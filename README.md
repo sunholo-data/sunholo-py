@@ -21,11 +21,8 @@ The package includes:
 * `summarise/` - creation of summaries of large documents
 * `utils/` - reading configuration files, Google Cloud Platform metadata
 
-The package is hosted on GCP Artifact Registry and then imported within the Cloud Run agent scripts.
 
-
-
-
+```
    Copyright [2023] [Sunholo ApS]
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,3 +36,4 @@ The package is hosted on GCP Artifact Registry and then imported within the Clou
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+```

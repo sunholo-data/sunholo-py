@@ -12,6 +12,13 @@ setup(
     name='llmops',
     version=version,
     packages=find_packages(),
+    license='Apache License, Version 2.0',
+    description='Large Language Model DevOps - a package to help deploy LLMs to the Cloud.',
+    author = 'Sunholo ApS',
+    author_email = 'llmops@sunholo.com',
+    url = 'https://github.com/sunholo-data/llmops',
+    download_url=f'https://github.com/sunholo-data/llmops/archive/refs/tags/v{base_version}.tar.gz',
+    keywords=['llms', 'devops','google_cloud_platform'],
     package_data={
         'llmops.database': ['sql/sb/*.sql']
     },
@@ -26,5 +33,15 @@ setup(
         # "google-auth-httplib2",
         # "google-auth-oauthlib",
         # "psycopg2-binary"
+    ],
+    classifiers=[
+        'Development Status :: 3 - Alpha',      # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as the current state of your package
+        'Intended Audience :: Developers',      # Define that your audience are developers
+        'Topic :: Software Development :: Build Tools',
+        'License :: OSI Approved :: Apache 2.0',   # Again, pick a license
+        'Programming Language :: Python :: 3',      #Specify which pyhton versions that you want to support
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12'
     ],
 )
