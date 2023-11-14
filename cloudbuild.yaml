@@ -1,9 +1,9 @@
 substitutions:
   _PYTHON_REGISTRY_REPO_URL: terraform_managed
   _PYPI_REPOSITORY_URL: https://upload.pypi.org/legacy/
-  _PYPI_USERNAME: secret
+  _PYPI_USERNAME: sunholo
   _PYPI_PASSWORD: secret
-  _REPO: llmops
+  _REPO: sunholo
 
 steps:
   # Build the Python package
@@ -20,6 +20,7 @@ steps:
         printf "[distutils]\nindex-servers = \n    ${_REPO}\n\n[${_REPO}]\nrepository: ${_PYTHON_REGISTRY_REPO_URL}\n" > ~/.pypirc
         printf "[global]\nindex-url = ${_PYTHON_REGISTRY_REPO_URL}/simple/\n" > ~/.config/pip/pip.conf
         python setup.py sdist bdist_wheel
+        twine check dist/*
         twine upload --verbose --repository-url ${_PYTHON_REGISTRY_REPO_URL} dist/* 
     env:
     - 'SHORT_SHA=$SHORT_SHA'
