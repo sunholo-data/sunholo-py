@@ -13,6 +13,8 @@ setup(
     version=version,
     packages=find_packages(),
     license='Apache License, Version 2.0',
+    long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
     description='Large Language Model DevOps - a package to help deploy LLMs to the Cloud.',
     author = 'Sunholo ApS',
     author_email = 'llmops@sunholo.com',
