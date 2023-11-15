@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 import datetime
 
 # Define your base version
-version = '0.1.4'
+version = '0.1.5'
 
 setup(
     name='sunholo',
@@ -15,7 +15,7 @@ setup(
     author = 'Sunholo ApS',
     author_email = 'llmops@sunholo.com',
     url = 'https://github.com/sunholo-data/sunholo-py',
-    download_url=f'https://github.com/sunholo-data/sunholo-py/archive/refs/tags/v{base_version}.tar.gz',
+    download_url=f'https://github.com/sunholo-data/sunholo-py/archive/refs/tags/v{version}.tar.gz',
     keywords=['llms', 'devops','google_cloud_platform'],
     package_data={
         'sunholo.database': ['sql/sb/*.sql']
