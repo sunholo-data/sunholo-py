@@ -1,4 +1,10 @@
-# llmops
+# sunholo-py
+
+(draft release)
+
+```sh
+pip install sunholo
+```
 
 A python library to enable LLMOps within cloud environments
 
