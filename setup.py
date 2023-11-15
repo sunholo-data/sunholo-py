@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 import datetime
 
 # Define your base version
-base_version = '0.1.2'
+base_version = '0.1.3'
 
 timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 version = f"{base_version}.{timestamp}"
