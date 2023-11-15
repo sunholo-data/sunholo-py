@@ -8,17 +8,17 @@ pip install sunholo
 
 A python library to enable LLMOps within cloud environments
 
-`llmops` provides utilities to help manage LLM operations on Google Cloud Platform at first, but it is hoped that making it open source will help it support other clouds in the future.  A lot of the functionality is not Google Cloud Platform specific, so still may be helpful.
+`sunholo` provides utilities to help manage LLM operations on Google Cloud Platform at first, but it is hoped that making it open source will help it support other clouds in the future.  A lot of the functionality is not Google Cloud Platform specific, so still may be helpful.
 
 It is derived from the Edmonbrain project, the original blog post you can read here: https://code.markedmondson.me/running-llms-on-gcp/ and owes a lot to Langchain ( https://github.com/langchain-ai/langchain )
 
 The package includes:
 
 * `agents/` - functions for working with agents, including easy flask apps, parsing chat history and dispatching requests to different agent endpoints
-* `archive` - functions to record all Q&A activity to BigQuery via PubSub
+* `archive/` - functions to record all Q&A activity to BigQuery via PubSub
 * `bots/` - functions for special cases regrding frontend bots such as Web Apps, Discord and Slack
 * `chunker/` - functions to slice up documents for sending into vector stores
-* `components/` - functions to help configure which LLM, prompt, vectorstore or document reteriver you will use based on a yaml config file
+* `components/` - functions to help configure which LLM, prompt, vectorstore or document retriever you will use based on a yaml config file
 * `database/` - database setup functions and SQL to run on those sources such as Supabase
 * `embedder/` - functions to send chunks into embedding vector stores
 * `pubsub/` - use of PubSub for a message queue between components
