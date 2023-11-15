@@ -1,14 +1,11 @@
 substitutions:
   _PYTHON_REGISTRY_REPO_URL: terraform_managed
-  _PYPI_REPOSITORY_URL: https://upload.pypi.org/legacy/
-  _PYPI_USERNAME: sunholo
-  _PYPI_PASSWORD: secret
   _REPO: sunholo
 
 steps:
   # Build the Python package
   - name: 'python:3.9-slim'
-    id: build 
+    id: push to GCP Artifact Registry
     entrypoint: 'bash'
     args:
     - '-c'
@@ -23,13 +20,4 @@ steps:
         twine check dist/*
         twine upload --verbose --repository-url ${_PYTHON_REGISTRY_REPO_URL} dist/* 
     env:
-    - 'SHORT_SHA=$SHORT_SHA'
-  - name: 'python:3.9-slim'
-    id: push to pypi
-    entrypoint: twine
-    args: ["upload", "/workspace/dist/*",
-              "-u", "$_PYPI_USERNAME",
-              "-p", "$_PYPI_PASSWORD",
-              "—-repository-url", "${_PYPI_REPOSITORY_URL}",
-              "—-verbose"]    
-
+    - 'SHORT_SHA=$SHORT_SHA'  
