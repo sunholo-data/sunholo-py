@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 import datetime
 
 # Define your base version
-base_version = '0.1.1'
+base_version = '0.1.2'
 
 timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 version = f"{base_version}.{timestamp}"
@@ -16,8 +16,8 @@ setup(
     description='Large Language Model DevOps - a package to help deploy LLMs to the Cloud.',
     author = 'Sunholo ApS',
     author_email = 'llmops@sunholo.com',
-    url = 'https://github.com/sunholo-data/llmops',
-    download_url=f'https://github.com/sunholo-data/llmops/archive/refs/tags/v{base_version}.tar.gz',
+    url = 'https://github.com/sunholo-data/sunholo-py',
+    download_url=f'https://github.com/sunholo-data/sunholo-py/archive/refs/tags/v{base_version}.tar.gz',
     keywords=['llms', 'devops','google_cloud_platform'],
     package_data={
         'sunholo.database': ['sql/sb/*.sql']
