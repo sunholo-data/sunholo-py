@@ -1,6 +1,6 @@
 # sunholo-py
 
-(draft release)
+(draft release https://pypi.org/project/sunholo/ )
 
 ```sh
 pip install sunholo
