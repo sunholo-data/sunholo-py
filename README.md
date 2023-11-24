@@ -1,6 +1,20 @@
 # sunholo-py
 
 (draft release https://pypi.org/project/sunholo/ )
+## Table of Contents
+- [Agents](#agents)
+- [Archive](#archive)
+- [Bots](#bots)
+- [Chunker](#chunker)
+- [Components](#components)
+- [Database](#database)
+- [Embedder](#embedder)
+- [PubSub](#pubsub)
+- [QnA](#qna)
+- [Streaming](#streaming)
+- [Summarise](#summarise)
+- [Utils](#utils)
+
 
 ```sh
 pip install sunholo
