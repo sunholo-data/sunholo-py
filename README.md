@@ -1,3 +1,5 @@
+This is the sunholo-py project. It provides a collection of useful tools and functionalities for working with language models, databases, and various bots.
+
 # sunholo-py
 
 (draft release https://pypi.org/project/sunholo/ )
