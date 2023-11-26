@@ -1,0 +1,38 @@
+name: Comment Action Workflow
+
+on:
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  process-comment:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Extract Comment and File Context
+      id: extract
+      run: |
+        # Extract PR number and comment
+        PR_NUMBER=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
+        COMMENT=$(jq --raw-output .comment.body "$GITHUB_EVENT_PATH")
+
+        # Extract the file name associated with the comment
+        FILE_NAME=$(jq --raw-output .comment.path "$GITHUB_EVENT_PATH")
+
+        # Set outputs
+        echo "::set-output name=pr_number::$PR_NUMBER"
+        echo "::set-output name=comment::$COMMENT"
+        echo "::set-output name=file_name::$FILE_NAME"
+
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_EVENT_PATH: ${{ github.event_path }}
+
+    - name: Call External API
+      run: |
+        curl -X POST -H "Content-Type: application/json" \
+             -H "Authorization: Bearer ${{ secrets.EXTERNAL_API_KEY }}" \
+             -d '{"pr_number": "${{ steps.extract.outputs.pr_number }}", "comment": "${{ steps.extract.outputs.comment }}", "file_name": "${{ steps.extract.outputs.file_name }}"}' \
+             https://yourapi.example.com/endpoint
