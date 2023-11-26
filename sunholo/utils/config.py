@@ -56,7 +56,7 @@ def load_config(filename=None):
         elif filename.endswith(".yaml") or filename.endswith(".yml"):
             config = yaml.safe_load(f)
         else:
-            raise ValueError(f"Unsupported config file format: {config_path}. Only JSON and YAML are supported.")
+            raise ValueError(f"Unsupported config file format: {config_path}. The supported formats are JSON and YAML.")
     
     return config, filename
 
