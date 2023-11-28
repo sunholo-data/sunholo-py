@@ -1,0 +1,8 @@
+{
+    "agents":"https://agents-xxxx.a.run.app",
+    "chunker":"https://chunker-xxxx.a.run.app",
+    "embedder":"https://embedder-xxxx.a.run.app",
+    "litellm":"https://litellm-xxxx.a.run.app",
+    "slack":"https://slack-xxxx.a.run.app",
+    "unstructured":"https://unstructured-xxxx.a.run.app"
+}

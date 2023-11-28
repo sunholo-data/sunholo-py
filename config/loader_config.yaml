@@ -1,0 +1,16 @@
+code:
+  extensions: 
+    - ".py"
+    - ".js"
+    - ".java"
+    - ".c"
+    - ".cpp"
+    - ".cs"
+    - ".rb"
+    - ".php"
+    - ".txt"
+    - ".md"
+    - ".yaml"
+    - ".sql"
+    - ".r"
+    - ".sh"

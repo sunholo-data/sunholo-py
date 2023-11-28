@@ -48,6 +48,19 @@ def pick_llm(vector_name):
         llm_chat = ChatVertexAI(model_name="codechat-bison", max_output_tokens=2048)
         embeddings = VertexAIEmbeddings()
         logging.debug("Chose VertexAI code-bison")
+    elif llm_str == 'model_garden':
+        from ..patches.langchain.vertexai import VertexAIModelGarden
+        model_garden_config = load_config_key("gcp_config", vector_name, filename = "config/llm_config.yaml")
+        if model_garden_config is None:
+            raise ValueError("llm='model_garden' requires a gcp_config entry in config yaml file")
+        llm = VertexAIModelGarden(project=model_garden_config['project_id'], 
+                                  endpoint_id=model_garden_config['endpoint_id'], 
+                                  location=model_garden_config['location'], 
+                                  allowed_model_args=["max_tokens"])
+        llm_chat = llm
+        embeddings = None
+        logging.debug("Chose VertexAIModelGarden")
+
     else:
         raise NotImplementedError(f'No llm implemented for {llm_str}')   
 

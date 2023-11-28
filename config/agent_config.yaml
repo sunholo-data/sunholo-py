@@ -1,0 +1,15 @@
+default:
+  stream: "{stem}/stream"
+  invoke: "{stem}/invoke"
+
+langserve:
+  stream: "{stem}/{vector_name}/stream"
+  invoke: "{stem}/{vector_name}/invoke"
+
+edmonbrain:
+  stream: "{stem}/qna/streaming/{vector_name}"
+  invoke: "{stem}/qna/{vector_name}"
+
+openinterpreter:
+  stream: "{stem}/qna/streaming/{vector_name}"
+  invoke: "{stem}/qna/{vector_name}"

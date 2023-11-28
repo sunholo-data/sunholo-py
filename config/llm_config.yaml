@@ -1,0 +1,79 @@
+dng:
+  llm: model_garden
+  agent: langserve
+  gcp_config:
+    project_id: model_garden_project
+    endpoint_id: 12345678
+    location: europe-west1
+
+research-assistant:
+  llm: openai
+  agent: langserve
+  secrets:
+    - OPENAI_API_KEY
+    - TAVILY_API_KEY
+edmonbrain_agent:
+  llm: openai
+  agent: openinterpreter
+  secrets:
+    - OPENAI_API_KEY
+    - GIT_PAT
+edmonbrain_vertex:
+  llm: vertex
+  agent: edmonbrain_rag
+  prompt: "You are a British chatty AI who always works step by step logically through why you are answering any particular question.\n"
+  memory:
+    - alloydb-vectorstore:
+        vectorstore: alloydb
+        self_query: false
+codey:
+  llm: codey
+  agent: edmonbrain_rag
+  prompt: "You are an expert code assistant AI who always describes step by step logically through why you are answering any particular question, with illustrative code examples.\n"
+  memory:
+    - alloydb-vectorstore:
+        vectorstore: alloydb
+        provider: PostgreSQL
+        self_query: false
+edmonbrain:
+  llm: openai
+  agent: edmonbrain
+  secrets:
+    - OPENAI_API_KEY
+    - TAVILY_API_KEY
+  memory:
+    #- longterm-conversation-memory:
+    #    provider: GoogleCloudEnterpriseSearchRetriever
+    #    db_id: longterm-conversation-memo_1694023932257
+    #    type: structured
+    #    location: global
+    - supabase:
+        vectorstore: supabase
+        self_query: false
+  prompt: "You are a happy, optimistic British AI who always works step by step logically through why you are answering any particular question."
+  chat_buddies:
+    edmonbrain_agent:
+      chat_buddy_id: "<@1114588633505206353>"
+      chat_buddy_description: "can run python programs, help with calendar inquiries for specific dates, look into your memories for more refined questions and perform basic mathematical operations"
+edmonbrain_agent2:
+  llm: openai
+  agent: edmonbrain_agent
+  memory:
+    #- longterm-conversation-memo_1694023932257:
+    #    type: structured
+    #    location: global
+    #    provider: GoogleCloudEnterpriseSearchRetriever
+    - supabase-vectorstore:
+        shared_vectorstore: edmonbrain
+  chat_buddies:
+    edmonbrain:
+      chat_buddy: "<@1107554583192031232>"
+      chat_buddy_description: "called Electric Sheep and asks you questions."
+jesper:
+  llm: openai
+  agent: edmonbrain_rag
+  prompt: "You are a Danish AI who works with a Science Educational Professor who wants precise logical thought through answers. Answer in Danish unless otherwise requested.\n"
+  memory:
+    - supabase-vectorstore:
+        vectorstore: supabase
+        self_query: false
