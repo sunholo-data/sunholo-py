@@ -46,6 +46,11 @@ The package includes:
 * `summarise/` - creation of summaries of large documents
 * `utils/` - reading configuration files, Google Cloud Platform metadata
 
+## Configuration
+
+The library uses the config specifications that some examples are given in the `config/` folder.
+
+When using the functions, make sure to have the `config/` folder in the root of where your application is running (usually `$HOME/config`)
 
 ```
    Copyright [2023] [Sunholo ApS]
