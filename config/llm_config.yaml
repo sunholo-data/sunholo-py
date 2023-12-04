@@ -5,9 +5,9 @@ dng:
     project_id: model_garden_project
     endpoint_id: 12345678
     location: europe-west1
-
 research-assistant:
   llm: openai
+  model: gpt-3.5-turbo-16k
   agent: langserve
   secrets:
     - OPENAI_API_KEY
@@ -20,6 +20,7 @@ edmonbrain_agent:
     - GIT_PAT
 edmonbrain_vertex:
   llm: vertex
+  model: text-unicorn
   agent: edmonbrain_rag
   prompt: "You are a British chatty AI who always works step by step logically through why you are answering any particular question.\n"
   memory:
@@ -37,6 +38,7 @@ codey:
         self_query: false
 edmonbrain:
   llm: openai
+  model: gpt-4
   agent: edmonbrain
   secrets:
     - OPENAI_API_KEY
