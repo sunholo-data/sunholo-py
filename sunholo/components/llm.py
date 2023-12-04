@@ -23,7 +23,6 @@ def pick_llm(vector_name):
     llm_str = load_config_key("llm", vector_name, filename = "config/llm_config.yaml")
     
     if llm_str == 'openai':
-        from langchain.embeddings import OpenAIEmbeddings
         llm_chat = get_llm_chat(vector_name)
         llm = get_llm_chat(vector_name, model="gpt-3.5-turbo-16k") # TODO: fix it needs llm_chat and not llm
         embeddings = get_embeddings(vector_name)

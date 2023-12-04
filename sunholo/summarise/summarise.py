@@ -13,7 +13,7 @@
 #   limitations under the License.
 import logging
 
-from ..components import pick_llm
+from ..components import get_llm
 from ..chunker.splitter import chunk_doc_to_docs
 
 from langchain.prompts import PromptTemplate
@@ -34,7 +34,7 @@ import time
 import random
 
 def summarise_docs(docs, vector_name, skip_if_less=10000):
-    llm, _, _ = pick_llm(vector_name)
+    llm, _, _ = get_llm(vector_name)
     chain = load_summarize_chain(llm, chain_type="map_reduce", verbose=True,
                                  map_prompt=MAP_PROMPT,
                                  combine_prompt=MAP_PROMPT)

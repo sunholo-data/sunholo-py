@@ -49,8 +49,8 @@ def lookup_connection_env(vs_str):
 
 def get_vector_size(vector_name: str):
 
-    from ..components import pick_llm
-    llm_str = pick_llm(vector_name)
+    from ..components import get_llm
+    llm_str = get_llm(vector_name)
     
     vector_size = 768
     if llm_str == 'openai':

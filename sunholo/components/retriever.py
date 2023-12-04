@@ -15,7 +15,7 @@ import logging
 
 from .vectorstore import pick_vectorstore
 from ..utils import load_config_key
-from .llm import pick_llm
+from .llm import get_embeddings
 from ..utils.gcp import get_gcp_project
 
 from langchain.retrievers import MergerRetriever
@@ -69,7 +69,7 @@ def pick_retriever(vector_name, embeddings):
         
     lotr = MergerRetriever(retrievers=retriever_list)
 
-    _, filter_embeddings, _ = pick_llm(vector_name)
+    filter_embeddings = get_embeddings(vector_name)
     filter = EmbeddingsRedundantFilter(embeddings=filter_embeddings)
     pipeline = DocumentCompressorPipeline(transformers=[filter])
     retriever = ContextualCompressionRetriever(

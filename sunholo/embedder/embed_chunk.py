@@ -19,7 +19,7 @@ import datetime
 
 from langchain.schema import Document
 
-from ..components import pick_llm, pick_vectorstore, load_memories
+from ..components import get_embeddings, pick_vectorstore, load_memories
 
 def embed_pubsub_chunk(data: dict):
     """Triggered from a message on a Cloud Pub/Sub topic "embed_chunk" topic
@@ -67,7 +67,7 @@ def embed_pubsub_chunk(data: dict):
     doc = Document(page_content=page_content, metadata=metadata)
 
     # init embedding and vector store
-    _, embeddings, _ = pick_llm(vector_name)
+    embeddings = get_embeddings(vector_name)
 
     memories = load_memories(vector_name)
     vectorstore_list = []
