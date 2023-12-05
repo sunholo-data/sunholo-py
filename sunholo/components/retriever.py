@@ -19,7 +19,7 @@ from .llm import get_embeddings
 from ..utils.gcp import get_gcp_project
 
 from langchain.retrievers import MergerRetriever
-from langchain.retrievers import GoogleCloudEnterpriseSearchRetriever
+from langchain.retrievers import GoogleCloudEnterpriseSearchRetriever, GoogleVertexAISearchRetriever
 # https://python.langchain.com/docs/integrations/retrievers/merger_retriever
 from langchain.document_transformers import (
     EmbeddingsRedundantFilter,
@@ -37,8 +37,8 @@ def load_memories(vector_name):
 
     return memories
 
-def pick_retriever(vector_name, embeddings):
-    
+def pick_retriever(vector_name, embeddings=None):
+
     memories = load_memories(vector_name)
 
     retriever_list = []
@@ -47,12 +47,26 @@ def pick_retriever(vector_name, embeddings):
             logging.info(f"Found memory {key}")
             vectorstore = value.get('vectorstore', None)
             if vectorstore is not None:
+                logging.info(f"Found vectorstore {vectorstore}")
+                if embeddings is None:
+                    embeddings = get_embeddings(vector_name)
                 vectorstore = pick_vectorstore(vectorstore, vector_name=vector_name, embeddings=embeddings)
                 vs_retriever = vectorstore.as_retriever(search_kwargs=dict(k=3))
                 retriever_list.append(vs_retriever)
             
             if value.get('provider', None) == "GoogleCloudEnterpriseSearchRetriever":
+                logging.info(f"Found GoogleCloudEnterpriseSearchRetriever {value['provider']}")
                 gcp_retriever = GoogleCloudEnterpriseSearchRetriever(
+                    project_id=get_gcp_project(),
+                    search_engine_id=value["db_id"],
+                    location_id=value.get("location", "global"),
+                    engine_data_type=1 if value.get("type","unstructured") == "structured" else 0,
+                    query_expansion_condition=2
+                )
+                retriever_list.append(gcp_retriever)
+            if value.get('provider', None) == "GoogleVertexAISearchRetriever":
+                logging.info(f"Found GoogleVertexAISearchRetriever {value['provider']}")
+                gcp_retriever = GoogleVertexAISearchRetriever(
                     project_id=get_gcp_project(),
                     search_engine_id=value["db_id"],
                     location_id=value.get("location", "global"),
