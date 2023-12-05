@@ -34,7 +34,7 @@ import time
 import random
 
 def summarise_docs(docs, vector_name, skip_if_less=10000):
-    llm, _, _ = get_llm(vector_name)
+    llm  = get_llm(vector_name)
     chain = load_summarize_chain(llm, chain_type="map_reduce", verbose=True,
                                  map_prompt=MAP_PROMPT,
                                  combine_prompt=MAP_PROMPT)
