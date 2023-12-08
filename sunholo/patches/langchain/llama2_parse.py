@@ -51,10 +51,11 @@ class ReActSingleInputOutputParser(AgentOutputParser):
     def parse(self, text: str) -> Union[AgentAction, AgentFinish]:
         # Preprocess to remove everything before and including "Begin!"
         # This regex matches everything up to and including "Begin!" and captures everything after it
-        begin_regex = r".*?Begin!\s*(.*)"
-        begin_match = re.search(begin_regex, text, re.DOTALL)
+        inst_regex = r".*?\[/INST\]\s*(.*)"
+        begin_match = re.search(inst_regex, text, re.DOTALL)
         if begin_match:
-            text = begin_match.group(1).strip()  # Use the text after "Begin!"
+            print("Matched [/INST] - removing everything before it")
+            text = begin_match.group(1).strip()  # Use the text after "ª[/INST]"
         else:
             # If "Begin!" is not found, proceed with the original text
             pass
