@@ -78,7 +78,7 @@ def register_qna_routes(app, stream_interpreter, qna_interpreter):
 
         message_author = data.get('message_author', None)
 
-        paired_messages = extract_chat_history(data['chat_history'])
+        paired_messages = extract_chat_history(data.get('chat_history', None))
 
         command_response = handle_special_commands(user_input, vector_name, paired_messages)
         if command_response is not None:
