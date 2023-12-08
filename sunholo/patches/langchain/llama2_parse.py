@@ -1,5 +1,6 @@
 import re
 from typing import Union
+import logging
 
 from langchain_core.agents import AgentAction, AgentFinish
 from langchain_core.exceptions import OutputParserException
@@ -52,14 +53,17 @@ class ReActSingleInputOutputParser(AgentOutputParser):
         # Preprocess to remove everything before and including "Begin!"
         # This regex matches everything up to and including "Begin!" and captures everything after it
         inst_regex = r".*?\[/INST\]\s*(.*)"
+        logging.info(f"parser:  {text}")
         begin_match = re.search(inst_regex, text, re.DOTALL)
         if begin_match:
-            print("Matched [/INST] - removing everything before it")
+            logging.info("Matched [/INST] - removing everything before it")
             text = begin_match.group(1).strip()  # Use the text after "ª[/INST]"
         else:
             # If "Begin!" is not found, proceed with the original text
-            pass
+            logging.info("Did NOT Match [/INST]")
 
+
+        logging.info(f"parser parsed:  {text}")
 
         includes_answer = FINAL_ANSWER_ACTION in text
         regex = (
@@ -69,7 +73,7 @@ class ReActSingleInputOutputParser(AgentOutputParser):
         if action_match:
             if includes_answer:
                 raise OutputParserException(
-                    f"{FINAL_ANSWER_AND_PARSABLE_ACTION_ERROR_MESSAGE}: {text}"
+                    f"Blah - {FINAL_ANSWER_AND_PARSABLE_ACTION_ERROR_MESSAGE}: {text}"
                 )
             action = action_match.group(1).strip()
             action_input = action_match.group(2)
@@ -85,7 +89,7 @@ class ReActSingleInputOutputParser(AgentOutputParser):
 
         if not re.search(r"Action\s*\d*\s*:[\s]*(.*?)", text, re.DOTALL):
             raise OutputParserException(
-                f"Could not parse LLM output: `{text}`",
+                f"Blah - Could not parse LLM output: `{text}`",
                 observation=MISSING_ACTION_AFTER_THOUGHT_ERROR_MESSAGE,
                 llm_output=text,
                 send_to_llm=True,
@@ -94,13 +98,13 @@ class ReActSingleInputOutputParser(AgentOutputParser):
             r"[\s]*Action\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)", text, re.DOTALL
         ):
             raise OutputParserException(
-                f"Could not parse LLM output: `{text}`",
+                f"Blah - Could not parse LLM output: `{text}`",
                 observation=MISSING_ACTION_INPUT_AFTER_ACTION_ERROR_MESSAGE,
                 llm_output=text,
                 send_to_llm=True,
             )
         else:
-            raise OutputParserException(f"Could not parse LLM output: `{text}`")
+            raise OutputParserException(f"Blah - Could not parse LLM output: `{text}`")
 
     @property
     def _type(self) -> str:
