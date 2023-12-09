@@ -42,8 +42,8 @@ def summarise_docs(docs, vector_name, skip_if_less=10000):
                                  combine_prompt=MAP_PROMPT)
     
     if isinstance(llm, ChatOpenAI) or isinstance(llm, OpenAI):
-        llm.max_tokens = 13000
-        max_content_length = 13000
+        llm.max_tokens = 8000
+        max_content_length = 8000
     elif isinstance(llm, ChatVertexAI) or isinstance(llm, VertexAI):
         llm.max_output_tokens=1024
         max_content_length=1024
