@@ -19,6 +19,8 @@ from ..chunker.splitter import chunk_doc_to_docs
 from langchain.prompts import PromptTemplate
 from langchain.chat_models import ChatVertexAI
 from langchain.chat_models import ChatOpenAI
+from langchain.llms import OpenAI
+from langchain.llms import VertexAI
 from langchain.chains.summarize import load_summarize_chain
 from langchain.schema import Document
 
@@ -39,14 +41,14 @@ def summarise_docs(docs, vector_name, skip_if_less=10000):
                                  map_prompt=MAP_PROMPT,
                                  combine_prompt=MAP_PROMPT)
     
-    if isinstance(llm, ChatOpenAI):
+    if isinstance(llm, ChatOpenAI) or isinstance(llm, OpenAI):
         llm.max_tokens = 13000
         max_content_length = 13000
-    elif isinstance(llm, ChatVertexAI):
+    elif isinstance(llm, ChatVertexAI) or isinstance(llm, VertexAI):
         llm.max_output_tokens=1024
         max_content_length=1024
     else:
-        raise ValueError("Unsupported llm type: %s" % llm.__class__.__)
+        raise ValueError("Unsupported llm type: %s" % llm)
 
     summaries = []
     for doc in docs:
