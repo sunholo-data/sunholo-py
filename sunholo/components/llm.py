@@ -66,12 +66,14 @@ def get_llm(vector_name, model=None):
     if llm_str == 'openai':
         # Setup for OpenAI LLM
         from langchain.llms import OpenAI
+        from langchain.chat_models import ChatOpenAI
         if not model:
             model = load_config_key("model", vector_name, filename="config/llm_config.yaml")
             if model is None:
                 model = 'gpt-4'
-                logging.info(f"No 'model' value in config file - selecting default {model}")
-            
+                logging.info(f"No 'model' value in config file - selecting default ChatOpenAI: {model}")
+                return ChatOpenAI(model=model, temperature=0, max_tokens=8000)
+                
         return OpenAI(model=model, temperature=0, max_tokens=8000)
 
     elif llm_str == 'vertex':
