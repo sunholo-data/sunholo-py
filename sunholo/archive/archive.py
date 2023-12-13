@@ -14,11 +14,15 @@
 from ..pubsub import PubSubManager
 
 import datetime
+import logging
 
 def archive_qa(bot_output, vector_name):
-    pubsub_manager = PubSubManager(vector_name, pubsub_topic="qna-to-pubsub-bq-archive")
-    the_data = {"bot_output": bot_output,
-                "vector_name": vector_name,
-                "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-    
-    pubsub_manager.publish_message(the_data)
+    try:
+        pubsub_manager = PubSubManager(vector_name, pubsub_topic="qna-to-pubsub-bq-archive")
+        the_data = {"bot_output": bot_output,
+                    "vector_name": vector_name,
+                    "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+        
+        pubsub_manager.publish_message(the_data)
+    except Exception as e:
+        logging.warning(f"Could not publish message for {vector_name} to qna-to-pubsub-bq-archive - {str(e)}")
