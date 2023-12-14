@@ -37,18 +37,20 @@ import random
 
 def summarise_docs(docs, vector_name, skip_if_less=10000):
     llm  = get_llm(vector_name)
-    chain = load_summarize_chain(llm, chain_type="map_reduce", verbose=True,
-                                 map_prompt=MAP_PROMPT,
-                                 combine_prompt=MAP_PROMPT)
-    
+  
     if isinstance(llm, ChatOpenAI) or isinstance(llm, OpenAI):
-        llm.max_tokens = 8000
-        max_content_length = 8000
+        llm = get_llm(vector_name, model="gpt-3.5-turbo-16k")
+        llm.max_tokens = 11000
+        max_content_length = 11000
     elif isinstance(llm, ChatVertexAI) or isinstance(llm, VertexAI):
         llm.max_output_tokens=1024
         max_content_length=1024
     else:
         raise ValueError("Unsupported llm type: %s" % llm)
+
+    chain = load_summarize_chain(llm, chain_type="map_reduce", verbose=True,
+                                 map_prompt=MAP_PROMPT,
+                                 combine_prompt=MAP_PROMPT)
 
     summaries = []
     for doc in docs:
