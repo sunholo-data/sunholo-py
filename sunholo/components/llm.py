@@ -52,7 +52,7 @@ def pick_streaming(vector_name):
     
     llm_str = load_config_key("llm", vector_name, filename = "config/llm_config.yaml")
     
-    if llm_str == 'openai':
+    if llm_str == 'openai' or llm_str == 'gemini':
         return True
     
     return False
@@ -109,47 +109,49 @@ def get_llm(vector_name, model=None):
                                    location=model_garden_config['location'], 
                                    allowed_model_args=["max_tokens"])
 
-
     if llm_str is None:
         raise NotImplementedError(f'No llm implemented for {llm_str}')
 
 def get_llm_chat(vector_name, model=None):
     llm_str = load_config_key("llm", vector_name, filename="config/llm_config.yaml")
+    if not model:
+        model = load_config_key("model", vector_name, filename="config/llm_config.yaml")
 
     logging.debug(f"Chose LLM: {llm_str}")
     # Configure LLMs based on llm_str
     if llm_str == 'openai':
         # Setup for OpenAI LLM
         from langchain.chat_models import ChatOpenAI
-        if not model:
-            model = load_config_key("model", vector_name, filename="config/llm_config.yaml")
-            if model is None:
-                model = 'gpt-4'
-                logging.info(f"No 'model' value in config file - selecting default {model}")
+        if model is None:
+            model = 'gpt-4'
+            logging.info(f"No 'model' value in config file - selecting default {model}")
             
         return ChatOpenAI(model=model, temperature=0, max_tokens=11000)
 
     elif llm_str == 'vertex':
         # Setup for Vertex LLM
         from langchain.chat_models import ChatVertexAI
-        if not model:
-            model = load_config_key("model", vector_name, filename="config/llm_config.yaml")
-            if model is None:
-                model = 'chat-bison'
-                logging.info(f"No 'model' value in config file - selecting default {model}")
+        if model is None:
+            model = 'chat-bison'
+            logging.info(f"No 'model' value in config file - selecting default {model}")
             
         return ChatVertexAI(model_name = model, temperature=0, max_output_tokens=1024)
 
     elif llm_str == 'codey':
         # Setup for Vertex LLM
         from langchain.chat_models import ChatVertexAI
-        if not model:
-            model = load_config_key("model", vector_name, filename="config/llm_config.yaml")
-            if model is None:
-                model = 'codechat-bison'
-                logging.info(f"No 'model' value in config file - selecting default {model}")
+        if model is None:
+            model = 'codechat-bison'
+            logging.info(f"No 'model' value in config file - selecting default {model}")
             
         return ChatVertexAI(model_name = model, temperature=0, max_output_tokens=1024)
+    
+    elif llm_str == 'gemini':
+        from langchain_google_genai import ChatGoogleGenerativeAI
+        if model is None:
+            model="gemini-pro"
+        
+        return ChatGoogleGenerativeAI(model_name = model, temperature=0)
 
     if llm_str is None:
         raise NotImplementedError(f'No llm implemented for {llm_str}')
@@ -167,6 +169,11 @@ def get_embeddings(vector_name):
         from langchain.embeddings import VertexAIEmbeddings
         
         return VertexAIEmbeddings()
+    elif llm_str == 'gemini':
+        from langchain_google_genai import GoogleGenerativeAIEmbeddings
+
+        return GoogleGenerativeAIEmbeddings(model="models/embedding-001") #TODO add embedding type
+
 
     if llm_str is None:
         raise NotImplementedError(f'No embeddings implemented for {llm_str}')
