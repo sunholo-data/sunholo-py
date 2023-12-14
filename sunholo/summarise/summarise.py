@@ -19,6 +19,7 @@ from ..chunker.splitter import chunk_doc_to_docs
 from langchain.prompts import PromptTemplate
 from langchain.chat_models import ChatVertexAI
 from langchain.chat_models import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.llms import OpenAI
 from langchain.llms import VertexAI
 from langchain.chains.summarize import load_summarize_chain
@@ -39,12 +40,15 @@ def summarise_docs(docs, vector_name, skip_if_less=10000):
     llm  = get_llm(vector_name)
   
     if isinstance(llm, ChatOpenAI) or isinstance(llm, OpenAI):
-        llm = get_llm(vector_name, model="gpt-3.5-turbo-16k")
+        llm = OpenAI(model="gpt-3.5-turbo-16k")
         llm.max_tokens = 11000
         max_content_length = 11000
     elif isinstance(llm, ChatVertexAI) or isinstance(llm, VertexAI):
         llm.max_output_tokens=1024
         max_content_length=1024
+    elif isinstance(llm, ChatGoogleGenerativeAI):
+        llm.max_output_tokens = 30000
+        max_content_length = 30000
     else:
         raise ValueError("Unsupported llm type: %s" % llm)
 
