@@ -18,9 +18,9 @@ from google.auth import default
 
 import json
 import os
-import logging
+from ..logging import setup_logging
 
-logging.basicConfig(level=logging.INFO)
+logging = setup_logging()
 
 class PubSubManager:
     """

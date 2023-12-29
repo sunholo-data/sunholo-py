@@ -11,8 +11,11 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-import logging, json, os
+import json, os
 import requests
+from ..logging import setup_logging
+
+logging = setup_logging()
 
 def generate_discord_output(bot_output):
     source_documents = []

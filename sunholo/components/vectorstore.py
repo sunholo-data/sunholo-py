@@ -12,9 +12,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import os
-import logging
+from ..logging import setup_logging
 
-from ..utils import load_config_key
+logging = setup_logging()
+
 
 def pick_vectorstore(vs_str, vector_name, embeddings):
     logging.debug('Picking vectorstore')

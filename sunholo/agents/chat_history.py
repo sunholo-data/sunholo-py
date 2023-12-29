@@ -12,7 +12,9 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import json
-import logging
+from ..logging import setup_logging
+
+logging = setup_logging()
 
 def extract_chat_history(chat_history=None):
 

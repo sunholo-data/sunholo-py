@@ -12,7 +12,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import traceback
-import logging
 import base64
 import json
 import datetime
@@ -20,6 +19,9 @@ import datetime
 from langchain.schema import Document
 
 from ..components import get_embeddings, pick_vectorstore, load_memories
+from ..logging import setup_logging
+
+logging = setup_logging()
 
 def embed_pubsub_chunk(data: dict):
     """Triggered from a message on a Cloud Pub/Sub topic "embed_chunk" topic

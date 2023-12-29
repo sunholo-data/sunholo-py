@@ -12,7 +12,9 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import base64
-import logging
+from ..logging import setup_logging
+
+logging = setup_logging()
 
 def process_pubsub_message(data: dict) -> tuple:
     """Extracts message data and metadata from a Pub/Sub message.

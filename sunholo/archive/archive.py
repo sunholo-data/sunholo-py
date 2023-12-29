@@ -12,9 +12,12 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from ..pubsub import PubSubManager
+from ..logging import setup_logging
+
+logging = setup_logging()
 
 import datetime
-import logging
+
 
 def archive_qa(bot_output, vector_name):
     try:

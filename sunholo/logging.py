@@ -3,7 +3,6 @@
 
 from google.cloud.logging import Client
 from .utils.gcp import get_gcp_project
-import os
 import logging
 
 class GoogleCloudLogging:
@@ -16,8 +15,10 @@ class GoogleCloudLogging:
         """
         # Instantiates a Google Cloud logging client
         if project_id is None:
-            project_id = get_gcp_project()
-        self.client = Client(project=project_id)
+            self.project_id = get_gcp_project()
+        else:
+            self.project_id = project_id
+        self.client = Client(project=self.project_id)
         self.logger_name = logger_name
 
     def setup_logging(self, log_level=logging.INFO, logger_name=None):
@@ -49,14 +50,17 @@ class GoogleCloudLogging:
             ValueError("Must provide a logger name e.g. projects/your-project/logs/run.googleapis.com%2Fstderr")
 
         logger = self.client.logger(logger_name)
+        sunholo_logger = self.client.logger(f"projects/{self.project_id}/logs/sunholo")
 
         if log_text:
             logger.log_text(log_text, severity=severity)
+            sunholo_logger.log_text(log_text, severity=severity)
 
         elif log_struct:
             if not isinstance(log_struct, dict):
                 raise ValueError("log_struct must be a dictionary.")
             logger.log_struct(log_struct, severity=severity)
+            sunholo_logger.log_struct(log_struct, severity=severity)
 
 
     def debug(self, log_text=None, log_struct=None):

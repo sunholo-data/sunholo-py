@@ -13,13 +13,13 @@
 #   limitations under the License.
 import psycopg2
 from psycopg2.extensions import adapt
-import logging
 import os
 import time
 import math
-from ..utils.config import load_config_key
 
-logging.basicConfig(level=logging.INFO)
+from ..logging import setup_logging
+
+logging = setup_logging()
 
 def setup_supabase(vector_name:str, verbose:bool=False):
     hello = f"Setting up supabase database: {vector_name}"

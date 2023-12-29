@@ -17,8 +17,9 @@ from langchain.schema import LLMResult
 
 import threading
 import re
-import logging
-logging.basicConfig(level=logging.INFO)
+from ..logging import setup_logging
+
+logging = setup_logging()
 
 class ContentBuffer:
     def __init__(self):

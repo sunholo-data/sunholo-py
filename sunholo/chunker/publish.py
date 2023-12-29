@@ -1,5 +1,6 @@
-import logging
-import os
+from ..logging import setup_logging
+
+logging = setup_logging()
 
 from ..pubsub import PubSubManager
 from ..utils.parsers import contains_url, extract_urls

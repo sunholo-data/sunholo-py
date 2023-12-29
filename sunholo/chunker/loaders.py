@@ -20,7 +20,9 @@ from ..utils.config import load_config
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 
-import logging
+from ..logging import setup_logging
+
+logging = setup_logging()
 import pathlib
 import os
 import shutil

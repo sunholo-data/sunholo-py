@@ -15,7 +15,9 @@ import time
 from httpcore import ReadTimeout
 from httpx import ReadTimeout
 import traceback
-import logging
+from ..logging import setup_logging
+
+logging = setup_logging()
 
 def retry_qna(qa_function, question, max_retries=1, initial_delay=5):
     for retry in range(max_retries):

@@ -16,7 +16,9 @@ parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(parent_dir)
 
 import pathlib
-import logging
+from ..logging import setup_logging
+
+logging = setup_logging()
 
 def split_pdf_to_pages(pdf_path, temp_dir):
 
