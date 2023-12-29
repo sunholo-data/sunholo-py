@@ -66,9 +66,9 @@ def setup_database(type, vector_name:str, verbose:bool=False):
     
     params = {'vector_name': vector_name, 'vector_size': get_vector_size(vector_name)}
 
-    execute_sql_from_file("sql/sb/setup.sql", params, verbose=verbose, connection_env=connection_env)
-    execute_sql_from_file("sql/sb/create_table.sql", params, verbose=verbose, connection_env=connection_env)
-    execute_sql_from_file("sql/sb/create_function.sql", params, verbose=verbose, connection_env=connection_env)
+    execute_sql_from_file("database/sql/sb/setup.sql", params, verbose=verbose, connection_env=connection_env)
+    execute_sql_from_file("database/sql/sb/create_table.sql", params, verbose=verbose, connection_env=connection_env)
+    execute_sql_from_file("database/sql/sb/create_function.sql", params, verbose=verbose, connection_env=connection_env)
 
     if verbose: print("Ran all setup SQL statements")
     
