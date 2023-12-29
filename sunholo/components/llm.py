@@ -15,7 +15,7 @@ from ..logging import setup_logging
 
 logging = setup_logging()
 
-from ..utils.config import load_config_key
+from ..utils.config import load_config_key, load_config, get_module_filepath
 
 logging.basicConfig(level=logging.INFO)
 
@@ -62,6 +62,8 @@ def pick_streaming(vector_name):
 
 def get_llm(vector_name, model=None):
     llm_str = load_config_key("llm", vector_name, filename="config/llm_config.yaml")
+    model_lookup_filepath = get_module_filepath("lookup/model_lookup.yaml")
+    model_lookup, _ = load_config(model_lookup_filepath)
 
     logging.debug(f"Chose LLM: {llm_str}")
     # Configure LLMs based on llm_str

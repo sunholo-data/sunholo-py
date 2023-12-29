@@ -17,6 +17,7 @@ import os
 import time
 import math
 
+from ..utils.config import get_module_filepath
 from ..logging import setup_logging
 
 logging = setup_logging()
@@ -155,12 +156,8 @@ def do_sql(sql, sql_params=None, return_rows=False, verbose=False, connection_en
 
 
 def execute_sql_from_file(filepath, params, return_rows=False, verbose=False, connection_env=None):
-
-     # Get the directory of this Python script
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    # Build the full filepath by joining the directory with the filename
-    filepath = os.path.join(dir_path, filepath)
-
+    
+    filepath = get_module_filepath(filepath)
     logging.info(f"Executing SQL from file {filepath}")
 
     # read the SQL file

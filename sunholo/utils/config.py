@@ -40,6 +40,15 @@ def fetch_config(bucket_name, blob_name):
 
     return updated_time
 
+def get_module_filepath(filepath):
+    # Get the directory of this Python script
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    # Build the full filepath by joining the directory with the filename
+    filepath = os.path.join(dir_path, filepath)
+
+    logging.info(f"Found filepath {filepath}")
+    return filepath
+
 def load_config(filename=None):
 
     if filename is None:

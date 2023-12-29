@@ -17,7 +17,8 @@ setup(
     download_url=f'https://github.com/sunholo-data/sunholo-py/archive/refs/tags/v{version}.tar.gz',
     keywords=['llms', 'devops','google_cloud_platform'],
     package_data={
-        'sunholo.database': ['sql/sb/*.sql']
+        'sunholo.database': ['sql/sb/*.sql'],
+        'sunholo.lookup': ['model_lookup.yaml']
     },
     install_requires=[
         # List your dependencies here
