@@ -18,20 +18,21 @@ class GoogleCloudLogging:
             self.project_id = get_gcp_project()
         else:
             self.project_id = project_id
+
         self.client = Client(project=self.project_id)
         self.logger_name = logger_name
 
     def setup_logging(self, log_level=logging.INFO, logger_name=None):
-        """
-        Sets up logging with the specified log level and attaches a Google Cloud logging
-        handler to the Python root logger.
-        
-        Args:
-            log_level (int, optional): The logging level to capture. Defaults to logging.INFO.
-        """
-        self.client.setup_logging(log_level=log_level)
-        if logger_name:
-            self.logger_name = logger_name
+        try:
+            self.client.setup_logging(log_level=log_level)
+            if logger_name:
+                self.logger_name = logger_name
+            return self  # Return the instance itself on success
+        except Exception as e:
+            # If there's an exception, use standard Python logging as a fallback
+            logging.basicConfig(level=log_level)
+            logging.warning(f"Failed to set up Google Cloud Logging. Using standard logging. Error: {e}")
+            return logging.getLogger()  # Return the root logger
 
 
     def structured_log(self, log_text=None, log_struct=None, logger_name=None, severity="INFO"):
@@ -155,17 +156,10 @@ def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
     if logger_name is None:
         logger_name = f"projects/{project_id}/logs/run.googleapis.com%2Fstderr"
 
-    print(f"Google Cloud Logging set to {logger_name}")
+    # Instantiate the GoogleCloudLogging class
+    gc_logger = GoogleCloudLogging(project_id)
 
-    try:
-        gc_logger = GoogleCloudLogging(project_id).setup_logging(log_level=log_level, logger_name=logger_name)
+    # Setup logging and return the logger instance
+    return gc_logger.setup_logging(log_level=log_level, logger_name=logger_name)
 
-        return gc_logger
-
-    except Exception as e:
-        # Fallback to default logging if Google Cloud Logging setup fails
-        logging.basicConfig(level=log_level)
-        logging.warning("Failed to set up Google Cloud Logging. Falling back to default logging. Error: {}".format(e))
-
-        return logging
 
