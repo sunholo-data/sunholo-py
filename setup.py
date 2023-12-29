@@ -18,7 +18,7 @@ setup(
     keywords=['llms', 'devops','google_cloud_platform'],
     package_data={
         'sunholo.database': ['sql/sb/*.sql'],
-        'sunholo.lookup': ['model_lookup.yaml']
+        'sunholo.lookup': ['*.yaml']
     },
     install_requires=[
         # List your dependencies here
