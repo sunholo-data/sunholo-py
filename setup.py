@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.4.2'
+version = '0.5.0'
 
 setup(
     name='sunholo',
@@ -22,7 +22,8 @@ setup(
     install_requires=[
         # List your dependencies here
         "langchain",
-        "langchain-google-genai"
+        "langchain-google-genai",
+        "google-cloud-logging"
         # "supabase",
         # "openai",
         # "tiktoken",
