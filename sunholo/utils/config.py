@@ -43,8 +43,8 @@ def fetch_config(bucket_name, blob_name):
 def get_module_filepath(filepath):
     from ..logging import setup_logging
     logging = setup_logging()
-    # Get the directory of this Python script
-    dir_path = os.path.dirname(os.path.realpath(__file__))
+    # Get the root directory of this Python script
+    dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     # Build the full filepath by joining the directory with the filename
     filepath = os.path.join(dir_path, filepath)
 
