@@ -20,9 +20,9 @@ from .content_buffer import ContentBuffer, BufferStreamingStdOutCallbackHandler
 
 from ..qna.parsers import parse_output
 
-#from ..logging import setup_logging
+from ..logging import setup_logging
 
-import logging
+logging = setup_logging()
 
 def start_streaming_chat(question, 
                          vector_name,

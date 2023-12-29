@@ -51,7 +51,7 @@ class GoogleCloudLogging:
         if not logger_name and not self.logger_name:
             ValueError("Must provide a logger name e.g. projects/your-project/logs/run.googleapis.com%2Fstderr")
 
-        logger = self.client.logger(logger_name)
+        logger = self.client.logger(self.logger_name)
         sunholo_logger = self.client.logger("sunholo")
 
         if log_text:
