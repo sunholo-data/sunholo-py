@@ -5,22 +5,23 @@ from google.cloud.logging import Client
 from .utils.gcp import get_gcp_project
 import logging
 
-class GoogleCloudLogging:
-    def __init__(self, project_id=None, logger_name=None):
-        """
-        Initializes the GoogleCloudLogging instance with a specific Google Cloud project ID.
-        
-        Args:
-            project_id (str): The project ID for the Google Cloud project.
-        """
-        # Instantiates a Google Cloud logging client
-        if project_id is None:
-            self.project_id = get_gcp_project()
-        else:
-            self.project_id = project_id
 
-        self.client = Client(project=self.project_id)
-        self.logger_name = logger_name
+class GoogleCloudLogging:
+    
+    _instances = {}  # Dictionary to hold instances keyed by a tuple of (project_id, logger_name)
+
+    def __new__(cls, project_id=None, logger_name=None):
+        key = (project_id, logger_name)
+        if key not in cls._instances:
+            cls._instances[key] = super(GoogleCloudLogging, cls).__new__(cls)
+        return cls._instances[key]
+
+    def __init__(self, project_id=None, logger_name=None):
+        if not hasattr(self, 'initialized'):  # Avoid re-initialization
+            self.project_id = project_id or get_gcp_project()
+            self.client = Client(project=self.project_id)
+            self.logger_name = logger_name
+            self.initialized = True  # Mark as initialized
 
     def setup_logging(self, log_level=logging.INFO, logger_name=None):
         try:
