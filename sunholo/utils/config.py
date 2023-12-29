@@ -11,16 +11,16 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from ..logging import setup_logging
 
-logging = setup_logging()
 import os
 import json
 import yaml
 from google.cloud import storage
 
 def fetch_config(bucket_name, blob_name):
-    #global last_mod_time
+
+    from ..logging import setup_logging
+    logging = setup_logging()
 
     storage_client = storage.Client()
 
@@ -41,6 +41,8 @@ def fetch_config(bucket_name, blob_name):
     return updated_time
 
 def get_module_filepath(filepath):
+    from ..logging import setup_logging
+    logging = setup_logging()
     # Get the directory of this Python script
     dir_path = os.path.dirname(os.path.realpath(__file__))
     # Build the full filepath by joining the directory with the filename
@@ -50,7 +52,8 @@ def get_module_filepath(filepath):
     return filepath
 
 def load_config(filename=None):
-
+    from ..logging import setup_logging
+    logging = setup_logging()
     if filename is None:
         filename = os.getenv("_CONFIG_FILE", None)
         if filename is None:
@@ -72,6 +75,8 @@ def load_config(filename=None):
     return config, filename
 
 def load_config_key(key, vector_name, filename=None):
+    from ..logging import setup_logging
+    logging = setup_logging()
     config, filename = load_config(filename)
         
     llm_config = config.get(vector_name, None)
