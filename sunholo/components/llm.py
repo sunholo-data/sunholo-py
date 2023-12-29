@@ -17,8 +17,6 @@ logging = setup_logging()
 
 from ..utils.config import load_config_key, load_config, get_module_filepath
 
-logging.basicConfig(level=logging.INFO)
-
 def pick_llm(vector_name):
     logging.debug('Picking llm')
     

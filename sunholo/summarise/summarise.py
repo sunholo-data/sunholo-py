@@ -43,14 +43,14 @@ def summarise_docs(docs, vector_name, skip_if_less=10000):
   
     if isinstance(llm, ChatOpenAI) or isinstance(llm, OpenAI):
         llm = OpenAI(model="gpt-3.5-turbo-16k")
-        llm.max_tokens = 11000
+        llm.max_tokens = 2000
         max_content_length = 11000
     elif isinstance(llm, ChatVertexAI) or isinstance(llm, VertexAI):
         llm.max_output_tokens=1024
         max_content_length=1024
     elif isinstance(llm, ChatGoogleGenerativeAI):
-        llm.max_output_tokens = 30000
-        max_content_length = 30000
+        llm.max_output_tokens = 2000
+        max_content_length = 28000
     else:
         raise ValueError("Unsupported llm type: %s" % llm)
 
