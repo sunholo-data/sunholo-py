@@ -51,7 +51,7 @@ class GoogleCloudLogging:
             ValueError("Must provide a logger name e.g. projects/your-project/logs/run.googleapis.com%2Fstderr")
 
         logger = self.client.logger(logger_name)
-        sunholo_logger = self.client.logger(f"projects/{self.project_id}/logs/sunholo")
+        sunholo_logger = self.client.logger("sunholo")
 
         if log_text:
             logger.log_text(log_text, severity=severity)
@@ -154,7 +154,7 @@ def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
         project_id = get_gcp_project()
 
     if logger_name is None:
-        logger_name = f"projects/{project_id}/logs/run.googleapis.com%2Fstderr"
+        logger_name = "run.googleapis.com%2Fstderr"
 
     # Instantiate the GoogleCloudLogging class
     gc_logger = GoogleCloudLogging(project_id)
