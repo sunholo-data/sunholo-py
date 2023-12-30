@@ -76,7 +76,7 @@ def get_llm(vector_name, model=None):
                 logging.info(f"No 'model' value in config file - selecting default ChatOpenAI: {model}")
                 return ChatOpenAI(model=model, temperature=0, max_tokens=6000)
                 
-        return OpenAI(model=model, temperature=0, max_tokens=6000)
+        return ChatOpenAI(model=model, temperature=0, max_tokens=6000)
 
     elif llm_str == 'vertex':
         # Setup for Vertex LLM
