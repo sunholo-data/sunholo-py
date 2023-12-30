@@ -53,7 +53,7 @@ The library uses the config specifications that some examples are given in the `
 When using the functions, make sure to have the `config/` folder in the root of where your application is running (usually `$HOME/config`)
 
 ```
-   Copyright [2023] [Sunholo ApS]
+   Copyright [2023] [Holosun ApS]
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.

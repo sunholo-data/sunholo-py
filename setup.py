@@ -11,7 +11,7 @@ setup(
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     description='Large Language Model DevOps - a package to help deploy LLMs to the Cloud.',
-    author = 'Sunholo ApS',
+    author = 'Holosun ApS',
     author_email = 'llmops@sunholo.com',
     url = 'https://github.com/sunholo-data/sunholo-py',
     download_url=f'https://github.com/sunholo-data/sunholo-py/archive/refs/tags/v{version}.tar.gz',
