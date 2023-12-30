@@ -104,7 +104,7 @@ class GoogleCloudLogging:
         """
         self.structured_log(log_text=log_text, log_struct=log_struct, severity="INFO")
 
-    def warn(self, log_text=None, log_struct=None):
+    def warning(self, log_text=None, log_struct=None):
         """
         Writes a warning log entry.
         
