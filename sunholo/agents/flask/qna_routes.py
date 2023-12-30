@@ -26,7 +26,6 @@ def register_qna_routes(app, stream_interpreter, qna_interpreter):
     @app.route('/qna/streaming/<vector_name>', methods=['POST'])
     def stream_qa(vector_name):
         data = request.get_json()
-        logging.info(f"qna/streaming/{vector_name} got data: {data}")
 
         user_input = data['user_input'].strip()  # Extract user input from the payload
 
@@ -39,9 +38,6 @@ def register_qna_routes(app, stream_interpreter, qna_interpreter):
         command_response = handle_special_commands(user_input, vector_name, paired_messages)
         if command_response is not None:
             return jsonify(command_response)
-
-        logging.info(f'Stream QNA got: {user_input}')
-        logging.info(f'Stream QNA got chat_history: {paired_messages}')
 
         def generate_response_content():
             for chunk in start_streaming_chat(user_input,
