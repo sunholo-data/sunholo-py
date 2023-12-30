@@ -40,7 +40,7 @@ class GoogleCloudLogging:
         Internal method to get caller's filename, line number, and function name.
         """
         frame = inspect.currentframe()
-        caller_frame = frame.f_back.f_back if frame is not None else None  # Two levels up in the stack
+        caller_frame = frame.f_back.f_back.f_back if frame is not None else None  # Three levels up in the stack
         if caller_frame:
             return {
                     'file': caller_frame.f_code.co_filename,
