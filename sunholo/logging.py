@@ -1,10 +1,10 @@
-# ciab/logging.py
+# sunholo/logging.py
 # https://cloud.google.com/python/docs/reference/logging/latest/google.cloud.logging_v2.client.Client
 
 from google.cloud.logging import Client
 from .utils.gcp import get_gcp_project
 import logging
-
+import inspect
 
 class GoogleCloudLogging:
     
@@ -35,6 +35,19 @@ class GoogleCloudLogging:
             logging.warning(f"Failed to set up Google Cloud Logging. Using standard logging. Error: {e}")
             return logging.getLogger()  # Return the root logger
 
+    def _get_caller_info(self):
+        """
+        Internal method to get caller's filename, line number, and function name.
+        """
+        frame = inspect.currentframe()
+        caller_frame = frame.f_back.f_back if frame is not None else None  # Two levels up in the stack
+        if caller_frame:
+            return {
+                    'file': caller_frame.f_code.co_filename,
+                    'line': str(caller_frame.f_lineno),  
+                    'function': caller_frame.f_code.co_name
+                }
+        return None
 
     def structured_log(self, log_text=None, log_struct=None, logger_name=None, severity="INFO"):
         """
@@ -44,25 +57,27 @@ class GoogleCloudLogging:
             log_text (str, optional): The log message as a text string. Defaults to None.
             log_struct (dict, optional): The log message as a dictionary for structured logging. Defaults to None.
             logger_name (str, optional): The name of the logger to which to write the log entries. e.g. 
-        logName="projects/your-project/logs/run.googleapis.com%2Fstderr"
+        logName="run.googleapis.com%2Fstderr"
             severity (str, optional): The severity level of the log entry. Defaults to "INFO".
         """
 
         if not logger_name and not self.logger_name:
-            ValueError("Must provide a logger name e.g. projects/your-project/logs/run.googleapis.com%2Fstderr")
+            raise ValueError("Must provide a logger name e.g. 'run.googleapis.com%2Fstderr'")
 
-        logger = self.client.logger(self.logger_name)
+        logger = self.client.logger(self.logger_name or logger_name)
         sunholo_logger = self.client.logger("sunholo")
 
+        caller_info = self._get_caller_info()
+
         if log_text:
-            logger.log_text(log_text, severity=severity)
-            sunholo_logger.log_text(log_text, severity=severity)
+            logger.log_text(log_text, severity=severity, source_location=caller_info)
+            sunholo_logger.log_text(log_text, severity=severity, source_location=caller_info)
 
         elif log_struct:
             if not isinstance(log_struct, dict):
                 raise ValueError("log_struct must be a dictionary.")
-            logger.log_struct(log_struct, severity=severity)
-            sunholo_logger.log_struct(log_struct, severity=severity)
+            logger.log_struct(log_struct, severity=severity, source_location=caller_info)
+            sunholo_logger.log_struct(log_struct, severity=severity, source_location=caller_info)
 
 
     def debug(self, log_text=None, log_struct=None):

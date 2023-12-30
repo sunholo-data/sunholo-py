@@ -72,7 +72,7 @@ def get_llm(vector_name, model=None):
         if not model:
             model = load_config_key("model", vector_name, filename="config/llm_config.yaml")
             if model is None:
-                model = 'gpt-4-32k'
+                model = 'gpt-4'
                 logging.info(f"No 'model' value in config file - selecting default ChatOpenAI: {model}")
                 return ChatOpenAI(model=model, temperature=0, max_tokens=6000)
                 
