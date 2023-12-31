@@ -42,7 +42,7 @@ def summarise_docs(docs, vector_name, skip_if_less=10000):
     llm  = get_llm(vector_name)
   
     if isinstance(llm, ChatOpenAI) or isinstance(llm, OpenAI):
-        llm = OpenAI(model="gpt-3.5-turbo-16k")
+        llm = ChatOpenAI(model="gpt-3.5-turbo-16k")
         llm.max_tokens = 2000
         max_content_length = 11000
     elif isinstance(llm, ChatVertexAI) or isinstance(llm, VertexAI):
