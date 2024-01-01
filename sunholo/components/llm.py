@@ -128,7 +128,7 @@ def get_llm_chat(vector_name, model=None):
             model = 'gpt-4'
             logging.info(f"No 'model' value in config file - selecting default {model}")
             
-        return ChatOpenAI(model=model, temperature=0, max_tokens=11000)
+        return ChatOpenAI(model=model, temperature=0, max_tokens=4000)
 
     elif llm_str == 'vertex':
         # Setup for Vertex LLM
