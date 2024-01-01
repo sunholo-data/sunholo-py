@@ -79,9 +79,6 @@ def register_qna_routes(app, stream_interpreter, qna_interpreter):
         command_response = handle_special_commands(user_input, vector_name, paired_messages)
         if command_response is not None:
             return jsonify(command_response)
-        
-        logging.info(f'QNA got: {user_input} - author: {message_author}')
-        logging.info(f'QNA got chat_history: {paired_messages}')
 
         try:
             bot_output = qna_interpreter(user_input, vector_name, chat_history=paired_messages, message_author=message_author)

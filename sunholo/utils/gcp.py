@@ -52,9 +52,14 @@ def get_gcp_project():
     project_id = get_env_project_id()
     if project_id:
         return project_id
+    
     project_id = get_metadata('project/project-id')
-    os.environ["GCP_PROJECT"] = project_id 
-    return project_id
+    if project_id:
+        os.environ["GCP_PROJECT"] = project_id 
+
+    logging.warning("GCP Project ID not found. Ensure you are running on GCP or have the GCP_PROJECT environment variable set.")
+    return None
+
 
 def get_region():
     # The "instance/zone" metadata includes the region as part of the zone name
