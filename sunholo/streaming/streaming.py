@@ -33,7 +33,7 @@ def start_streaming_chat(question,
                          timeout=120): # Timeout in seconds (2 minutes)
 
     # Immediately yield to indicate the process has started.
-    yield "Thinking..."
+    yield "Thinking...\n"
     # Initialize the chat
     content_buffer = ContentBuffer()
     chat_callback_handler = BufferStreamingStdOutCallbackHandler(content_buffer=content_buffer, tokens=".!?\n")

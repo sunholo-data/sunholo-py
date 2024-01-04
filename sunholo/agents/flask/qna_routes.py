@@ -28,10 +28,10 @@ def register_qna_routes(app, stream_interpreter, qna_interpreter):
         data = request.get_json()
 
         user_input = data['user_input'].strip()  # Extract user input from the payload
-
         chat_history = data.get('chat_history', None)
-
         message_author = data.get('message_author', None)
+        stream_wait_time = data.get('stream_wait_time', 7)
+        stream_timeout = data.get('stream_timeout', 120)
 
         paired_messages = extract_chat_history(chat_history)
 
@@ -45,8 +45,8 @@ def register_qna_routes(app, stream_interpreter, qna_interpreter):
                                             chat_history=paired_messages,
                                             message_author=message_author,
                                             qna_func=stream_interpreter,
-                                            wait_time=7,
-                                            timeout=120):
+                                            wait_time=stream_wait_time,
+                                            timeout=stream_timeout):
                 if isinstance(chunk, dict) and 'answer' in chunk:
                     # When we encounter the dictionary, we yield it as a JSON string
                     # and stop the generator.
