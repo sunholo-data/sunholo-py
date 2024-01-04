@@ -19,7 +19,7 @@ import aiohttp
 
 from .route import route_endpoint
 
-def send_to_qa(user_input, vector_name, chat_history, message_author=None, stream=False):
+def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
 
     # {'stream': '', 'invoke': ''}
     endpoints = route_endpoint(vector_name)
@@ -29,11 +29,14 @@ def send_to_qa(user_input, vector_name, chat_history, message_author=None, strea
     else:
         qna_endpoint = endpoints["invoke"]
 
+    # Base qna_data dictionary
     qna_data = {
         'user_input': user_input,
-        'chat_history': chat_history,
-        'message_author': message_author
+        'chat_history': chat_history
     }
+
+    # Update qna_data with optional values from kwargs
+    qna_data.update(kwargs)
 
     try:
         logging.info(f"Sending to {qna_endpoint} this data: {qna_data}")

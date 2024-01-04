@@ -28,9 +28,9 @@ def start_streaming_chat(question,
                          vector_name,
                          qna_func,
                          chat_history=[],
-                         message_author=None,
                          wait_time=2,
-                         timeout=120): # Timeout in seconds (2 minutes)
+                         timeout=120, # Timeout in seconds (2 minutes)
+                         **kwargs): 
 
     # Immediately yield to indicate the process has started.
     yield "Thinking...\n"
@@ -45,11 +45,7 @@ def start_streaming_chat(question,
     def start_chat(stop_event, result_queue, exception_queue):
         # autogen_qna(user_input, vector_name, chat_history=None, message_author=None):
         try:
-            final_result = qna_func(question, 
-                                    vector_name, 
-                                    chat_history, 
-                                    message_author=message_author, 
-                                    callback=chat_callback_handler)
+            final_result = qna_func(question, vector_name, chat_history, callback=chat_callback_handler, **kwargs)
             result_queue.put(final_result)
         except Exception as e:
             exception_queue.put(e)
@@ -109,12 +105,13 @@ def start_streaming_chat(question,
     yield parse_output(final_result)
 
 
-def generate_proxy_stream(stream_to_f, user_input, vector_name, chat_history, message_author, generate_f_output):
+def generate_proxy_stream(stream_to_f, user_input, vector_name, chat_history, generate_f_output, **kwargs):
     def generate():
         json_buffer = ""  # Initialize an empty string buffer for JSON content
         inside_json = False  # Flag to track whether we're currently buffering JSON content
 
-        for streaming_content in stream_to_f(user_input, vector_name, chat_history, message_author, stream=True):
+        for streaming_content in stream_to_f(user_input, vector_name, chat_history, stream=True, **kwargs):
+
             if isinstance(streaming_content, str):
                 
                 content_str = streaming_content
