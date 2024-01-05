@@ -69,21 +69,43 @@ def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
         else:
             return {"answer": error_message}
 
-async def send_to_qa_async(user_input, vector_name, chat_history):
-
-    # {'stream': '', 'invoke': ''}
+async def send_to_qa_async(user_input, vector_name, chat_history, stream=False):
     endpoints = route_endpoint(vector_name)
 
-    qna_endpoint = endpoints['invoke']
+    # Choose the endpoint based on whether streaming is needed
+    qna_endpoint = endpoints["stream"] if stream else endpoints["invoke"]
+
     qna_data = {
         'user_input': user_input,
         'chat_history': chat_history,
     }
     logging.info(f"Sending to {qna_endpoint} this data: {qna_data}")
-    
-    async with aiohttp.ClientSession() as session:
-        async with session.post(qna_endpoint, json=qna_data) as resp:
-            qna_response = await resp.json()
 
-    logging.info(f"Got back QA response: {qna_response}")
-    return qna_response
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(qna_endpoint, json=qna_data) as resp:
+                resp.raise_for_status()
+
+                if stream:
+                    # Stream the response
+                    async for chunk in resp.content.iter_any():
+                        yield chunk
+                else:
+                    # Return the complete response
+                    qna_response = await resp.json()
+                    logging.info(f"Got back QA response: {qna_response}")
+                    yield qna_response
+    except aiohttp.ClientResponseError as e:
+        logging.error(f"HTTP error occurred: {e}")
+        error_message = f"There was an error processing your request: {str(e)}"
+        if stream:
+            yield error_message.encode('utf-8')
+        else:
+            yield {"answer": error_message}
+    except Exception as e:
+        logging.error(f"Other error occurred: {str(e)}")
+        error_message = f"Something went wrong: {str(e)}"
+        if stream:
+            yield error_message.encode('utf-8')
+        else:
+            yield {"answer": error_message}
