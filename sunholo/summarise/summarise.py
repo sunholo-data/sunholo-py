@@ -75,7 +75,7 @@ def summarise_docs(docs, vector_name, skip_if_less=10000):
         delay = 1.0  # 1 second, for example
         max_delay = 300.0  # Maximum delay, adjust as needed
 
-        for attempt in range(5):  # Attempt to summarize 5 times
+        for attempt in range(2):  # Attempt to summarize 2 times
             try:
                 summary = chain.run(chunks)
                 break  # If the summary was successful, break the loop

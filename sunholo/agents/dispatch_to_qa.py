@@ -35,6 +35,11 @@ def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
     # Update qna_data with optional values from kwargs
     qna_data.update(kwargs)
 
+    # Check if 'user_input_override' is in kwargs and if so, use its value as a key for user_input
+    if 'user_input_override' in kwargs:
+        override_key = kwargs['user_input_override']
+        qna_data[override_key] = user_input
+
     try:
         logging.info(f"Sending to {qna_endpoint} this data: {qna_data}")
         qna_response = requests.post(qna_endpoint, json=qna_data, stream=stream)
@@ -78,6 +83,11 @@ async def send_to_qa_async(user_input, vector_name, chat_history, stream=False, 
     }
     # Update qna_data with optional values from kwargs
     qna_data.update(kwargs)
+
+    # Check if 'user_input_override' is in kwargs and if so, use its value as a key for user_input
+    if 'user_input_override' in kwargs:
+        override_key = kwargs['user_input_override']
+        qna_data[override_key] = user_input
 
     logging.info(f"Sending to {qna_endpoint} this data: {qna_data}")
 
