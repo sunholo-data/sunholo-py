@@ -34,6 +34,7 @@ def start_streaming_chat(question,
 
     # Immediately yield to indicate the process has started.
     yield "Thinking...\n"
+    logging.info("Streaming chat with wait time {wait_time} seconds and timeout {timeout} seconds and kwargs {kwargs}")
     # Initialize the chat
     content_buffer = ContentBuffer()
     chat_callback_handler = BufferStreamingStdOutCallbackHandler(content_buffer=content_buffer, tokens=".!?\n")
@@ -107,77 +108,96 @@ def start_streaming_chat(question,
 
 def generate_proxy_stream(stream_to_f, user_input, vector_name, chat_history, generate_f_output, **kwargs):
     def generate():
-        json_buffer = ""  # Initialize an empty string buffer for JSON content
-        inside_json = False  # Flag to track whether we're currently buffering JSON content
+        json_buffer = ""
+        inside_json = False
 
         for streaming_content in stream_to_f(user_input, vector_name, chat_history, stream=True, **kwargs):
-
-            if isinstance(streaming_content, str):
-                
-                content_str = streaming_content
-
-                if streaming_content.startswith('###JSON_START###'):
-                    # Never happens?
-                    logging.warning('Streaming content was a string with ###JSON_START###')
-                else:
-                    logging.info(f'Streaming got a string we return directly: {streaming_content}')
-                    # just output the string as is
-                    yield streaming_content
-            else:
-                # If it's a bytes object, decode it before further processing
-                content_str = streaming_content.decode('utf-8')
-
-            logging.info('Content_str: %s', content_str)
-
-            while '###JSON_START###' in content_str:
-                if '###JSON_END###' in content_str:
-                    # Handle complete JSON object in a single chunk
-                    start_index = content_str.index('###JSON_START###') + len('###JSON_START###')
-                    end_index = content_str.index('###JSON_END###')
-                    json_buffer = content_str[start_index:end_index]
-
-                    try:
-                        json_content = json.loads(json_buffer)
-                        discord_output = generate_f_output(json_content)
-                        to_client = f'###JSON_START###{json.dumps(discord_output)}###JSON_END###'
-                        logging.info(f"Streaming JSON to_client:\n{to_client}")
-                        yield to_client.encode('utf-8')
-                    except json.JSONDecodeError as e:
-                        logging.error(f"JSON decode error: {e}")
-                    
-                    # Prepare for next JSON object, if any
-                    content_str = content_str[end_index + len('###JSON_END###'):]
-                    json_buffer = ""
-
-                else:
-                    # Start JSON buffering if END marker is not in the same chunk
-                    start_index = content_str.index('###JSON_START###') + len('###JSON_START###')
-                    json_buffer = content_str[start_index:]
-                    inside_json = True
-                    break  # Exit while loop; rest will be handled by the next chunk
-
-            if '###JSON_END###' in content_str and inside_json:
-                # Handle case where END marker is in the current chunk
-                end_index = content_str.index('###JSON_END###')
-                json_buffer += content_str[:end_index]
-                try:
-                    json_content = json.loads(json_buffer)
-                    discord_output = generate_f_output(json_content)
-                    to_client = f'###JSON_START###{json.dumps(discord_output)}###JSON_END###'
-                    logging.info(f"Streaming JSON to_client:\n{to_client}")
-                    yield to_client.encode('utf-8')
-                except json.JSONDecodeError as e:
-                    logging.error(f"JSON decode error: {e}")
-                
-                content_str = content_str[end_index + len('###JSON_END###'):]
-                json_buffer = ""
-                inside_json = False
-
-            if not inside_json and content_str:
-                # Yield non-JSON content as it is
-                logging.info(f"Streaming to client: {content_str}")
-                yield content_str.encode('utf-8')
+            json_buffer, inside_json, processed_output = process_streaming_content(streaming_content, generate_f_output, json_buffer, inside_json)
+            for output in processed_output:
+                yield output
 
     return generate
 
 
+
+async def a_generate_proxy_stream(stream_to_f, user_input, vector_name, chat_history, generate_f_output, **kwargs):
+    async def generate():
+        json_buffer = ""
+        inside_json = False
+
+        async for streaming_content in stream_to_f(user_input, vector_name, chat_history, stream=True, **kwargs):
+            json_buffer, inside_json, processed_output = process_streaming_content(streaming_content, generate_f_output, json_buffer, inside_json)
+            for output in processed_output:
+                yield output
+
+    return generate
+
+
+def process_streaming_content(streaming_content, generate_f_output, json_buffer, inside_json):
+    processed_outputs = []  # List to hold all processed outputs
+
+    if isinstance(streaming_content, str):
+        content_str = streaming_content
+
+        # Handle string content
+        if content_str.startswith('###JSON_START###'):
+            logging.warning('Streaming content was a string with ###JSON_START###')
+        else:
+            logging.info(f'Streaming got a string we return directly: {content_str}')
+            processed_outputs.append(content_str)
+    else:
+        # Decode if it's a bytes object
+        content_str = streaming_content.decode('utf-8')
+
+    logging.info(f'Content_str: {content_str}')
+
+    # JSON processing logic
+    while '###JSON_START###' in content_str:
+        if '###JSON_END###' in content_str:
+            start_index = content_str.index('###JSON_START###') + len('###JSON_START###')
+            end_index = content_str.index('###JSON_END###')
+            json_buffer = content_str[start_index:end_index]
+
+            try:
+                json_content = json.loads(json_buffer)
+                parsed_output = generate_f_output(json_content)
+                to_client = f'###JSON_START###{json.dumps(parsed_output)}###JSON_END###'
+                logging.info(f"Streaming JSON to_client:\n{to_client}")
+                 # Yielding the processed JSON
+                processed_outputs.append(to_client.encode('utf-8'))
+            except json.JSONDecodeError as e:
+                logging.error(f"JSON decode error: {e}")
+
+            content_str = content_str[end_index + len('###JSON_END###'):]
+            json_buffer = ""
+
+        else:
+            start_index = content_str.index('###JSON_START###') + len('###JSON_START###')
+            json_buffer = content_str[start_index:]
+            inside_json = True
+            break  # Exit while loop; rest will be handled by the next chunk
+
+    if '###JSON_END###' in content_str and inside_json:
+        end_index = content_str.index('###JSON_END###')
+        json_buffer += content_str[:end_index]
+
+        try:
+            json_content = json.loads(json_buffer)
+            parsed_output = generate_f_output(json_content)
+            to_client = f'###JSON_START###{json.dumps(parsed_output)}###JSON_END###'
+            logging.info(f"Streaming JSON to_client:\n{to_client}")
+            # Yielding the processed JSON
+            processed_outputs.append(to_client.encode('utf-8'))
+        except json.JSONDecodeError as e:
+            logging.error(f"JSON decode error: {e}")
+
+        content_str = content_str[end_index + len('###JSON_END###'):]
+        json_buffer = ""
+        inside_json = False
+
+    if not inside_json and content_str:
+        logging.info(f"Streaming to client: {content_str}")
+        # Yielding non-JSON content
+        processed_outputs.append(content_str.encode('utf-8'))
+    
+    return json_buffer, inside_json, processed_outputs
