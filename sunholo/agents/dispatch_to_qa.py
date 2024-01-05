@@ -24,10 +24,7 @@ def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
     # {'stream': '', 'invoke': ''}
     endpoints = route_endpoint(vector_name)
 
-    if stream:
-        qna_endpoint = endpoints["stream"]
-    else:
-        qna_endpoint = endpoints["invoke"]
+    qna_endpoint = endpoints["stream"] if stream else endpoints["invoke"]
 
     # Base qna_data dictionary
     qna_data = {
@@ -69,7 +66,7 @@ def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
         else:
             return {"answer": error_message}
 
-async def send_to_qa_async(user_input, vector_name, chat_history, stream=False):
+async def send_to_qa_async(user_input, vector_name, chat_history, stream=False, **kwargs):
     endpoints = route_endpoint(vector_name)
 
     # Choose the endpoint based on whether streaming is needed
@@ -79,6 +76,9 @@ async def send_to_qa_async(user_input, vector_name, chat_history, stream=False):
         'user_input': user_input,
         'chat_history': chat_history,
     }
+    # Update qna_data with optional values from kwargs
+    qna_data.update(kwargs)
+
     logging.info(f"Sending to {qna_endpoint} this data: {qna_data}")
 
     try:
