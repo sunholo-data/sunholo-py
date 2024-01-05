@@ -1,1 +1,1 @@
-from .streaming import start_streaming_chat, generate_proxy_stream, a_generate_proxy_stream
+from .streaming import start_streaming_chat, generate_proxy_stream, generate_proxy_stream_async

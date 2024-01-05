@@ -120,7 +120,7 @@ def generate_proxy_stream(stream_to_f, user_input, vector_name, chat_history, ge
 
 
 
-async def a_generate_proxy_stream(stream_to_f, user_input, vector_name, chat_history, generate_f_output, **kwargs):
+async def generate_proxy_stream_async(stream_to_f, user_input, vector_name, chat_history, generate_f_output, **kwargs):
     async def generate():
         json_buffer = ""
         inside_json = False
