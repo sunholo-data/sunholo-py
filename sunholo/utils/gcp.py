@@ -25,20 +25,21 @@ def get_env_project_id():
     """
     return os.environ.get('GCP_PROJECT') or os.environ.get('GOOGLE_CLOUD_PROJECT')
 
+is_gcp_cached = None  # Global variable for caching the result
 def is_running_on_gcp():
-    """
-    Checks if the code is running on a Google Cloud Platform instance.
+    global is_gcp_cached
+    if is_gcp_cached is not None:
+        return is_gcp_cached
 
-    Returns:
-        bool: True if running on GCP, False otherwise.
-    """
     try:
         # Google Cloud instances can reach the metadata server
-        socket.setdefaulttimeout(0.1)
+        socket.setdefaulttimeout(1)
         socket.socket().connect(('metadata.google.internal', 80))
-        return True
+        is_gcp_cached = True
     except (socket.timeout, socket.error):
-        return False
+        is_gcp_cached = False
+
+    return is_gcp_cached
 
 def get_service_account_email():
     service_email = os.getenv("GCP_DEFAULT_SERVICE_EMAIL")

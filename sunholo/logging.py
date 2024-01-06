@@ -14,7 +14,7 @@
 # https://cloud.google.com/python/docs/reference/logging/latest/google.cloud.logging_v2.client.Client
 
 from google.cloud.logging import Client
-from .utils.gcp import get_gcp_project
+from .utils.gcp import get_gcp_project, is_running_on_gcp
 import logging
 import inspect
 
@@ -72,6 +72,13 @@ class GoogleCloudLogging:
         logName="run.googleapis.com%2Fstderr"
             severity (str, optional): The severity level of the log entry. Defaults to "INFO".
         """
+
+        if not is_running_on_gcp():
+            logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+            if log_text:
+                logging.info(f"[{severity}][{logger_name}] - {log_text}")
+            elif log_struct:
+                logging.info(f"[{severity}][{logger_name}] - {str(log_struct)}")
 
         if not logger_name and not self.logger_name:
             raise ValueError("Must provide a logger name e.g. 'run.googleapis.com%2Fstderr'")

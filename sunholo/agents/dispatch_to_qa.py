@@ -26,7 +26,7 @@ def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs
 
     qna_endpoint = endpoints["stream"] if stream else endpoints["invoke"]
 
-    agent = load_config_key("agent", vector_name, "config/llm_config.yaml")
+    agent = load_config_key("agent", vector_name, filename="config/llm_config.yaml")
 
     if agent == "langserve":
         from .langserve import prepare_request_data
