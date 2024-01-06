@@ -77,8 +77,13 @@ def load_config(filename: str=None) -> (dict, str):
 def load_config_key(key: str, vector_name: str, filename: str=None) -> str:
     from ..logging import setup_logging
     logging = setup_logging()
+
+    assert isinstance(key, str), "key must be a string"
+    assert isinstance(vector_name, str), "vector_name must be a string"
+    
     config, filename = load_config(filename)
     logging.info(f"Loaded config: {config} from {filename}")
+    logging.info(f"Fetching {key} for {vector_name}")
     llm_config = config.get(vector_name, None)
     if llm_config is None:
         raise ValueError(f"No config array was found for {vector_name} in {filename}")

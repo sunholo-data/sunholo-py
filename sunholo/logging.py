@@ -45,7 +45,7 @@ class GoogleCloudLogging:
             # If there's an exception, use standard Python logging as a fallback
             logging.basicConfig(level=log_level)
             logging.warning(f"Failed to set up Google Cloud Logging. Using standard logging. Error: {e}")
-            return logging.getLogger()  # Return the root logger
+            return logging.getLogger(name=logger_name)  # Return the root logger
 
     def _get_caller_info(self):
         """
