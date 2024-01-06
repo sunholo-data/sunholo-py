@@ -13,7 +13,7 @@ def fetch_input_schema(endpoint):
         return langserve_input_schema_cache[endpoint]
 
     try:
-        response = requests.get(f"{endpoint}/input_schema")
+        response = requests.get(endpoint)
         response.raise_for_status()
         schema = response.json()
 
