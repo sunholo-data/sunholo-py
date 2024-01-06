@@ -30,7 +30,7 @@ def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs
 
     if agent == "langserve":
         from .langserve import prepare_request_data
-        qna_data = prepare_request_data(user_input, qna_endpoint["input_schema"], **kwargs)
+        qna_data = prepare_request_data(user_input, endpoints["input_schema"], **kwargs)
     else:
         # Base qna_data dictionary
         qna_data = {
