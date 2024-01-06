@@ -26,7 +26,7 @@ def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs
 
     qna_endpoint = endpoints["stream"] if stream else endpoints["invoke"]
 
-    agent = load_config_key("agent", vector_name, filename="config/llm_config.yaml")
+    agent = load_config_key("agent", vector_name=vector_name, filename="config/llm_config.yaml")
 
     if agent == "langserve":
         from .langserve import prepare_request_data
@@ -46,7 +46,7 @@ def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs
 
 def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
 
-    qna_endpoint, qna_data = prep_request_payload(user_input, vector_name, chat_history, stream, **kwargs)
+    qna_endpoint, qna_data = prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs)
 
     try:
         qna_response = requests.post(qna_endpoint, json=qna_data, stream=stream)
@@ -80,7 +80,7 @@ def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
 
 async def send_to_qa_async(user_input, vector_name, chat_history, stream=False, **kwargs):
     
-    qna_endpoint, qna_data = prep_request_payload(user_input, vector_name, chat_history, stream, **kwargs)
+    qna_endpoint, qna_data = prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs)
 
     try:
         async with aiohttp.ClientSession() as session:

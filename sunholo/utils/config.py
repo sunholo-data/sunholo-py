@@ -78,8 +78,8 @@ def load_config_key(key: str, vector_name: str, filename: str=None) -> str:
     from ..logging import setup_logging
     logging = setup_logging()
 
-    assert isinstance(key, str), "key must be a string"
-    assert isinstance(vector_name, str), "vector_name must be a string"
+    assert isinstance(key, str), f"key must be a string got a {type(key)}"
+    assert isinstance(vector_name, str), f"vector_name must be a string, got a {type(vector_name)}"
     
     config, filename = load_config(filename)
     logging.info(f"Loaded config: {config} from {filename}")
