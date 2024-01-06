@@ -73,15 +73,15 @@ class GoogleCloudLogging:
             severity (str, optional): The severity level of the log entry. Defaults to "INFO".
         """
 
+        if not logger_name and not self.logger_name:
+            raise ValueError("Must provide a logger name e.g. 'run.googleapis.com%2Fstderr'")
+        
         if not is_running_on_gcp():
             logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
             if log_text:
-                logging.info(f"[{severity}][{logger_name}] - {log_text}")
+                logging.info(f"[{severity}][{self.logger_name or logger_name}] - {log_text}")
             elif log_struct:
-                logging.info(f"[{severity}][{logger_name}] - {str(log_struct)}")
-
-        if not logger_name and not self.logger_name:
-            raise ValueError("Must provide a logger name e.g. 'run.googleapis.com%2Fstderr'")
+                logging.info(f"[{severity}][{self.logger_name or logger_name}] - {str(log_struct)}")
 
         logger = self.client.logger(self.logger_name or logger_name)
         sunholo_logger = self.client.logger("sunholo")
