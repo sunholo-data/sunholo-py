@@ -5,6 +5,11 @@ default:
 langserve:
   stream: "{stem}/{vector_name}/stream"
   invoke: "{stem}/{vector_name}/invoke"
+  input_schema: "{stem}/{vector_name}/input_schema"
+  output_schema: "{stem}/{vector_name}/output_schema"
+  config_schema: "{stem}/{vector_name}/config_schema"
+  batch: "{stem}/{vector_name}/batch"
+  stream_log: "{stem}/{vector_name}/stream_log"
 
 edmonbrain:
   stream: "{stem}/qna/streaming/{vector_name}"

@@ -12,6 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from ..logging import setup_logging
+from ..utils import load_config_key
 
 logging = setup_logging()
 import requests
@@ -19,29 +20,35 @@ import aiohttp
 
 from .route import route_endpoint
 
-def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
-
+def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs):
     # {'stream': '', 'invoke': ''}
     endpoints = route_endpoint(vector_name)
 
     qna_endpoint = endpoints["stream"] if stream else endpoints["invoke"]
 
-    # Base qna_data dictionary
-    qna_data = {
-        'user_input': user_input,
-        'chat_history': chat_history
-    }
+    agent = load_config_key("agent", vector_name, "config/llm_config.yaml")
 
-    # Update qna_data with optional values from kwargs
-    qna_data.update(kwargs)
+    if agent == "langserve":
+        from .langserve import prepare_request_data
+        qna_data = prepare_request_data(user_input, qna_endpoint["input_schema"], **kwargs)
+    else:
+        # Base qna_data dictionary
+        qna_data = {
+            'user_input': user_input,
+            'chat_history': chat_history
+        }
+        # Update qna_data with optional values from kwargs
+        qna_data.update(kwargs)
 
-    # Check if 'user_input_override' is in kwargs and if so, use its value as a key for user_input
-    if 'user_input_override' in kwargs:
-        override_key = kwargs['user_input_override']
-        qna_data[override_key] = user_input
+    logging.info(f"Sending to {qna_endpoint} this data: {qna_data}")
+
+    return qna_endpoint, qna_data
+
+def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
+
+    qna_endpoint, qna_data = prep_request_payload(user_input, vector_name, chat_history, stream, **kwargs)
 
     try:
-        logging.info(f"Sending to {qna_endpoint} this data: {qna_data}")
         qna_response = requests.post(qna_endpoint, json=qna_data, stream=stream)
         qna_response.raise_for_status()
 
@@ -72,24 +79,8 @@ def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
             return {"answer": error_message}
 
 async def send_to_qa_async(user_input, vector_name, chat_history, stream=False, **kwargs):
-    endpoints = route_endpoint(vector_name)
-
-    # Choose the endpoint based on whether streaming is needed
-    qna_endpoint = endpoints["stream"] if stream else endpoints["invoke"]
-
-    qna_data = {
-        'user_input': user_input,
-        'chat_history': chat_history,
-    }
-    # Update qna_data with optional values from kwargs
-    qna_data.update(kwargs)
-
-    # Check if 'user_input_override' is in kwargs and if so, use its value as a key for user_input
-    if 'user_input_override' in kwargs:
-        override_key = kwargs['user_input_override']
-        qna_data[override_key] = user_input
-
-    logging.info(f"Sending to {qna_endpoint} this data: {qna_data}")
+    
+    qna_endpoint, qna_data = prep_request_payload(user_input, vector_name, chat_history, stream, **kwargs)
 
     try:
         async with aiohttp.ClientSession() as session:

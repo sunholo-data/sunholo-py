@@ -51,7 +51,7 @@ def get_module_filepath(filepath):
     logging.info(f"Found filepath {filepath}")
     return filepath
 
-def load_config(filename=None):
+def load_config(filename: str=None) -> (dict, str):
     from ..logging import setup_logging
     logging = setup_logging()
     if filename is None:
@@ -74,7 +74,7 @@ def load_config(filename=None):
     
     return config, filename
 
-def load_config_key(key, vector_name, filename=None):
+def load_config_key(key: str, vector_name: str, filename: str=None) -> str:
     from ..logging import setup_logging
     logging = setup_logging()
     config, filename = load_config(filename)
