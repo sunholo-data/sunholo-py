@@ -16,7 +16,7 @@ def fetch_input_schema(endpoint):
         response = requests.get(endpoint)
         response.raise_for_status()
         schema = response.json()
-
+        logging.info(f"Fetched schema: {schema}")
         # Cache the fetched schema
         langserve_input_schema_cache[endpoint] = schema
         return schema
@@ -29,13 +29,14 @@ def prepare_request_data(user_input, endpoint, **kwargs):
         Additional data can be passed via kwargs.
     """
     input_schema = fetch_input_schema(endpoint)
-
+    logging.info(f"Found input schema: {input_schema}")
     if input_schema is not None and 'properties' in input_schema:
         key = next(iter(input_schema['properties']))
-        request_data = {key: user_input}
+        input_data = {key: user_input}
 
         # Merge kwargs into request_data
-        request_data.update(kwargs)
+        input_data.update(kwargs)
+        request_data = {"input": input_data}
         return request_data
     else:
         logging.error("Invalid or no input schema available.")

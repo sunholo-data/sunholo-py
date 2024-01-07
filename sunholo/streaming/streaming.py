@@ -22,6 +22,8 @@ from ..qna.parsers import parse_output
 
 from ..logging import setup_logging
 
+from .langserve import parse_langserve_token, parse_langserve_token_async
+
 logging = setup_logging()
 
 def start_streaming_chat(question, 
@@ -114,7 +116,8 @@ def generate_proxy_stream(stream_to_f, user_input, vector_name, chat_history, ge
         for streaming_content in stream_to_f(user_input, vector_name, chat_history, stream=True, **kwargs):
             json_buffer, inside_json, processed_output = process_streaming_content(streaming_content, generate_f_output, json_buffer, inside_json)
             for output in processed_output:
-                yield output
+                for parsed_output in parse_langserve_token(output):
+                    yield parsed_output
 
     return generate
 
@@ -128,7 +131,8 @@ async def generate_proxy_stream_async(stream_to_f, user_input, vector_name, chat
         async for streaming_content in stream_to_f(user_input, vector_name, chat_history, stream=True, **kwargs):
             json_buffer, inside_json, processed_output = process_streaming_content(streaming_content, generate_f_output, json_buffer, inside_json)
             for output in processed_output:
-                yield output
+                async for parsed_output in parse_langserve_token_async(output):
+                    yield parsed_output
 
     return generate
 
@@ -196,7 +200,8 @@ def process_streaming_content(streaming_content, generate_f_output, json_buffer,
         inside_json = False
 
     if not inside_json and content_str:
-        logging.info(f"Streaming to client: {content_str}")
+        logging.info(f"Streaming to client:\n{content_str}")
+
         # Yielding non-JSON content
         processed_outputs.append(content_str.encode('utf-8'))
     
