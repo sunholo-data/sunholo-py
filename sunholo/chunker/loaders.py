@@ -13,9 +13,9 @@
 #   limitations under the License.
 from langchain.document_loaders.unstructured import UnstructuredFileLoader
 from langchain.document_loaders.unstructured import UnstructuredAPIFileLoader
-from langchain.document_loaders import UnstructuredURLLoader
+from langchain_community.document_loaders import UnstructuredURLLoader
 from langchain.document_loaders.git import GitLoader
-from langchain.document_loaders import GoogleDriveLoader
+from langchain_community.document_loaders import GoogleDriveLoader
 from ..utils.config import load_config
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build

@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.7.13'
+version = '0.7.14'
 
 setup(
     name='sunholo',
@@ -23,6 +23,7 @@ setup(
     install_requires=[
         # List your dependencies here
         "langchain",
+        "langchain-community",
         "langchain-google-genai",
         "google-cloud-logging"
         # "supabase",

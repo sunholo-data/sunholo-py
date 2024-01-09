@@ -22,30 +22,42 @@ class GoogleCloudLogging:
     
     _instances = {}  # Dictionary to hold instances keyed by a tuple of (project_id, logger_name)
 
-    def __new__(cls, project_id=None, logger_name=None):
+    def __new__(cls, project_id=None, log_level=logging.INFO, logger_name=None):
         key = (project_id, logger_name)
         if key not in cls._instances:
             cls._instances[key] = super(GoogleCloudLogging, cls).__new__(cls)
         return cls._instances[key]
 
-    def __init__(self, project_id=None, logger_name=None):
+    def __init__(self, project_id=None, log_level=logging.INFO, logger_name=None):
         if not hasattr(self, 'initialized'):  # Avoid re-initialization
             self.project_id = project_id or get_gcp_project()
             self.client = Client(project=self.project_id)
             self.logger_name = logger_name
+            self.log_level = log_level
             self.initialized = True  # Mark as initialized
 
     def setup_logging(self, log_level=logging.INFO, logger_name=None):
+        if log_level:
+            self.log_level = log_level
+        if logger_name:
+            self.logger_name = logger_name
+
         try:
-            self.client.setup_logging(log_level=log_level)
-            if logger_name:
-                self.logger_name = logger_name
+            caller_info = self._get_caller_info()
+            if not is_running_on_gcp():
+                logging.basicConfig(level=self.log_level, format='%(asctime)s - %(levelname)s - %(message)s')
+                logging.info(f"Standard logging: {caller_info['file']}")
+                return logging
+            
+            print(f"Cloud logging for {caller_info['file']}")
+            self.client.setup_logging(log_level=self.log_level)
+
             return self  # Return the instance itself on success
         except Exception as e:
             # If there's an exception, use standard Python logging as a fallback
-            logging.basicConfig(level=log_level)
+            logging.basicConfig(level=self.log_level, format='%(asctime)s - %(levelname)s - %(message)s')
             logging.warning(f"Failed to set up Google Cloud Logging. Using standard logging. Error: {e}")
-            return logging.getLogger(name=logger_name)  # Return the root logger
+            return logging
 
     def _get_caller_info(self):
         """
@@ -79,25 +91,21 @@ class GoogleCloudLogging:
         if not is_running_on_gcp():
             logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
             if log_text:
-                logging.info(f"[{severity}][{self.logger_name or logger_name}] - {log_text}")
+                logging.info(f"[{severity}][{logger_name or self.logger_name}] - {log_text}")
             elif log_struct:
-                logging.info(f"[{severity}][{self.logger_name or logger_name}] - {str(log_struct)}")
+                logging.info(f"[{severity}][{logger_name or self.logger_name}] - {str(log_struct)}")
 
-        logger = self.client.logger(self.logger_name or logger_name)
-        sunholo_logger = self.client.logger("sunholo")
+        logger = self.client.logger(logger_name or self.logger_name)
 
         caller_info = self._get_caller_info()
 
         if log_text:
             logger.log_text(log_text, severity=severity, source_location=caller_info)
-            sunholo_logger.log_text(log_text, severity=severity, source_location=caller_info)
 
         elif log_struct:
             if not isinstance(log_struct, dict):
                 raise ValueError("log_struct must be a dictionary.")
             logger.log_struct(log_struct, severity=severity, source_location=caller_info)
-            sunholo_logger.log_struct(log_struct, severity=severity, source_location=caller_info)
-
 
     def debug(self, log_text=None, log_struct=None):
 
@@ -189,12 +197,12 @@ def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
         project_id = get_gcp_project()
 
     if logger_name is None:
-        logger_name = "run.googleapis.com%2Fstderr"
+        logger_name = "sunholo"
 
     # Instantiate the GoogleCloudLogging class
-    gc_logger = GoogleCloudLogging(project_id)
+    gc_logger = GoogleCloudLogging(project_id, log_level=log_level, logger_name=logger_name)
 
     # Setup logging and return the logger instance
-    return gc_logger.setup_logging(log_level=log_level, logger_name=logger_name)
+    return gc_logger.setup_logging()
 
 
