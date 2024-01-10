@@ -10,7 +10,7 @@ def get_run_url(service_name=None):
         return os.environ.get('SERVICE_URL')
     
     if service_name is None:
-        service_name = sys.getenv('SERVICE_NAME')
+        service_name = os.getenv('SERVICE_NAME')
     cloud_urls, _ = load_config('cloud_run_urls.json')
     try:
         url = cloud_urls[service_name]
