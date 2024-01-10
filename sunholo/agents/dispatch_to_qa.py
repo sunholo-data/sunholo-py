@@ -13,6 +13,7 @@
 #   limitations under the License.
 from ..logging import setup_logging
 from ..utils import load_config_key
+from ..auth import get_header
 
 logging = setup_logging()
 import requests
@@ -47,9 +48,10 @@ def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs
 def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
 
     qna_endpoint, qna_data = prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs)
-
+    header = get_header()
+    
     try:
-        qna_response = requests.post(qna_endpoint, json=qna_data, stream=stream)
+        qna_response = requests.post(qna_endpoint, json=qna_data, stream=stream, headers=header)
         qna_response.raise_for_status()
 
         if stream:
@@ -81,10 +83,10 @@ def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
 async def send_to_qa_async(user_input, vector_name, chat_history, stream=False, **kwargs):
     
     qna_endpoint, qna_data = prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs)
-
+    header = get_header()
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post(qna_endpoint, json=qna_data) as resp:
+            async with session.post(qna_endpoint, json=qna_data, headers=header) as resp:
                 resp.raise_for_status()
 
                 if stream:

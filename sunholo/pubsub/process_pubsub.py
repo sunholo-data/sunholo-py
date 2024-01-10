@@ -32,7 +32,7 @@ def process_pubsub_message(data: dict) -> tuple:
     publishTime = data['message'].get('publishTime')
     vector_name = attributes.get('namespace', None)
     if vector_name is None:
-        raise KeyError(f"Did not find key vector_name within attributes: {attributes}")
+        logging.warning(f"Did not find key vector_name within attributes: {attributes}")
     
     # to show we found it
     attributes['vector_name'] = vector_name

@@ -1,5 +1,6 @@
 import requests
 from ..logging import setup_logging
+from ..auth import get_header
 
 logging = setup_logging()
 
@@ -12,8 +13,10 @@ def fetch_input_schema(endpoint):
     if endpoint in langserve_input_schema_cache:
         return langserve_input_schema_cache[endpoint]
 
+    header = get_header()
+
     try:
-        response = requests.get(endpoint)
+        response = requests.get(endpoint, headers = header)
         response.raise_for_status()
         schema = response.json()
         logging.info(f"Fetched schema: {schema}")

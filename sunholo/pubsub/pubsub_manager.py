@@ -126,7 +126,7 @@ class PubSubManager:
     def _callback(self, future):
         try:
             message_id = future.result()
-            logging.info(f"Published message with ID: {message_id} to {self.pubsub_topic}")
+            logging.info(f"Published message with ID: {message_id} to {self.pubsub_topic} for {self.memory_namespace}")
         except Exception as e:
             logging.error(f"Failed to publish message: {e}")
 
@@ -141,6 +141,8 @@ class PubSubManager:
         
         if self.publisher and self.pubsub_topic:
             message_bytes = message.encode('utf-8')
-            future = self.publisher.publish(self.pubsub_topic, message_bytes, namespace = self.memory_namespace)
+            future = self.publisher.publish(self.pubsub_topic, 
+                                            message_bytes, 
+                                            namespace = self.memory_namespace)
             future.add_done_callback(self._callback)
 
