@@ -16,6 +16,12 @@ import requests
 import socket
 import logging
 
+def is_running_on_cloudrun():
+    if os.getenv("K_SERVICE"):
+        return True
+    
+    return False
+
 def get_env_project_id():
     """
     Attempts to retrieve the project ID from environment variables.

@@ -1,9 +1,13 @@
 # from https://github.com/sunholo-data/genai-databases-retrieval-app/blob/main/langchain_tools_demo/agent.py
-import os, sys
+import os
 import google.auth.transport.requests  # type: ignore
 import google.oauth2.id_token  # type: ignore
 from typing import Dict, Optional
 from ..utils.config import load_config
+from ..utils.gcp import is_running_on_cloudrun
+from ..logging import setup_logging
+
+logging = setup_logging()
 
 def get_run_url(service_name=None):
     if os.environ.get('SERVICE_URL') is not None:
@@ -11,18 +15,23 @@ def get_run_url(service_name=None):
     
     if service_name is None:
         service_name = os.getenv('SERVICE_NAME')
+    
+    if not service_name:
+        raise ValueError('Service name was not specified')
+    
     cloud_urls, _ = load_config('config/cloud_run_urls.json')
     try:
+        logging.info(f'Looking up URL for {service_name}')
         url = cloud_urls[service_name]
         os.environ['SERVICE_URL'] = url
         return url
     except KeyError:
-        raise ValueError('Could not find cloud_run_url for {service_name} within {cloud_urls}')
+        raise ValueError(f'Could not find cloud_run_url for {service_name} within {cloud_urls}')
 
 def get_id_token(url: str) -> str:
     """Helper method to generate ID tokens for authenticated requests"""
     # Use Application Default Credentials on Cloud Run
-    if os.getenv("K_SERVICE"):
+    if is_running_on_cloudrun():
         auth_req = google.auth.transport.requests.Request()
         return google.oauth2.id_token.fetch_id_token(auth_req, url)
     else:
@@ -40,7 +49,10 @@ def get_id_token(url: str) -> str:
         )
 
 def get_header() -> Optional[dict]:
-    run_url = get_run_url()
+    if is_running_on_cloudrun():
+        run_url = get_run_url()
+    else:
+        run_url = "127.0.0.1:8080"
     if "http://" in run_url:
         return None
     else:
