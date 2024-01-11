@@ -74,6 +74,6 @@ def get_header() -> Optional[dict]:
                     'function': caller_frame.f_code.co_name,
                     'run_url': run_url
                 }
-        logging.info(log_struct=deets)
+        logging.info(deets)
         headers = {"Authorization": f"Bearer {get_id_token(run_url)}"}
         return headers
