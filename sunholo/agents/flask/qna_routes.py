@@ -41,6 +41,7 @@ def register_qna_routes(app, stream_interpreter, qna_interpreter):
         if command_response is not None:
             return jsonify(command_response)
 
+        logging.info(f'Streaming data with stream_wait_time: {stream_wait_time} and stream_timeout: {stream_timeout}')
         def generate_response_content():
             for chunk in start_streaming_chat(user_input,
                                               vector_name=vector_name,

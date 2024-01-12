@@ -36,7 +36,7 @@ def start_streaming_chat(question,
 
     # Immediately yield to indicate the process has started.
     yield "Thinking...\n"
-    logging.info("Streaming chat with wait time {wait_time} seconds and timeout {timeout} seconds and kwargs {kwargs}")
+    logging.info(f"Streaming chat with wait time {wait_time} seconds and timeout {timeout} seconds and kwargs {kwargs}")
     # Initialize the chat
     content_buffer = ContentBuffer()
     chat_callback_handler = BufferStreamingStdOutCallbackHandler(content_buffer=content_buffer, tokens=".!?\n")
