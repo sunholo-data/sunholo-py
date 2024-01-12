@@ -18,3 +18,7 @@ edmonbrain:
 openinterpreter:
   stream: "{stem}/qna/streaming/{vector_name}"
   invoke: "{stem}/qna/{vector_name}"
+
+crewai:
+  stream: "{stem}/qna/streaming/{vector_name}"
+  invoke: "{stem}/qna/{vector_name}"

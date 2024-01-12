@@ -1,4 +1,4 @@
-#   Copyright [2023] [Holosun ApS]
+#   Copyright [2024] [Holosun ApS]
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
 
     qna_endpoint, qna_data = prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs)
     header = get_header()
-    
+
     try:
         qna_response = requests.post(qna_endpoint, json=qna_data, stream=stream, headers=header)
         qna_response.raise_for_status()
