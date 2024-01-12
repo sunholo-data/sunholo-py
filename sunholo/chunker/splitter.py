@@ -20,7 +20,7 @@ from ..utils.parsers import remove_whitespace
 from langchain.schema import Document
 import langchain.text_splitter as text_splitter
 
-def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 800):
+def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 800, **kwargs):
     """Turns a Document object into a list of many Document chunks.
        If a document or chunk is smaller than min_size, it will be merged with adjacent documents or chunks."""
 
@@ -47,7 +47,7 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
     source_chunks = []
     temporary_chunk = ""
     for document in combined_documents:
-        splitter = choose_splitter(extension)
+        splitter = choose_splitter(extension, **kwargs)
         for chunk in splitter.split_text(document.page_content):
             # If a chunk is smaller than the min_size, append it to temporary_chunk with a line break and continue
             if len(chunk) < min_size:

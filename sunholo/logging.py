@@ -100,7 +100,10 @@ class GoogleCloudLogging:
         caller_info = self._get_caller_info()
 
         if log_text:
-            logger.log_text(log_text, severity=severity, source_location=caller_info)
+            if isinstance(log_struct, dict):
+                logger.log_struct(log_struct, severity=severity, source_location=caller_info)
+            else:
+                logger.log_text(log_text, severity=severity, source_location=caller_info)
 
         elif log_struct:
             if not isinstance(log_struct, dict):
