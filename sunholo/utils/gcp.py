@@ -14,9 +14,8 @@
 import os
 import requests
 import socket
-from ..logging import setup_logging
-
-logging = setup_logging()
+# can't install due to circular import sunholo.logging
+import logging
 
 def is_running_on_cloudrun():
     if os.getenv("K_SERVICE"):
