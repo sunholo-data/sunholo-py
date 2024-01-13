@@ -7,24 +7,21 @@ from typing import Dict, Optional
 from ..utils.config import load_config
 from ..utils.gcp import is_running_on_cloudrun
 from ..logging import setup_logging
+from ..agents.route import route_qna
 
 logging = setup_logging()
 
-def get_run_url(service_name=None):
-    if os.environ.get('SERVICE_URL') is not None:
-        return os.environ.get('SERVICE_URL')
+def get_run_url(vector_name=None):
+
+    if not vector_name:
+        raise ValueError('Vector name was not specified')
     
-    if service_name is None:
-        service_name = os.getenv('SERVICE_NAME')
-    
-    if not service_name:
-        raise ValueError('Service name was not specified')
+    service_name = route_qna(vector_name)
     
     cloud_urls, _ = load_config('config/cloud_run_urls.json')
     try:
         logging.info(f'Looking up URL for {service_name}')
         url = cloud_urls[service_name]
-        os.environ['SERVICE_URL'] = url
         return url
     except KeyError:
         raise ValueError(f'Could not find cloud_run_url for {service_name} within {cloud_urls}')
@@ -50,11 +47,11 @@ def get_id_token(url: str) -> str:
             .decode()
         )
 
-def get_header() -> Optional[dict]:
+def get_header(vector_name) -> Optional[dict]:
     if is_running_on_cloudrun():
-        run_url = get_run_url()
+        run_url = get_run_url(vector_name)
     else:
-        run_url = "127.0.0.1:8080"
+        run_url = "http://127.0.0.1:8080"
 
     if "http://" in run_url:
         return None

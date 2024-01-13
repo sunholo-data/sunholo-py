@@ -13,7 +13,7 @@ def fetch_input_schema(endpoint):
     if endpoint in langserve_input_schema_cache:
         return langserve_input_schema_cache[endpoint]
 
-    header = get_header()
+    header = get_header("langserve")
 
     try:
         response = requests.get(endpoint, headers = header)

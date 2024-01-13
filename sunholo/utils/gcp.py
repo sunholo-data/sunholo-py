@@ -19,10 +19,7 @@ import logging
 
 def is_running_on_cloudrun():
     if os.getenv("K_SERVICE"):
-        logging.info("Running on Cloud Run")
         return True
-    
-    logging.info("Not running on Cloud Run")
     return False
 
 def get_env_project_id():

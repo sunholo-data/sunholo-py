@@ -46,7 +46,7 @@ def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs
 def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
 
     qna_endpoint, qna_data = prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs)
-    header = get_header()
+    header = get_header(vector_name)
 
     logging.info(f"Send_to_qa to {qna_endpoint} this data: {qna_data} with this header: {header}")
     try:
@@ -82,7 +82,7 @@ def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
 async def send_to_qa_async(user_input, vector_name, chat_history, stream=False, **kwargs):
     
     qna_endpoint, qna_data = prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs)
-    header = get_header()
+    header = get_header(vector_name)
 
     logging.info(f"send_to_qa_async to {qna_endpoint} this data: {qna_data} with this header: {header}")
 

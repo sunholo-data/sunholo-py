@@ -51,7 +51,11 @@ def get_module_filepath(filepath):
     logging.info(f"Found filepath {filepath}")
     return filepath
 
+# Global cache
+config_cache = {}
+
 def load_config(filename: str=None) -> (dict, str):
+    global config_cache
     from ..logging import setup_logging
     logging = setup_logging()
     if filename is None:
@@ -59,6 +63,11 @@ def load_config(filename: str=None) -> (dict, str):
         if filename is None:
             raise ValueError("No _CONFIG_FILE env value specified")
 
+   # Check the cache first
+    if filename in config_cache:
+        logging.info(f"Returning cached config for {filename}")
+        return config_cache[filename], filename
+    
     # Join the script directory with the filename
     config_path = filename
 
@@ -71,6 +80,9 @@ def load_config(filename: str=None) -> (dict, str):
             config = yaml.safe_load(f)
         else:
             raise ValueError(f"Unsupported config file format: {config_path}. The supported formats are JSON and YAML.")
+
+    # Store in cache
+    config_cache[filename] = config    
     
     return config, filename
 
