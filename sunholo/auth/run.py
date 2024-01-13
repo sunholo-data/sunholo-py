@@ -4,7 +4,7 @@ import inspect
 import google.auth.transport.requests  # type: ignore
 import google.oauth2.id_token  # type: ignore
 from typing import Dict, Optional
-from ..utils.config import load_config
+from ..utils.config import load_config_key, load_config
 from ..utils.gcp import is_running_on_cloudrun
 from ..logging import setup_logging
 from ..agents.route import route_qna
@@ -17,12 +17,14 @@ def get_run_url(vector_name=None):
         raise ValueError('Vector name was not specified')
     
     cloud_urls, _ = load_config('config/cloud_run_urls.json')
+    agent = load_config_key("agent", vector_name=vector_name, filename="config/llm_config.yaml")
+
     try:
-        logging.info(f'Looking up URL for {vector_name}')
-        url = cloud_urls[vector_name]
+        logging.info(f'Looking up URL for {agent}')
+        url = cloud_urls[agent]
         return url
     except KeyError:
-        raise ValueError(f'Could not find cloud_run_url for {vector_name} within {cloud_urls}')
+        raise ValueError(f'Could not find cloud_run_url for {agent} within {cloud_urls}')
 
 def get_id_token(url: str) -> str:
     """Helper method to generate ID tokens for authenticated requests"""
