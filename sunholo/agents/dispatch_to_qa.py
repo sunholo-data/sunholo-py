@@ -41,8 +41,6 @@ def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs
         # Update qna_data with optional values from kwargs
         qna_data.update(kwargs)
 
-    logging.info(f"Sending to {qna_endpoint} this data: {qna_data}")
-
     return qna_endpoint, qna_data
 
 def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
@@ -50,6 +48,7 @@ def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
     qna_endpoint, qna_data = prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs)
     header = get_header()
 
+    logging.info(f"Send_to_qa to {qna_endpoint} this data: {qna_data} with this header: {header}")
     try:
         qna_response = requests.post(qna_endpoint, json=qna_data, stream=stream, headers=header)
         qna_response.raise_for_status()
@@ -84,6 +83,9 @@ async def send_to_qa_async(user_input, vector_name, chat_history, stream=False, 
     
     qna_endpoint, qna_data = prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs)
     header = get_header()
+
+    logging.info(f"send_to_qa_async to {qna_endpoint} this data: {qna_data} with this header: {header}")
+
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(qna_endpoint, json=qna_data, headers=header) as resp:

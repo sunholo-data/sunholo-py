@@ -1,6 +1,5 @@
 from fastapi import FastAPI, Request, Response, APIRouter
 from fastapi.responses import StreamingResponse, JSONResponse
-import logging
 import json
 import traceback
 
@@ -11,6 +10,9 @@ from ...agents import extract_chat_history, handle_special_commands
 from ...qna.parsers import parse_output
 from ...streaming import start_streaming_chat
 from ...archive import archive_qa
+from ...logging import setup_logging
+
+logging = setup_logging()
 
 app = FastAPI()
 

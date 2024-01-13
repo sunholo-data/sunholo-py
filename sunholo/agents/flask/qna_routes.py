@@ -13,7 +13,6 @@
 #   limitations under the License.
 from flask import request, jsonify, Response
 
-import logging
 import json
 import traceback
 
@@ -21,6 +20,9 @@ from ...agents import extract_chat_history, handle_special_commands
 from ...qna.parsers import parse_output
 from ...streaming import start_streaming_chat
 from ...archive import archive_qa
+from ...logging import setup_logging
+
+logging = setup_logging()
 
 def register_qna_routes(app, stream_interpreter, qna_interpreter):
     @app.route('/qna/streaming/<vector_name>', methods=['POST'])
