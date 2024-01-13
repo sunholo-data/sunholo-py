@@ -7,13 +7,13 @@ logging = setup_logging()
 # Global cache for storing input schemas
 langserve_input_schema_cache = {}
 
-def fetch_input_schema(endpoint):
+def fetch_input_schema(endpoint, vector_name):
     """ Fetch the input schema from the endpoint, with caching """
     # Check if the schema is already in the cache
     if endpoint in langserve_input_schema_cache:
         return langserve_input_schema_cache[endpoint]
 
-    header = get_header("langserve")
+    header = get_header(vector_name)
 
     try:
         response = requests.get(endpoint, headers = header)
@@ -27,11 +27,11 @@ def fetch_input_schema(endpoint):
         logging.error(f"Error fetching input schema: {e}")
         return None
 
-def prepare_request_data(user_input, endpoint, **kwargs):
+def prepare_request_data(user_input, endpoint, vector_name, **kwargs):
     """ Prepare the request data based on the input schema from the endpoint. 
         Additional data can be passed via kwargs.
     """
-    input_schema = fetch_input_schema(endpoint)
+    input_schema = fetch_input_schema(endpoint, vector_name)
     logging.info(f"Found input schema: {input_schema}")
     if input_schema is not None and 'properties' in input_schema:
         key = next(iter(input_schema['properties']))
@@ -45,12 +45,3 @@ def prepare_request_data(user_input, endpoint, **kwargs):
         logging.error("Invalid or no input schema available.")
         return None
 
-# Example usage
-#endpoint = "http://example.com/api/endpoint"
-#user_input = "What is the weather today?"
-#additional_data = {"location": "New York", "date": "2024-01-06"}
-#request_data = prepare_request_data(user_input, endpoint, **additional_data)
-
-#if request_data is not None:
-#    print("Request data:", request_data)
-#    # Further code to use request_data as needed
