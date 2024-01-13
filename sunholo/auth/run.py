@@ -75,6 +75,7 @@ def get_header() -> Optional[dict]:
                     'run_url': run_url
                 }
         logging.info(f"Authenticating for run_url {run_url} from {caller_frame.f_code.co_name}")
-        headers = {"Authorization": f"Bearer {get_id_token(run_url)}"}
-        logging.info(headers)
+        id_token = get_id_token(run_url)
+        headers = {"Authorization": f"Bearer {id_token}"}
+        logging.info(f"id_token {id_token}"})
         return headers
