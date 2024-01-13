@@ -16,15 +16,13 @@ def get_run_url(vector_name=None):
     if not vector_name:
         raise ValueError('Vector name was not specified')
     
-    service_name = route_qna(vector_name)
-    
     cloud_urls, _ = load_config('config/cloud_run_urls.json')
     try:
-        logging.info(f'Looking up URL for {service_name}')
-        url = cloud_urls[service_name]
+        logging.info(f'Looking up URL for {vector_name}')
+        url = cloud_urls[vector_name]
         return url
     except KeyError:
-        raise ValueError(f'Could not find cloud_run_url for {service_name} within {cloud_urls}')
+        raise ValueError(f'Could not find cloud_run_url for {vector_name} within {cloud_urls}')
 
 def get_id_token(url: str) -> str:
     """Helper method to generate ID tokens for authenticated requests"""
