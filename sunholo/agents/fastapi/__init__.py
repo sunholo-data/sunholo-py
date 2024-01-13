@@ -1,0 +1,1 @@
+from .qna_routes import register_qna_fastapi_routes
