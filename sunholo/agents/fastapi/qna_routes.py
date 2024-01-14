@@ -8,7 +8,7 @@ from typing import Optional
 
 from ...agents import extract_chat_history, handle_special_commands
 from ...qna.parsers import parse_output
-from ...streaming import start_streaming_chat
+from ...streaming import start_streaming_chat_async
 from ...archive import archive_qa
 from ...logging import setup_logging
 
@@ -37,7 +37,7 @@ def create_stream_qa_endpoint(stream_interpreter):
         logging.info(f'Streaming data with stream_wait_time: {request.stream_wait_time} and stream_timeout: {request.stream_timeout}')
 
         async def generate_response_content():
-            async for chunk in start_streaming_chat(user_input,
+            async for chunk in start_streaming_chat_async(user_input,
                                                 vector_name=vector_name,
                                                 qna_func=stream_interpreter,
                                                 chat_history=paired_messages,

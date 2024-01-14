@@ -1,2 +1,2 @@
-from .streaming import start_streaming_chat, generate_proxy_stream, generate_proxy_stream_async
+from .streaming import start_streaming_chat, generate_proxy_stream, generate_proxy_stream_async, start_streaming_chat_async
 from .langserve import parse_langserve_token, parse_langserve_token_async

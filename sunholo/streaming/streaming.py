@@ -108,6 +108,88 @@ def start_streaming_chat(question,
     # parses out source_documents if not present etc.
     yield parse_output(final_result)
 
+async def start_streaming_chat_async(question, 
+                               vector_name,
+                               qna_func,
+                               chat_history=[],
+                               wait_time=2,
+                               timeout=120, # Timeout in seconds (2 minutes)
+                               **kwargs): 
+
+    # Immediately yield to indicate the process has started.
+    yield "Thinking...\n"
+    logging.info(f"Streaming chat with wait time {wait_time} seconds and timeout {timeout} seconds and kwargs {kwargs}")
+    # Initialize the chat
+    content_buffer = ContentBuffer()
+    chat_callback_handler = BufferStreamingStdOutCallbackHandler(content_buffer=content_buffer, tokens=".!?\n")
+
+    result_queue = Queue()
+    exception_queue = Queue()  # Queue for exceptions
+    stop_event = Event()
+
+    def start_chat(stop_event, result_queue, exception_queue):
+        # autogen_qna(user_input, vector_name, chat_history=None, message_author=None):
+        try:
+            final_result = qna_func(question, vector_name, chat_history, callback=chat_callback_handler, **kwargs)
+            result_queue.put(final_result)
+        except Exception as e:
+            exception_queue.put(e)
+
+
+    chat_thread = Thread(target=start_chat, args=(stop_event, result_queue, exception_queue))
+    chat_thread.start()
+
+    start = time.time()
+    first_start = start
+    while not chat_callback_handler.stream_finished.is_set() and not stop_event.is_set():
+
+        time.sleep(wait_time) # Wait for x seconds
+        logging.info(f"heartbeat - {round(time.time() - start, 2)} seconds")
+        # Check for exceptions and raise if any
+        while not exception_queue.empty():
+            raise exception_queue.get()
+        
+        content_to_send = content_buffer.read()
+
+        if content_to_send:
+            logging.info(f"==\n{content_to_send}")
+            yield content_to_send
+            content_buffer.clear()
+            start = time.time() # reset timeout
+        else:
+            if time.time() - first_start < wait_time:
+                # If the initial wait period hasn't passed yet, keep sending "..."
+                yield "..."
+            else:
+                logging.info("No content to send")
+
+        elapsed_time = time.time() - start
+        if elapsed_time > timeout: # If the elapsed time exceeds the timeout
+            logging.warning(f"Content production has timed out after {timeout} secs")
+            break
+    else:
+        logging.info(f"Stream has ended after {round(time.time() - first_start, 2)} seconds")
+        logging.info(f"Sending final full message plus sources...")
+        
+    
+    # if  you need it to stop it elsewhere use 
+    # stop_event.set()
+    content_to_send = content_buffer.read()
+    if content_to_send:
+        logging.info(f"==\n{content_to_send}")
+        yield content_to_send
+        content_buffer.clear()
+
+    # Stop the stream thread
+    chat_thread.join()
+
+    # the json object with full response in 'answer' and the 'sources' array
+    final_result = result_queue.get()
+
+    # parses out source_documents if not present etc.
+    yield parse_output(final_result)
+
+
 
 def generate_proxy_stream(stream_to_f, user_input, vector_name, chat_history, generate_f_output, **kwargs):
     agent = load_config_key("agent", vector_name=vector_name, filename="config/llm_config.yaml")
