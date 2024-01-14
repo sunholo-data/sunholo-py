@@ -21,6 +21,7 @@ from .content_buffer import ContentBuffer, BufferStreamingStdOutCallbackHandler
 from ..qna.parsers import parse_output
 
 from ..logging import setup_logging
+from ..utils import load_config_key
 
 from .langserve import parse_langserve_token, parse_langserve_token_async
 
@@ -109,6 +110,7 @@ def start_streaming_chat(question,
 
 
 def generate_proxy_stream(stream_to_f, user_input, vector_name, chat_history, generate_f_output, **kwargs):
+    agent = load_config_key("agent", vector_name=vector_name, filename="config/llm_config.yaml")
     def generate():
         json_buffer = ""
         inside_json = False
@@ -116,14 +118,19 @@ def generate_proxy_stream(stream_to_f, user_input, vector_name, chat_history, ge
         for streaming_content in stream_to_f(user_input, vector_name, chat_history, stream=True, **kwargs):
             json_buffer, inside_json, processed_output = process_streaming_content(streaming_content, generate_f_output, json_buffer, inside_json)
             for output in processed_output:
-                for parsed_output in parse_langserve_token(output):
-                    yield parsed_output
+                if agent == "langserve":
+                    for parsed_output in parse_langserve_token(output):
+                        yield parsed_output
+                else:
+                    yield output
 
     return generate
 
 
 
 async def generate_proxy_stream_async(stream_to_f, user_input, vector_name, chat_history, generate_f_output, **kwargs):
+    agent = load_config_key("agent", vector_name=vector_name, filename="config/llm_config.yaml")
+
     async def generate():
         json_buffer = ""
         inside_json = False
@@ -131,8 +138,11 @@ async def generate_proxy_stream_async(stream_to_f, user_input, vector_name, chat
         async for streaming_content in stream_to_f(user_input, vector_name, chat_history, stream=True, **kwargs):
             json_buffer, inside_json, processed_output = process_streaming_content(streaming_content, generate_f_output, json_buffer, inside_json)
             for output in processed_output:
-                async for parsed_output in parse_langserve_token_async(output):
-                    yield parsed_output
+                if agent == "langserve":
+                    async for parsed_output in parse_langserve_token_async(output):
+                        yield parsed_output
+                else:
+                    yield output
 
     return generate
 
