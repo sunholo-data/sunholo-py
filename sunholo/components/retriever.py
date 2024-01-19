@@ -21,12 +21,9 @@ from .llm import get_embeddings
 from ..utils.gcp import get_gcp_project
 
 from langchain.retrievers import MergerRetriever
-from langchain.retrievers import GoogleCloudEnterpriseSearchRetriever, GoogleVertexAISearchRetriever
+from langchain_community.retrievers import GoogleCloudEnterpriseSearchRetriever
 # https://python.langchain.com/docs/integrations/retrievers/merger_retriever
-from langchain.document_transformers import (
-    EmbeddingsRedundantFilter,
-    EmbeddingsClusteringFilter,
-)
+from langchain_community.document_transformers import EmbeddingsRedundantFilter
 from langchain.retrievers.document_compressors import DocumentCompressorPipeline
 from langchain.retrievers import ContextualCompressionRetriever
 
@@ -59,16 +56,6 @@ def pick_retriever(vector_name, embeddings=None):
             if value.get('provider', None) == "GoogleCloudEnterpriseSearchRetriever":
                 logging.info(f"Found GoogleCloudEnterpriseSearchRetriever {value['provider']}")
                 gcp_retriever = GoogleCloudEnterpriseSearchRetriever(
-                    project_id=get_gcp_project(),
-                    search_engine_id=value["db_id"],
-                    location_id=value.get("location", "global"),
-                    engine_data_type=1 if value.get("type","unstructured") == "structured" else 0,
-                    query_expansion_condition=2
-                )
-                retriever_list.append(gcp_retriever)
-            if value.get('provider', None) == "GoogleVertexAISearchRetriever":
-                logging.info(f"Found GoogleVertexAISearchRetriever {value['provider']}")
-                gcp_retriever = GoogleVertexAISearchRetriever(
                     project_id=get_gcp_project(),
                     search_engine_id=value["db_id"],
                     location_id=value.get("location", "global"),
