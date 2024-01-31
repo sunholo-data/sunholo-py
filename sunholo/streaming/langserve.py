@@ -80,21 +80,22 @@ async def parse_langserve_token_async(token):
             json_line_index = i + 1
             if json_line_index < len(lines):
                 json_line = lines[json_line_index]
-                logging.debug(f"json_line - {json_line}")
+                logging.info(f"json_line - {json_line}")
                 if json_line.startswith('data:'):
                     json_str = json_line[len('data:'):].strip()
                     try:
                         json_data = json.loads(json_str)
                         # Extract "content" from JSON
+                        content = None
                         try:
                             content = json_data.get("content")
                         except AttributeError as err:
-                            logging.warning("No 'content' found")
+                            logging.warning(f"No 'content' found - {err}")
                             yield json_data
                         if content:
                             yield content  # Append content to the accumulator
-                    except json.JSONDecodeError as e:
-                        logging.error(f"Langserve JSON decoding error: {e}")
+                    except json.JSONDecodeError as err:
+                        logging.error(f"Langserve JSON decoding error: {err}")
                         yield line
                         # Optionally append the original line in case of an error
                 else:
