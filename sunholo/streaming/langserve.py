@@ -24,35 +24,9 @@ def parse_langserve_token(token):
     if len(lines) == 1:
         yield token
 
-    for i, line in enumerate(lines):
-        if line.startswith('event: data'):
-            # Next line should contain the JSON
-            json_line_index = i + 1
-            if json_line_index < len(lines):
-                json_line = lines[json_line_index]
-                logging.info(f'JSON line found: {json_line}')
-                if json_line.startswith('data:'):
-                    json_str = json_line[len('data:'):].strip()
-                    logging.info(f'json_str: {json_str}')
-                    try:
-                        json_data = json.loads(json_str)
-                        # Extract "content" from JSON
-                        content = json_data.get("content")
-                        if content:
-                            logging.info(f'JSON content found: {content}')
-                            yield content  # Append content to the accumulator
-                    except json.JSONDecodeError as e:
-                        logging.error(f"Langserve JSON decoding error: {e}")
-                        yield line
-                        # Optionally append the original line in case of an error
-                else:
-                    logging.warning("Could not find data:")
-        elif line.startswith('event:'):
-            logging.info(f"Found langserve non-data event: {line}")
-        else:
-            logging.warning(f"Unexpected langserve line: {line}")
-            yield line
-
+    # Use process_langserve_lines to process each line
+    for content in process_langserve_lines(lines):
+        yield content
 
 async def parse_langserve_token_async(token):
     """
@@ -74,6 +48,11 @@ async def parse_langserve_token_async(token):
     if len(lines) == 1:
         yield token
 
+    # Use process_langserve_lines to process each line
+    for content in process_langserve_lines(lines):
+        yield content
+
+def process_langserve_lines(lines):
     for i, line in enumerate(lines):
         if line.startswith('event: data'):
             # Next line should contain the JSON
@@ -90,16 +69,18 @@ async def parse_langserve_token_async(token):
                         try:
                             content = json_data.get("content")
                         except AttributeError as err:
-                            logging.warning(f"No 'content' found - {err}")
-                            yield json_data
+                            logging.info(f"No 'content' found - sending full {json_str}")
+                            yield json_str
                         if content:
-                            yield content  # Append content to the accumulator
+                            yield content
                     except json.JSONDecodeError as err:
                         logging.error(f"Langserve JSON decoding error: {err}")
                         yield line
                         # Optionally append the original line in case of an error
                 else:
                     logging.warning("Could not find data:")
+        elif line.startswith('event: error'):
+            logging.error(f"Error in stream line: {line}")
+            yield line
         elif line.startswith('event:'):
             logging.info(f"Found langserve non-data event: {line}")
-
