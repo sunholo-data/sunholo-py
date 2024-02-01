@@ -25,7 +25,9 @@ setup(
         "langchain",
         "langchain-community",
         "langchain-google-genai",
-        "google-cloud-logging"
+        "google-cloud-logging",
+        "google-cloud-storage",
+        # pydantic==1.10.13
         # "supabase",
         # "openai",
         # "tiktoken",

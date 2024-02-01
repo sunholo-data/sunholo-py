@@ -164,11 +164,11 @@ def get_embeddings(vector_name):
     # Configure embeddings based on llm_str
     if llm_str == 'openai':
         # Setup for OpenAI embeddings
-        from langchain.embeddings import OpenAIEmbeddings
+        from langchain_community.embeddings import OpenAIEmbeddings
         return OpenAIEmbeddings()
     elif llm_str == 'vertex' or llm_str == 'codey':
         # Setup for Text-Bison embeddings
-        from langchain.embeddings import VertexAIEmbeddings
+        from langchain_community.embeddings import VertexAIEmbeddings
         
         return VertexAIEmbeddings()
     elif llm_str == 'gemini':
