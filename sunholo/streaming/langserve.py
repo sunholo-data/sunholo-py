@@ -52,6 +52,7 @@ async def parse_langserve_token_async(token):
     for content in process_langserve_lines(lines):
         yield content
 
+
 def process_langserve_lines(lines):
     for i, line in enumerate(lines):
         if line.startswith('event: data'):
@@ -64,21 +65,15 @@ def process_langserve_lines(lines):
                     json_str = json_line[len('data:'):].strip()
                     try:
                         json_data = json.loads(json_str)
-                        # Extract "content" from JSON
-                        content = None
-                        try:
-                            content = json_data.get("content")
-                        except AttributeError as err:
-                            logging.info(f"No 'content' found - sending full {json_str}")
-                            yield json_str
-                        if content:
-                            yield content
+                        # Extract "content" from JSON, if not present, send the whole JSON
+                        content = json_data.get("content", json_str)
+                        yield content
                     except json.JSONDecodeError as err:
                         logging.error(f"Langserve JSON decoding error: {err}")
+                        # Send the original line in case of an error
                         yield line
-                        # Optionally append the original line in case of an error
                 else:
-                    logging.warning("Could not find data:")
+                    logging.warning("Could not find data: line after event: data")
         elif line.startswith('event: error'):
             logging.error(f"Error in stream line: {line}")
             yield line
