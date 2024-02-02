@@ -17,6 +17,7 @@ from google.cloud.logging import Client
 from .utils.gcp import get_gcp_project, is_running_on_gcp
 import logging
 import inspect
+import os
 
 class GoogleCloudLogging:
     
@@ -209,3 +210,15 @@ def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
     return gc_logger.setup_logging()
 
 
+def log_folder_location(folder_name):
+    # Get the current working directory
+    current_working_directory = os.getcwd()
+    
+    # Construct the absolute path to the folder
+    folder_path = os.path.join(current_working_directory, folder_name)
+    
+    # Check if the folder exists
+    if os.path.exists(folder_path) and os.path.isdir(folder_path):
+        logging.info(f"The folder '{folder_name}' is located at: {folder_path}")
+    else:
+        logging.warning(f"The folder '{folder_name}' does not exist in the current working directory: {current_working_directory}")
