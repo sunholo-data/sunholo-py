@@ -68,9 +68,9 @@ def process_langserve_lines(lines):
                     json_str = json_line[len('data:'):].strip()
                     try:
                         json_data = json.loads(json_str)
-                        if not isinstance(json_data, dict):
-                            logging.warning(f"Expected json_data to be a dict, but got {type(json_data)}")
-                            yield json_str
+                        if isinstance(json_data, str):
+                            # Strip the quotes and yield
+                            yield json_data.strip('"')
                         else:
                             content = json_data.get("content")
                             if content is None:
