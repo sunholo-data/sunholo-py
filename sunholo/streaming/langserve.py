@@ -52,10 +52,6 @@ async def parse_langserve_token_async(token):
     for content in process_langserve_lines(lines):
         yield content
 
-
-import json
-import logging
-
 def process_langserve_lines(lines):
     for i, line in enumerate(lines):
         if line.startswith('event: data'):
