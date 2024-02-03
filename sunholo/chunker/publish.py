@@ -43,6 +43,10 @@ def publish_text(text:str, vector_name: str):
 
 def process_docs_chunks_vector_name(chunks, vector_name, metadata):
 
+    if vector_name is None:
+        logging.error(f"Missing vector name for pubsub-chunk - no publishing done")
+        return metadata
+    
     pubsub_manager = PubSubManager(vector_name, pubsub_topic=f"pubsub_state_messages")
     if chunks is None:
         logging.info("No chunks found")

@@ -16,11 +16,13 @@ from langchain.document_loaders.unstructured import UnstructuredAPIFileLoader
 from langchain_community.document_loaders import UnstructuredURLLoader
 from langchain.document_loaders.git import GitLoader
 from langchain_community.document_loaders import GoogleDriveLoader
-from ..utils.config import load_config
+
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 
 from ..logging import setup_logging
+from .pdfs import read_pdf_file
+from ..utils.config import load_config
 
 logging = setup_logging()
 import pathlib
@@ -67,8 +69,6 @@ class MyGoogleDriveLoader(GoogleDriveLoader):
 
     def load_from_url(self, url: str):
         id = self._extract_id(url)
-
-        
 
         # Identify type of URL
         try:
@@ -176,7 +176,7 @@ def read_file_to_document(gs_file: pathlib.Path, split=False, metadata: dict = N
     done = False
     pdf_path = pathlib.Path(gs_file)
     if pdf_path.suffix == ".pdf":
-        from pdfs import read_pdf_file
+        
         local_doc = read_pdf_file(pdf_path, metadata=metadata)
         if local_doc is not None:
             docs.append(local_doc)
