@@ -37,6 +37,7 @@ class GoogleCloudLogging:
             self.log_level = log_level
             self.initialized = True  # Mark as initialized
 
+
     def setup_logging(self, log_level=logging.INFO, logger_name=None):
         if log_level:
             self.log_level = log_level
@@ -197,17 +198,22 @@ def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
         Google Kubernetes Engine, Google App Engine, etc.
     """
 
-    if project_id is None:
-        project_id = get_gcp_project()
+    logger = logging.getLogger(logger_name)
+    if not logger.handlers:  # No handlers present, we can set up new ones
+        if project_id is None:
+            project_id = get_gcp_project()
 
-    if logger_name is None:
-        logger_name = "sunholo"
+        if logger_name is None:
+            logger_name = "sunholo"
 
-    # Instantiate the GoogleCloudLogging class
-    gc_logger = GoogleCloudLogging(project_id, log_level=log_level, logger_name=logger_name)
+        # Instantiate the GoogleCloudLogging class
+        gc_logger = GoogleCloudLogging(project_id, log_level=log_level, logger_name=logger_name)
 
-    # Setup logging and return the logger instance
-    return gc_logger.setup_logging()
+        # Setup logging and return the logger instance
+        return gc_logger.setup_logging()
+    else:
+        # Handlers are already present, so we just return the existing logger
+        return logger
 
 
 def log_folder_location(folder_name):
