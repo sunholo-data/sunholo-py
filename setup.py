@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.11.5'
+version = '0.12.0'
 
 setup(
     name='sunholo',
@@ -27,6 +27,7 @@ setup(
         "langchain-google-genai",
         "google-cloud-logging",
         "google-cloud-storage",
+        "lancedb"
         # pydantic==1.10.13
         # "supabase",
         # "openai",

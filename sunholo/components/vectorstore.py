@@ -72,7 +72,7 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
         # https://python.langchain.com/docs/modules/data_connection/vectorstores/integrations/pgvector
         CONNECTION_STRING = os.environ.get("ALLOYDB_CONNECTION_STRING",None)
         if CONNECTION_STRING is None:
-            logging.info("Did not find ALLOYDB_CONNECTION_STRING fallback to PGVECTOR_CONNECTION_STRING")
+            logging.warning("Did not find ALLOYDB_CONNECTION_STRING fallback to PGVECTOR_CONNECTION_STRING")
             CONNECTION_STRING = os.environ.get("PGVECTOR_CONNECTION_STRING")
         # postgresql://brainuser:password@10.24.0.3:5432/brain
 
@@ -87,6 +87,28 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
             )
 
         logging.info("Chose AlloyDB")
+    elif vs_str == "lancedb":
+        from ..patches.langchain.lancedb import LanceDB
+        import lancedb
+
+        LANCEDB_BUCKET = os.environ.get("LANCEDB_BUCKET")
+        if LANCEDB_BUCKET is None:
+            logging.error(f"Could not locate LANCEDB_BUCKET environment variable for {vector_name}")
+        logging.info(f"LANCEDB_BUCKET environment variable found for {vector_name} - {LANCEDB_BUCKET}")
+
+        db = lancedb.connect(LANCEDB_BUCKET)
+
+        logging.info(f"LanceDB Tables: {db.table_names()} using {LANCEDB_BUCKET}")
+        logging.info(f"Opening LanceDB table: {vector_name} using {LANCEDB_BUCKET}")
+    
+        table = db.open_table(vector_name)
+
+        logging.info("Inititaing LanceDB object for {vector_name} using {LANCEDB_BUCKET}")
+        vectorstore = LanceDB(
+            connection=table,
+            embedding=embeddings,
+        )
+        logging.info("Chose LanceDB for {vector_name} using {LANCEDB_BUCKET}")
 
     else:
         raise NotImplementedError(f'No llm implemented for {vs_str}')   
