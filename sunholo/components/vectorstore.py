@@ -105,7 +105,7 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
             table = db.open_table(vector_name)
         except FileNotFoundError as err:
             logging.info(f"{err} - Could not open table for {vector_name} - creating new table")
-            init = "Creating new table for {vector_name}"
+            init = f"Creating new table for {vector_name}"
             table = db.create_table(
                         vector_name,
                         data=[
@@ -118,12 +118,12 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
                         mode="overwrite",
                     )
 
-        logging.info("Inititaing LanceDB object for {vector_name} using {LANCEDB_BUCKET}")
+        logging.info(f"Inititaing LanceDB object for {vector_name} using {LANCEDB_BUCKET}")
         vectorstore = LanceDB(
             connection=table,
             embedding=embeddings,
         )
-        logging.info("Chose LanceDB for {vector_name} using {LANCEDB_BUCKET}")
+        logging.info(f"Chose LanceDB for {vector_name} using {LANCEDB_BUCKET}")
 
     else:
         raise NotImplementedError(f'No llm implemented for {vs_str}')   

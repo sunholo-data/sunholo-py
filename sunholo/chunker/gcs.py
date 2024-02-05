@@ -14,8 +14,6 @@
 import datetime
 import os
 
-from ..database import database
-from ..pubsub import PubSubManager
 from ..logging import setup_logging
 
 logging = setup_logging()
@@ -81,17 +79,5 @@ def add_file_to_gcs(filename: str, vector_name:str, bucket_name: str=None, metad
 
     else:  # This block executes if the loop completes without breaking
         logging.error(f"Failed to upload file {filename} to gs://{bucket_name}/{bucket_filepath} after {max_retries} attempts.")
-
-
-    # create pubsub topic and subscription if necessary to receive notifications from cloud storage 
-    pubsub_manager = PubSubManager(vector_name, pubsub_topic=f"app_to_pubsub_{vector_name}")
-    sub_name = f"pubsub_to_store_{vector_name}"
-    sub_exists = pubsub_manager.subscription_exists(sub_name)
-    if not sub_exists:
-        
-        pubsub_manager.create_subscription(sub_name,
-                                           push_endpoint=f"/pubsub_to_store/{vector_name}")
-        database.setup_database(vector_name)
-        
 
     return f"gs://{bucket_name}/{bucket_filepath}"
