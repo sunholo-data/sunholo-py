@@ -101,7 +101,22 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
         logging.info(f"LanceDB Tables: {db.table_names()} using {LANCEDB_BUCKET}")
         logging.info(f"Opening LanceDB table: {vector_name} using {LANCEDB_BUCKET}")
     
-        table = db.open_table(vector_name)
+        try:
+            table = db.open_table(vector_name)
+        except FileNotFoundError as err:
+            logging.info(f"{err} - Could not open table for {vector_name} - creating new table")
+            init = "Creating new table for {vector_name}"
+            table = db.create_table(
+                        vector_name,
+                        data=[
+                            {
+                                "vector": embeddings.embed_query(init),
+                                "text": init,
+                                "id": "1",
+                            }
+                        ],
+                        mode="overwrite",
+                    )
 
         logging.info("Inititaing LanceDB object for {vector_name} using {LANCEDB_BUCKET}")
         vectorstore = LanceDB(
