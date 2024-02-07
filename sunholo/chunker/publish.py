@@ -4,6 +4,7 @@ logging = setup_logging()
 
 from ..pubsub import PubSubManager
 from ..utils.parsers import contains_url, extract_urls
+from ..utils.gcp import get_gcp_project
 
 from langchain.schema import Document
 
@@ -23,7 +24,9 @@ def publish_if_urls(the_content, vector_name):
 def publish_chunks(chunks: list[Document], vector_name: str):
     logging.info("Publishing chunks to embed_chunk")
     
-    pubsub_manager = PubSubManager(vector_name, pubsub_topic=f"chunk-to-pubsub-embed")
+    pubsub_manager = PubSubManager(vector_name, 
+                                   pubsub_topic=f"chunk-to-pubsub-embed", 
+                                   project_id=get_gcp_project())
         
     for chunk in chunks:
         # Convert chunk to string, as Pub/Sub messages must be strings or bytes
@@ -37,7 +40,9 @@ def publish_chunks(chunks: list[Document], vector_name: str):
 
 def publish_text(text:str, vector_name: str):
     logging.info(f"Publishing text: {text} to app-to-pubsub-chunk")
-    pubsub_manager = PubSubManager(vector_name, pubsub_topic=f"app-to-pubsub-chunk")
+    pubsub_manager = PubSubManager(vector_name, 
+                                   pubsub_topic=f"app-to-pubsub-chunk",
+                                   project_id=get_gcp_project())
     
     pubsub_manager.publish_message(text)
 
@@ -47,7 +52,9 @@ def process_docs_chunks_vector_name(chunks, vector_name, metadata):
         logging.error(f"Missing vector name for pubsub-chunk - no publishing done")
         return metadata
     
-    pubsub_manager = PubSubManager(vector_name, pubsub_topic=f"pubsub_state_messages")
+    pubsub_manager = PubSubManager(vector_name, 
+                                   pubsub_topic=f"pubsub_state_messages",
+                                   project_id=get_gcp_project())
     if chunks is None:
         logging.info("No chunks found")
         pubsub_manager.publish_message(f"No chunks for: {metadata} to {vector_name} embedding")

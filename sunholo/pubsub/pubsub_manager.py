@@ -19,6 +19,7 @@ from google.auth import default
 import json
 import os
 from ..logging import setup_logging
+from ..utils.gcp import get_gcp_project
 
 logging = setup_logging()
 
@@ -34,15 +35,15 @@ class PubSubManager:
         self.memory_namespace = memory_namespace
 
         # Get the project ID from the default Google Cloud settings or the environment variable
-        _, project_id = default()
-        self.project_id = project_id or os.environ.get('GOOGLE_CLOUD_PROJECT')
+        if self.project_id is None:
+            _, project_id = default()
+            self.project_id = project_id or get_gcp_project()
 
         if self.project_id:
-            logging.debug(f"Project ID: {self.project_id}")
+            logging.info(f"Pubsub Project ID: {self.project_id}")
             # Create the Pub/Sub topic based on the project ID and memory_namespace
             self.publisher = pubsub_v1.PublisherClient()
-            self.pubsub_topic = f"projects/{self.project_id}/topics/{pubsub_topic}" or \
-                                f"projects/{self.project_id}/topics/chat-messages-{memory_namespace}"
+            self.pubsub_topic = f"projects/{self.project_id}/topics/{pubsub_topic}"
             self._create_pubsub_topic_if_not_exists()
 
         else:
