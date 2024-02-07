@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import uuid
+import uuid, time
 from typing import Any, Iterable, List, Optional
 
 from langchain_core.documents import Document
@@ -87,7 +87,23 @@ class LanceDB(VectorStore):
                 }
             )
 
-        self._connection.add(docs)
+        max_retries = 5  
+        retry_delay = 1 
+        for attempt in range(max_retries):
+            try:
+                self._connection.add(docs)
+                return ids  # If success, return immediately
+            except OSError as e:
+                if "429 Too Many Requests" in str(e):
+                    if attempt < max_retries - 1:
+                        time.sleep(retry_delay)
+                        retry_delay *= 2  # Exponential backoff
+                        continue
+                    else:
+                        raise  # Re-raise the exception if max retries are reached
+                else:
+                    raise  # Re-raise the exception if it's not a rate limit error
+
         return ids
 
     def similarity_search(self, query: str, k: int = 4, **kwargs: Any) -> List[Document]:
