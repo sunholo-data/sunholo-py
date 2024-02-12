@@ -16,17 +16,18 @@ logging = setup_logging()
 
 app = FastAPI()
 
-class QnARequest(BaseModel):
+class VACRequest(BaseModel):
     user_input: str
     chat_history: Optional[list] = None
     stream_wait_time: Optional[int] = 7
     stream_timeout: Optional[int] = 120
     message_author: Optional[str] = None
+    image_url: Optional[str] = None
 
 
 
 def create_stream_qa_endpoint(stream_interpreter):
-    async def stream_qa(vector_name: str, request: QnARequest):
+    async def stream_qa(vector_name: str, request: VACRequest):
         user_input = request.user_input.strip()
         paired_messages = extract_chat_history(request.chat_history)
 
@@ -56,7 +57,7 @@ def create_stream_qa_endpoint(stream_interpreter):
     return stream_qa
 
 def create_process_qna_endpoint(qna_interpreter):
-    async def process_qna(vector_name: str, request: QnARequest):
+    async def process_qna(vector_name: str, request: VACRequest):
         user_input = request.user_input.strip()
         paired_messages = extract_chat_history(request.chat_history)
 

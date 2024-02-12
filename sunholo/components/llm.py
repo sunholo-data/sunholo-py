@@ -134,7 +134,7 @@ def get_llm_chat(vector_name, model=None):
         # Setup for Vertex LLM
         from langchain.chat_models import ChatVertexAI
         if model is None:
-            model = 'chat-bison'
+            model = 'gemini-pro'
             logging.info(f"No 'model' value in config file - selecting default {model}")
             
         return ChatVertexAI(model_name = model, temperature=0, max_output_tokens=1024)
