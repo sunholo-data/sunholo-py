@@ -54,7 +54,7 @@ def get_module_filepath(filepath):
 # Global cache
 config_cache = {}
 
-def load_config(filename: str=None) -> (dict, str):
+def load_config(filename: str=None) -> tuple[dict, str]:
     global config_cache
     from ..logging import setup_logging
     logging = setup_logging()

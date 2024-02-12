@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, Response, APIRouter
 from fastapi.responses import StreamingResponse, JSONResponse
 import json
 import traceback
+import asyncio
 
 from pydantic import BaseModel
 from typing import Optional
@@ -39,12 +40,12 @@ def create_stream_qa_endpoint(stream_interpreter):
 
         async def generate_response_content():
             async for chunk in start_streaming_chat_async(user_input,
-                                                vector_name=vector_name,
-                                                qna_func=stream_interpreter,
-                                                chat_history=paired_messages,
-                                                wait_time=request.stream_wait_time,
-                                                timeout=request.stream_timeout,
-                                                message_author=request.message_author):
+                                                            vector_name=vector_name,
+                                                            qna_func=stream_interpreter,
+                                                            chat_history=paired_messages,
+                                                            wait_time=request.stream_wait_time,
+                                                            timeout=request.stream_timeout,
+                                                            message_author=request.message_author):
                 if isinstance(chunk, dict) and 'answer' in chunk:
                     archive_qa(chunk, vector_name)
                     yield f"###JSON_START###{json.dumps(chunk)}###JSON_END###"
@@ -66,7 +67,12 @@ def create_process_qna_endpoint(qna_interpreter):
             return JSONResponse(content=command_response)
 
         try:
-            bot_output = await qna_interpreter(user_input, vector_name, chat_history=paired_messages, message_author=request.message_author)
+
+            if asyncio.iscoroutinefunction(qna_interpreter):
+                bot_output = await qna_interpreter(user_input, vector_name, chat_history=paired_messages, message_author=request.message_author)
+            else:
+                bot_output = qna_interpreter(user_input, vector_name, chat_history=paired_messages, message_author=request.message_author)
+
             bot_output = parse_output(bot_output)
             archive_qa(bot_output, vector_name)
         except Exception as err:
