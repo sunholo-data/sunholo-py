@@ -11,6 +11,11 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+
+from sunholo.logging import setup_logging
+
+log = setup_logging()
+
 def document_to_dict(document):
     return {
         "page_content": document.page_content,
@@ -18,8 +23,11 @@ def document_to_dict(document):
     }
 
 def parse_output(bot_output):
-    if 'source_documents' in bot_output:
-        bot_output['source_documents'] = [document_to_dict(doc) for doc in bot_output['source_documents']]
-    if bot_output.get("answer", None) is None or bot_output.get("answer") == "":
-        bot_output['answer'] = "(No text was returned)"
-    return bot_output
+    if isinstance(bot_output, dict) and 'source_documents' in bot_output:
+        if 'source_documents' in bot_output:
+            bot_output['source_documents'] = [document_to_dict(doc) for doc in bot_output['source_documents']]
+        if bot_output.get("answer", None) is None or bot_output.get("answer") == "":
+            bot_output['answer'] = "(No text was returned)"
+        return bot_output
+    else:
+        log.error(f"Couldn't parse output for {bot_output}")
