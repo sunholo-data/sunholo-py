@@ -15,6 +15,7 @@ from threading import Thread, Event
 from queue import Queue
 import json
 import time
+import asyncio
 
 from .content_buffer import ContentBuffer, BufferStreamingStdOutCallbackHandler
 
@@ -108,86 +109,60 @@ def start_streaming_chat(question,
     # parses out source_documents if not present etc.
     yield parse_output(final_result)
 
-async def start_streaming_chat_async(question, 
-                               vector_name,
-                               qna_func,
-                               chat_history=[],
-                               wait_time=2,
-                               timeout=120, # Timeout in seconds (2 minutes)
-                               **kwargs): 
-
-    # Immediately yield to indicate the process has started.
+async def start_streaming_chat_async(question, vector_name, qna_func, chat_history=[], wait_time=2, timeout=120, **kwargs): 
+    # Indicate process start
     yield "Thinking...\n"
     logging.info(f"Streaming chat with wait time {wait_time} seconds and timeout {timeout} seconds and kwargs {kwargs}")
-    # Initialize the chat
+
     content_buffer = ContentBuffer()
     chat_callback_handler = BufferStreamingStdOutCallbackHandler(content_buffer=content_buffer, tokens=".!?\n")
 
     result_queue = Queue()
-    exception_queue = Queue()  # Queue for exceptions
+    exception_queue = Queue()
     stop_event = Event()
 
-    def start_chat(stop_event, result_queue, exception_queue):
-        # autogen_qna(user_input, vector_name, chat_history=None, message_author=None):
+    def start_chat():
         try:
             final_result = qna_func(question, vector_name, chat_history, callback=chat_callback_handler, **kwargs)
             result_queue.put(final_result)
         except Exception as e:
             exception_queue.put(e)
 
-
-    chat_thread = Thread(target=start_chat, args=(stop_event, result_queue, exception_queue))
+    chat_thread = Thread(target=start_chat)
     chat_thread.start()
 
     start = time.time()
-    first_start = start
+
     while not chat_callback_handler.stream_finished.is_set() and not stop_event.is_set():
-
-        time.sleep(wait_time) # Wait for x seconds
+        await asyncio.sleep(wait_time)  # Use asyncio.sleep for async compatibility
         logging.info(f"heartbeat - {round(time.time() - start, 2)} seconds")
-        # Check for exceptions and raise if any
-        while not exception_queue.empty():
-            raise exception_queue.get()
         
-        content_to_send = content_buffer.read()
+        while not exception_queue.empty():
+            exception = exception_queue.get_nowait()
+            raise exception
 
+        content_to_send = content_buffer.read()
         if content_to_send:
             logging.info(f"==\n{content_to_send}")
             yield content_to_send
             content_buffer.clear()
-            start = time.time() # reset timeout
+            start = time.time()
         else:
-            if time.time() - first_start < wait_time:
-                # If the initial wait period hasn't passed yet, keep sending "..."
-                yield "..."
-            else:
-                logging.info("No content to send")
+            if time.time() - start > timeout:
+                logging.warning(f"Content production has timed out after {timeout} seconds")
+                break
 
-        elapsed_time = time.time() - start
-        if elapsed_time > timeout: # If the elapsed time exceeds the timeout
-            logging.warning(f"Content production has timed out after {timeout} secs")
-            break
-    else:
-        logging.info(f"Stream has ended after {round(time.time() - first_start, 2)} seconds")
-        logging.info(f"Sending final full message plus sources...")
-        
-    
-    # if  you need it to stop it elsewhere use 
-    # stop_event.set()
-    content_to_send = content_buffer.read()
-    if content_to_send:
-        logging.info(f"==\n{content_to_send}")
-        yield content_to_send
-        content_buffer.clear()
-
-    # Stop the stream thread
+    stop_event.set()
     chat_thread.join()
 
-    # the json object with full response in 'answer' and the 'sources' array
-    final_result = result_queue.get()
+    # Handle final result
+    if not result_queue.empty():
+        final_result = result_queue.get()
+        # Ensure parse_output is called outside of the async generator context if needed
+        parsed_final_result = parse_output(final_result)  # Assuming parse_output can handle final_result structure
+        if 'answer' in parsed_final_result:  # Yield final structured result if needed
+            yield f"###JSON_START###{json.dumps(parsed_final_result)}###JSON_END###"
 
-    # parses out source_documents if not present etc.
-    yield parse_output(final_result)
 
 
 
