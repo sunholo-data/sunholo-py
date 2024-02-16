@@ -134,7 +134,7 @@ def get_llm_chat(vector_name, model=None):
         # Setup for Vertex LLM
         from langchain.chat_models import ChatVertexAI
         if model is None:
-            model = 'gemini-pro'
+            model = 'gemini-1.0-pro'
             logging.info(f"No 'model' value in config file - selecting default {model}")
             
         return ChatVertexAI(model_name = model, temperature=0, max_output_tokens=1024)
@@ -164,8 +164,9 @@ def get_embeddings(vector_name):
     return pick_embedding(llm_str)
 
 
-# get embedding directly from llm_str
+
 def pick_embedding(llm_str):
+    # get embedding directly from llm_str
     # Configure embeddings based on llm_str
     if llm_str == 'openai':
         # Setup for OpenAI embeddings
