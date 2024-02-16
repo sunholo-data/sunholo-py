@@ -161,6 +161,11 @@ def get_llm_chat(vector_name, model=None):
 def get_embeddings(vector_name):
     llm_str = load_config_key("llm", vector_name, filename="config/llm_config.yaml")
 
+    return pick_embedding(llm_str)
+
+
+# get embedding directly from llm_str
+def pick_embedding(llm_str):
     # Configure embeddings based on llm_str
     if llm_str == 'openai':
         # Setup for OpenAI embeddings
@@ -176,7 +181,6 @@ def get_embeddings(vector_name):
         from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
         return GoogleGenerativeAIEmbeddings(model="models/embedding-001") #TODO add embedding type
-
 
     if llm_str is None:
         raise NotImplementedError(f'No embeddings implemented for {llm_str}')

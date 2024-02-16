@@ -18,7 +18,7 @@ import datetime
 
 from langchain.schema import Document
 
-from ..components import get_embeddings, pick_vectorstore, load_memories
+from ..components import get_embeddings, pick_vectorstore, load_memories, pick_embedding
 from ..logging import setup_logging
 
 logging = setup_logging()
@@ -78,6 +78,10 @@ def embed_pubsub_chunk(data: dict):
             logging.info(f"Found memory {key}")
             vectorstore = value.get('vectorstore', None)
             if vectorstore is not None:
+                # check if vectorstore specific embedding is available
+                embed_specific = vectorstore.get('llm', None)
+                if embed_specific is not None:
+                    embeddings = pick_embedding(embed_specific)
                 vectorstore = pick_vectorstore(vectorstore, vector_name=vector_name, embeddings=embeddings)
                 vs_retriever = vectorstore.as_retriever(search_kwargs=dict(k=3))
                 vectorstore_list.append(vs_retriever)
