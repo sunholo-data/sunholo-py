@@ -70,7 +70,7 @@ def process_langserve_lines(lines):
                         else:
                             content = json_data.get("content")
                             if content is None:
-                                logging.info(f"No 'content' found - sending full JSON string")
+                                logging.info("No 'content' found - sending full JSON string")
                                 yield json_str
                             else:
                                 yield content

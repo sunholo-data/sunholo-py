@@ -89,7 +89,7 @@ def start_streaming_chat(question,
             break
     else:
         logging.info(f"Stream has ended after {round(time.time() - first_start, 2)} seconds")
-        logging.info(f"Sending final full message plus sources...")
+        logging.info("Sending final full message plus sources...")
         
     
     # if  you need it to stop it elsewhere use 
@@ -168,6 +168,8 @@ async def start_streaming_chat_async(question, vector_name, qna_func, chat_histo
 
 def generate_proxy_stream(stream_to_f, user_input, vector_name, chat_history, generate_f_output, **kwargs):
     agent = load_config_key("agent", vector_name=vector_name, filename="config/llm_config.yaml")
+    agent_type = load_config_key("agent_type", vector_name=vector_name, filename="config/llm_config.yaml")
+    
     def generate():
         json_buffer = ""
         inside_json = False
@@ -175,7 +177,7 @@ def generate_proxy_stream(stream_to_f, user_input, vector_name, chat_history, ge
         for streaming_content in stream_to_f(user_input, vector_name, chat_history, stream=True, **kwargs):
             json_buffer, inside_json, processed_output = process_streaming_content(streaming_content, generate_f_output, json_buffer, inside_json)
             for output in processed_output:
-                if agent == "langserve":
+                if agent == "langserve" or agent_type == "langserve":
                     for parsed_output in parse_langserve_token(output):
                         yield parsed_output
                 else:
