@@ -12,10 +12,9 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from ..logging import setup_logging
+from ..utils.config import load_config_key, load_config, get_module_filepath
 
 logging = setup_logging()
-
-from ..utils.config import load_config_key, load_config, get_module_filepath
 
 def pick_llm(vector_name):
     logging.debug('Picking llm')

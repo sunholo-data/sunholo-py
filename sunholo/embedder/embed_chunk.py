@@ -79,9 +79,10 @@ def embed_pubsub_chunk(data: dict):
             vectorstore = value.get('vectorstore', None)
             if vectorstore is not None:
                 # check if vectorstore specific embedding is available
-                embed_specific = value.get('llm', None)
-                if embed_specific is not None:
-                    embeddings = pick_embedding(embed_specific)
+                embed_llm = value.get('llm', None)
+                if embed_llm is not None:
+                    embeddings = pick_embedding(embed_llm)
+                    # append llm name if its specified in the vectorstore config
                 vectorstore_obj = pick_vectorstore(vectorstore, vector_name=vector_name, embeddings=embeddings)
                 vs_retriever = vectorstore_obj.as_retriever(search_kwargs=dict(k=3))
                 vectorstore_list.append(vs_retriever)
