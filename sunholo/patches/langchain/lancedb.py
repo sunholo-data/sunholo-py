@@ -1,3 +1,4 @@
+# from https://github.com/langchain-ai/langchain/blob/6c18f73ca56bb72cb964aaa668c3f8ac14237619/libs/community/langchain_community/vectorstores/lancedb.py
 from __future__ import annotations
 
 import uuid, time
@@ -25,11 +26,12 @@ class LanceDB(VectorStore):
 
     def __init__(
         self,
-        connection: Any,
-        embedding: Embeddings,
+        connection: Optional[Any] = None,
+        embedding: Optional[Embeddings] = None,
         vector_key: Optional[str] = "vector",
         id_key: Optional[str] = "id",
         text_key: Optional[str] = "text",
+        table_name: Optional[str] = "vectorstore",
     ):
         """Initialize with Lance DB connection"""
         try:
@@ -44,11 +46,25 @@ class LanceDB(VectorStore):
                 "connection should be an instance of lancedb.db.LanceTable, ",
                 f"got {type(connection)}",
             )
-        self._connection = connection
+        self.lancedb = lancedb
         self._embedding = embedding
         self._vector_key = vector_key
         self._id_key = id_key
         self._text_key = text_key
+        self._table_name = table_name
+
+        if self._embedding is None:
+            raise ValueError("embedding should be provided")
+
+        if connection is not None:
+            if not isinstance(connection, lancedb.db.LanceTable):
+                raise ValueError(
+                    "connection should be an instance of lancedb.db.LanceTable, ",
+                    f"got {type(connection)}",
+                )
+            self._connection = connection
+        else:
+            self._connection = self._init_table()
 
     @property
     def embeddings(self) -> Embeddings:
@@ -117,14 +133,24 @@ class LanceDB(VectorStore):
             List of documents most similar to the query.
         """
         embedding = self._embedding.embed_query(query)
-        docs = self._connection.search(embedding).limit(k).to_df()
+        # .select([-"vector"]).
+        # .where("item != 'item 1141'")
+        docs = (
+            self._connection.search(embedding, vector_column_name=self._vector_key)
+            .limit(k)
+            .to_arrow()
+        )
+        columns = docs.schema.names
         return [
             Document(
-                page_content=row[self._text_key],
-                # Filter out the 'vector' key from the metadata if it exists
-                metadata={key: value for key, value in row[docs.columns != self._text_key].items() if key != 'vector'},
+                page_content=docs[self._text_key][idx].as_py(),
+                metadata={
+                    col: docs[col][idx].as_py()
+                    for col in columns
+                    if col != self._text_key
+                },
             )
-            for _, row in docs.iterrows()
+            for idx in range(len(docs))
         ]
 
 
@@ -150,3 +176,24 @@ class LanceDB(VectorStore):
         instance.add_texts(texts, metadatas=metadatas, **kwargs)
 
         return instance
+
+    def _init_table(self) -> Any:
+        import pyarrow as pa
+
+        schema = pa.schema(
+            [
+                pa.field(
+                    self._vector_key,
+                    pa.list_(
+                        pa.float32(),
+                        len(self.embeddings.embed_query("test")),  # type: ignore
+                    ),
+                ),
+                pa.field(self._id_key, pa.string()),
+                pa.field(self._text_key, pa.string()),
+            ]
+        )
+        db = self.lancedb.connect("/tmp/lancedb")
+        tbl = db.create_table(self._table_name, schema=schema, mode="overwrite")
+        return tbl
+    
