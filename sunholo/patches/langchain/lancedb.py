@@ -132,14 +132,23 @@ class LanceDB(VectorStore):
         Returns:
             List of documents most similar to the query.
         """
-        embedding = self._embedding.embed_query(query)
-        # .select([-"vector"]).
-        # .where("item != 'item 1141'")
-        docs = (
-            self._connection.search(embedding, vector_column_name=self._vector_key)
-            .limit(k)
-            .to_arrow()
-        )
+        query_type = kwargs.get('query_type', None)
+        where_clause = kwargs.get('where', None)
+
+        if query_type == "hybrid":
+            # Hybrid search logic
+            search_query = self._connection.search(query, query_type="hybrid")
+        else:
+            # Original search logic
+            embedding = self._embedding.embed_query(query)
+            search_query = self._connection.search(embedding, vector_column_name=self._vector_key)
+
+        if where_clause:
+            # Apply the where condition if specified
+            search_query = search_query.where(where_clause)        
+
+        docs = search_query.limit(k).to_arrow()
+        
         columns = docs.schema.names
         return [
             Document(
