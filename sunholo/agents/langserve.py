@@ -39,6 +39,7 @@ def prepare_request_data(user_input, endpoint, vector_name, **kwargs):
 
         # Merge kwargs into request_data
         input_data.update(kwargs)
+        input_data['vector_name'] = vector_name
         request_data = {"input": input_data}
         return request_data
     else:
