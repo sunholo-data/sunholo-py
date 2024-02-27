@@ -25,7 +25,7 @@ def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs
 
     # Add chat_history/vector_name to kwargs so langserve can use them too
     kwargs['chat_history'] = chat_history
-    kwargs['vector_name'] = vector_name
+
     # {'stream': '', 'invoke': ''}
     endpoints = route_endpoint(vector_name)
 
