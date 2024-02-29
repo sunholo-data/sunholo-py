@@ -113,7 +113,6 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
                                 "vector": embeddings.embed_query(init),
                                 "text": init,
                                 "id": "1",
-                                "metadata": {"vector_name": vector_name}
                             }
                         ],
                         mode="overwrite",
