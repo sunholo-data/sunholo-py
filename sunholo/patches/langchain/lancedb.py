@@ -148,7 +148,6 @@ class LanceDB(VectorStore):
                     "Could not import tantivy python package. "
                     "Please install it with `pip install tantivy`."
                 )
-            self._connection.create_fts_index(self._text_key)
             search_query = self._connection.search(query)
         else:
             # Original search logic
