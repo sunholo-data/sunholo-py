@@ -136,8 +136,20 @@ class LanceDB(VectorStore):
         where_clause = kwargs.get('where', None)
 
         if query_type == "hybrid":
-            # Hybrid search logic
+            # Hybrid search logic - requires table created with embedding function
+            # https://lancedb.github.io/lancedb/hybrid_search/hybrid_search/
             search_query = self._connection.search(query, query_type="hybrid")
+        elif query_type == "text":
+            # Text search - requires a text index created table.create_fts_index("text")
+            # requires import tantivy to be installed
+            try:
+                import tantivy  # noqa: F401
+            except ImportError:
+                raise ImportError(
+                    "Could not import tantivy python package. "
+                    "Please install it with `pip install tantivy`."
+                )
+            search_query = self._connection.search(query)
         else:
             # Original search logic
             embedding = self._embedding.embed_query(query)

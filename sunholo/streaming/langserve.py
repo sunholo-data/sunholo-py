@@ -79,6 +79,12 @@ def process_langserve_lines(lines):
                         yield json_str
                 else:
                     logging.warning("Could not find 'data:' line after 'event: data'")
+        if line.startswith('event: metadata'):
+            json_line_index = i + 1
+            if json_line_index < len(lines):
+                json_line = lines[json_line_index]
+                logging.info(f"metadata json_line - {json_line}")
+                yield json_line
         elif line.startswith('event: error'):
             logging.error(f"Error in stream line: {line}")
             yield line

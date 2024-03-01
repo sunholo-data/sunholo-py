@@ -12,13 +12,11 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from ..logging import setup_logging
-
-logging = setup_logging()
-
 from ..utils.parsers import remove_whitespace
-
 from langchain.schema import Document
 import langchain.text_splitter as text_splitter
+
+logging = setup_logging()
 
 def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 800, **kwargs):
     """Turns a Document object into a list of many Document chunks.

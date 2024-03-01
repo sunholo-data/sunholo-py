@@ -66,6 +66,10 @@ def embed_pubsub_chunk(data: dict):
     if 'eventTime' not in metadata:
         metadata['eventTime'] = datetime.datetime.utcnow().isoformat(timespec='microseconds') + "Z"
 
+    # add metadata to page_content too for vectorstores that don't suppoort the metdata field
+    chunk_metadata = f"## Chunk Metadata:\n{json.dumps(metadata)}\n"
+    page_content = f"## Chunk Content:\n{page_content}\n{chunk_metadata}"
+
     doc = Document(page_content=page_content, metadata=metadata)
 
     # init embedding and vector store
@@ -82,7 +86,6 @@ def embed_pubsub_chunk(data: dict):
                 embed_llm = value.get('llm', None)
                 if embed_llm is not None:
                     embeddings = pick_embedding(embed_llm)
-                    # append llm name if its specified in the vectorstore config
                 vectorstore_obj = pick_vectorstore(vectorstore, vector_name=vector_name, embeddings=embeddings)
                 vs_retriever = vectorstore_obj.as_retriever(search_kwargs=dict(k=3))
                 vectorstore_list.append(vs_retriever)

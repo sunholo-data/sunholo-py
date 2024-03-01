@@ -12,13 +12,11 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from ..logging import setup_logging
-
-logging = setup_logging()
-
 from ..pubsub import process_pubsub_message
-
 from .message_data import handle_gcs_message, handle_google_drive_message, handle_github_message, handle_http_message, handle_json_content_message
 from .publish import process_docs_chunks_vector_name
+
+logging = setup_logging()
 
 def data_to_embed_pubsub(data: dict):
     """Triggered from a message on a Cloud Pub/Sub topic.
