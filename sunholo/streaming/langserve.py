@@ -70,8 +70,8 @@ def process_langserve_lines(lines):
                         else:
                             content = json_data.get("content")
                             if content is None:
-                                logging.info("No 'content' found - sending full JSON string")
-                                yield json_str
+                                logging.info("No 'content' found - sending full JSON data")
+                                yield json_data
                             else:
                                 yield content
                     except json.JSONDecodeError as err:
@@ -80,22 +80,7 @@ def process_langserve_lines(lines):
                 else:
                     logging.warning("Could not find 'data:' line after 'event: data'")
         if line.startswith('event: metadata'):
-            json_line_index = i + 1
-            if json_line_index < len(lines):
-                json_line = lines[json_line_index]
-                logging.info(f"metadata json_line - {json_line}")
-                if json_line.startswith('data:'):
-                    json_str = json_line[len('data:'):].strip()
-                    try:
-                        json_data = json.loads(json_str)
-                        if isinstance(json_data, dict):
-                            yield json_data
-                        else:
-                            logging.error(f"json.loads(json_str) returned a non-dict object: {json_str}")
-                            yield json_data
-                    except json.JSONDecodeError as err:
-                        logging.error(f"JSON decoding error: {err} - JSON string was: '{json_str}'")
-                        yield json_str
+            logging.info(f"Found event metadata: {line}")
         elif line.startswith('event: error'):
             logging.error(f"Error in stream line: {line}")
             yield line
