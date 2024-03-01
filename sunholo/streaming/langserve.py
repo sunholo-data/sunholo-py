@@ -84,7 +84,18 @@ def process_langserve_lines(lines):
             if json_line_index < len(lines):
                 json_line = lines[json_line_index]
                 logging.info(f"metadata json_line - {json_line}")
-                yield json_line
+                if json_line.startswith('data:'):
+                    json_str = json_line[len('data:'):].strip()
+                    try:
+                        json_data = json.loads(json_str)
+                        if isinstance(json_data, dict):
+                            yield json_data
+                        else:
+                            logging.error(f"json.loads(json_str) returned a non-dict object: {json_str}")
+                            yield json_data
+                    except json.JSONDecodeError as err:
+                        logging.error(f"JSON decoding error: {err} - JSON string was: '{json_str}'")
+                        yield json_str
         elif line.startswith('event: error'):
             logging.error(f"Error in stream line: {line}")
             yield line
