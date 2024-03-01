@@ -140,7 +140,6 @@ class LanceDB(VectorStore):
             # https://lancedb.github.io/lancedb/hybrid_search/hybrid_search/
             search_query = self._connection.search(query, query_type="hybrid")
         elif query_type == "text":
-            # Text search - requires a text index created table.create_fts_index("text")
             # requires import tantivy to be installed
             try:
                 import tantivy  # noqa: F401
@@ -149,6 +148,7 @@ class LanceDB(VectorStore):
                     "Could not import tantivy python package. "
                     "Please install it with `pip install tantivy`."
                 )
+            self._connection.create_fts_index(self._text_key)
             search_query = self._connection.search(query)
         else:
             # Original search logic
