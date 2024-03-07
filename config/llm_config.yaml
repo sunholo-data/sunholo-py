@@ -28,11 +28,11 @@ edmonbrain_vertex:
         vectorstore: alloydb
         self_query: false
   alloydb_config:
-    - project_id: alloydb-project
-    - region: europe-west1
-    - cluster: cluster_name
-    - instance: instance_name
-    - database: database_name
+    project_id: alloydb-project
+    region: europe-west1
+    cluster: cluster_name
+    instance: instance_name
+    database: database_name
 codey:
   llm: codey
   agent: edmonbrain_rag

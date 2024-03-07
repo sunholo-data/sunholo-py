@@ -43,6 +43,9 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
                                         query_name=f'match_documents_{vector_name}')
 
         logging.debug("Chose Supabase")
+
+        return vectorstore
+    
     elif vs_str == 'cloudsql':
         from langchain.vectorstores.pgvector import PGVector
 
@@ -64,6 +67,9 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
             )
 
         logging.debug("Chose CloudSQL")
+
+        return vectorstore
+    
     elif vs_str == 'alloydb':
         from langchain_google_alloydb_pg import AlloyDBEngine, AlloyDBVectorStore, Column
 
@@ -91,22 +97,22 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
         from ..database.database import get_vector_size
         vector_size = get_vector_size(vector_name)
         try:
-            AlloyDBEngine.init_vectorstore_table(
+            engine.init_vectorstore_table(
                 table_name=vector_name,
                 vector_size=vector_size,
-                metadata_columns=[Column("source", "text", nullable=True),
+                metadata_columns=[Column("source", "VARCHAR", nullable=True),
                                   Column("eventTime", "TIMESTAMPTZ", nullable=True)],
             )
         except Exception as e:
             logging.warning(f"Could not create alloydb table {vector_name}: {str(e)}")
-
-        vectorstore = AlloyDBVectorStore(
-            engine,
-            table_name=vector_name,
-            embeddings=embeddings
-        )
-
+        
         logging.info("Chose AlloyDB")
+        return AlloyDBVectorStore.create(
+                engine,
+                table_name=vector_name,
+                embedding_service=embeddings
+            )
+        
     elif vs_str == "lancedb":
         from ..patches.langchain.lancedb import LanceDB
         import lancedb
@@ -145,7 +151,7 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
         )
         logging.info(f"Chose LanceDB for {vector_name} using {LANCEDB_BUCKET}")
 
+        return vectorstore
+
     else:
         raise NotImplementedError(f'No llm implemented for {vs_str}')   
-
-    return vectorstore
