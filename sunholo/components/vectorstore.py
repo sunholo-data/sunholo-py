@@ -73,6 +73,7 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
     elif vs_str == 'alloydb':
         from langchain_google_alloydb_pg import AlloyDBEngine, AlloyDBVectorStore, Column
         from google.cloud.alloydb.connector import IPTypes
+        from sqlalchemy.exc import ProgrammingError
 
         alloydb_config = load_config_key(
             'alloydb_config', 
@@ -95,15 +96,20 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
         )
 
         #TODO: check if table exists first?
-        from ..database.database import get_vector_size
-        vector_size = get_vector_size(vector_name)
-        engine.init_vectorstore_table(
-            vector_name,
-            vector_size=vector_size,
-            metadata_columns=[Column("source", "VARCHAR", nullable=True),
-                              Column("eventTime", "TIMESTAMPTZ", nullable=True)],
-            overwrite_existing=False
-        )
+
+        try:
+            from ..database.database import get_vector_size
+            vector_size = get_vector_size(vector_name)
+            engine.init_vectorstore_table(
+                vector_name,
+                vector_size=vector_size,
+                metadata_columns=[Column("source", "VARCHAR", nullable=True),
+                                  Column("eventTime", "TIMESTAMPTZ", nullable=True)],
+                overwrite_existing=False
+            )
+        except ProgrammingError as err:
+            logging.info(f"Table already exists: {str(err)}")
+
 
         logging.info("Chose AlloyDB")
         vectorstore = AlloyDBVectorStore.create_sync(
