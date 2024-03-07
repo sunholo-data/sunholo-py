@@ -33,6 +33,7 @@ edmonbrain_vertex:
     cluster: cluster_name
     instance: instance_name
     database: database_name
+#   ip_type: PUBLIC or PRIVATE
 codey:
   llm: codey
   agent: edmonbrain_rag

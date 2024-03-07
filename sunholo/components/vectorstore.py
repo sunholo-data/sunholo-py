@@ -83,12 +83,14 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
             logging.error("No alloydb_config was found")
         
         logging.info("Inititaing AlloyDB Langchain")
+        from google.cloud.alloydb.connector import IPTypes
         engine = AlloyDBEngine.from_instance(
             project_id=alloydb_config["project_id"],
             region=alloydb_config["region"],
             cluster=alloydb_config["cluster"],
             instance=alloydb_config["instance"],
-            database=alloydb_config["database"]
+            database=alloydb_config["database"],
+            ip_type=alloydb_config.get("ip_type") or IPTypes.PRIVATE
         )
 
         #create table if not present
