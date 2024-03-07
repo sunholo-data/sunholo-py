@@ -13,6 +13,7 @@
 #   limitations under the License.
 import os
 from ..logging import setup_logging
+from ..utils.config import load_config_key
 
 logging = setup_logging()
 
@@ -63,28 +64,47 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
             )
 
         logging.debug("Chose CloudSQL")
-    elif vs_str == 'alloydb':  # exact same as CloudSQL for now
-        from langchain.vectorstores.pgvector import PGVector
+    elif vs_str == 'alloydb':
+        from langchain_google_alloydb_pg import AlloyDBEngine, AlloyDBVectorStore, Column
 
-        logging.info("Inititaing AlloyDB pgvector")
-        #setup_cloudsql(vector_name) 
+        alloydb_config = load_config_key(
+            'alloydb_config', 
+            vector_name=vector_name, 
+            filename = "config/llm_config.yaml"
+        )
 
-        # https://python.langchain.com/docs/modules/data_connection/vectorstores/integrations/pgvector
-        CONNECTION_STRING = os.environ.get("ALLOYDB_CONNECTION_STRING",None)
-        if CONNECTION_STRING is None:
-            logging.warning("Did not find ALLOYDB_CONNECTION_STRING fallback to PGVECTOR_CONNECTION_STRING")
-            CONNECTION_STRING = os.environ.get("PGVECTOR_CONNECTION_STRING")
-        # postgresql://brainuser:password@10.24.0.3:5432/brain
+        if alloydb_config is None:
+            logging.error("No alloydb_config was found")
+        
+        logging.info("Inititaing AlloyDB Langchain")
+        engine = AlloyDBEngine.from_instance(
+            project_id=alloydb_config["project_id"],
+            region=alloydb_config["region"],
+            cluster=alloydb_config["cluster"],
+            instance=alloydb_config["instance"],
+            database=alloydb_config["database"]
+        )
 
+        #create table if not present
+
+        #TODO: check if table exists first
         from ..database.database import get_vector_size
         vector_size = get_vector_size(vector_name)
-
-        os.environ["PGVECTOR_VECTOR_SIZE"] = str(vector_size)
-        vectorstore = PGVector(connection_string=CONNECTION_STRING,
-            embedding_function=embeddings,
-            collection_name=vector_name,
-            #pre_delete_collection=True # for testing purposes
+        try:
+            AlloyDBEngine.init_vectorstore_table(
+                table_name=vector_name,
+                vector_size=vector_size,
+                metadata_columns=[Column("source", "text", nullable=True),
+                                  Column("eventTime", "TIMESTAMPTZ", nullable=True)],
             )
+        except Exception as e:
+            logging.warning(f"Could not create alloydb table {vector_name}: {str(e)}")
+
+        vectorstore = AlloyDBVectorStore(
+            engine,
+            table_name=vector_name,
+            embeddings=embeddings
+        )
 
         logging.info("Chose AlloyDB")
     elif vs_str == "lancedb":

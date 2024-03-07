@@ -1,6 +1,6 @@
 import pg8000
 import sqlalchemy
-from sqlalchemy.exc import ProgrammingError
+from sqlalchemy.exc import DatabaseError
 from google.cloud.alloydb.connector import Connector
 
 from ..logging import setup_logging
@@ -93,7 +93,7 @@ class AlloyDBClient:
                 logging.info(f"Executing SQL statement: {sql_}")
                 result = conn.execute(sql_)
                 return result  
-            except ProgrammingError as e:
+            except DatabaseError as e:
                 if "already exists" in str(e):
                     logging.warning(f"Error ignored: {str(e)}. Assuming object already exists.")
                 else:

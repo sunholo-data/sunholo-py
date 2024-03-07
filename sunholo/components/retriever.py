@@ -12,9 +12,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from ..logging import setup_logging
-
-logging = setup_logging()
-
 from .vectorstore import pick_vectorstore
 from ..utils import load_config_key
 from .llm import get_embeddings
@@ -26,6 +23,8 @@ from langchain_community.retrievers import GoogleCloudEnterpriseSearchRetriever
 from langchain_community.document_transformers import EmbeddingsRedundantFilter
 from langchain.retrievers.document_compressors import DocumentCompressorPipeline
 from langchain.retrievers import ContextualCompressionRetriever
+
+logging = setup_logging()
 
 def load_memories(vector_name):
     memories = load_config_key("memory", vector_name, filename="config/llm_config.yaml")
