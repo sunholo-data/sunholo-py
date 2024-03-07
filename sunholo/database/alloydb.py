@@ -31,7 +31,14 @@ class AlloyDBClient:
     ```
     """
 
-    def __init__(self, project_id, region, cluster_name, instance_name, user, password=None, db="postgres"):
+    def __init__(self, 
+                 project_id: str, 
+                 region: str, 
+                 cluster_name:str, 
+                 instance_name:str, 
+                 user:str, 
+                 password=None, 
+                 db="postgres"):
         """Initializes the AlloyDB client.
 
         Args:

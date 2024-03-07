@@ -11,8 +11,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-import psycopg2
-from psycopg2.extensions import adapt
+
 import os
 import time
 import math
@@ -81,6 +80,12 @@ def return_sources_last24(vector_name:str):
 
 def delete_row_from_source(source: str, vector_name:str):
     # adapt the user input and decode from bytes to string to protect against sql injection
+    try:
+        import psycopg2
+        from psycopg2.extensions import adapt
+    except ImportError:
+        logging.error("Couldn't import psycopg2 - please install via 'pip install psycopg2'") 
+
     source = adapt(source).getquoted().decode()
     sql_params = {'source_delete': source}
     sql = f"""
@@ -96,6 +101,12 @@ def do_sql(sql, sql_params=None, return_rows=False, verbose=False, connection_en
 
     if connection_env is None:
         raise ValueError("Need to specify connection_env to connect to DB")
+    
+    try:
+        import psycopg2
+        from psycopg2.extensions import adapt
+    except ImportError:
+        logging.error("Couldn't import psycopg2 - please install via 'pip install psycopg2'") 
 
     rows = []
     connection_string = os.getenv(connection_env, None)

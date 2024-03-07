@@ -22,12 +22,15 @@ setup(
     },
     install_requires=[
         # List your dependencies here
+        "google-cloud-alloydb-connector[pg8000]",
+        "google-cloud-logging",
+        "google-cloud-storage",
+        "lancedb",
         "langchain",
         "langchain-community",
         "langchain-google-genai",
-        "google-cloud-logging",
-        "google-cloud-storage",
-        "lancedb"
+        "pg8000",
+        "sqlalchemy"
         # pydantic==1.10.13
         # "supabase",
         # "openai",
