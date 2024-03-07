@@ -97,18 +97,26 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
         #create table if not present
 
         #TODO: check if table exists first
-        from ..database.database import get_vector_size
-        vector_size = get_vector_size(vector_name)
-        try:
-            engine.init_vectorstore_table(
-                vector_name,
-                vector_size=vector_size,
-                metadata_columns=[Column("source", "VARCHAR", nullable=True),
-                                  Column("eventTime", "TIMESTAMPTZ", nullable=True)],
-            )
-            logging.info(f"AlloyDB table created successfully {vector_name}")
-        except Exception as e:
-            logging.warning(f"Could not create alloydb table {vector_name}: {str(e)}")
+        from sqlalchemy import inspect  
+
+        def table_exists(engine, table_name):
+            inspector = inspect(engine)
+            return table_name in inspector.get_table_names()
+
+        if not table_exists(engine, vector_name):
+            from ..database.database import get_vector_size
+            vector_size = get_vector_size(vector_name)
+            try:
+                engine.init_vectorstore_table(
+                    vector_name,
+                    vector_size=vector_size,
+                    metadata_columns=[Column("source", "VARCHAR", nullable=True),
+                                    Column("eventTime", "TIMESTAMPTZ", nullable=True)],
+                )
+                logging.info(f"AlloyDB table created successfully {vector_name}")
+            except Exception as e:
+                logging.warning(f"Could not create alloydb table {vector_name}: {str(e)}")
+                raise
         
         logging.info("Chose AlloyDB")
         vectorstore = AlloyDBVectorStore.create_sync(
