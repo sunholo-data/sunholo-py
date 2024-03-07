@@ -107,11 +107,12 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
             logging.warning(f"Could not create alloydb table {vector_name}: {str(e)}")
         
         logging.info("Chose AlloyDB")
-        return AlloyDBVectorStore.create(
+        vectorstore = AlloyDBVectorStore.create_sync(
                 engine,
                 table_name=vector_name,
                 embedding_service=embeddings
             )
+        return vectorstore
         
     elif vs_str == "lancedb":
         from ..patches.langchain.lancedb import LanceDB
