@@ -98,3 +98,5 @@ class AlloyDBClient:
                     logging.warning(f"Error ignored: {str(e)}. Assuming object already exists.")
                 else:
                     raise  
+            finally:
+                conn.close()
