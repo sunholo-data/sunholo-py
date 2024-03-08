@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.21.15'
+version = '0.21.16'
 
 setup(
     name='sunholo',
@@ -28,6 +28,7 @@ setup(
         "lancedb",
         "langchain",
         "langchain-community",
+        "langchain-openai",
         "langchain-google-genai",
         "pg8000",
         "sqlalchemy"

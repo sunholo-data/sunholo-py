@@ -69,7 +69,7 @@ def get_llm(vector_name, model=None, config_file="config/llm_config.yaml"):
     # Configure LLMs based on llm_str
     if llm_str == 'openai':
         # Setup for OpenAI LLM
-        from langchain_community.chat_models import ChatOpenAI
+        from langchain_openai import ChatOpenAI
         if model is None:
             model = 'gpt-3.5-turbo'
             logging.info(f"No 'model' value in config file - selecting default ChatOpenAI: {model}")
@@ -84,15 +84,6 @@ def get_llm(vector_name, model=None, config_file="config/llm_config.yaml"):
             model = 'text-unicorn'
             logging.info(f"No 'model' value in config file - selecting default {model}")
             
-        return VertexAI(model_name = model, temperature=0, max_output_tokens=1024)
-
-    elif llm_str == 'codey':
-        # Setup for Vertex LLM
-        from langchain_community.llms import VertexAI
-        if model is None:
-            model = 'code-bison'
-            logging.info(f"No 'model' value in config file - selecting default {model}")
-                       
         return VertexAI(model_name = model, temperature=0, max_output_tokens=1024)
 
     elif llm_str == 'model_garden':
@@ -124,7 +115,7 @@ def get_llm_chat(vector_name, model=None, config_file="config/llm_config.yaml"):
     # Configure LLMs based on llm_str
     if llm_str == 'openai':
         # Setup for OpenAI LLM
-        from langchain_community.chat_models import ChatOpenAI
+        from langchain_openai import ChatOpenAI
         if model is None:
             model = 'gpt-4'
             logging.info(f"No 'model' value in config file - selecting default {model}")

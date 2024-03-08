@@ -65,6 +65,7 @@ def embed_pubsub_chunk(data: dict):
 
     if 'eventTime' not in metadata:
         metadata['eventTime'] = datetime.datetime.utcnow().isoformat(timespec='microseconds') + "Z"
+    metadata['eventtime'] = metadata['eventTime'] # case insensitive bugs
 
     # add metadata to page_content too for vectorstores that don't suppoort the metdata field
     chunk_metadata = f"## Chunk Metadata:\n{json.dumps(metadata)}\n"
@@ -92,10 +93,11 @@ def embed_pubsub_chunk(data: dict):
 
     # can have multiple vectorstores per embed
     metadata_list = []
+    import uuid
     for vector_store in vectorstore_list:
         logging.debug(f"Adding single document for {vector_name} to vector store {vector_store}")
         try:
-            vector_store.add_documents([doc])
+            vector_store.add_documents([doc], ids = [str(uuid.uuid4())])
             logging.info(f"Added doc for {vector_name} to {vector_store} - metadata: {metadata}")
             metadata_list.append(metadata)
         except Exception as err:
