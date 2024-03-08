@@ -88,6 +88,7 @@ class AlloyDBClient:
             The result of the execution, if any.
         """
         sql_ = sqlalchemy.text(sql_statement)
+        result = None
         with self.engine.connect() as conn:
             try:
                 logging.info(f"Executing SQL statement: {sql_}")
@@ -99,4 +100,5 @@ class AlloyDBClient:
                     raise  
             finally:
                 conn.close()
+                
         return result  
