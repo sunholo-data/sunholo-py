@@ -69,8 +69,7 @@ def get_llm(vector_name, model=None, config_file="config/llm_config.yaml"):
     # Configure LLMs based on llm_str
     if llm_str == 'openai':
         # Setup for OpenAI LLM
-        #from langchain.llms import OpenAI
-        from langchain.chat_models import ChatOpenAI
+        from langchain_community.chat_models import ChatOpenAI
         if model is None:
             model = 'gpt-3.5-turbo'
             logging.info(f"No 'model' value in config file - selecting default ChatOpenAI: {model}")
@@ -80,7 +79,7 @@ def get_llm(vector_name, model=None, config_file="config/llm_config.yaml"):
 
     elif llm_str == 'vertex':
         # Setup for Vertex LLM
-        from langchain.llms import VertexAI
+        from langchain_community.llms import VertexAI
         if model is None:
             model = 'text-unicorn'
             logging.info(f"No 'model' value in config file - selecting default {model}")
@@ -89,7 +88,7 @@ def get_llm(vector_name, model=None, config_file="config/llm_config.yaml"):
 
     elif llm_str == 'codey':
         # Setup for Vertex LLM
-        from langchain.llms import VertexAI
+        from langchain_community.llms import VertexAI
         if model is None:
             model = 'code-bison'
             logging.info(f"No 'model' value in config file - selecting default {model}")
@@ -125,7 +124,7 @@ def get_llm_chat(vector_name, model=None, config_file="config/llm_config.yaml"):
     # Configure LLMs based on llm_str
     if llm_str == 'openai':
         # Setup for OpenAI LLM
-        from langchain.chat_models import ChatOpenAI
+        from langchain_community.chat_models import ChatOpenAI
         if model is None:
             model = 'gpt-4'
             logging.info(f"No 'model' value in config file - selecting default {model}")
@@ -134,18 +133,9 @@ def get_llm_chat(vector_name, model=None, config_file="config/llm_config.yaml"):
 
     elif llm_str == 'vertex':
         # Setup for Vertex LLM
-        from langchain.chat_models import ChatVertexAI
+        from langchain_community.chat_models import ChatVertexAI
         if model is None:
             model = 'gemini-1.0-pro'
-            logging.info(f"No 'model' value in config file - selecting default {model}")
-            
-        return ChatVertexAI(model_name = model, temperature=0, max_output_tokens=1024)
-
-    elif llm_str == 'codey':
-        # Setup for Vertex LLM
-        from langchain.chat_models import ChatVertexAI
-        if model is None:
-            model = 'codechat-bison'
             logging.info(f"No 'model' value in config file - selecting default {model}")
             
         return ChatVertexAI(model_name = model, temperature=0, max_output_tokens=1024)
@@ -181,8 +171,7 @@ def pick_embedding(llm_str):
     # Configure embeddings based on llm_str
     if llm_str == 'openai':
         # Setup for OpenAI embeddings
-        #from langchain_openai import OpenAIEmbeddings
-        from langchain_community.embeddings import OpenAIEmbeddings
+        from langchain_openai import OpenAIEmbeddings
         return OpenAIEmbeddings()
     elif llm_str == 'vertex' or llm_str == 'codey':
         # Setup for Text-Bison embeddings
