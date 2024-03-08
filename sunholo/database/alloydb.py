@@ -92,7 +92,6 @@ class AlloyDBClient:
             try:
                 logging.info(f"Executing SQL statement: {sql_}")
                 result = conn.execute(sql_)
-                return result  
             except DatabaseError as e:
                 if "already exists" in str(e):
                     logging.warning(f"Error ignored: {str(e)}. Assuming object already exists.")
@@ -100,3 +99,4 @@ class AlloyDBClient:
                     raise  
             finally:
                 conn.close()
+        return result  

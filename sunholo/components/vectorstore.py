@@ -103,8 +103,8 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
             engine.init_vectorstore_table(
                 vector_name,
                 vector_size=vector_size,
-                #metadata_columns=[Column("source", "VARCHAR", nullable=True),
-                #                  Column("eventTime", "TIMESTAMPTZ", nullable=True)],
+                metadata_columns=[Column("source", "VARCHAR", nullable=True),
+                                  Column("eventTime", "TIMESTAMPTZ", nullable=True)],
                 overwrite_existing=False
             )
         except ProgrammingError as err:
@@ -116,7 +116,7 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
                 engine=engine,
                 table_name=vector_name,
                 embedding_service=embeddings,
-                #metadata_columns=["source", "eventTime"]
+                metadata_columns=["source", "eventTime"]
             )
         return vectorstore
         
