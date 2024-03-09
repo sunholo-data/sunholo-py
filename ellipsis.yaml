@@ -1,0 +1,28 @@
+version: 1.3
+
+about:
+  - "This is a codebase for a code generation tool called Ellipsis. It can review GitHub pull requests, answer questions about code, and even generate bug fixes!"
+  - "We're migrating away from using AWS CDK. Our infrastructure is no longer part of this repository."
+
+build:
+  file: "ellipsis.Dockerfile"
+  commands: 
+    - name: "lint_fix"
+      description: "Lints the code in fix mode, which will fix some errors, format some files, and throw and error when there are violations."
+      command: "./scripts/lint.sh"
+    - name: "unit_tests"
+      description: "Runs the unit tests."
+      command: ./scripts/unit_test.sh
+
+pr_review:
+  confidence_threshold: 0.7
+  rules:
+    - "Code should be DRY (Dont Repeat Yourself)"
+    - "There should no secrets or credentials in the code"
+    - "Extremely Complicated Code Needs Comments"
+    - "Use Descriptive Variable and Constant Names"
+    - "API routes must have error handling, they shouldn't intentionally return a HTTP 500"
+    - "Use retries when calling external API services"
+    - "Don't log sensitive data"
+    - "Follow the Single Responsibility Principle"
+    - "Function and Method Naming Should Follow Consistent Patterns"
