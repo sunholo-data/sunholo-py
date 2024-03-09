@@ -105,7 +105,7 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
                 vector_size=vector_size,
                 #metadata_columns=[Column("source", "VARCHAR", nullable=True),
                 #                  Column("eventTime", "TIMESTAMPTZ", nullable=True)],
-                metadata_columns=[Column("source", "VARCHAR", nullable=True)],
+                metadata_columns=[Column("source", "TEXT", nullable=True)],
                 overwrite_existing=False
             )
         except ProgrammingError as err:
