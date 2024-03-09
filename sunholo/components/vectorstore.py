@@ -71,9 +71,9 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
         return vectorstore
     
     elif vs_str == 'alloydb':
-        from langchain_google_alloydb_pg import AlloyDBEngine, AlloyDBVectorStore, Column
+        from langchain_google_alloydb_pg import AlloyDBEngine, AlloyDBVectorStore
         from google.cloud.alloydb.connector import IPTypes
-        from sqlalchemy.exc import ProgrammingError
+        from ..database.alloydb import create_alloydb_table
 
         alloydb_config = load_config_key(
             'alloydb_config', 
@@ -95,24 +95,9 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
             ip_type=alloydb_config.get("ip_type") or IPTypes.PRIVATE
         )
 
-        #TODO: check if table exists first?
-
-        # TODO: set flag and cache it
-        try:
-            from ..database.database import get_vector_size
-            vector_size = get_vector_size(vector_name, config_file="config/llm_config.yaml")
-            engine.init_vectorstore_table(
-                vector_name,
-                vector_size=vector_size,
-                #metadata_columns=[Column("source", "VARCHAR", nullable=True),
-                #                  Column("eventTime", "TIMESTAMPTZ", nullable=True)],
-                metadata_columns=[Column("source", "TEXT", nullable=True)],
-                overwrite_existing=False
-            )
-            logging.info(f"Created AlloyDB Table: {vector_name} with vector size: {vector_size}")
-        except ProgrammingError as err:
-            logging.info(f"Table already exists: {str(err)}")
-
+        # global in-memory cache to check if table created
+        alloydb_table_cache = {}  # Our cache, initially empty  # noqa: F841
+        create_alloydb_table(vector_name, engine)
 
         logging.info("Chose AlloyDB")
         vectorstore = AlloyDBVectorStore.create_sync(

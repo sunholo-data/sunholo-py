@@ -3,6 +3,10 @@ import sqlalchemy
 from sqlalchemy.exc import DatabaseError
 from google.cloud.alloydb.connector import Connector
 
+from langchain_google_alloydb_pg import AlloyDBEngine, AlloyDBVectorStore, Column
+from google.cloud.alloydb.connector import IPTypes
+from sqlalchemy.exc import ProgrammingError
+
 from ..logging import setup_logging
 
 logging = setup_logging()
@@ -100,5 +104,27 @@ class AlloyDBClient:
                     raise  
             finally:
                 conn.close()
-                
+
         return result  
+
+def create_alloydb_table(table_name, engine):
+    global alloydb_table_cache
+
+    if table_name in alloydb_table_cache:
+            logging.info(f"AlloyDB Table '{table_name}' exists, skipping creation.")
+            return
+    try:
+        from .database import get_vector_size
+        vector_size = get_vector_size(table_name, config_file="config/llm_config.yaml")
+        engine.init_vectorstore_table(
+            table_name,
+            vector_size=vector_size,
+            #metadata_columns=[Column("source", "VARCHAR", nullable=True),
+            #                  Column("eventTime", "TIMESTAMPTZ", nullable=True)],
+            metadata_columns=[Column("source", "TEXT", nullable=True)],
+            overwrite_existing=False
+        )
+        logging.info(f"## Created AlloyDB Table: {table_name} with vector size: {vector_size}")
+    except ProgrammingError as err:
+        logging.info(f"AlloyDB Table already exists - caching name: {str(err)}")
+        alloydb_table_cache[table_name] = True 
