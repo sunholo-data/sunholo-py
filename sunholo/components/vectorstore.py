@@ -97,6 +97,7 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
 
         #TODO: check if table exists first?
 
+        # TODO: set flag and cache it
         try:
             from ..database.database import get_vector_size
             vector_size = get_vector_size(vector_name)
@@ -108,6 +109,7 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
                 metadata_columns=[Column("source", "TEXT", nullable=True)],
                 overwrite_existing=False
             )
+            logging.info(f"Created AlloyDB Table: {vector_name} with vector size: {vector_size}")
         except ProgrammingError as err:
             logging.info(f"Table already exists: {str(err)}")
 
