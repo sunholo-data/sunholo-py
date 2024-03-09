@@ -107,6 +107,7 @@ class AlloyDBClient:
 
         return result  
 
+alloydb_table_cache = {}  # Our cache, initially empty  # noqa: F841
 def create_alloydb_table(table_name, engine):
     global alloydb_table_cache
 

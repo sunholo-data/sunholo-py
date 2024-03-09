@@ -95,8 +95,6 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
             ip_type=alloydb_config.get("ip_type") or IPTypes.PRIVATE
         )
 
-        # global in-memory cache to check if table created
-        alloydb_table_cache = {}  # Our cache, initially empty  # noqa: F841
         create_alloydb_table(vector_name, engine)
 
         logging.info("Chose AlloyDB")
