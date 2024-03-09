@@ -18,6 +18,7 @@ import math
 
 from ..utils.config import get_module_filepath
 from ..logging import setup_logging
+from ..utils.config import load_config_key
 
 logging = setup_logging()
 
@@ -47,10 +48,11 @@ def lookup_connection_env(vs_str):
     raise ValueError("Could not find vectorstore for {vs_str}")
 
 
-def get_vector_size(vector_name: str):
+def get_vector_size(vector_name: str, config_file:str):
 
-    from ..components import get_llm
-    llm_str = get_llm(vector_name)
+    llm_str = load_config_key("llm", vector_name, filename=config_file)
+    if not isinstance(llm_str, str):
+        raise ValueError(f"get_vector_size() did not return a value string for {vector_name} - got {llm_str} instead")
     
     vector_size = 768
     if llm_str == 'openai':

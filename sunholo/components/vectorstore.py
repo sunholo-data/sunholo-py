@@ -100,7 +100,7 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
         # TODO: set flag and cache it
         try:
             from ..database.database import get_vector_size
-            vector_size = get_vector_size(vector_name)
+            vector_size = get_vector_size(vector_name, config_file="config/llm_config.yaml")
             engine.init_vectorstore_table(
                 vector_name,
                 vector_size=vector_size,
