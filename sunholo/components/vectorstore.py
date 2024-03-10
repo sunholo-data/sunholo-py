@@ -91,7 +91,7 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
             region=alloydb_config["region"],
             cluster=alloydb_config["cluster"],
             instance=alloydb_config["instance"],
-            database=alloydb_config["database"],
+            database=alloydb_config.get("database") or f'db_{alloydb_config["project_id"]}',
             ip_type=alloydb_config.get("ip_type") or IPTypes.PRIVATE
         )
 
