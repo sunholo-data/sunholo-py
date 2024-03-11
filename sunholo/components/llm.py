@@ -51,7 +51,7 @@ def pick_streaming(vector_name):
     
     llm_str = load_config_key("llm", vector_name, filename = "config/llm_config.yaml")
     
-    if llm_str == 'openai' or llm_str == 'gemini':
+    if llm_str == 'openai' or llm_str == 'gemini' or llm_str == 'vertex':
         return True
     
     return False
