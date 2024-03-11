@@ -32,7 +32,7 @@ edmonbrain_vertex:
     region: europe-west1
     cluster: cluster_name
     instance: instance_name
-    database: database_name # if not included will default to 'db_<project_id>'
+    database: database_name # if not included will use env var ALLOYDB_DB
 #   ip_type: PUBLIC or PRIVATE
 codey:
   llm: codey

@@ -83,15 +83,21 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
 
         if alloydb_config is None:
             logging.error("No alloydb_config was found")
+
+        ALLOYDB_DB = os.environ.get("ALLOYDB_DB")
+        if ALLOYDB_DB is None:
+            logging.error(f"Could not locate ALLOYDB_DB environment variable for {vector_name}")
+        logging.info(f"ALLOYDB_DB environment variable found for {vector_name} - {ALLOYDB_DB}")
         
         logging.info("Inititaing AlloyDB Langchain")
+
         
         engine = AlloyDBEngine.from_instance(
             project_id=alloydb_config["project_id"],
             region=alloydb_config["region"],
             cluster=alloydb_config["cluster"],
             instance=alloydb_config["instance"],
-            database=alloydb_config.get("database") or f'db_{alloydb_config["project_id"]}',
+            database=alloydb_config.get("database") or ALLOYDB_DB,
             ip_type=alloydb_config.get("ip_type") or IPTypes.PRIVATE
         )
 
