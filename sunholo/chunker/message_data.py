@@ -13,7 +13,6 @@
 #   limitations under the License.
 from ..logging import setup_logging
 
-logging = setup_logging()
 import pathlib
 import tempfile
 import os
@@ -29,6 +28,8 @@ from .pdfs import split_pdf_to_pages
 from .publish import publish_if_urls
 from . import loaders
 from ..utils.parsers import extract_urls
+
+logging = setup_logging()
 
 def handle_gcs_message(message_data: str, metadata: dict, vector_name: str):
     # Process message from Google Cloud Storage
@@ -74,11 +75,11 @@ def handle_gcs_message(message_data: str, metadata: dict, vector_name: str):
             docs2 = loaders.read_file_to_document(page, metadata=metadata)
             docs.extend(docs2)
 
-        chunks = chunk_doc_to_docs(docs, file_name.suffix)
+        chunks = chunk_doc_to_docs(docs, file_name.suffix, vector_name=vector_name)
 
         return chunks, metadata
 
-def handle_google_drive_message(message_data: str, metadata: dict):
+def handle_google_drive_message(message_data: str, metadata: dict, vector_name: str):
     # Process message from Google Drive
     logging.info("Got google drive URL")
     urls = extract_urls(message_data)
@@ -94,11 +95,11 @@ def handle_google_drive_message(message_data: str, metadata: dict):
         else:
             docs.extend(doc)
 
-    chunks = chunk_doc_to_docs(docs)
+    chunks = chunk_doc_to_docs(docs, vector_name=vector_name)
 
     return chunks, metadata
 
-def handle_github_message(message_data: str, metadata: dict):
+def handle_github_message(message_data: str, metadata: dict, vector_name: str):
     # Process message from GitHub
     logging.info("Got GitHub URL")
     urls = extract_urls(message_data)
@@ -122,11 +123,11 @@ def handle_github_message(message_data: str, metadata: dict):
         else:
             docs.extend(doc)
     
-    chunks = chunk_doc_to_docs(docs)
+    chunks = chunk_doc_to_docs(docs, vector_name=vector_name)
     
     return chunks, metadata
 
-def handle_http_message(message_data: str, metadata: dict):
+def handle_http_message(message_data: str, metadata: dict, vector_name:str):
     # Process message from a generic HTTP URL
     logging.info(f"Got http message: {message_data}")
 
@@ -141,7 +142,7 @@ def handle_http_message(message_data: str, metadata: dict):
         doc = loaders.read_url_to_document(url, metadata=metadata)
         docs.extend(doc)
 
-    chunks = chunk_doc_to_docs(docs)
+    chunks = chunk_doc_to_docs(docs, vector_name=vector_name)
 
     return chunks, metadata
 
@@ -164,6 +165,6 @@ def handle_json_content_message(message_data: str, metadata: dict, vector_name: 
 
     publish_if_urls(the_content, vector_name)
 
-    chunks = chunk_doc_to_docs(docs)
+    chunks = chunk_doc_to_docs(docs,vector_name=vector_name)
 
     return chunks, metadata

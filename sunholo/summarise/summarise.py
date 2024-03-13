@@ -69,7 +69,7 @@ def summarise_docs(docs, vector_name, skip_if_less=10000):
             doc.page_content = doc.page_content[:max_content_length]
 
         metadata = doc.metadata
-        chunks = chunk_doc_to_docs([doc])
+        chunks = chunk_doc_to_docs([doc], vector_name=vector_name)
 
         # Initial delay
         delay = 1.0  # 1 second, for example

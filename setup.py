@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.22.0'
+version = '0.23.0'
 
 setup(
     name='sunholo',
@@ -27,6 +27,7 @@ setup(
         "google-cloud-storage",
         "lancedb",
         "langchain",
+        "langchain_experimental",
         "langchain-community",
         "langchain-openai",
         "langchain-google-genai",

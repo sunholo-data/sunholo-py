@@ -18,7 +18,7 @@ import langchain.text_splitter as text_splitter
 
 logging = setup_logging()
 
-def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 800, **kwargs):
+def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 800, vector_name=None, **kwargs):
     """Turns a Document object into a list of many Document chunks.
        If a document or chunk is smaller than min_size, it will be merged with adjacent documents or chunks."""
 
@@ -45,7 +45,7 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
     source_chunks = []
     temporary_chunk = ""
     for document in combined_documents:
-        splitter = choose_splitter(extension, **kwargs)
+        splitter = choose_splitter(extension, vector_name=vector_name, **kwargs)
         for chunk in splitter.split_text(document.page_content):
             # If a chunk is smaller than the min_size, append it to temporary_chunk with a line break and continue
             if len(chunk) < min_size:
@@ -87,7 +87,28 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
     logging.info(f"Chunked into {len(source_chunks)} documents")
     return source_chunks
 
-def choose_splitter(extension: str, chunk_size: int=1024, chunk_overlap:int=0):
+def choose_splitter(extension: str, chunk_size: int=1024, chunk_overlap:int=0, vector_name: str=None):
+
+    if vector_name:
+        # check if there is a chunking configuration
+        from ..utils import load_config_key
+        chunk_config = load_config_key("chunker", vector_name=vector_name, filename="config/llm_config.yaml")
+        if chunk_config:
+            if chunk_config.get("type") == "semantic":
+                embedding_str = chunk_config.get("llm")
+                if not embedding_str:
+                    logging.error("Unable to find embedding 'config.chunker.llm' configuration needed for semantic chunking")
+                else:
+                    from langchain_experimental.text_splitter import SemanticChunker
+                    from ..components import pick_embedding
+                    embeddings = pick_embedding()
+                    semantic_splitter = SemanticChunker(
+                        embeddings, breakpoint_threshold_type="percentile"
+                    )
+
+                    return semantic_splitter
+
+
     if extension == ".py":
         return text_splitter.PythonCodeTextSplitter()
     elif extension == ".md":

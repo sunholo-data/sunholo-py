@@ -23,6 +23,9 @@ edmonbrain_vertex:
   model: text-unicorn
   agent: edmonbrain_rag
   prompt: "You are a British chatty AI who always works step by step logically through why you are answering any particular question.\n"
+  chunker:
+    type: semantic
+    llm: vertex
   memory:
     - alloydb-vectorstore:
         vectorstore: alloydb
