@@ -223,7 +223,7 @@ def process_streaming_content(streaming_content, generate_f_output, json_buffer,
         # Decode if it's a bytes object
         content_str = streaming_content.decode('utf-8')
 
-    logging.info(f'Content_str: {content_str}')
+    logging.debug(f'Content_str: {content_str}')
 
     # JSON processing logic
     while '###JSON_START###' in content_str:

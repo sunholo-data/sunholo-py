@@ -128,9 +128,9 @@ def create_alloydb_table(table_name, engine):
         )
         logging.info(f"## Created AlloyDB Table: {table_name} with vector size: {vector_size}")
     except DuplicateTableError as err: 
-        logging.info(f"AlloyDB Table already exists - caching name: {str(err)}")
+        logging.info(f"AlloyDB Table already exists - caching name")
         alloydb_table_cache[table_name] = True 
     except ProgrammingError as err:
         if "already exists" in str(err):
-            logging.info(f"AlloyDB Table already exists (programming error) - caching name: {str(err)}")
+            logging.info(f"AlloyDB Table already exists (programming error) - caching name")
             alloydb_table_cache[table_name] = True
