@@ -40,14 +40,14 @@ def data_to_embed_pubsub(data: dict):
         chunks, metadata =  handle_gcs_message(message_data, metadata, vector_name)
 
     elif message_data.startswith("https://drive.google.com") or message_data.startswith("https://docs.google.com"):
-        chunks, metadata = handle_google_drive_message(message_data, metadata)
+        chunks, metadata = handle_google_drive_message(message_data, metadata, vector_name)
 
     #TODO: support more git service URLs
     elif message_data.startswith("https://github.com"):
-        chunks, metadata = handle_github_message(message_data, metadata)
+        chunks, metadata = handle_github_message(message_data, metadata, vector_name)
         
     elif message_data.startswith("http"):
-        chunks, metadata = handle_http_message(message_data, metadata)
+        chunks, metadata = handle_http_message(message_data, metadata, vector_name)
 
     else: 
         chunks, metadata = handle_json_content_message(message_data, metadata, vector_name) 
