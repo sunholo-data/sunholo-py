@@ -99,6 +99,7 @@ def choose_splitter(extension: str, chunk_size: int=1024, chunk_overlap:int=0, v
                 if not embedding_str:
                     logging.error("Unable to find embedding 'config.chunker.llm' configuration needed for semantic chunking")
                 else:
+                    logging.info(f"Semantic chunking for {vector_name}")
                     from langchain_experimental.text_splitter import SemanticChunker
                     from ..components import pick_embedding
                     embeddings = pick_embedding()
@@ -113,5 +114,7 @@ def choose_splitter(extension: str, chunk_size: int=1024, chunk_overlap:int=0, v
         return text_splitter.PythonCodeTextSplitter()
     elif extension == ".md":
         return text_splitter.MarkdownTextSplitter()
+    elif extension == ".html":
+        return text_splitter.HTMLHeaderTextSplitter()
     
     return text_splitter.RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)

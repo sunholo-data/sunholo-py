@@ -65,13 +65,13 @@ def load_config(filename: str=None) -> tuple[dict, str]:
 
    # Check the cache first
     if filename in config_cache:
-        logging.info(f"Returning cached config for {filename}")
+        logging.debug(f"Returning cached config for {filename}")
         return config_cache[filename], filename
     
     # Join the script directory with the filename
     config_path = filename
 
-    logging.info(f"Loading config file {os.getcwd()}/{config_path}")
+    logging.debug(f"Loading config file {os.getcwd()}/{config_path}")
 
     with open(config_path, 'r') as f:
         if filename.endswith(".json"):
