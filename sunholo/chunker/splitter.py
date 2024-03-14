@@ -102,7 +102,7 @@ def choose_splitter(extension: str, chunk_size: int=1024, chunk_overlap:int=0, v
                     logging.info(f"Semantic chunking for {vector_name}")
                     from langchain_experimental.text_splitter import SemanticChunker
                     from ..components import pick_embedding
-                    embeddings = pick_embedding(vector_name)
+                    embeddings = pick_embedding(embedding_str)
                     semantic_splitter = SemanticChunker(
                         embeddings, breakpoint_threshold_type="percentile"
                     )

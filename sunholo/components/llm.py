@@ -157,7 +157,7 @@ def get_embeddings(vector_name):
 
 
 
-def pick_embedding(llm_str):
+def pick_embedding(llm_str: str):
     # get embedding directly from llm_str
     # Configure embeddings based on llm_str
     if llm_str == 'openai':
