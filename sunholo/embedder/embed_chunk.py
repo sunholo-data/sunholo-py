@@ -64,14 +64,15 @@ def embed_pubsub_chunk(data: dict):
     logging.info(f"Embedding: {vector_name} page_content: {page_content[:30]}...")
 
     if 'eventTime' not in metadata:
-        metadata['eventTime'] = datetime.datetime.utcnow().isoformat(timespec='microseconds') + "Z"
+        metadata['eventTime'] = datetime.datetime.now(datetime.UTC).isoformat(timespec='microseconds') + "Z"
     metadata['eventtime'] = metadata['eventTime'] # case insensitive bugs
 
     if 'source' not in metadata:
         if 'objectId' in metadata:
             metadata['source'] = metadata['objectId']
     
-    metadata['original_source'] = metadata['source']
+    if 'original_source' not in metadata:
+        metadata['original_source'] = metadata['source']
 
     # add metadata to page_content too for vectorstores that don't suppoort the metdata field
     chunk_metadata = f"## Chunk Metadata:\n{json.dumps(metadata)}\n"
