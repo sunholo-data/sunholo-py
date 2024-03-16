@@ -186,12 +186,22 @@ def read_file_to_document(gs_file: pathlib.Path, split=False, metadata: dict = N
         try:
             logging.info(f"Sending {gs_file} to UnstructuredAPIFileLoader")
             UNSTRUCTURED_URL = os.getenv("UNSTRUCTURED_URL", None)
+            unstructured_kwargs = {"pdf_infer_table_structure": True,
+                                   "extract_image_block_types":  ["Image", "Table"]}
             if UNSTRUCTURED_URL is not None:
                 logging.debug(f"Found UNSTRUCTURED_URL: {UNSTRUCTURED_URL}")
                 the_endpoint = f"{UNSTRUCTURED_URL}/general/v0/general"
-                loader = UnstructuredAPIFileLoader(gs_file, url=the_endpoint)
+                loader = UnstructuredAPIFileLoader(
+                    gs_file,
+                    url=the_endpoint,
+                    mode="elements",
+                    unstructured_kwargs=unstructured_kwargs)
             else:
-                loader = UnstructuredAPIFileLoader(gs_file, api_key=UNSTRUCTURED_KEY)
+                loader = UnstructuredAPIFileLoader(
+                    gs_file,
+                    api_key=UNSTRUCTURED_KEY,
+                    mode="elements",
+                    unstructured_kwargs=unstructured_kwargs)
             
             if split:
                 # only supported for some file types
@@ -229,6 +239,7 @@ def read_file_to_document(gs_file: pathlib.Path, split=False, metadata: dict = N
         logging.info(f"doc_content: {doc.page_content[:30]} - length: {len(doc.page_content)}")
         if metadata is not None:
             doc.metadata.update(metadata)
+            logging.info(f"doc_metadata: {doc.metadata}")
     
     logging.info(f"gs_file:{gs_file} read into {len(docs)} docs")
 

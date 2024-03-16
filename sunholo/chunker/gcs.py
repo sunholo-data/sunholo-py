@@ -13,12 +13,12 @@
 #   limitations under the License.
 import datetime
 import os
-
+from google.cloud import storage
 from ..logging import setup_logging
 
 logging = setup_logging()
 
-from google.cloud import storage
+
 
 def add_file_to_gcs(filename: str, vector_name:str, bucket_name: str=None, metadata:dict=None):
 
