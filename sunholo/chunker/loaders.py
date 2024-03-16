@@ -11,10 +11,11 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from langchain.document_loaders.unstructured import UnstructuredFileLoader
-from langchain.document_loaders.unstructured import UnstructuredAPIFileLoader
+from langchain_community.document_loaders import UnstructuredFileLoader
+from langchain_community.document_loaders import UnstructuredAPIFileLoader
 from langchain_community.document_loaders import UnstructuredURLLoader
-from langchain.document_loaders.git import GitLoader
+
+from langchain_community.document_loaders import GitLoader
 from langchain_community.document_loaders import GoogleDriveLoader
 
 from googleapiclient.errors import HttpError
@@ -24,7 +25,6 @@ from ..logging import setup_logging
 from .pdfs import read_pdf_file
 from ..utils.config import load_config
 
-logging = setup_logging()
 import pathlib
 import os
 import shutil
@@ -34,6 +34,8 @@ import time
 
 from pydantic import BaseModel, Field
 from typing import Optional
+
+logging = setup_logging()
 
 UNSTRUCTURED_KEY=os.getenv('UNSTRUCTURED_KEY')
 
@@ -159,8 +161,10 @@ def read_gdrive_to_document(url: str, metadata: dict = None):
     return docs
 
 def read_url_to_document(url: str, metadata: dict = None):
-    
-    loader = UnstructuredURLLoader(urls=[url])
+
+    unstructured_kwargs = {"pdf_infer_table_structure": True,
+                            "extract_image_block_types":  ["Image", "Table"]} 
+    loader = UnstructuredURLLoader(urls=[url], mode="elements", unstructured_kwargs=unstructured_kwargs)
     docs = loader.load()
     if metadata is not None:
         for doc in docs:
@@ -220,7 +224,9 @@ def read_file_to_document(gs_file: pathlib.Path, split=False, metadata: dict = N
                 try:
                     # Convert the file to .txt and try again
                     txt_file = convert_to_txt(gs_file)
-                    loader = UnstructuredFileLoader(txt_file, mode="elements")
+                    loader = UnstructuredFileLoader(
+                        txt_file, 
+                        mode="elements")
                     if split:
                         docs = loader.load_and_split()
                     else:
