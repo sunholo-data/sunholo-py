@@ -178,7 +178,7 @@ def read_url_to_document(url: str, metadata: dict = None):
 def read_file_to_document(gs_file: pathlib.Path, split=False, metadata: dict = None):
     
     docs = []
-    pdf_path = pathlib.Path(gs_file)
+    pdf_path = str(pathlib.Path(gs_file))
 
     logging.info(f"Sending {pdf_path} to UnstructuredAPIFileLoader")
     UNSTRUCTURED_URL = os.getenv("UNSTRUCTURED_URL", None)

@@ -55,7 +55,8 @@ def data_to_embed_pubsub(data: dict):
     process_docs_chunks_vector_name(chunks, vector_name, metadata)
 
     # to be really sure
-    metadata["vector_name"] = vector_name
+    if metadata:
+        metadata["vector_name"] = vector_name
 
     return metadata
 
