@@ -38,7 +38,6 @@ def embed_pubsub_chunk(data: dict):
     publishTime = data['message'].get('publishTime')
 
     logging.debug(f"This Function was triggered by messageId {messageId} published at {publishTime}")
-    logging.debug(f"from_pubsub_to_supabase message data: {message_data}")
 
     try:
         the_json = json.loads(message_data)
