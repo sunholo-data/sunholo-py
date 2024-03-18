@@ -58,7 +58,7 @@ def handle_gcs_message(message_data: str, metadata: dict, vector_name: str):
                     gs_file = add_file_to_gcs(pp, vector_name=vector_name, bucket_name=bucket_name, metadata=metadata)
                     logging.info(f"{gs_file} is now in bucket {bucket_name}")
                 logging.info(f"Sent split pages for {file_name.name} back to GCS to parrallise the imports")
-                return None
+                return None, None
         else:
             # just original temp file
             pages = [tmp_file_path]

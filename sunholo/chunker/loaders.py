@@ -163,9 +163,8 @@ def read_gdrive_to_document(url: str, metadata: dict = None):
 def read_url_to_document(url: str, metadata: dict = None):
 
     unstructured_kwargs = {"pdf_infer_table_structure": True,
-                                   "extract_image_block_types":  ["Image", "Table"],
-                                   "extract_image_block_to_payload": True,
-                                   "infer_table_structure": True}
+                            "extract_image_block_types":  ["Image", "Table"]
+                            }
     loader = UnstructuredURLLoader(urls=[url], mode="elements", unstructured_kwargs=unstructured_kwargs)
     docs = loader.load()
     if metadata is not None:
@@ -184,8 +183,8 @@ def read_file_to_document(gs_file: pathlib.Path, split=False, metadata: dict = N
     logging.info(f"Sending {pdf_path} to UnstructuredAPIFileLoader")
     UNSTRUCTURED_URL = os.getenv("UNSTRUCTURED_URL", None)
     unstructured_kwargs = {"pdf_infer_table_structure": True,
-                            "extract_image_block_types":  ["Image", "Table"],
-                            "infer_table_structure": True}
+                            "extract_image_block_types":  ["Image", "Table"]
+                            }
     
     if UNSTRUCTURED_URL is not None:
         logging.debug(f"Found UNSTRUCTURED_URL: {UNSTRUCTURED_URL}")
