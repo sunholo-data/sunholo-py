@@ -51,7 +51,7 @@ def handle_gcs_message(message_data: str, metadata: dict, vector_name: str):
 
         if file_name.suffix == ".pdf":
             pages = split_pdf_to_pages(tmp_file_path, temp_dir)
-            metadata["original_source"] = file_name # to keep track
+            metadata["original_source"] = str(file_name) # to keep track
             if len(pages) > 1: # we send it back to GCS to parrallise the imports
                 logging.info(f"Got back {len(pages)} pages for file {tmp_file_path}")
                 for pp in pages:

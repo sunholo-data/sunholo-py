@@ -185,7 +185,6 @@ def read_file_to_document(gs_file: pathlib.Path, split=False, metadata: dict = N
     UNSTRUCTURED_URL = os.getenv("UNSTRUCTURED_URL", None)
     unstructured_kwargs = {"pdf_infer_table_structure": True,
                             "extract_image_block_types":  ["Image", "Table"],
-                            "extract_image_block_to_payload": True,
                             "infer_table_structure": True}
     
     if UNSTRUCTURED_URL is not None:
