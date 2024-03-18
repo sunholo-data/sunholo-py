@@ -163,7 +163,9 @@ def read_gdrive_to_document(url: str, metadata: dict = None):
 def read_url_to_document(url: str, metadata: dict = None):
 
     unstructured_kwargs = {"pdf_infer_table_structure": True,
-                            "extract_image_block_types":  ["Image", "Table"]} 
+                                   "extract_image_block_types":  ["Image", "Table"],
+                                   "extract_image_block_to_payload": True,
+                                   "infer_table_structure": True}
     loader = UnstructuredURLLoader(urls=[url], mode="elements", unstructured_kwargs=unstructured_kwargs)
     docs = loader.load()
     if metadata is not None:
@@ -177,71 +179,52 @@ def read_url_to_document(url: str, metadata: dict = None):
 def read_file_to_document(gs_file: pathlib.Path, split=False, metadata: dict = None):
     
     docs = []
-    done = False
     pdf_path = pathlib.Path(gs_file)
-    if pdf_path.suffix == ".pdf":
-        
-        local_doc = read_pdf_file(pdf_path, metadata=metadata)
-        if local_doc is not None:
-            docs.append(local_doc)
-            done = True
+
+    logging.info(f"Sending {pdf_path} to UnstructuredAPIFileLoader")
+    UNSTRUCTURED_URL = os.getenv("UNSTRUCTURED_URL", None)
+    unstructured_kwargs = {"pdf_infer_table_structure": True,
+                            "extract_image_block_types":  ["Image", "Table"],
+                            "extract_image_block_to_payload": True,
+                            "infer_table_structure": True}
     
-    if not done:
-        try:
-            logging.info(f"Sending {gs_file} to UnstructuredAPIFileLoader")
-            UNSTRUCTURED_URL = os.getenv("UNSTRUCTURED_URL", None)
-            unstructured_kwargs = {"pdf_infer_table_structure": True,
-                                   "extract_image_block_types":  ["Image", "Table"]}
-            if UNSTRUCTURED_URL is not None:
-                logging.debug(f"Found UNSTRUCTURED_URL: {UNSTRUCTURED_URL}")
-                the_endpoint = f"{UNSTRUCTURED_URL}/general/v0/general"
-                loader = UnstructuredAPIFileLoader(
-                    gs_file,
-                    url=the_endpoint,
-                    mode="elements",
-                    unstructured_kwargs=unstructured_kwargs)
-            else:
-                loader = UnstructuredAPIFileLoader(
-                    gs_file,
-                    api_key=UNSTRUCTURED_KEY,
-                    mode="elements",
-                    unstructured_kwargs=unstructured_kwargs)
-            
-            if split:
-                # only supported for some file types
-                docs = loader.load_and_split()
-            else:
-                start = time.time()
-                docs = loader.load() # this takes a long time 30m+ for big PDF files
-                end = time.time()
-                elapsed_time = round((end - start) / 60, 2)
-                logging.info(f"Loaded docs for {gs_file} from UnstructuredAPIFileLoader took {elapsed_time} mins")
-        except ValueError as e:
-            logging.info(f"Error for {gs_file} from UnstructuredAPIFileLoader: {str(e)}")
-            if "file type is not supported in partition" in str(e):
-                logging.info("trying locally via .txt conversion")
-                txt_file = None
-                try:
-                    # Convert the file to .txt and try again
-                    txt_file = convert_to_txt(gs_file)
-                    loader = UnstructuredFileLoader(
-                        txt_file, 
-                        mode="elements")
-                    if split:
-                        docs = loader.load_and_split()
-                    else:
-                        docs = loader.load()
+    if UNSTRUCTURED_URL is not None:
+        logging.debug(f"Found UNSTRUCTURED_URL: {UNSTRUCTURED_URL}")
+        the_endpoint = f"{UNSTRUCTURED_URL}/general/v0/general"
+        loader = UnstructuredAPIFileLoader(
+            pdf_path,
+            url=the_endpoint,
+            mode="elements",
+            unstructured_kwargs=unstructured_kwargs)
+    else:
+        loader = UnstructuredAPIFileLoader(
+            pdf_path,
+            api_key=UNSTRUCTURED_KEY,
+            mode="elements",
+            unstructured_kwargs=unstructured_kwargs)
+    
+    start = time.time()
+    try:
+        docs = loader.load_and_split() if split else loader.load() # this takes a long time 30m+ for big PDF files
+    except ValueError as e:
+        logging.info(f"Error for {gs_file} from UnstructuredAPIFileLoader: {str(e)}")
+        if pdf_path.suffix == ".pdf":
+            local_doc = read_pdf_file(pdf_path, metadata=metadata)
+            if local_doc is not None:
+                docs.append(local_doc)
 
-                except Exception as inner_e:
-                    raise Exception("An error occurred during txt conversion or loading.") from inner_e
-
-                finally:
-                    # Ensure cleanup happens if txt_file was created
-                    if txt_file is not None and os.path.exists(txt_file):
-                        os.remove(txt_file)
+        elif "file type is not supported in partition" in str(e):
+            txt_docs = convert_to_txt_and_extract(gs_file, split=split)
+            if txt_docs:
+                docs.extend(txt_docs)
+            else:
+                logging.warning("Could not extract any docs for {gs_file}")
+    
+    end = time.time()
+    elapsed_time = round((end - start) / 60, 2)
+    logging.info(f"Loaded docs for {gs_file} from read_file_to_docs took {elapsed_time} mins")
 
     for doc in docs:
-        #doc.metadata["file_sha1"] = file_sha1
         logging.info(f"doc_content: {doc.page_content[:30]} - length: {len(doc.page_content)}")
         if metadata is not None:
             doc.metadata.update(metadata)
@@ -249,4 +232,28 @@ def read_file_to_document(gs_file: pathlib.Path, split=False, metadata: dict = N
     
     logging.info(f"gs_file:{gs_file} read into {len(docs)} docs")
 
+    return docs
+
+def convert_to_txt_and_extract(gs_file, split=None):
+
+    logging.info("trying file parsing locally via .txt conversion")
+    txt_file = None
+    docs = []
+    try:
+        # Convert the file to .txt and try again
+        txt_file = convert_to_txt(gs_file)
+        loader = UnstructuredFileLoader(
+            txt_file, 
+            mode="elements")
+
+        docs = loader.load_and_split() if split else loader.load()
+
+    except Exception as inner_e:
+        raise Exception("An error occurred during txt conversion or loading.") from inner_e
+
+    finally:
+        # Ensure cleanup happens if txt_file was created
+        if txt_file is not None and os.path.exists(txt_file):
+            os.remove(txt_file)
+    
     return docs

@@ -57,7 +57,7 @@ def split_pdf_to_pages(pdf_path, temp_dir):
 def read_pdf_file(pdf_path, metadata):
     from langchain.schema import Document
     from pypdf import PdfReader
-    logging.info(f"Reading PDF {pdf_path}...")
+    logging.info(f"Trying local PDF parsing.  Reading PDF {pdf_path}...")
 
     pdf_path = pathlib.Path(pdf_path)
     
