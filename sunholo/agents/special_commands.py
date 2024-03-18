@@ -21,7 +21,7 @@ from google.cloud import storage
 from ..database import delete_row_from_source, return_sources_last24
 from ..utils.parsers import contains_url, extract_urls
 from ..chunker.publish import publish_text
-from ..chunker.gcs import add_file_to_gcs
+from ..gcs.add_file import add_file_to_gcs
 
 def handle_special_commands(user_input, vector_name, paired_messages):
     now = datetime.datetime.now()

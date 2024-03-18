@@ -15,13 +15,16 @@ import traceback
 import base64
 import json
 import datetime
+import tempfile
+import os
 
 from langchain.schema import Document
 
 from ..components import get_embeddings, pick_vectorstore, load_memories, pick_embedding
 from ..logging import setup_logging
+from ..gcs.add_file import add_file_to_gcs, get_image_file_name
 
-logging = setup_logging()
+logging = setup_logging("embedder")
 
 def embed_pubsub_chunk(data: dict):
     """Triggered from a message on a Cloud Pub/Sub topic "embed_chunk" topic
@@ -47,9 +50,40 @@ def embed_pubsub_chunk(data: dict):
         raise ValueError(f"Could not parse message_data from json to a dict: got {message_data} or type: {type(the_json)}")
 
     page_content = the_json.get("page_content", None)
-    if page_content is None:
+    image_base64 = the_json.get("image_base64", None)
+
+    # upload an image to the objectId/img folder
+    if image_base64:
+        image_data = base64.b64decode(image_base64)
+
+        # Determine the file extension based on the MIME type
+        mime_type = the_json.get("image_mime_type", "")
+        object_id = the_json.get("objectId", "image")
+        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        image_path = get_image_file_name(object_id, image_name=timestamp, mime_type=mime_type)
+        
+        # Write image data to a temporary file
+        with tempfile.NamedTemporaryFile(mode='wb', delete=False) as temp_image:
+            temp_image.write(image_data)
+            temp_image.flush()  # Make sure all data is written to the file
+
+        temp_image_path = temp_image.name
+
+        # Use the provided function to upload the file to GCS
+        image_gsurl = add_file_to_gcs(
+            filename=temp_image_path,
+            vector_name=the_json.get("vector_name"),
+            bucket_name=the_json.get("bucket_name"),
+            metadata=the_json,
+            bucket_filepath=image_path
+        )
+        os.remove(temp_image.name)
+        logging.info(f"Uploaded image to GCS: {image_gsurl}")
+        the_json["image_gs_url"] = image_gsurl
+
+    elif page_content is None:
         return "No page content"
-    if len(page_content) < 100:
+    elif len(page_content) < 100:
         logging.warning(f"too little page content to add: {message_data}")
         return "Too little characters"
     

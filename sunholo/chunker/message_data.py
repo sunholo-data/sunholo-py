@@ -22,12 +22,14 @@ import json
 from google.cloud import storage
 from langchain.schema import Document
 
-from .gcs import add_file_to_gcs
+
 from .splitter import chunk_doc_to_docs
 from .pdfs import split_pdf_to_pages
 from .publish import publish_if_urls
 from . import loaders
+
 from ..utils.parsers import extract_urls
+from ..gcs.add_file import add_file_to_gcs
 
 logging = setup_logging()
 
