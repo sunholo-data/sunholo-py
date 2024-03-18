@@ -195,13 +195,13 @@ def read_file_to_document(gs_file: pathlib.Path, split=False, metadata: dict = N
             pdf_path,
             url=the_endpoint,
             mode="elements",
-            unstructured_kwargs=unstructured_kwargs)
+            **unstructured_kwargs)
     else:
         loader = UnstructuredAPIFileLoader(
             pdf_path,
             api_key=UNSTRUCTURED_KEY,
             mode="elements",
-            unstructured_kwargs=unstructured_kwargs)
+            **unstructured_kwargs)
     
     start = time.time()
     try:

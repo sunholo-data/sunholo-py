@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.27.2'
+version = '0.27.3'
 
 setup(
     name='sunholo',
@@ -12,7 +12,7 @@ setup(
     long_description_content_type='text/markdown',
     description='Large Language Model DevOps - a package to help deploy LLMs to the Cloud.',
     author = 'Holosun ApS',
-    author_email = 'llmops@sunholo.com',
+    author_email = 'multivac@sunholo.com',
     url = 'https://github.com/sunholo-data/sunholo-py',
     download_url=f'https://github.com/sunholo-data/sunholo-py/archive/refs/tags/v{version}.tar.gz',
     keywords=['llms', 'devops','google_cloud_platform'],
