@@ -122,7 +122,7 @@ def accumulate_json_lines(lines, start_index):
             if json_str:
                 content = json_str.get('content')
                 if content:
-                    return line
+                    return the_data
         elif line.startswith('data:'):
             the_data = line[len('data:'):].strip()
             json_str_accumulator += the_data
