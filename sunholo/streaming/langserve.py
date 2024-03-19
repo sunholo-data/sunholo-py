@@ -113,7 +113,18 @@ def accumulate_json_lines(lines, start_index):
     """
     json_str_accumulator = ""
     for line in lines[start_index:]:
-        if line.startswith('data:'):
+        if line.startswith('data: {"content"'):
+            json_str = None
+            the_data = line[len('data:'):].strip()
+            try:
+                json_str = json.loads(the_data)
+            except json.JSONDecodeError:
+                log.debug('Got data: content but not: {line}')
+            if json_str:
+                content = json_str.get('content')
+                if content:
+                    return line
+        elif line.startswith('data:'):
             json_str_accumulator += line[len('data:'):].strip()
         elif json_str_accumulator and not line.startswith('event:'):
             json_str_accumulator += line.strip()
