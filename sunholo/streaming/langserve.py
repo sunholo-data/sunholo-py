@@ -95,32 +95,40 @@ def parse_json_data(json_str):
 
 def accumulate_json_lines(lines, start_index):
     """
-    Accumulate JSON string parts from a list of lines starting at a given index,
-    supporting JSON data that spans across lines and across multiple 'event: data'
-    sections, ignoring 'event: metadata' lines during accumulation.
+    Attempt to accumulate and parse JSON string parts from a list of lines starting
+    at a given index, supporting JSON data that spans across lines and across multiple
+    'event: data' sections, ignoring 'event: metadata' lines during accumulation.
+
+    This approach attempts to parse the accumulating JSON string periodically to
+    determine if a complete JSON object has been formed, allowing for more prompt
+    handling of simple JSON objects.
 
     :param lines: The list of lines containing the JSON data.
     :param start_index: The index to start accumulation from.
-    :return: The accumulated JSON string.
+    :return: The accumulated JSON string if a complete JSON object is formed, 
+             or None if accumulation should continue.
     """
     json_str_accumulator = ""
     for line in lines[start_index:]:
-        # Check if the line starts with 'data:', indicating JSON data.
         if line.startswith('data:'):
             json_str_accumulator += line[len('data:'):].strip()
-        # If the line continues directly with JSON data without a 'data:' prefix,
-        # and we're already in the process of accumulating,
-        # then append it directly.
         elif json_str_accumulator and not line.startswith('event:'):
             json_str_accumulator += line.strip()
-        # If the line is 'event: metadata', ignore it and continue.
         elif line.startswith('event: metadata'):
             continue
-        # If we hit a new 'event: data', indicating a new JSON message,
-        # or any other event type that should end the current accumulation,
-        # then break the loop.
         elif line.startswith('event:') and not line.startswith('event: data'):
             break
 
-    return json_str_accumulator
+        # Attempt to parse the accumulated JSON string periodically
+        try:
+            json.loads(json_str_accumulator)
+            # If no exception is raised, a complete JSON object has been formed
+            return json_str_accumulator
+        except json.JSONDecodeError:
+            # If an exception is raised, continue accumulating
+            continue
+
+    # Return the accumulated string if it's potentially a complete JSON object,
+    # or None if the loop exited for other reasons (e.g., encountering a new event)
+    return json_str_accumulator if json_str_accumulator else None
 
