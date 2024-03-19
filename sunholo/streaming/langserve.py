@@ -1,7 +1,7 @@
 import json
 from ..logging import setup_logging
 
-logging = setup_logging("langserve_streaming")
+log = setup_logging("langserve_streaming")
 
 def parse_langserve_token(token):
     """
@@ -19,7 +19,7 @@ def parse_langserve_token(token):
 
     # Split the token into lines
     lines = token.split('\r\n')
-    logging.info(f'Lines: {lines}')
+    log.info(f'Lines: {lines}')
 
     if len(lines) == 1:
         yield token
@@ -59,16 +59,19 @@ def process_langserve_lines(lines):
     :param lines: The list of lines to process.
     """
     for i, line in enumerate(lines):
+        log.debug(f'Line {i}: {line}')
         if line.startswith('event: data'):
             json_str = accumulate_json_lines(lines, i + 1)
             yield from parse_json_data(json_str)
+        elif line.startswith('event: end'):
+            return ""
         elif line.startswith('event: metadata'):
-            logging.info(f"Found event metadata: {line}")
+            log.info(f"Found event metadata: {line}")
         elif line.startswith('event: error'):
-            logging.error(f"Error in stream line: {line}")
+            log.error(f"Error in stream line: {line}")
             yield line
         elif line.startswith('event:'):
-            logging.info(f"Found langserve non-data event: {line}")
+            log.info(f"Found langserve non-data event: {line}")
 
 
 
@@ -85,12 +88,12 @@ def parse_json_data(json_str):
         else:
             content = json_data.get("content")
             if content is None:
-                logging.info("No 'content' found - sending full JSON data")
+                log.info("No 'content' found - sending full JSON data")
                 yield json_data
             else:
                 yield content
     except json.JSONDecodeError as err:
-        logging.error(f"JSON decoding error: {err} - JSON string was: '{json_str}'")
+        log.error(f"JSON decoding error: {err} - JSON string was: '{json_str}'")
         yield json_str
 
 def accumulate_json_lines(lines, start_index):
@@ -119,6 +122,7 @@ def accumulate_json_lines(lines, start_index):
         elif line.startswith('event:') and not line.startswith('event: data'):
             break
 
+        log.info('json_accumulator: {json_str_accumulator}')
         # Attempt to parse the accumulated JSON string periodically
         try:
             json.loads(json_str_accumulator)

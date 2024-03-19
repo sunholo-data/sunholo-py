@@ -41,7 +41,7 @@ def sign_gcs_url(bucket_name:str, object_name:str, expiry_secs = 86400):
         expiration=expires,
         service_account_email=service_account_email, 
         access_token=credentials.token)
-    log.info(f"Generated signed URL: {url}")
+    log.debug(f"Generated signed URL: {url}")
     return url
 
 
@@ -56,7 +56,7 @@ def construct_download_link(source_uri: str) -> str:
     if signed_url:
         return signed_url, os.path.basename(object_name), True
     
-    log.info(f"Failed to generate signed URL for {source_uri}")
+    log.error(f"Failed to generate signed URL for {source_uri}")
     return construct_download_link_simple(bucket_name, object_name)
 
 
