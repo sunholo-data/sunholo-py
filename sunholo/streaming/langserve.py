@@ -95,8 +95,9 @@ def parse_json_data(json_str):
 
 def accumulate_json_lines(lines, start_index):
     """
-    Accumulate JSON string parts from a list of lines starting at a given index.
-    This version supports JSON data that spans multiple lines.
+    Accumulate JSON string parts from a list of lines starting at a given index,
+    supporting JSON data that spans across lines and across multiple 'event: data'
+    sections, ignoring 'event: metadata' lines during accumulation.
 
     :param lines: The list of lines containing the JSON data.
     :param start_index: The index to start accumulation from.
@@ -104,10 +105,22 @@ def accumulate_json_lines(lines, start_index):
     """
     json_str_accumulator = ""
     for line in lines[start_index:]:
+        # Check if the line starts with 'data:', indicating JSON data.
         if line.startswith('data:'):
-            # Append the current line's data part to the accumulator
             json_str_accumulator += line[len('data:'):].strip()
-        elif line.startswith('event:'):
-            # Stop accumulating when a new event starts
+        # If the line continues directly with JSON data without a 'data:' prefix,
+        # and we're already in the process of accumulating,
+        # then append it directly.
+        elif json_str_accumulator and not line.startswith('event:'):
+            json_str_accumulator += line.strip()
+        # If the line is 'event: metadata', ignore it and continue.
+        elif line.startswith('event: metadata'):
+            continue
+        # If we hit a new 'event: data', indicating a new JSON message,
+        # or any other event type that should end the current accumulation,
+        # then break the loop.
+        elif line.startswith('event:') and not line.startswith('event: data'):
             break
+
     return json_str_accumulator
+
