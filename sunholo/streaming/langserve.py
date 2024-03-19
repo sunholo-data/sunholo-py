@@ -1,7 +1,7 @@
 import json
 from ..logging import setup_logging
 
-logging = setup_logging()
+logging = setup_logging("langserve_streaming")
 
 def parse_langserve_token(token):
     """
@@ -96,6 +96,7 @@ def parse_json_data(json_str):
 def accumulate_json_lines(lines, start_index):
     """
     Accumulate JSON string parts from a list of lines starting at a given index.
+    This version supports JSON data that spans multiple lines.
 
     :param lines: The list of lines containing the JSON data.
     :param start_index: The index to start accumulation from.
@@ -104,8 +105,9 @@ def accumulate_json_lines(lines, start_index):
     json_str_accumulator = ""
     for line in lines[start_index:]:
         if line.startswith('data:'):
+            # Append the current line's data part to the accumulator
             json_str_accumulator += line[len('data:'):].strip()
-        else:
+        elif line.startswith('event:'):
+            # Stop accumulating when a new event starts
             break
     return json_str_accumulator
-
