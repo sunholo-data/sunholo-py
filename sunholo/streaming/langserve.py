@@ -62,9 +62,8 @@ def process_langserve_lines(lines):
         log.debug(f'Line {i}: {line}')
         if line.startswith('event: data'):
             json_str = accumulate_json_lines(lines, i + 1)
-            yield from parse_json_data(json_str)
-        elif line.startswith('event: end'):
-            return ""
+            if json_str:
+                yield from parse_json_data(json_str)
         elif line.startswith('event: metadata'):
             log.info(f"Found event metadata: {line}")
         elif line.startswith('event: error'):
@@ -125,7 +124,8 @@ def accumulate_json_lines(lines, start_index):
                 if content:
                     return line
         elif line.startswith('data:'):
-            json_str_accumulator += line[len('data:'):].strip()
+            the_data = line[len('data:'):].strip()
+            json_str_accumulator += the_data
         elif json_str_accumulator and not line.startswith('event:'):
             json_str_accumulator += line.strip()
         elif line.startswith('event: metadata'):
@@ -133,7 +133,7 @@ def accumulate_json_lines(lines, start_index):
         elif line.startswith('event:') and not line.startswith('event: data'):
             break
 
-        log.info('json_accumulator: {json_str_accumulator}')
+        log.info(f'json_accumulator: {json_str_accumulator}')
         # Attempt to parse the accumulated JSON string periodically
         try:
             json.loads(json_str_accumulator)
