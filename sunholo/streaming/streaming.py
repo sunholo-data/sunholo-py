@@ -26,7 +26,7 @@ from ..utils import load_config_key
 
 from .langserve import parse_langserve_token, parse_langserve_token_async
 
-logging = setup_logging()
+log = setup_logging("sunholo_streaming")
 
 def start_streaming_chat(question, 
                          vector_name,
@@ -38,7 +38,7 @@ def start_streaming_chat(question,
 
     # Immediately yield to indicate the process has started.
     yield "Thinking...\n"
-    logging.info(f"Streaming chat with wait time {wait_time} seconds and timeout {timeout} seconds and kwargs {kwargs}")
+    log.info(f"Streaming chat with wait time {wait_time} seconds and timeout {timeout} seconds and kwargs {kwargs}")
     # Initialize the chat
     content_buffer = ContentBuffer()
     chat_callback_handler = BufferStreamingStdOutCallbackHandler(content_buffer=content_buffer, tokens=".!?\n")
@@ -64,7 +64,7 @@ def start_streaming_chat(question,
     while not chat_callback_handler.stream_finished.is_set() and not stop_event.is_set():
 
         time.sleep(wait_time) # Wait for x seconds
-        logging.info(f"heartbeat - {round(time.time() - start, 2)} seconds")
+        log.info(f"heartbeat - {round(time.time() - start, 2)} seconds")
         # Check for exceptions and raise if any
         while not exception_queue.empty():
             raise exception_queue.get()
@@ -72,7 +72,7 @@ def start_streaming_chat(question,
         content_to_send = content_buffer.read()
 
         if content_to_send:
-            logging.info(f"==\n{content_to_send}")
+            log.info(f"==\n{content_to_send}")
             yield content_to_send
             content_buffer.clear()
             start = time.time() # reset timeout
@@ -81,22 +81,22 @@ def start_streaming_chat(question,
                 # If the initial wait period hasn't passed yet, keep sending "..."
                 yield "..."
             else:
-                logging.info("No content to send")
+                log.info("No content to send")
 
         elapsed_time = time.time() - start
         if elapsed_time > timeout: # If the elapsed time exceeds the timeout
-            logging.warning(f"Content production has timed out after {timeout} secs")
+            log.warning(f"Content production has timed out after {timeout} secs")
             break
     else:
-        logging.info(f"Stream has ended after {round(time.time() - first_start, 2)} seconds")
-        logging.info("Sending final full message plus sources...")
+        log.info(f"Stream has ended after {round(time.time() - first_start, 2)} seconds")
+        log.info("Sending final full message plus sources...")
         
     
     # if  you need it to stop it elsewhere use 
     # stop_event.set()
     content_to_send = content_buffer.read()
     if content_to_send:
-        logging.info(f"==\n{content_to_send}")
+        log.info(f"==\n{content_to_send}")
         yield content_to_send
         content_buffer.clear()
 
@@ -112,7 +112,7 @@ def start_streaming_chat(question,
 async def start_streaming_chat_async(question, vector_name, qna_func, chat_history=[], wait_time=2, timeout=120, **kwargs): 
     # Indicate process start
     yield "Thinking...\n"
-    logging.info(f"Streaming chat with wait time {wait_time} seconds and timeout {timeout} seconds and kwargs {kwargs}")
+    log.info(f"Streaming chat with wait time {wait_time} seconds and timeout {timeout} seconds and kwargs {kwargs}")
 
     content_buffer = ContentBuffer()
     chat_callback_handler = BufferStreamingStdOutCallbackHandler(content_buffer=content_buffer, tokens=".!?\n")
@@ -135,7 +135,7 @@ async def start_streaming_chat_async(question, vector_name, qna_func, chat_histo
 
     while not chat_callback_handler.stream_finished.is_set() and not stop_event.is_set():
         await asyncio.sleep(wait_time)  # Use asyncio.sleep for async compatibility
-        logging.info(f"heartbeat - {round(time.time() - start, 2)} seconds")
+        log.info(f"heartbeat - {round(time.time() - start, 2)} seconds")
         
         while not exception_queue.empty():
             exception = exception_queue.get_nowait()
@@ -143,13 +143,13 @@ async def start_streaming_chat_async(question, vector_name, qna_func, chat_histo
 
         content_to_send = content_buffer.read()
         if content_to_send:
-            logging.info(f"==\n{content_to_send}")
+            log.info(f"==\n{content_to_send}")
             yield content_to_send
             content_buffer.clear()
             start = time.time()
         else:
             if time.time() - start > timeout:
-                logging.warning(f"Content production has timed out after {timeout} seconds")
+                log.warning(f"Content production has timed out after {timeout} seconds")
                 break
 
     stop_event.set()
@@ -215,15 +215,15 @@ def process_streaming_content(streaming_content, generate_f_output, json_buffer,
 
         # Handle string content
         if content_str.startswith('###JSON_START###'):
-            logging.warning('Streaming content was a string with ###JSON_START###')
+            log.warning('Streaming content was a string with ###JSON_START###')
         else:
-            logging.info(f'Streaming got a string we return directly: {content_str}')
+            log.info(f'Streaming got a string we return directly: {content_str}')
             processed_outputs.append(content_str)
     else:
         # Decode if it's a bytes object
         content_str = streaming_content.decode('utf-8')
 
-    logging.debug(f'Content_str: {content_str}')
+    log.debug(f'Content_str: {content_str}')
 
     # JSON processing logic
     while '###JSON_START###' in content_str:
@@ -236,11 +236,11 @@ def process_streaming_content(streaming_content, generate_f_output, json_buffer,
                 json_content = json.loads(json_buffer)
                 parsed_output = generate_f_output(json_content)
                 to_client = f'###JSON_START###{json.dumps(parsed_output)}###JSON_END###'
-                logging.info(f"Streaming JSON to_client:\n{to_client}")
+                log.info(f"Streaming JSON to_client:\n{to_client}")
                  # Yielding the processed JSON
                 processed_outputs.append(to_client.encode('utf-8'))
             except json.JSONDecodeError as e:
-                logging.error(f"JSON decode error: {e}")
+                log.error(f"JSON decode error: {e}")
 
             content_str = content_str[end_index + len('###JSON_END###'):]
             json_buffer = ""
@@ -259,18 +259,18 @@ def process_streaming_content(streaming_content, generate_f_output, json_buffer,
             json_content = json.loads(json_buffer)
             parsed_output = generate_f_output(json_content)
             to_client = f'###JSON_START###{json.dumps(parsed_output)}###JSON_END###'
-            logging.info(f"Streaming JSON to_client:\n{to_client}")
+            log.info(f"Streaming JSON to_client:\n{to_client}")
             # Yielding the processed JSON
             processed_outputs.append(to_client.encode('utf-8'))
         except json.JSONDecodeError as e:
-            logging.error(f"JSON decode error: {e}")
+            log.error(f"JSON decode error: {e}")
 
         content_str = content_str[end_index + len('###JSON_END###'):]
         json_buffer = ""
         inside_json = False
 
     if not inside_json and content_str:
-        logging.info(f"Streaming to client:\n{content_str}")
+        log.info(f"Streaming to client:\n{content_str}")
 
         # Yielding non-JSON content
         processed_outputs.append(content_str.encode('utf-8'))

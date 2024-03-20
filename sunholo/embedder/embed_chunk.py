@@ -138,10 +138,10 @@ def embed_pubsub_chunk(data: dict):
         logging.debug(f"Adding single document for {vector_name} to vector store {vector_store}")
         try:
             vector_store.add_documents([doc], ids = [str(uuid.uuid4())])
-            logging.info(f"Added doc for {vector_name} to {vector_store} - metadata: {metadata}")
+            logging.info(f"Added doc for {vector_name} to {vector_store} - metadata: {metadata['source']}")
             metadata_list.append(metadata)
         except Exception as err:
             error_message = traceback.format_exc()
-            logging.error(f"Could not add document {doc} for {vector_name} to {vector_store} - metadata: {metadata}: {str(err)} traceback: {error_message}")
+            logging.error(f"Could not add document {doc} for {vector_name} to {vector_store} for {metadata['source']}: {str(err)} traceback: {error_message}")
 
     return metadata_list
