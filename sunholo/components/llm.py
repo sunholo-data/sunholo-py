@@ -164,7 +164,7 @@ def pick_embedding(llm_str: str):
         # Setup for OpenAI embeddings
         from langchain_openai import OpenAIEmbeddings
         return OpenAIEmbeddings()
-    elif llm_str == 'vertex' or llm_str == 'codey':
+    elif llm_str == 'vertex' or llm_str == 'codey' or llm_str == 'anthropic':
         # Setup for Text-Bison embeddings
         from langchain_community.embeddings import VertexAIEmbeddings
         
