@@ -131,6 +131,7 @@ def accumulate_json_lines(lines, start_index, run_id):
     """
     global json_accumulation_buffer
     global json_accumulation_flag
+    accumulator = ""
 
     if run_id:
         log.info("Got run_id: {run_id}")
@@ -166,7 +167,7 @@ def accumulate_json_lines(lines, start_index, run_id):
     # Update the buffer with the current accumulation state
     json_accumulation_buffer = accumulator
     json_accumulation_flag = True
-    log.info(f'Did not finish accumulator run_id {run_id} - waiting for next token: {accumulator}')
+    log.info(f'Did not finish accumulator run_id {run_id} - waiting for next token')
     return None  # Indicate continuation if a complete object has not been formed
 
 def parse_json_data(json_data: dict):
