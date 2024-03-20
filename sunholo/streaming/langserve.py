@@ -27,16 +27,8 @@ async def parse_langserve_token_async(token):
     lines = token.split('\r\n')
     log.info(f'Lines: {lines}')
 
-    current_run_id = None
-
     # Check for run_id in the metadata event
-    for line in lines:
-        if line.startswith('event: metadata'):
-            metadata = json.loads(line.split('data:', 1)[1].strip())
-            current_run_id = metadata.get('run_id')
-            if current_run_id not in json_accumulation_buffer:
-                json_accumulation_buffer[current_run_id] = ""
-            break
+    current_run_id = set_metadata_value(lines)
 
     # Use process_langserve_lines to process each line, passing the current run_id
     async for content in process_langserve_lines_async(lines, current_run_id):
@@ -54,6 +46,28 @@ async def process_langserve_lines_async(lines, run_id):
     # iterate over its output in an async for loop.
     for content in process_langserve_lines(lines, run_id):
         yield content
+
+def set_metadata_value(lines):
+    global json_accumulation_buffer
+    current_run_id = None
+    for line in lines:
+        if line.startswith('event: metadata'):
+            # Find the next line which starts with "data:", assuming it's immediately after the event line
+            data_line_index = lines.index(line) + 1
+            if data_line_index < len(lines):
+                data_line = lines[data_line_index]
+                if data_line.startswith('data:'):
+                    try:
+                        metadata = json.loads(data_line[len('data:'):].strip())
+                        current_run_id = metadata.get('run_id')
+                        if current_run_id and current_run_id not in json_accumulation_buffer:
+                            json_accumulation_buffer[current_run_id] = ""
+                    except json.JSONDecodeError as e:
+                        log.error(f"Error decoding metadata JSON: {e}")
+            break  # Break after processing the first metadata event
+    
+    return current_run_id
+
 
 def parse_langserve_token(token):
     """
@@ -76,16 +90,8 @@ def parse_langserve_token(token):
     lines = token.split('\r\n')
     log.info(f'Lines: {lines}')
 
-    current_run_id = None
-
     # Check for run_id in the metadata event
-    for line in lines:
-        if line.startswith('event: metadata'):
-            metadata = json.loads(line.split('data:', 1)[1].strip())
-            current_run_id = metadata.get('run_id')
-            if current_run_id not in json_accumulation_buffer:
-                json_accumulation_buffer[current_run_id] = ""
-            break
+    current_run_id = set_metadata_value(lines)
 
     # Use process_langserve_lines to process each line, passing the current run_id
     for content in process_langserve_lines(lines, current_run_id):
@@ -122,6 +128,9 @@ def accumulate_json_lines(lines, start_index, run_id):
              or None if accumulation should continue.
     """
     global json_accumulation_buffer
+    if run_id is None:
+        log.warning("No run_id found in metadata. This may lead to data handling issues.")
+
     accumulator = json_accumulation_buffer.get(run_id, "")
     
     for line in lines[start_index:]:
