@@ -5,6 +5,7 @@ log = setup_logging("langserve_streaming")
 
 # Global accumulation buffer for JSON parts, indexed by run_id
 json_accumulation_buffer = {}
+json_accumulation_flag = False
 
 async def parse_langserve_token_async(token):
     """
@@ -17,7 +18,6 @@ async def parse_langserve_token_async(token):
     Yields:
         str: An accumulated content from 'event: data'.
     """
-    global json_accumulation_buffer
     
     # Decode bytes to string if necessary
     if isinstance(token, bytes):
@@ -60,8 +60,6 @@ def set_metadata_value(lines):
                     try:
                         metadata = json.loads(data_line[len('data:'):].strip())
                         current_run_id = metadata.get('run_id')
-                        if current_run_id and current_run_id not in json_accumulation_buffer:
-                            json_accumulation_buffer[current_run_id] = ""
                     except json.JSONDecodeError as e:
                         log.error(f"Error decoding metadata JSON: {e}")
             break  # Break after processing the first metadata event
@@ -80,7 +78,6 @@ def parse_langserve_token(token):
     Returns:
         Generator of str: A generator that yields accumulated contents from 'event: data'.
     """
-    global json_accumulation_buffer
     
     # Decode bytes to string if necessary
     if isinstance(token, bytes):
@@ -104,9 +101,11 @@ def process_langserve_lines(lines, run_id):
     :param lines: The list of lines to process.
     :param run_id: The current run_id to index the accumulation buffer.
     """
+    global json_accumulation_flag
+
     for i, line in enumerate(lines):
         #log.debug(f'Line {i}: {line}')
-        if line.startswith('event: data'):
+        if line.startswith('event: data') or json_accumulation_flag:
             #log.debug(f'Sending {i} {line} to accumulator')
             json_data = accumulate_json_lines(lines, i + 1, run_id)
             if json_data:
@@ -131,10 +130,16 @@ def accumulate_json_lines(lines, start_index, run_id):
              or None if accumulation should continue.
     """
     global json_accumulation_buffer
-    #if run_id is None:
-    #    log.warning("No run_id found in metadata. This may lead to data handling issues.")
+    global json_accumulation_flag
 
-    accumulator = json_accumulation_buffer.get(run_id, "")
+    if run_id:
+        log.info("Got run_id: {run_id}")
+
+    if json_accumulation_flag:
+        accumulator = json_accumulation_buffer
+
+    if accumulator:
+        log.info(f"Using old accumulator for {run_id}")
     
     for line in lines[start_index:]:
         if line.startswith('data:'):
@@ -143,7 +148,7 @@ def accumulate_json_lines(lines, start_index, run_id):
             #log.debug(f'line_data: {the_data}')
             accumulator += the_data
         elif accumulator and not line.startswith('event:'):
-            log.debug(f'Adding line: {line}')
+            log.info(f'Adding old accumulator line: {line}')
             accumulator += line.strip()
 
         #log.debug(f'accumulator: {accumulator}')
@@ -151,15 +156,17 @@ def accumulate_json_lines(lines, start_index, run_id):
         try:
             parsed_json = json.loads(accumulator)
             # If no exception is raised, a complete JSON object has been formed
-            json_accumulation_buffer[run_id] = ""  # Reset buffer for this run_id
+            json_accumulation_buffer = ""  # Reset buffer for this run_id
+            json_accumulation_flag = False
             return parsed_json  # Return the complete JSON string
         except json.JSONDecodeError:
-            log.debug(f'Did not parse json for {accumulator}')
+            log.warning(f'Did not parse json for {accumulator}')
             continue  # Continue accumulating if JSON is incomplete
 
     # Update the buffer with the current accumulation state
-    json_accumulation_buffer[run_id] = accumulator
-    log.info(f'Did not finish accumulator: {accumulator} - waiting for next token')
+    json_accumulation_buffer = accumulator
+    json_accumulation_flag = True
+    log.info(f'Did not finish accumulator run_id {run_id} - waiting for next token: {accumulator}')
     return None  # Indicate continuation if a complete object has not been formed
 
 def parse_json_data(json_data: dict):
