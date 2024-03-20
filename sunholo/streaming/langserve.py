@@ -107,14 +107,18 @@ def process_langserve_lines(lines, run_id):
     for i, line in enumerate(lines):
         log.debug(f'Line {i}: {line}')
         if line.startswith('event: data'):
+            log.debug('Sending {i} {line} to accumulator')
             json_str = accumulate_json_lines(lines, i + 1, run_id)
             if json_str:
+                log.info('Got json_str to parse: {json_str}')
                 yield from parse_json_data(json_str)
         elif line.startswith('event: error'):
             log.error(f"Error in stream line: {line}")
             yield line
         elif line.startswith('event:'):
             log.info(f"Found langserve non-data event: {line}")
+        else:
+            log.debug("No action with line: {i} {line}")
 
 def accumulate_json_lines(lines, start_index, run_id):
     """
@@ -135,11 +139,15 @@ def accumulate_json_lines(lines, start_index, run_id):
     
     for line in lines[start_index:]:
         if line.startswith('data:'):
+            log.debug(f'stripping line: {line}')
             the_data = line[len('data:'):].strip()
+            log.debug(f'line_data: {the_data}')
             accumulator += the_data
         elif accumulator and not line.startswith('event:'):
+            log.debug('Adding line: {line}')
             accumulator += line.strip()
 
+        log.debug(f'accumulator: {accumulator}')
         # Attempt to parse the accumulated JSON string periodically
         try:
             parsed_json = json.loads(accumulator)
@@ -147,21 +155,35 @@ def accumulate_json_lines(lines, start_index, run_id):
             json_accumulation_buffer[run_id] = ""  # Reset buffer for this run_id
             return json.dumps(parsed_json)  # Return the complete JSON string
         except json.JSONDecodeError:
+            log.debug(f'Did not parse json for {accumulator}')
             continue  # Continue accumulating if JSON is incomplete
 
     # Update the buffer with the current accumulation state
     json_accumulation_buffer[run_id] = accumulator
+    log.info(f'Did not finish accumulator: {accumulator} - waiting for next token')
     return None  # Indicate continuation if a complete object has not been formed
 
-def parse_json_data(json_str):
+def parse_json_data(json_str: str):
     """
     Attempt to parse a JSON string and yield the appropriate content or error.
 
     :param json_str: The JSON string to parse.
+
+    yields: 
+        str if within content key
+        dict if no content key
+        str if error in decoding json
+
     """
     try:
         json_data = json.loads(json_str)
-        yield json.dumps(json_data)  # Yielding the JSON data for simplicity
+        content = json_data.get('content')
+        if content:
+            log.debug(f'Yield content: {content}')
+            yield content
+        else:
+            log.debug(f'No content found, yielding all json data dict: {json_data}')
+            yield json_data # Yielding all JSON data
     except json.JSONDecodeError as err:
         log.error(f"JSON decoding error: {err} - JSON string was: '{json_str}'")
         yield json_str  # In case of error, yield the raw string for debugging
