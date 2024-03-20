@@ -6,6 +6,55 @@ log = setup_logging("langserve_streaming")
 # Global accumulation buffer for JSON parts, indexed by run_id
 json_accumulation_buffer = {}
 
+async def parse_langserve_token_async(token):
+    """
+    Asynchronously parses the token to accumulate content from JSON for 'event: data' events,
+    handling JSON strings split between two tokens.
+
+    Args:
+        token (str or bytes): The token to parse.
+
+    Yields:
+        str: An accumulated content from 'event: data'.
+    """
+    global json_accumulation_buffer
+    
+    # Decode bytes to string if necessary
+    if isinstance(token, bytes):
+        token = token.decode('utf-8')
+
+    # Split the token into lines
+    lines = token.split('\r\n')
+    log.info(f'Lines: {lines}')
+
+    current_run_id = None
+
+    # Check for run_id in the metadata event
+    for line in lines:
+        if line.startswith('event: metadata'):
+            metadata = json.loads(line.split('data:', 1)[1].strip())
+            current_run_id = metadata.get('run_id')
+            if current_run_id not in json_accumulation_buffer:
+                json_accumulation_buffer[current_run_id] = ""
+            break
+
+    # Use process_langserve_lines to process each line, passing the current run_id
+    async for content in process_langserve_lines_async(lines, current_run_id):
+        yield content
+
+async def process_langserve_lines_async(lines, run_id):
+    """
+    Asynchronously process lines from langserve, parsing JSON data as needed.
+    This is an async wrapper for process_langserve_lines to fit into async processing.
+
+    :param lines: The list of lines to process.
+    :param run_id: The current run_id to index the accumulation buffer.
+    """
+    # Assuming process_langserve_lines itself doesn't need to be async,
+    # iterate over its output in an async for loop.
+    for content in process_langserve_lines(lines, run_id):
+        yield content
+
 def parse_langserve_token(token):
     """
     Parses the token to accumulate content from JSON for 'event: data' events,
