@@ -117,8 +117,7 @@ def process_langserve_lines(lines, run_id):
             yield line
         elif line.startswith('event:'):
             log.info(f"Found langserve non-data event: {line}")
-        else:
-            log.debug(f"No action with line: {i} {line}")
+
 
 def accumulate_json_lines(lines, start_index, run_id):
     """
