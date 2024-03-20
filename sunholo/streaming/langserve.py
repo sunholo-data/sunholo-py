@@ -108,10 +108,10 @@ def process_langserve_lines(lines, run_id):
         log.debug(f'Line {i}: {line}')
         if line.startswith('event: data'):
             log.debug(f'Sending {i} {line} to accumulator')
-            json_str = accumulate_json_lines(lines, i + 1, run_id)
-            if json_str:
-                log.info(f'Got json_str to parse: {json_str}')
-                yield from parse_json_data(json_str)
+            json_data = accumulate_json_lines(lines, i + 1, run_id)
+            if json_data:
+                log.info(f'Got json_str to parse: {json_data}')
+                yield from parse_json_data(json_data)
         elif line.startswith('event: error'):
             log.error(f"Error in stream line: {line}")
             yield line
@@ -153,7 +153,7 @@ def accumulate_json_lines(lines, start_index, run_id):
             parsed_json = json.loads(accumulator)
             # If no exception is raised, a complete JSON object has been formed
             json_accumulation_buffer[run_id] = ""  # Reset buffer for this run_id
-            return json.dumps(parsed_json)  # Return the complete JSON string
+            return parsed_json  # Return the complete JSON string
         except json.JSONDecodeError:
             log.debug(f'Did not parse json for {accumulator}')
             continue  # Continue accumulating if JSON is incomplete
@@ -163,11 +163,11 @@ def accumulate_json_lines(lines, start_index, run_id):
     log.info(f'Did not finish accumulator: {accumulator} - waiting for next token')
     return None  # Indicate continuation if a complete object has not been formed
 
-def parse_json_data(json_str: str):
+def parse_json_data(json_data: dict):
     """
     Attempt to parse a JSON string and yield the appropriate content or error.
 
-    :param json_str: The JSON string to parse.
+    :param json_data: The dict string to parse.
 
     yields: 
         str if within content key
@@ -176,7 +176,6 @@ def parse_json_data(json_str: str):
 
     """
     try:
-        json_data = json.loads(json_str)
         content = json_data.get('content')
         if content:
             log.debug(f'Yield content: {content}')
@@ -185,5 +184,5 @@ def parse_json_data(json_str: str):
             log.debug(f'No content found, yielding all json data dict: {json_data}')
             yield json_data # Yielding all JSON data
     except json.JSONDecodeError as err:
-        log.error(f"JSON decoding error: {err} - JSON string was: '{json_str}'")
-        yield json_str  # In case of error, yield the raw string for debugging
+        log.error(f"JSON decoding error: {err} - JSON string was: '{json_data}'")
+        yield "Parsing JSON error - check logs"  # In case of error, yield the raw string for debugging
