@@ -105,12 +105,12 @@ def process_langserve_lines(lines, run_id):
     :param run_id: The current run_id to index the accumulation buffer.
     """
     for i, line in enumerate(lines):
-        log.debug(f'Line {i}: {line}')
+        #log.debug(f'Line {i}: {line}')
         if line.startswith('event: data'):
-            log.debug(f'Sending {i} {line} to accumulator')
+            #log.debug(f'Sending {i} {line} to accumulator')
             json_data = accumulate_json_lines(lines, i + 1, run_id)
             if json_data:
-                log.info(f'Got json_str to parse: {json_data}')
+                #log.info(f'Got json_str to parse: {json_data}')
                 yield from parse_json_data(json_data)
         elif line.startswith('event: error'):
             log.error(f"Error in stream line: {line}")
@@ -118,7 +118,7 @@ def process_langserve_lines(lines, run_id):
         elif line.startswith('event:'):
             log.info(f"Found langserve non-data event: {line}")
         else:
-            log.debug("No action with line: {i} {line}")
+            log.debug(f"No action with line: {i} {line}")
 
 def accumulate_json_lines(lines, start_index, run_id):
     """
@@ -132,22 +132,22 @@ def accumulate_json_lines(lines, start_index, run_id):
              or None if accumulation should continue.
     """
     global json_accumulation_buffer
-    if run_id is None:
-        log.warning("No run_id found in metadata. This may lead to data handling issues.")
+    #if run_id is None:
+    #    log.warning("No run_id found in metadata. This may lead to data handling issues.")
 
     accumulator = json_accumulation_buffer.get(run_id, "")
     
     for line in lines[start_index:]:
         if line.startswith('data:'):
-            log.debug(f'stripping line: {line}')
+            #log.debug(f'stripping line: {line}')
             the_data = line[len('data:'):].strip()
-            log.debug(f'line_data: {the_data}')
+            #log.debug(f'line_data: {the_data}')
             accumulator += the_data
         elif accumulator and not line.startswith('event:'):
             log.debug(f'Adding line: {line}')
             accumulator += line.strip()
 
-        log.debug(f'accumulator: {accumulator}')
+        #log.debug(f'accumulator: {accumulator}')
         # Attempt to parse the accumulated JSON string periodically
         try:
             parsed_json = json.loads(accumulator)
@@ -178,7 +178,7 @@ def parse_json_data(json_data: dict):
     try:
         content = json_data.get('content')
         if content:
-            log.debug(f'Yield content: {content}')
+            #log.debug(f'Yield content: {content}')
             yield content
         else:
             log.debug(f'No content found, yielding all json data dict: {json_data}')
