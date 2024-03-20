@@ -36,6 +36,7 @@ class GoogleCloudLogging:
             self.logger_name = logger_name
             self.log_level = log_level
             self.initialized = True  # Mark as initialized
+        print(f"Initialized logging object for logger_name: {logger_name}")
 
 
     def setup_logging(self, log_level=logging.INFO, logger_name=None):
@@ -169,6 +170,10 @@ class GoogleCloudLogging:
         """
         self.structured_log(log_text=log_text, log_struct=log_struct, severity="CRITICAL")
 
+def is_logging_setup(logger=None):
+    logger = logger or logging.getLogger()  # If no logger is specified, use the root logger
+    return bool(logger.handlers)
+
 def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
     """
     Sets up Google Cloud Logging with the provided log level and project ID. If no project ID
@@ -198,22 +203,24 @@ def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
         Google Kubernetes Engine, Google App Engine, etc.
     """
 
+
+
     logger = logging.getLogger(logger_name)
-    if not logger.handlers:  # No handlers present, we can set up new ones
-        if project_id is None:
-            project_id = get_gcp_project()
-
-        if logger_name is None:
-            logger_name = "sunholo"
-
-        # Instantiate the GoogleCloudLogging class
-        gc_logger = GoogleCloudLogging(project_id, log_level=log_level, logger_name=logger_name)
-
-        # Setup logging and return the logger instance
-        return gc_logger.setup_logging()
-    else:
-        # Handlers are already present, so we just return the existing logger
+    if is_logging_setup(logger):
         return logger
+    
+    if project_id is None:
+        project_id = get_gcp_project()
+
+    if logger_name is None:
+        logger_name = "sunholo"
+
+    # Instantiate the GoogleCloudLogging class
+    gc_logger = GoogleCloudLogging(project_id, log_level=log_level, logger_name=logger_name)
+
+    # Setup logging and return the logger instance
+    return gc_logger.setup_logging()
+
 
 
 def log_folder_location(folder_name):

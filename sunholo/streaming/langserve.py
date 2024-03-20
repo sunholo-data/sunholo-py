@@ -107,10 +107,10 @@ def process_langserve_lines(lines, run_id):
     for i, line in enumerate(lines):
         log.debug(f'Line {i}: {line}')
         if line.startswith('event: data'):
-            log.debug('Sending {i} {line} to accumulator')
+            log.debug(f'Sending {i} {line} to accumulator')
             json_str = accumulate_json_lines(lines, i + 1, run_id)
             if json_str:
-                log.info('Got json_str to parse: {json_str}')
+                log.info(f'Got json_str to parse: {json_str}')
                 yield from parse_json_data(json_str)
         elif line.startswith('event: error'):
             log.error(f"Error in stream line: {line}")
@@ -144,7 +144,7 @@ def accumulate_json_lines(lines, start_index, run_id):
             log.debug(f'line_data: {the_data}')
             accumulator += the_data
         elif accumulator and not line.startswith('event:'):
-            log.debug('Adding line: {line}')
+            log.debug(f'Adding line: {line}')
             accumulator += line.strip()
 
         log.debug(f'accumulator: {accumulator}')
