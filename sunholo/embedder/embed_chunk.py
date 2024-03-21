@@ -96,7 +96,7 @@ def embed_pubsub_chunk(data: dict):
         logging.error(msg)
         return msg
     
-    logging.info(f"Embedding: {vector_name} page_content: {page_content[:30]}...")
+    logging.info(f"Embedding: {vector_name} page_content: {page_content[:30]}...{metadata}")
 
     if 'eventTime' not in metadata:
         metadata['eventTime'] = datetime.datetime.now(datetime.UTC).isoformat(timespec='microseconds') + "Z"
@@ -105,6 +105,8 @@ def embed_pubsub_chunk(data: dict):
     if 'source' not in metadata:
         if 'objectId' in metadata:
             metadata['source'] = metadata['objectId']
+        else:
+            logging.warning(f"No source found in metadata: {metadata}")
     
     if 'original_source' not in metadata:
         metadata['original_source'] = metadata.get('source')
@@ -140,10 +142,10 @@ def embed_pubsub_chunk(data: dict):
         logging.debug(f"Adding single document for {vector_name} to vector store {vector_store}")
         try:
             vector_store.add_documents([doc], ids = [str(uuid.uuid4())])
-            logging.info(f"Added doc for {vector_name} to {vector_store} - metadata: {metadata.get('source')}")
+            logging.info(f"Added doc for {vector_name} to {vector_store} - metadata: {metadata}")
             metadata_list.append(metadata)
         except Exception as err:
             error_message = traceback.format_exc()
-            logging.error(f"Could not add document for {vector_name} to {vector_store} for {metadata.get('source')}: {str(err)} traceback: {error_message}")
+            logging.error(f"Could not add document for {vector_name} to {vector_store} for {metadata}: {str(err)} traceback: {error_message}")
 
     return metadata_list
