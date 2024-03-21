@@ -76,8 +76,8 @@ def embed_pubsub_chunk(data: dict):
         # Use the provided function to upload the file to GCS
         image_gsurl = add_file_to_gcs(
             filename=temp_image_path,
-            vector_name=metadata.get("vector_name"),
-            bucket_name=metadata.get("bucket_name"),
+            vector_name=metadata["vector_name"],
+            bucket_name=metadata["bucket_name"],
             metadata=metadata,
             bucket_filepath=image_path
         )
