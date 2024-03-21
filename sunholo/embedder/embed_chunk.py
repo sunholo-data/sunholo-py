@@ -57,7 +57,7 @@ def embed_pubsub_chunk(data: dict):
     image_base64 = metadata.get("image_base64", None)
 
     # upload an image to the objectId/img folder
-    if image_base64:
+    if image_base64 and not image_base64.startswith("gs://"):
         image_data = base64.b64decode(image_base64)
 
         # Determine the file extension based on the MIME type
