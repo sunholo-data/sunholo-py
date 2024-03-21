@@ -79,6 +79,7 @@ def embed_pubsub_chunk(data: dict):
         os.remove(temp_image.name)
         logging.info(f"Uploaded image to GCS: {image_gsurl}")
         the_json["image_gs_url"] = image_gsurl
+        the_json["image_base64"] = image_gsurl
 
     elif page_content is None:
         return "No page content"
@@ -142,6 +143,6 @@ def embed_pubsub_chunk(data: dict):
             metadata_list.append(metadata)
         except Exception as err:
             error_message = traceback.format_exc()
-            logging.error(f"Could not add document {doc} for {vector_name} to {vector_store} for {metadata['source']}: {str(err)} traceback: {error_message}")
+            logging.error(f"Could not add document {doc} for {vector_name} to {vector_store} for {metadata.get('source')}: {str(err)} traceback: {error_message}")
 
     return metadata_list
