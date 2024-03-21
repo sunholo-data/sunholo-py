@@ -105,7 +105,7 @@ def embed_pubsub_chunk(data: dict):
             metadata['source'] = metadata['objectId']
     
     if 'original_source' not in metadata:
-        metadata['original_source'] = metadata['source']
+        metadata['original_source'] = metadata.get('source')
 
     # add metadata to page_content too for vectorstores that don't suppoort the metdata field
     chunk_metadata = f"## Chunk Metadata:\n{json.dumps(metadata)}\n"
@@ -138,7 +138,7 @@ def embed_pubsub_chunk(data: dict):
         logging.debug(f"Adding single document for {vector_name} to vector store {vector_store}")
         try:
             vector_store.add_documents([doc], ids = [str(uuid.uuid4())])
-            logging.info(f"Added doc for {vector_name} to {vector_store} - metadata: {metadata['source']}")
+            logging.info(f"Added doc for {vector_name} to {vector_store} - metadata: {metadata.get('source')}")
             metadata_list.append(metadata)
         except Exception as err:
             error_message = traceback.format_exc()
