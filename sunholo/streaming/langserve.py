@@ -23,8 +23,12 @@ async def parse_langserve_token_async(token):
     if isinstance(token, bytes):
         token = token.decode('utf-8')
 
-    # Split the token into lines
-    lines = token.split('\r\n')
+    if json_accumulation_flag:
+        # its just one big string needing to be added
+        lines = [token]
+    else:
+        # Split the token into lines
+        lines = token.split('\r\n')
     log.info(f'Lines: {lines}')
 
     # Check for run_id in the metadata event
@@ -84,7 +88,12 @@ def parse_langserve_token(token):
         token = token.decode('utf-8')
 
     # Split the token into lines
-    lines = token.split('\r\n')
+    if json_accumulation_flag:
+        # its just one big string needing to be added
+        lines = [token]
+    else:
+        # Split the token into lines
+        lines = token.split('\r\n')
     log.info(f'Lines: {lines}')
 
     # Check for run_id in the metadata event
@@ -105,7 +114,12 @@ def process_langserve_lines(lines, run_id):
 
     for i, line in enumerate(lines):
         #log.debug(f'Line {i}: {line}')
-        if line.startswith('event: data') or json_accumulation_flag:
+        if json_accumulation_flag:
+            json_data = accumulate_json_lines(lines, i, run_id)
+            if json_data:
+                log.info(f'Got accumulated json_str to parse: {json_data}')
+                yield from parse_json_data(json_data)            
+        if line.startswith('event: data'):
             #log.debug(f'Sending {i} {line} to accumulator')
             json_data = accumulate_json_lines(lines, i + 1, run_id)
             if json_data:
@@ -134,7 +148,7 @@ def accumulate_json_lines(lines, start_index, run_id):
     accumulator = ""
 
     if run_id:
-        log.info("Got run_id: {run_id}")
+        log.info(f"Got run_id: {run_id}")
 
     if json_accumulation_flag:
         accumulator = json_accumulation_buffer
