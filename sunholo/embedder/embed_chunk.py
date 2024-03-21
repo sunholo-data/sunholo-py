@@ -144,6 +144,6 @@ def embed_pubsub_chunk(data: dict):
             metadata_list.append(metadata)
         except Exception as err:
             error_message = traceback.format_exc()
-            logging.error(f"Could not add document {doc} for {vector_name} to {vector_store} for {metadata.get('source')}: {str(err)} traceback: {error_message}")
+            logging.error(f"Could not add document for {vector_name} to {vector_store} for {metadata.get('source')}: {str(err)} traceback: {error_message}")
 
     return metadata_list
