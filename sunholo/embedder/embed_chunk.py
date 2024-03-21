@@ -48,11 +48,13 @@ def embed_pubsub_chunk(data: dict):
     if not isinstance(the_json, dict):
         raise ValueError(f"Could not parse message_data from json to a dict: got {message_data} or type: {type(the_json)}")
 
-    page_content = the_json.get("page_content", None)
+    page_content = the_json.get("page_content")
 
-    metadata = the_json.get("metadata", None)
-    if metadata:
-        image_base64 = the_json.get("image_base64", None)
+    metadata = the_json.get("metadata")
+    if not metadata:
+        raise ValueError("Could not find metadata")
+    
+    image_base64 = metadata.get("image_base64", None)
 
     # upload an image to the objectId/img folder
     if image_base64:
@@ -81,8 +83,8 @@ def embed_pubsub_chunk(data: dict):
         )
         os.remove(temp_image.name)
         logging.info(f"Uploaded image to GCS: {image_gsurl}")
-        the_json["image_gs_url"] = image_gsurl
-        the_json["image_base64"] = image_gsurl
+        metadata["image_gs_url"] = image_gsurl
+        metadata["image_base64"] = image_gsurl
 
     elif page_content is None:
         return "No page content"
@@ -112,8 +114,8 @@ def embed_pubsub_chunk(data: dict):
         metadata['original_source'] = metadata.get('source')
 
     # add metadata to page_content too for vectorstores that don't suppoort the metdata field
-    chunk_metadata = f"## Chunk Metadata:\n{json.dumps(metadata)}\n"
-    page_content = f"## Chunk Content:\n{page_content}\n{chunk_metadata}"
+    chunk_metadata = f"Metadata:\n{json.dumps(metadata)}\n"
+    page_content = f"{page_content}\n{chunk_metadata}"
 
     doc = Document(page_content=page_content, metadata=metadata)
 
@@ -125,11 +127,11 @@ def embed_pubsub_chunk(data: dict):
     for memory in memories:  # Iterate over the list
         for key, value in memory.items(): 
             logging.info(f"Found memory {key}")
-            vectorstore = value.get('vectorstore', None)
-            if vectorstore is not None:
+            vectorstore = value.get('vectorstore')
+            if vectorstore:
                 # check if vectorstore specific embedding is available
-                embed_llm = value.get('llm', None)
-                if embed_llm is not None:
+                embed_llm = value.get('llm')
+                if embed_llm:
                     embeddings = pick_embedding(embed_llm)
                 vectorstore_obj = pick_vectorstore(vectorstore, vector_name=vector_name, embeddings=embeddings)
                 vs_retriever = vectorstore_obj.as_retriever(search_kwargs=dict(k=3))
