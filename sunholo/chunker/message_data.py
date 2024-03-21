@@ -53,11 +53,15 @@ def handle_gcs_message(message_data: str, metadata: dict, vector_name: str):
 
         if file_name.suffix == ".pdf":
             pages = split_pdf_to_pages(tmp_file_path, temp_dir)
-            metadata["original_source"] = str(file_name) # to keep track
+            if not metadata.get("source"):
+                metadata["source"] = message_data
             if len(pages) > 1: # we send it back to GCS to parrallise the imports
                 logging.info(f"Got back {len(pages)} pages for file {tmp_file_path}")
                 for pp in pages:
-                    gs_file = add_file_to_gcs(pp, vector_name=vector_name, bucket_name=bucket_name, metadata=metadata)
+                    gs_file = add_file_to_gcs(pp, 
+                                              vector_name=vector_name, 
+                                              bucket_name=bucket_name, 
+                                              metadata=metadata)
                     logging.info(f"{gs_file} is now in bucket {bucket_name}")
                 logging.info(f"Sent split pages for {file_name.name} back to GCS to parrallise the imports")
                 return None, None
@@ -66,10 +70,13 @@ def handle_gcs_message(message_data: str, metadata: dict, vector_name: str):
             pages = [tmp_file_path]
 
         the_metadata = {
-            "source": message_data,
             "type": "file_load_gcs",
             "bucket_name": bucket_name
         }
+        
+        if metadata.get("source") is None:
+            the_metadata["source"] = message_data
+
         metadata.update(the_metadata)
 
         docs = []
