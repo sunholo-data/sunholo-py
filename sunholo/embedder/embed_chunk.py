@@ -57,7 +57,7 @@ def embed_pubsub_chunk(data: dict):
     image_base64 = metadata.get("image_base64", None)
 
     # upload an image to the objectId/img folder
-    if image_base64 and not image_base64.startswith("gs://"):
+    if image_base64 and not image_base64.startswith("uploaded"):
         image_data = base64.b64decode(image_base64)
 
         # Determine the file extension based on the MIME type
@@ -74,7 +74,7 @@ def embed_pubsub_chunk(data: dict):
         temp_image_path = temp_image.name
 
         # wipe this so it doesn't get stuck in loop
-        metadata["image_base64"] = None
+        metadata["image_base64"] = "uploaded"
 
         # Use the provided function to upload the file to GCS
         image_gsurl = add_file_to_gcs(
