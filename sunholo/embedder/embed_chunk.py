@@ -114,6 +114,8 @@ def embed_pubsub_chunk(data: dict):
     
     if 'original_source' not in metadata:
         metadata['original_source'] = metadata.get('source')
+    else:
+        metadata['source'] = metadata['original_source']
 
     # add metadata to page_content too for vectorstores that don't suppoort the metdata field
     chunk_metadata = f"Metadata:\n{json.dumps(metadata)}\n"
