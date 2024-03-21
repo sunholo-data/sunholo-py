@@ -61,8 +61,8 @@ def embed_pubsub_chunk(data: dict):
         image_data = base64.b64decode(image_base64)
 
         # Determine the file extension based on the MIME type
-        mime_type = the_json.get("image_mime_type", "")
-        object_id = the_json.get("objectId", "image")
+        mime_type = metadata.get("image_mime_type", "")
+        object_id = metadata.get("objectId", "image")
         timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         image_path = get_image_file_name(object_id, image_name=timestamp, mime_type=mime_type)
         
@@ -76,9 +76,9 @@ def embed_pubsub_chunk(data: dict):
         # Use the provided function to upload the file to GCS
         image_gsurl = add_file_to_gcs(
             filename=temp_image_path,
-            vector_name=the_json.get("vector_name"),
-            bucket_name=the_json.get("bucket_name"),
-            metadata=the_json,
+            vector_name=metadata.get("vector_name"),
+            bucket_name=metadata.get("bucket_name"),
+            metadata=metadata,
             bucket_filepath=image_path
         )
         os.remove(temp_image.name)
