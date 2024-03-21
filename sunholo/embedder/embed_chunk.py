@@ -73,6 +73,9 @@ def embed_pubsub_chunk(data: dict):
 
         temp_image_path = temp_image.name
 
+        # wipe this so it doesn't get stuck in loop
+        metadata["image_base64"] = None
+
         # Use the provided function to upload the file to GCS
         image_gsurl = add_file_to_gcs(
             filename=temp_image_path,
@@ -84,7 +87,6 @@ def embed_pubsub_chunk(data: dict):
         os.remove(temp_image.name)
         logging.info(f"Uploaded image to GCS: {image_gsurl}")
         metadata["image_gs_url"] = image_gsurl
-        metadata["image_base64"] = image_gsurl
 
     elif page_content is None:
         return "No page content"
