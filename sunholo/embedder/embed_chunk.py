@@ -49,7 +49,10 @@ def embed_pubsub_chunk(data: dict):
         raise ValueError(f"Could not parse message_data from json to a dict: got {message_data} or type: {type(the_json)}")
 
     page_content = the_json.get("page_content", None)
-    image_base64 = the_json.get("image_base64", None)
+
+    metadata = the_json.get("metadata", None)
+    if metadata:
+        image_base64 = the_json.get("image_base64", None)
 
     # upload an image to the objectId/img folder
     if image_base64:
@@ -86,8 +89,6 @@ def embed_pubsub_chunk(data: dict):
     elif len(page_content) < 100:
         logging.warning(f"too little page content to add: {message_data}")
         return "Too little characters"
-    
-    metadata = the_json.get("metadata", None)
 
     vector_name = metadata.get("vector_name", None)
     if vector_name is None:
