@@ -54,7 +54,7 @@ def handle_gcs_message(message_data: str, metadata: dict, vector_name: str):
         if file_name.suffix == ".pdf":
             pages = split_pdf_to_pages(tmp_file_path, temp_dir)
             if not metadata.get("source"):
-                metadata["source"] = file_name
+                metadata["source"] = str(file_name)
             if len(pages) > 1: # we send it back to GCS to parrallise the imports
                 logging.info(f"Got back {len(pages)} pages for file {tmp_file_path}")
                 for pp in pages:
@@ -79,7 +79,7 @@ def handle_gcs_message(message_data: str, metadata: dict, vector_name: str):
         }
         
         if metadata.get("source") is None:
-            the_metadata["source"] = message_data
+            the_metadata["source"] = str(file_name)
 
         metadata.update(the_metadata)
 
