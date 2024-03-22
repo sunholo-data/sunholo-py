@@ -180,6 +180,11 @@ def read_file_to_document(gs_file: pathlib.Path, split=False, metadata: dict = N
     docs = []
     pdf_path = str(pathlib.Path(gs_file))
 
+    if metadata:
+        if metadata.get("uploaded_to_bucket"):
+            logging.info(f"Already uploaded to bucket, skipping {gs_file.name}")
+            return []
+
     logging.info(f"Sending {pdf_path} to UnstructuredAPIFileLoader")
     UNSTRUCTURED_URL = os.getenv("UNSTRUCTURED_URL", None)
     unstructured_kwargs = {"pdf_infer_table_structure": True,

@@ -24,7 +24,7 @@ def publish_chunks(chunks: list[Document], vector_name: str):
     logging.info("Publishing chunks to embed_chunk")
     
     pubsub_manager = PubSubManager(vector_name, 
-                                   pubsub_topic=f"chunk-to-pubsub-embed", 
+                                   pubsub_topic="chunk-to-pubsub-embed", 
                                    project_id=get_gcp_project())
         
     for chunk in chunks:
@@ -40,19 +40,15 @@ def publish_chunks(chunks: list[Document], vector_name: str):
 def publish_text(text:str, vector_name: str):
     logging.info(f"Publishing text: {text} to app-to-pubsub-chunk")
     pubsub_manager = PubSubManager(vector_name, 
-                                   pubsub_topic=f"app-to-pubsub-chunk",
+                                   pubsub_topic="app-to-pubsub-chunk",
                                    project_id=get_gcp_project())
     
     pubsub_manager.publish_message(text)
 
 def process_docs_chunks_vector_name(chunks, vector_name, metadata):
-
-    if vector_name is None:
-        logging.error(f"Missing vector name for pubsub-chunk - no publishing done")
-        return metadata
     
     pubsub_manager = PubSubManager(vector_name, 
-                                   pubsub_topic=f"pubsub_state_messages",
+                                   pubsub_topic="pubsub_state_messages",
                                    project_id=get_gcp_project())
     if chunks is None:
         logging.info("No chunks found")

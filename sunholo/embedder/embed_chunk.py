@@ -15,14 +15,11 @@ import traceback
 import base64
 import json
 import datetime
-import tempfile
-import os
 
 from langchain.schema import Document
 
 from ..components import get_embeddings, pick_vectorstore, load_memories, pick_embedding
 from ..logging import setup_logging
-from ..gcs.add_file import add_file_to_gcs, get_image_file_name
 
 logging = setup_logging("embedder")
 
@@ -53,42 +50,8 @@ def embed_pubsub_chunk(data: dict):
     metadata = the_json.get("metadata")
     if not metadata:
         raise ValueError("Could not find metadata")
-    
-    image_base64 = metadata.get("image_base64")
 
-    # upload an image to the objectId/img folder
-    if image_base64 and len(image_base64) > 100:
-        image_data = base64.b64decode(image_base64)
-
-        # Determine the file extension based on the MIME type
-        mime_type = metadata.get("image_mime_type", "")
-        object_id = metadata.get("objectId", "image")
-        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-        image_path = get_image_file_name(object_id, image_name=timestamp, mime_type=mime_type)
-        
-        # Write image data to a temporary file
-        with tempfile.NamedTemporaryFile(mode='wb', delete=False) as temp_image:
-            temp_image.write(image_data)
-            temp_image.flush()  # Make sure all data is written to the file
-
-        temp_image_path = temp_image.name
-
-        # wipe this so it doesn't get stuck in loop
-        metadata["image_base64"] = None
-        
-        # Use the provided function to upload the file to GCS
-        image_gsurl = add_file_to_gcs(
-            filename=temp_image_path,
-            vector_name=metadata["vector_name"],
-            bucket_name=metadata["bucket_name"],
-            metadata=metadata,
-            bucket_filepath=image_path
-        )
-        os.remove(temp_image.name)
-        logging.info(f"Uploaded image to GCS: {image_gsurl}")
-        metadata["image_gs_url"] = image_gsurl
-
-    elif page_content is None:
+    if page_content is None:
         return "No page content"
     elif len(page_content) < 100:
         logging.warning(f"too little page content to add: {message_data}")
@@ -100,7 +63,7 @@ def embed_pubsub_chunk(data: dict):
         logging.error(msg)
         return msg
     
-    logging.info(f"Embedding: {vector_name} page_content: {page_content[:30]}...{metadata}")
+    logging.info(f"Embedding: {vector_name} page_content: {page_content[:30]}...[{len(page_content)}] - {metadata}")
 
     if 'eventTime' not in metadata:
         metadata['eventTime'] = datetime.datetime.now(datetime.UTC).isoformat(timespec='microseconds') + "Z"

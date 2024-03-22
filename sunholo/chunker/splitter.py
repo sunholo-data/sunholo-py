@@ -15,8 +15,9 @@ from ..logging import setup_logging
 from ..utils.parsers import remove_whitespace
 from langchain.schema import Document
 import langchain.text_splitter as text_splitter
+from .images import upload_doc_images
 
-logging = setup_logging()
+logging = setup_logging("chunker")
 
 def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 800, vector_name=None, **kwargs):
     """Turns a Document object into a list of many Document chunks.
@@ -30,6 +31,10 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
     combined_documents = []
     for document in documents:
         content = remove_whitespace(document.page_content)
+
+        # look for images and upload them for later extraction
+        upload_doc_images(document.metadata)
+
         if len(content) < min_size:
             combined_documents_content += content + "\n"
             logging.info(f"Appending document as its smaller than {min_size}: length {len(content)}")
