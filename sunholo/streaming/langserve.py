@@ -93,10 +93,15 @@ def parse_langserve_token(token):
     if isinstance(token, bytes):
         token = token.decode('utf-8')
 
-    # Split the token into lines
     if json_accumulation_flag:
-        # its just one big string needing to be added
-        lines = [token]
+        parsed_token = token
+        # its just one big string needing to be added, with some :pings one the end
+        last_closing_bracket_index = token.rfind('}')
+        if last_closing_bracket_index != -1:
+            # Slice the string to get only the JSON part
+            parsed_token = token[:last_closing_bracket_index+1]
+
+        lines = [parsed_token]
     else:
         # Split the token into lines
         lines = token.split('\r\n')
@@ -121,6 +126,7 @@ def process_langserve_lines(lines, run_id):
     for i, line in enumerate(lines):
         #log.debug(f'Line {i}: {line}')
         if json_accumulation_flag:
+            log.info('Accumulation flag active for line:\n{line}')
             json_data = accumulate_json_lines(lines, i, run_id)
             if json_data:
                 log.info(f'Got accumulated json_str to parse: {json_data}')
@@ -169,8 +175,9 @@ def accumulate_json_lines(lines, start_index, run_id):
             #log.debug(f'line_data: {the_data}')
             accumulator += the_data
         elif accumulator and not line.startswith('event:'):
-            log.info(f'Adding old accumulator line: {line}')
-            accumulator += line.strip()
+            no_pings = line.split(': ping')[0].strip()
+            log.info(f'Adding old accumulator line: {no_pings}')
+            accumulator += no_pings
 
         #log.debug(f'accumulator: {accumulator}')
         # Attempt to parse the accumulated JSON string periodically
@@ -179,6 +186,7 @@ def accumulate_json_lines(lines, start_index, run_id):
             # If no exception is raised, a complete JSON object has been formed
             json_accumulation_buffer = ""  # Reset buffer for this run_id
             json_accumulation_flag = False
+            accumulator = ""
             return parsed_json  # Return the complete JSON string
         except json.JSONDecodeError:
             log.warning(f'Did not parse json for {accumulator}')
