@@ -3,10 +3,6 @@ from ..logging import setup_logging
 
 log = setup_logging("langserve_streaming")
 
-# Global accumulation buffer for JSON parts, indexed by run_id
-json_accumulation_buffer = {}
-json_accumulation_flag = False
-
 async def parse_langserve_token_async(token):
     """
     Asynchronously parses the token to accumulate content from JSON for 'event: data' events,
@@ -23,18 +19,7 @@ async def parse_langserve_token_async(token):
     if isinstance(token, bytes):
         token = token.decode('utf-8')
 
-    if json_accumulation_flag:
-        parsed_token = token
-        # its just one big string needing to be added, with some :pings one the end
-        last_closing_bracket_index = token.rfind('}')
-        if last_closing_bracket_index != -1:
-            # Slice the string to get only the JSON part
-            parsed_token = token[:last_closing_bracket_index+1]
-
-        lines = [parsed_token]
-    else:
-        # Split the token into lines
-        lines = token.split('\r\n')
+    lines = token.split('\r\n')
     log.info(f'Lines: {lines}')
 
     # Check for run_id in the metadata event
@@ -93,18 +78,7 @@ def parse_langserve_token(token):
     if isinstance(token, bytes):
         token = token.decode('utf-8')
 
-    if json_accumulation_flag:
-        parsed_token = token
-        # its just one big string needing to be added, with some :pings one the end
-        last_closing_bracket_index = token.rfind('}')
-        if last_closing_bracket_index != -1:
-            # Slice the string to get only the JSON part
-            parsed_token = token[:last_closing_bracket_index+1]
-
-        lines = [parsed_token]
-    else:
-        # Split the token into lines
-        lines = token.split('\r\n')
+    lines = token.split('\r\n')
     log.info(f'Lines: {lines}')
 
     # Check for run_id in the metadata event
@@ -121,16 +95,9 @@ def process_langserve_lines(lines, run_id):
     :param lines: The list of lines to process.
     :param run_id: The current run_id to index the accumulation buffer.
     """
-    global json_accumulation_flag
 
     for i, line in enumerate(lines):
-        #log.debug(f'Line {i}: {line}')
-        if json_accumulation_flag:
-            log.info('Accumulation flag active for line:\n{line}')
-            json_data = accumulate_json_lines(lines, i, run_id)
-            if json_data:
-                log.info(f'Got accumulated json_str to parse: {json_data}')
-                yield from parse_json_data(json_data)            
+        #log.debug(f'Line {i}: {line}')         
         if line.startswith('event: data'):
             #log.debug(f'Sending {i} {line} to accumulator')
             json_data = accumulate_json_lines(lines, i + 1, run_id)
@@ -155,48 +122,28 @@ def accumulate_json_lines(lines, start_index, run_id):
     :return: The accumulated JSON string if a complete JSON object is formed, 
              or None if accumulation should continue.
     """
-    global json_accumulation_buffer
-    global json_accumulation_flag
-    accumulator = ""
 
     if run_id:
         log.info(f"Got run_id: {run_id}")
-
-    if json_accumulation_flag:
-        accumulator = json_accumulation_buffer
-
-    if accumulator:
-        log.info(f"Using old accumulator for {run_id}")
     
     for line in lines[start_index:]:
         if line.startswith('data:'):
             #log.debug(f'stripping line: {line}')
             the_data = line[len('data:'):].strip()
             #log.debug(f'line_data: {the_data}')
-            accumulator += the_data
-        elif accumulator and not line.startswith('event:'):
-            no_pings = line.split(': ping')[0].strip()
-            log.info(f'Adding old accumulator line: {no_pings}')
-            accumulator += no_pings
+        else:
+            continue
 
-        #log.debug(f'accumulator: {accumulator}')
         # Attempt to parse the accumulated JSON string periodically
         try:
-            parsed_json = json.loads(accumulator)
+            parsed_json = json.loads(the_data)
             # If no exception is raised, a complete JSON object has been formed
-            json_accumulation_buffer = ""  # Reset buffer for this run_id
-            json_accumulation_flag = False
-            accumulator = ""
             return parsed_json  # Return the complete JSON string
         except json.JSONDecodeError:
-            log.warning(f'Did not parse json for {accumulator}')
-            continue  # Continue accumulating if JSON is incomplete
+            log.warning(f'Did not parse json for {the_data}')
 
-    # Update the buffer with the current accumulation state
-    json_accumulation_buffer = accumulator
-    json_accumulation_flag = True
-    log.info(f'Did not finish accumulator run_id {run_id} - waiting for next token')
-    return None  # Indicate continuation if a complete object has not been formed
+    # no data was parsed
+    return None
 
 def parse_json_data(json_data: dict):
     """
@@ -216,7 +163,7 @@ def parse_json_data(json_data: dict):
             #log.debug(f'Yield content: {content}')
             yield content
         else:
-            log.debug(f'No content found, yielding all json data dict: {json_data}')
+            log.debug(f'No "content" key found, yielding all json data dict: {json_data}')
             yield json_data # Yielding all JSON data
     except json.JSONDecodeError as err:
         log.error(f"JSON decoding error: {err} - JSON string was: '{json_data}'")
