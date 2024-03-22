@@ -13,6 +13,7 @@
 #   limitations under the License.
 import base64
 from ..logging import setup_logging
+from ..gcs.metadata import get_object_metadata
 
 logging = setup_logging()
 
@@ -58,5 +59,9 @@ def process_pubsub_message(data: dict) -> tuple:
             if len(bucket_vector_name) > 0 and vector_name != bucket_vector_name:
                 logging.info(f"Overwriting vector_name {vector_name} with {bucket_vector_name}")
                 vector_name = bucket_vector_name
+        
+        # get metadata for object
+        metadata = get_object_metadata(attributes.get("bucketId"), attributes.get("objectId"))
+        attributes.update(metadata)
 
     return message_data, attributes, vector_name
