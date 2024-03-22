@@ -24,8 +24,14 @@ async def parse_langserve_token_async(token):
         token = token.decode('utf-8')
 
     if json_accumulation_flag:
-        # its just one big string needing to be added
-        lines = [token]
+        parsed_token = token
+        # its just one big string needing to be added, with some :pings one the end
+        last_closing_bracket_index = token.rfind('}')
+        if last_closing_bracket_index != -1:
+            # Slice the string to get only the JSON part
+            parsed_token = token[:last_closing_bracket_index+1]
+
+        lines = [parsed_token]
     else:
         # Split the token into lines
         lines = token.split('\r\n')
