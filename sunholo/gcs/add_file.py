@@ -81,6 +81,15 @@ def add_file_to_gcs(filename: str, vector_name:str, bucket_name: str=None, metad
 
     return f"gs://{bucket_name}/{bucket_filepath}"
 
+def get_pdf_split_file_name(object_id, part_name):
+    # Get the base file name without the file extension and directory
+    base_name = os.path.basename(object_id).rsplit('.', 1)[0]
+
+    # Get the file extension for the given mime type
+    file_extension = "pdf"
+    # Return the full object name for the image
+    return f"{os.path.dirname(object_id)}/{base_name}/pdf_parts/{part_name}.{file_extension}"
+
 def get_image_file_name(object_id, image_name, mime_type):
     # Get the base file name without the file extension and directory
     base_name = os.path.basename(object_id).rsplit('.', 1)[0]

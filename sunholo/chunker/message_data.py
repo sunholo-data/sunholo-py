@@ -29,7 +29,7 @@ from .publish import publish_if_urls
 from . import loaders
 
 from ..utils.parsers import extract_urls
-from ..gcs.add_file import add_file_to_gcs
+from ..gcs.add_file import add_file_to_gcs, get_pdf_split_file_name
 
 logging = setup_logging()
 
@@ -54,14 +54,18 @@ def handle_gcs_message(message_data: str, metadata: dict, vector_name: str):
         if file_name.suffix == ".pdf":
             pages = split_pdf_to_pages(tmp_file_path, temp_dir)
             if not metadata.get("source"):
-                metadata["source"] = message_data
+                metadata["source"] = file_name
             if len(pages) > 1: # we send it back to GCS to parrallise the imports
                 logging.info(f"Got back {len(pages)} pages for file {tmp_file_path}")
                 for pp in pages:
+                    pp_basename = os.path.basename(pp)
+                    # file_name/pdf_parts/file_name_1.pdf
+                    bucket_path = get_pdf_split_file_name(file_name, part_name=pp_basename)
                     gs_file = add_file_to_gcs(pp, 
                                               vector_name=vector_name, 
                                               bucket_name=bucket_name, 
-                                              metadata=metadata)
+                                              metadata=metadata,
+                                              bucket_filepath=bucket_path)
                     logging.info(f"{gs_file} is now in bucket {bucket_name}")
                 logging.info(f"Sent split pages for {file_name.name} back to GCS to parrallise the imports")
                 return None, None
