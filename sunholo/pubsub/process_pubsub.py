@@ -62,6 +62,7 @@ def process_pubsub_message(data: dict) -> tuple:
         
         # get metadata for object
         metadata = get_object_metadata(attributes.get("bucketId"), attributes.get("objectId"))
-        attributes.update(metadata)
+        if metadata:
+            attributes.update(metadata)
 
     return message_data, attributes, vector_name
