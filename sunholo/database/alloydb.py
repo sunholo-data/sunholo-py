@@ -16,6 +16,7 @@ def create_alloydb_engine(alloydb_config, vector_name):
     ALLOYDB_DB = os.environ.get("ALLOYDB_DB")
     if ALLOYDB_DB is None:
         logging.error(f"Could not locate ALLOYDB_DB environment variable for {vector_name}")
+        raise ValueError("Could not locate ALLOYDB_DB environment variable")
     logging.info(f"ALLOYDB_DB environment variable found for {vector_name} - {ALLOYDB_DB}")
     
     logging.info("Inititaing AlloyDB Langchain")
@@ -183,12 +184,18 @@ def create_alloydb_table(table_name, engine, type = "vectorstore", alloydb_confi
 
             return table_name
 
-def create_docstore_table(table_name, alloy_db_config):
+def create_docstore_table(table_name, alloydb_config):
+    ALLOYDB_DB = os.environ.get("ALLOYDB_DB")
+    if ALLOYDB_DB is None:
+        logging.error(f"Could not locate ALLOYDB_DB environment variable for {table_name}")
+        raise ValueError("Could not locate ALLOYDB_DB environment variable")
+        
     client = AlloyDBClient(
-        project_id=alloy_db_config["project_id"],
-        region=alloy_db_config["region"],
-        cluster_name=alloy_db_config["cluster_name"],
-        instance_name=alloy_db_config["instance_name"]
+        project_id=alloydb_config["project_id"],
+        region=alloydb_config["region"],
+        cluster_name=alloydb_config["cluster"],
+        instance_name=alloydb_config["instance"],
+        db=alloydb_config.get("database") or ALLOYDB_DB,
     )
 
     # Execute other SQL statements
