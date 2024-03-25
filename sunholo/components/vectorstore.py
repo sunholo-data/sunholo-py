@@ -73,7 +73,7 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
     elif vs_str == 'alloydb':
         from langchain_google_alloydb_pg import AlloyDBEngine, AlloyDBVectorStore
         from google.cloud.alloydb.connector import IPTypes
-        from ..database.alloydb import create_alloydb_table
+        from ..database.alloydb import create_alloydb_table, create_alloydb_engine
 
         alloydb_config = load_config_key(
             'alloydb_config', 
@@ -84,22 +84,7 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
         if alloydb_config is None:
             logging.error("No alloydb_config was found")
 
-        ALLOYDB_DB = os.environ.get("ALLOYDB_DB")
-        if ALLOYDB_DB is None:
-            logging.error(f"Could not locate ALLOYDB_DB environment variable for {vector_name}")
-        logging.info(f"ALLOYDB_DB environment variable found for {vector_name} - {ALLOYDB_DB}")
-        
-        logging.info("Inititaing AlloyDB Langchain")
-
-        
-        engine = AlloyDBEngine.from_instance(
-            project_id=alloydb_config["project_id"],
-            region=alloydb_config["region"],
-            cluster=alloydb_config["cluster"],
-            instance=alloydb_config["instance"],
-            database=alloydb_config.get("database") or ALLOYDB_DB,
-            ip_type=alloydb_config.get("ip_type") or IPTypes.PRIVATE
-        )
+        engine = create_alloydb_engine(alloydb_config, vector_name)
 
         create_alloydb_table(vector_name, engine)
 

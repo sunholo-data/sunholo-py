@@ -15,7 +15,7 @@ import os
 import pathlib
 from ..logging import setup_logging
 
-logging = setup_logging()
+logging = setup_logging("chunker")
 
 def split_pdf_to_pages(pdf_path, temp_dir):
 

@@ -16,6 +16,7 @@ from ..utils.parsers import remove_whitespace
 from langchain.schema import Document
 import langchain.text_splitter as text_splitter
 from .images import upload_doc_images
+from .doc_handling import send_doc_to_docstore, summarise_docs
 
 logging = setup_logging("chunker")
 
@@ -25,6 +26,11 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
 
     if documents is None:
         return None
+
+    # send full parsed doc to docstore
+    send_doc_to_docstore(documents, vector_name=vector_name)
+
+    documents = summarise_docs(documents, vector_name=vector_name)
 
     # Combine entire documents that are smaller than min_size
     combined_documents_content = ""
@@ -75,19 +81,6 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
         if temporary_chunk:
             source_chunks.append(Document(page_content=temporary_chunk, metadata=document.metadata))
             temporary_chunk = ""
-
-    # summarisation of large docs, send them in too
-    #summaries = [Document(page_content="No summary made", metadata=metadata)]
-    #do_summary = False #TODO: use metadata to determine a summary should be made
-    #if documents is not None and do_summary:
-    #    from summarise import summarise_docs
-    #    summaries = summarise_docs(docs, vector_name=vector_name)
-    #    summary_chunks = chunk_doc_to_docs(summaries)
-    #    publish_chunks(summary_chunks, vector_name=vector_name)
-
-    #    pubsub_manager = PubSubManager(vector_name, pubsub_topic=f"pubsub_state_messages")    
-    #    pubsub_manager.publish_message(
-    #        f"Sent doc chunks with metadata: {metadata} to {vector_name} embedding with summaries:\n{summaries}")
 
     logging.info(f"Chunked into {len(source_chunks)} documents")
     return source_chunks

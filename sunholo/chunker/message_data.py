@@ -179,6 +179,6 @@ def handle_json_content_message(message_data: str, metadata: dict, vector_name: 
 
     publish_if_urls(the_content, vector_name)
 
-    chunks = chunk_doc_to_docs(docs,vector_name=vector_name)
+    chunks = chunk_doc_to_docs(docs, vector_name=vector_name)
 
     return chunks, metadata
