@@ -18,7 +18,11 @@ from ..utils.config import load_config_key
 logging = setup_logging()
 
 
+def load_memories(vector_name):
+    """This function loads memory settings for a given vector name from the 'config/llm_config.yaml' file and returns the memory settings for the vector name. If no memory settings are found, it returns None."""
+
 def pick_vectorstore(vs_str, vector_name, embeddings):
+    """This function picks a vector store based on the 'vs_str' parameter. It currently supports 'supabase', 'cloudsql', 'alloydb', and 'lancedb'."""
     logging.debug('Picking vectorstore')
         
     if vs_str == 'supabase':
@@ -69,7 +73,9 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
         logging.debug("Chose CloudSQL")
 
         return vectorstore
-    
+
+def pick_retriever(vector_name, embeddings=None):
+    """This function creates a list of retrievers based on the memory settings for a given vector name and returns a ContextualCompressionRetriever object. If no retrievers are created, it returns None. The function takes a vector name and an optional embeddings parameter."""
     elif vs_str == 'alloydb':
         from langchain_google_alloydb_pg import AlloyDBEngine, AlloyDBVectorStore
         from google.cloud.alloydb.connector import IPTypes

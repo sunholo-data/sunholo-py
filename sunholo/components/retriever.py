@@ -27,6 +27,7 @@ from langchain.retrievers import ContextualCompressionRetriever
 logging = setup_logging()
 
 def load_memories(vector_name):
+    """This function loads memory settings for a given vector name from the 'config/llm_config.yaml' file. It returns the memory settings for the vector name. If no memory settings are found, it returns None."""
     memories = load_config_key("memory", vector_name, filename="config/llm_config.yaml")
     logging.info(f"Found memory settings for {vector_name}: {memories}")
     if len(memories) == 0:
@@ -36,6 +37,7 @@ def load_memories(vector_name):
     return memories
 
 def pick_retriever(vector_name, embeddings=None):
+    """This function creates a list of retrievers based on the memory settings for a given vector name. It returns a ContextualCompressionRetriever object. If no retrievers are created, it returns None. The function takes a vector name and an optional embeddings parameter."""
 
     memories = load_memories(vector_name)
 

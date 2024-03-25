@@ -92,6 +92,7 @@ Can you help, {agent_buddy} , with the above question?
     return QA_PROMPT
 
 def pick_chat_buddy(vector_name):
+    """This function picks a chat buddy based on the 'chat_buddy' key in the 'config/llm_config.yaml' file. It returns the chosen chat buddy and a description of the chat buddy."""
     chat_buddy = load_config_key("chat_buddy", vector_name, filename = "config/llm_config.yaml")
     if chat_buddy is not None:
         logging.info(f"Got chat buddy {chat_buddy} for {vector_name}")
@@ -101,6 +102,7 @@ def pick_chat_buddy(vector_name):
 
 
 def pick_agent(vector_name):
+    """This function checks if the 'agent' key in the 'config/llm_config.yaml' file is 'yes'. If it is, the function returns True. Otherwise, it returns False."""
     agent_str = load_config_key("agent", vector_name, filename = "config/llm_config.yaml")
     if agent_str == "yes":
         return True
@@ -108,12 +110,14 @@ def pick_agent(vector_name):
     return False
 
 def pick_shared_vectorstore(vector_name, embeddings):
+    """This function picks a shared vector store based on the 'shared_vectorstore' key in the 'config/llm_config.yaml' file. It returns the chosen vector store."""
     shared_vectorstore = load_config_key("shared_vectorstore", vector_name, filename = "config/llm_config.yaml")
     vectorstore = pick_vectorstore(shared_vectorstore, embeddings)
     return vectorstore
 
 
 def get_chat_history(inputs, vector_name, last_chars=1000, summary_chars=1500) -> str:
+    """This function gets the chat history and returns a string that contains the summarized chat history and the last 'last_chars' characters of the chat history. The function takes as parameters the chat history, the vector name, the number of last characters to include in the chat history, and the number of characters to include in the summary."""
     from langchain.schema import Document
     from ..summarise import summarise_docs
 
