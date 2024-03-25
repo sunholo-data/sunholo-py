@@ -15,7 +15,7 @@ def send_doc_to_docstore(docs, vector_name):
 
     docstore_config = load_config_key("docstore", vector_name=vector_name, filename="config/llm_config.yaml")
     if docstore_config is None:
-        log.info("No docstore config found for {vector_name}")
+        log.info(f"No docstore config found for {vector_name} ")
         
         return
      
