@@ -16,7 +16,14 @@ from ..utils.config import load_config_key, load_config, get_module_filepath
 
 logging = setup_logging()
 
+
 def pick_llm(vector_name):
+    """
+    This function selects a language model based on a given vector name. It returns the selected language model, embeddings, and chat model.
+
+    :param vector_name: The name of the vector used to select the language model.
+    :return: A tuple containing the selected language model, embeddings, and chat model.
+    """
     logging.debug('Picking llm')
     
     llm_str = load_config_key("llm", vector_name, filename = "config/llm_config.yaml")
@@ -47,7 +54,14 @@ def pick_llm(vector_name):
 
     return llm, embeddings, llm_chat
 
+
 def pick_streaming(vector_name):
+    """
+    This function determines whether to use streaming based on the given vector name.
+
+    :param vector_name: The name of the vector used to determine whether to use streaming.
+    :return: A boolean indicating whether to use streaming.
+    """
     
     llm_str = load_config_key("llm", vector_name, filename = "config/llm_config.yaml")
     
@@ -57,7 +71,15 @@ def pick_streaming(vector_name):
     return False
  
 
+
 def get_llm(vector_name, model=None, config_file="config/llm_config.yaml"):
+    """
+    This function gets a language model based on a given vector name and an optional model name.
+
+    :param vector_name: The name of the vector used to get the language model.
+    :param model: The name of the model. If not provided, a default model is used.
+    :return: The selected language model.
+    """
     llm_str = load_config_key("llm", vector_name, filename=config_file)
     model_lookup_filepath = get_module_filepath("lookup/model_lookup.yaml")
     model_lookup, _ = load_config(model_lookup_filepath)
@@ -106,7 +128,15 @@ def get_llm(vector_name, model=None, config_file="config/llm_config.yaml"):
     if llm_str is None:
         raise NotImplementedError(f'No llm implemented for {llm_str}')
 
+
 def get_llm_chat(vector_name, model=None, config_file="config/llm_config.yaml"):
+    """
+    This function gets a chat model based on a given vector name and an optional model name.
+
+    :param vector_name: The name of the vector used to get the chat model.
+    :param model: The name of the model. If not provided, a default model is used.
+    :return: The selected chat model.
+    """
     llm_str = load_config_key("llm", vector_name, filename=config_file)
     if not model:
         model = load_config_key("model", vector_name, filename=config_file)
@@ -150,14 +180,28 @@ def get_llm_chat(vector_name, model=None, config_file="config/llm_config.yaml"):
     if llm_str is None:
         raise NotImplementedError(f'No llm implemented for {llm_str}')
 
+
 def get_embeddings(vector_name):
+    """
+    This function gets embeddings based on a given vector name.
+
+    :param vector_name: The name of the vector used to get the embeddings.
+    :return: The selected embeddings.
+    """
     llm_str = load_config_key("llm", vector_name, filename="config/llm_config.yaml")
 
     return pick_embedding(llm_str)
 
 
 
+
 def pick_embedding(llm_str: str):
+    """
+    This function selects embeddings based on a given language model string.
+
+    :param llm_str: The language model string used to select the embeddings.
+    :return: The selected embeddings.
+    """
     # get embedding directly from llm_str
     # Configure embeddings based on llm_str
     if llm_str == 'openai':

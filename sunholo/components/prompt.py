@@ -23,6 +23,7 @@ from .vectorstore import pick_vectorstore
 
 
 def pick_prompt(vector_name, chat_history=[]):
+    """This function selects a custom prompt based on a given vector name and an optional chat history. It returns a PromptTemplate object."""
     """Pick a custom prompt"""
     logging.debug('Picking prompt')
 
@@ -92,6 +93,7 @@ Can you help, {agent_buddy} , with the above question?
     return QA_PROMPT
 
 def pick_chat_buddy(vector_name):
+    """This function selects a chat buddy based on a given vector name. It returns the name of the chat buddy and a description of the chat buddy."""
     chat_buddy = load_config_key("chat_buddy", vector_name, filename = "config/llm_config.yaml")
     if chat_buddy is not None:
         logging.info(f"Got chat buddy {chat_buddy} for {vector_name}")
@@ -101,6 +103,7 @@ def pick_chat_buddy(vector_name):
 
 
 def pick_agent(vector_name):
+    """This function determines whether to use an agent based on a given vector name. It returns a boolean indicating whether to use an agent."""
     agent_str = load_config_key("agent", vector_name, filename = "config/llm_config.yaml")
     if agent_str == "yes":
         return True
@@ -108,12 +111,14 @@ def pick_agent(vector_name):
     return False
 
 def pick_shared_vectorstore(vector_name, embeddings):
+    """This function selects a shared vector store based on a given vector name and embeddings. It returns the selected vector store."""
     shared_vectorstore = load_config_key("shared_vectorstore", vector_name, filename = "config/llm_config.yaml")
     vectorstore = pick_vectorstore(shared_vectorstore, embeddings)
     return vectorstore
 
 
 def get_chat_history(inputs, vector_name, last_chars=1000, summary_chars=1500) -> str:
+    """This function gets the chat history based on given inputs, a vector name, and optional parameters for the number of last characters and summary characters. It returns a string representing the chat history."""
     from langchain.schema import Document
     from ..summarise import summarise_docs
 
