@@ -16,6 +16,9 @@ from ..utils.config import load_config_key, load_config, get_module_filepath
 
 logging = setup_logging()
 
+"""
+This function picks a language model based on the `vector_name` parameter and returns the chosen language model, its embeddings, and its chat model.
+"""
 def pick_llm(vector_name):
     logging.debug('Picking llm')
     
@@ -47,6 +50,9 @@ def pick_llm(vector_name):
 
     return llm, embeddings, llm_chat
 
+"""
+This function checks if the language model specified by the `vector_name` parameter supports streaming and returns a boolean value.
+"""
 def pick_streaming(vector_name):
     
     llm_str = load_config_key("llm", vector_name, filename = "config/llm_config.yaml")
@@ -57,6 +63,9 @@ def pick_streaming(vector_name):
     return False
  
 
+"""
+This function gets a language model based on the `vector_name` and `model` parameters and the `config_file` configuration file.
+"""
 def get_llm(vector_name, model=None, config_file="config/llm_config.yaml"):
     llm_str = load_config_key("llm", vector_name, filename=config_file)
     model_lookup_filepath = get_module_filepath("lookup/model_lookup.yaml")
@@ -106,6 +115,9 @@ def get_llm(vector_name, model=None, config_file="config/llm_config.yaml"):
     if llm_str is None:
         raise NotImplementedError(f'No llm implemented for {llm_str}')
 
+"""
+This function gets a chat model based on the `vector_name` and `model` parameters and the `config_file` configuration file.
+"""
 def get_llm_chat(vector_name, model=None, config_file="config/llm_config.yaml"):
     llm_str = load_config_key("llm", vector_name, filename=config_file)
     if not model:
@@ -150,6 +162,9 @@ def get_llm_chat(vector_name, model=None, config_file="config/llm_config.yaml"):
     if llm_str is None:
         raise NotImplementedError(f'No llm implemented for {llm_str}')
 
+"""
+This function gets the embeddings for the language model specified by the `vector_name` parameter.
+"""
 def get_embeddings(vector_name):
     llm_str = load_config_key("llm", vector_name, filename="config/llm_config.yaml")
 
@@ -157,6 +172,9 @@ def get_embeddings(vector_name):
 
 
 
+"""
+This function picks the embeddings based on the `llm_str` parameter.
+"""
 def pick_embedding(llm_str: str):
     # get embedding directly from llm_str
     # Configure embeddings based on llm_str

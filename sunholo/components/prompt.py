@@ -23,7 +23,7 @@ from .vectorstore import pick_vectorstore
 
 
 def pick_prompt(vector_name, chat_history=[]):
-    """Pick a custom prompt"""
+    """This function picks a custom prompt based on the `vector_name` and `chat_history` parameters and returns the chosen prompt."""
     logging.debug('Picking prompt')
 
     prompt_str = load_config_key("prompt", vector_name, filename = "config/llm_config.yaml")
@@ -69,13 +69,14 @@ Can you help, {agent_buddy} , with the above question?
     else:
         follow_up += ".\n"
 
-    memory_str = "\n## Your Memory (ignore if not relevant to question)\n{context}\n"
+    memory_str = "\n## Your Memory (ignore if not relevant to question)
+{context}\n"
 
     current_conversation = ""
     if chat_summary != "":
         current_conversation =f"## Current Conversation\n{chat_summary}\n"
         current_conversation = current_conversation.replace("{","{{").replace("}","}}") #escape {} characters
-   
+    
     buddy_question = ""
     my_q = "## Current Question\n{question}\n"
     if agent_buddy:
@@ -92,6 +93,7 @@ Can you help, {agent_buddy} , with the above question?
     return QA_PROMPT
 
 def pick_chat_buddy(vector_name):
+    """This function picks a chat buddy based on the `vector_name` parameter and returns the chosen chat buddy and its description."""
     chat_buddy = load_config_key("chat_buddy", vector_name, filename = "config/llm_config.yaml")
     if chat_buddy is not None:
         logging.info(f"Got chat buddy {chat_buddy} for {vector_name}")
@@ -99,8 +101,8 @@ def pick_chat_buddy(vector_name):
         return chat_buddy, buddy_description
     return None, None
 
-
 def pick_agent(vector_name):
+    """This function determines if an agent is needed based on the `vector_name` parameter and returns a boolean value."""
     agent_str = load_config_key("agent", vector_name, filename = "config/llm_config.yaml")
     if agent_str == "yes":
         return True
@@ -108,12 +110,13 @@ def pick_agent(vector_name):
     return False
 
 def pick_shared_vectorstore(vector_name, embeddings):
+    """This function picks a shared vector store based on the `vector_name` and `embeddings` parameters and returns the chosen vector store."""
     shared_vectorstore = load_config_key("shared_vectorstore", vector_name, filename = "config/llm_config.yaml")
     vectorstore = pick_vectorstore(shared_vectorstore, embeddings)
     return vectorstore
 
-
 def get_chat_history(inputs, vector_name, last_chars=1000, summary_chars=1500) -> str:
+    """This function gets the chat history based on the `inputs`, `vector_name`, `last_chars`, and `summary_chars` parameters and returns the chat history as a string."""
     from langchain.schema import Document
     from ..summarise import summarise_docs
 
