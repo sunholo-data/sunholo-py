@@ -55,6 +55,7 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
 
     source_chunks = []
     temporary_chunk = ""
+    chunk_number = 0
     for document in combined_documents:
         splitter = choose_splitter(extension, vector_name=vector_name, **kwargs)
         for chunk in splitter.split_text(document.page_content):
@@ -74,15 +75,18 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
                 temporary_chunk += chunk + "\n"
                 logging.info(f"Appending chunk as its smaller than {min_size}: length {len(chunk)}")
                 continue
-
+            
+            document.metadata["chunk_number"] = chunk_number
             source_chunks.append(Document(page_content=chunk, metadata=document.metadata))
 
         # If there's any remaining content in temporary_chunk, append it as a new chunk
         if temporary_chunk:
             source_chunks.append(Document(page_content=temporary_chunk, metadata=document.metadata))
             temporary_chunk = ""
+        
+        chunk_number += 1
 
-    logging.info(f"Chunked into {len(source_chunks)} documents")
+    logging.info(f"Chunked into {chunk_number} documents")
     return source_chunks
 
 def choose_splitter(extension: str, chunk_size: int=1024, chunk_overlap:int=0, vector_name: str=None):
