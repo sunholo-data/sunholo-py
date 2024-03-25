@@ -18,6 +18,27 @@ from ..utils.config import load_config_key
 logging = setup_logging()
 
 
+"""
+This function picks a vectorstore based on the vs_str, vector_name, and embeddings parameters.
+
+It uses the vs_str parameter to determine which type of vectorstore to pick. It supports several types of vectorstores, including 'supabase', 'cloudsql', 'alloydb', and 'lancedb'.
+
+For 'supabase', it imports the necessary modules from supabase and langchain.vectorstores, sets up the vectorstore using the setup_supabase function, and returns a SupabaseVectorStore object.
+
+For 'cloudsql', it imports the necessary modules from langchain.vectorstores.pgvector, sets up the vectorstore using the setup_cloudsql function, and returns a PGVector object.
+
+For 'alloydb', it imports the necessary modules from langchain_google_alloydb_pg and google.cloud.alloydb.connector, sets up the vectorstore using the create_alloydb_table and create_alloydb_engine functions, and returns an AlloyDBVectorStore object.
+
+For 'lancedb', it imports the necessary modules from ..patches.langchain.lancedb and lancedb, sets up the vectorstore using the lancedb.connect function, and returns a LanceDB object.
+
+If the vs_str parameter does not match any of the supported types, it raises a NotImplementedError.
+
+:param vs_str: The string used to select the type of vectorstore.
+:param vector_name: The name of the vector used to select the vectorstore.
+:param embeddings: The embeddings used to select the vectorstore.
+:return: The selected vectorstore.
+:raises NotImplementedError: If the vs_str parameter does not match any of the supported types.
+"""
 def pick_vectorstore(vs_str, vector_name, embeddings):
     logging.debug('Picking vectorstore')
         

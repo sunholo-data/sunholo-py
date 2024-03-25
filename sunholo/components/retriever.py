@@ -27,6 +27,14 @@ from langchain.retrievers import ContextualCompressionRetriever
 logging = setup_logging()
 
 def load_memories(vector_name):
+    """
+    This function loads memory settings for a given vector name from a configuration file.
+
+    It loads the memory settings from a configuration file using the load_config_key function and logs the loaded memory settings. If no memory settings are found, it logs this information and returns None.
+
+    :param vector_name: The name of the vector for which to load the memory settings.
+    :return: The loaded memory settings, or None if no memory settings are found.
+    """
     memories = load_config_key("memory", vector_name, filename="config/llm_config.yaml")
     logging.info(f"Found memory settings for {vector_name}: {memories}")
     if len(memories) == 0:
@@ -36,7 +44,15 @@ def load_memories(vector_name):
     return memories
 
 def pick_retriever(vector_name, embeddings=None):
+    """
+    This function creates a list of retrievers based on the memory settings loaded by the load_memories function.
 
+    It first calls the load_memories function to load the memory settings for the vector name. Then it iterates over the memory settings and for each memory, it checks if a vectorstore is specified. If a vectorstore is specified, it picks the vectorstore and creates a retriever for it. If a provider is specified and it is 'GoogleCloudEnterpriseSearchRetriever', it creates a GoogleCloudEnterpriseSearchRetriever. Finally, it merges all the retrievers into a MergerRetriever and returns it.
+
+    :param vector_name: The name of the vector for which to create the retrievers.
+    :param embeddings: The embeddings used to pick the vectorstore. Defaults to None.
+    :return: The created MergerRetriever, or None if no retrievers were created.
+    """
     memories = load_memories(vector_name)
 
     retriever_list = []

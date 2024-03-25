@@ -21,9 +21,19 @@ from langchain.prompts.prompt import PromptTemplate
 from ..utils import load_config_key
 from .vectorstore import pick_vectorstore
 
-
 def pick_prompt(vector_name, chat_history=[]):
-    """Pick a custom prompt"""
+    """
+    This function picks a custom prompt based on the vector_name parameter and an optional chat_history parameter.
+
+    It loads the prompt_str parameter from a configuration file and then configures the prompt based on this parameter. If the prompt_str parameter contains certain predefined strings, the function raises a ValueError.
+
+    The function returns a PromptTemplate object that represents the configured prompt.
+
+    :param vector_name: The name of the vector used to select the prompt.
+    :param chat_history: A list of chat history items. Defaults to an empty list.
+    :return: A PromptTemplate object that represents the configured prompt.
+    :raises ValueError: If the prompt_str parameter contains certain predefined strings.
+    """
     logging.debug('Picking prompt')
 
     prompt_str = load_config_key("prompt", vector_name, filename = "config/llm_config.yaml")
@@ -69,7 +79,8 @@ Can you help, {agent_buddy} , with the above question?
     else:
         follow_up += ".\n"
 
-    memory_str = "\n## Your Memory (ignore if not relevant to question)\n{context}\n"
+    memory_str = "\n## Your Memory (ignore if not relevant to question)
+{context}\n"
 
     current_conversation = ""
     if chat_summary != "":
@@ -90,30 +101,66 @@ Can you help, {agent_buddy} , with the above question?
     )
 
     return QA_PROMPT
-
 def pick_chat_buddy(vector_name):
+    """
+    This function picks a chat buddy based on the vector_name parameter.
+
+    It loads the chat_buddy parameter from a configuration file and then configures the chat buddy based on this parameter. If the chat_buddy parameter is not None, the function also loads the buddy_description parameter from the configuration file.
+
+    The function returns a tuple containing the chat buddy and the buddy description.
+
+    :param vector_name: The name of the vector used to select the chat buddy.
+    :return: A tuple containing the chat buddy and the buddy description.
+    """
     chat_buddy = load_config_key("chat_buddy", vector_name, filename = "config/llm_config.yaml")
     if chat_buddy is not None:
         logging.info(f"Got chat buddy {chat_buddy} for {vector_name}")
         buddy_description = load_config_key("chat_buddy_description", vector_name)
         return chat_buddy, buddy_description
     return None, None
-
-
 def pick_agent(vector_name):
+    """
+    This function determines whether an agent should be picked based on the vector_name parameter.
+
+    It loads the agent_str parameter from a configuration file and then checks if it is equal to 'yes'. If it is, the function returns True. Otherwise, it returns False.
+
+    :param vector_name: The name of the vector used to determine whether an agent should be picked.
+    :return: A boolean value indicating whether an agent should be picked.
+    """
     agent_str = load_config_key("agent", vector_name, filename = "config/llm_config.yaml")
     if agent_str == "yes":
         return True
     
     return False
-
 def pick_shared_vectorstore(vector_name, embeddings):
+    """
+    This function picks a shared vectorstore based on the vector_name and embeddings parameters.
+
+    It loads the shared_vectorstore parameter from a configuration file and then calls the pick_vectorstore function with this parameter and the embeddings parameter to pick a shared vectorstore.
+
+    The function returns the picked shared vectorstore.
+
+    :param vector_name: The name of the vector used to pick the shared vectorstore.
+    :param embeddings: The embeddings used to pick the shared vectorstore.
+    :return: The picked shared vectorstore.
+    """
     shared_vectorstore = load_config_key("shared_vectorstore", vector_name, filename = "config/llm_config.yaml")
     vectorstore = pick_vectorstore(shared_vectorstore, embeddings)
     return vectorstore
-
-
 def get_chat_history(inputs, vector_name, last_chars=1000, summary_chars=1500) -> str:
+    """
+    This function gets the chat history based on the inputs and vector_name parameters, and optional last_chars and summary_chars parameters.
+
+    It prepares the full chat history, gets the last `last_chars` characters of the full chat history, summarizes the chat history, and then concatenates the summary and the last `last_chars` characters of the chat history.
+
+    The function returns the concatenated summary and last `last_chars` characters of the chat history.
+
+    :param inputs: A list of inputs used to get the chat history.
+    :param vector_name: The name of the vector used to get the chat history.
+    :param last_chars: The number of last characters of the chat history to get. Defaults to 1000.
+    :param summary_chars: The number of characters of the summary to get. Defaults to 1500.
+    :return: The concatenated summary and last `last_chars` characters of the chat history.
+    """
     from langchain.schema import Document
     from ..summarise import summarise_docs
 
