@@ -38,12 +38,14 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
     for document in documents:
         content = remove_whitespace(document.page_content)
 
-        # look for images and upload them for later extraction
-        upload_doc_images(document.metadata)
+        # look for images and upload them for later extraction, add metadata of location
+        image_gsurl = upload_doc_images(document.metadata)
+        if image_gsurl:
+            document.metadata["image_gsurl"] = image_gsurl
 
         if len(content) < min_size:
             combined_documents_content += content + "\n"
-            logging.info(f"Appending document as its smaller than {min_size}: length {len(content)}")
+            logging.info(f"Appending document as its smaller than {min_size}: length {len(content)} - appended doc length {len(combined_documents_content)}")
         else:
             if combined_documents_content:
                 combined_documents.append(Document(page_content=combined_documents_content, metadata=document.metadata))
@@ -76,6 +78,7 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
                 logging.info(f"Appending chunk as its smaller than {min_size}: length {len(chunk)}")
                 continue
             
+            logging.info(f"Adding chunk of length {len(chunk)}")
             document.metadata["chunk_number"] = chunk_number
             source_chunks.append(Document(page_content=chunk, metadata=document.metadata))
 

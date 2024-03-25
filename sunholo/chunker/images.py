@@ -41,3 +41,6 @@ def upload_doc_images(metadata):
         )
         os.remove(temp_image.name)
         logging.info(f"Uploaded image to GCS: {image_gsurl}")
+
+        return image_gsurl
+
