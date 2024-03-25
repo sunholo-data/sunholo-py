@@ -162,7 +162,7 @@ def create_alloydb_table(table_name, engine, type = "vectorstore", alloydb_confi
 
                 return table_name
             
-            create_docstore_table(table_name, alloy_db_config=alloydb_config)
+            create_docstore_table(table_name, alloydb_config=alloydb_config)
             alloydb_table_cache[table_name] = True 
 
             return table_name
