@@ -22,24 +22,27 @@ def send_doc_to_docstore(docs, vector_name):
     log.info(f"Docstore config: {docstore_config}")
      
     for docstore in docstore_config:
-        if docstore.get('type') == 'alloydb':
-            # upload to alloydb
-            alloydb_config = load_config_key("alloydb_config", vector_name=vector_name, filename="config/llm_config.yaml")
-            if alloydb_config:
-                engine = create_alloydb_engine(alloydb_config, vector_name)
-                table_name = create_alloydb_table(table_name=vector_name, engine=engine, type = "docstore", alloydb_config=alloydb_config)
-                saver = AlloyDBDocumentSaver.create_sync(
-                    engine=engine,
-                    table_name=table_name,
-                    metadata_columns=["source"]
-                )
-                saver.add_documents(docs)
-                log.info(f"Saved docs to alloydb docstore: {table_name}")
+        for key, value in docstore.items(): 
+            log.info(f"Found memory {key}")
+            type = value.get('type')
+            if type == 'alloydb':
+                # upload to alloydb
+                alloydb_config = load_config_key("alloydb_config", vector_name=vector_name, filename="config/llm_config.yaml")
+                if alloydb_config:
+                    engine = create_alloydb_engine(alloydb_config, vector_name)
+                    table_name = create_alloydb_table(table_name=vector_name, engine=engine, type = "docstore", alloydb_config=alloydb_config)
+                    saver = AlloyDBDocumentSaver.create_sync(
+                        engine=engine,
+                        table_name=table_name,
+                        metadata_columns=["source"]
+                    )
+                    saver.add_documents(docs)
+                    log.info(f"Saved docs to alloydb docstore: {table_name}")
+                else:
+                    log.error("docstore.type==alloydb but no config.alloydb_config specified")
+            #elif docstore.get('type') == 'cloudstorage':
             else:
-                log.error("docstore.type==alloydb but no config.alloydb_config specified")
-        #elif docstore.get('type') == 'cloudstorage':
-        else:
-            log.info(f"No docstore type found for {vector_name}: {docstore}")
+                log.info(f"No docstore type found for {vector_name}: {docstore}")
 
 
 def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_limit_default=100000):
