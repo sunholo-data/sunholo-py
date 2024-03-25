@@ -43,39 +43,45 @@ def send_doc_to_docstore(docs, vector_name):
 def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_limit_default=100000):
     chunker_config = load_config_key("chunker", vector_name=vector_name, filename="config/llm_config.yaml")
     summarise_chunking_config = chunker_config.get("summarise")
-    if summarise_chunking_config:
-        # if model not specified will use default config.llm
-        model = summarise_chunking_config.get("model")
-        summary_threshold = summarise_chunking_config.get("threshold") if summarise_chunking_config.get("threshold") else summary_threshold_default
-        model_limit = summarise_chunking_config.get("model_limit") if summarise_chunking_config.get("model_limit") else model_limit_default
-        
-        summary_llm = get_llm(vector_name, model=model)
-        for doc in docs:
-            try:
-                if len(doc.page_content) > summary_threshold:
+    
+    if not summarise_chunking_config:
 
-                    context = doc.page_content[:model_limit]
-                    metadata = doc.metadata
-                    if len(doc.page_content) > model_limit:
-                        log.warning(f"Page content was above model_limit for summary: [{len(doc.page_content)} / {model_limit}]: {metadata}")
-                        #TODO: use map_reduce chain for summary instead
-                        
-                    log.info(f"Creating summary for {metadata} for doc [{len(context)}]")
-                    
-                    prompt = f"Summarise the context below.  Be careful not to add any speculation or any details that are not covered in the original:\n## Context:{context}\n## Your Summary:\n"
-
-                    summary = summary_llm | prompt | StrOutputParser()
-                    log.info(f"Created a summary for {metadata}: {len(context)} > {len(summary)}")
-                    
-                    # Create a temporary file for the summary
-                    with tempfile.NamedTemporaryFile(mode='w+', delete=False) as temp_file:
-                        temp_file.write(summary)
-                        temp_file_path = temp_file.name  # Get the temporary file's path
-                        bucket_filepath=get_summary_file_name(metadata["objectId"])
-                        summary_loc = add_file_to_gcs(temp_file_path, vector_name=vector_name, metadata=metadata, bucket_filepath=bucket_filepath)
-                        doc.metadata["summary_file"] = summary_loc
-            except Exception as err:
-                log.error(f"Failed to create a summary for {metadata}: {str(err)}")
-        
         return docs
+
+    # if model not specified will use default config.llm
+    model = summarise_chunking_config.get("model")
+    summary_threshold = summarise_chunking_config.get("threshold") if summarise_chunking_config.get("threshold") else summary_threshold_default
+    model_limit = summarise_chunking_config.get("model_limit") if summarise_chunking_config.get("model_limit") else model_limit_default
+    
+    summary_llm = get_llm(vector_name, model=model)
+
+    for doc in docs:
+        try:
+            if len(doc.page_content) > summary_threshold:
+
+                context = doc.page_content[:model_limit]
+                metadata = doc.metadata
+                if len(doc.page_content) > model_limit:
+                    log.warning(f"Page content was above model_limit for summary: [{len(doc.page_content)} / {model_limit}]: {metadata}")
+                    #TODO: use map_reduce chain for summary instead
+
+                log.info(f"Creating summary for {metadata} for doc [{len(context)}]")
+                
+                prompt = f"Summarise the context below.  Be careful not to add any speculation or any details that are not covered in the original:\n## Context:{context}\n## Your Summary:\n"
+
+                summary = summary_llm | prompt | StrOutputParser()
+                log.info(f"Created a summary for {metadata}: {len(context)} > {len(summary)}")
+                
+                # Create a temporary file for the summary
+                with tempfile.NamedTemporaryFile(mode='w+', delete=False) as temp_file:
+                    temp_file.write(summary)
+                    temp_file_path = temp_file.name  # Get the temporary file's path
+                    bucket_filepath=get_summary_file_name(metadata["objectId"])
+                    summary_loc = add_file_to_gcs(temp_file_path, vector_name=vector_name, metadata=metadata, bucket_filepath=bucket_filepath)
+                    doc.metadata["summary_file"] = summary_loc
+        except Exception as err:
+            log.error(f"Failed to create a summary for {metadata}: {str(err)}")
+    
+    
+    return docs
 
