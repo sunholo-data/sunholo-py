@@ -18,6 +18,8 @@ def send_doc_to_docstore(docs, vector_name):
         log.info(f"No docstore config found for {vector_name} ")
         
         return
+    
+    log.info(f"Docstore config: {docstore_config}")
      
     for docstore in docstore_config:
         if docstore.get('type') == 'alloydb':
@@ -37,7 +39,7 @@ def send_doc_to_docstore(docs, vector_name):
                 log.error("docstore.type==alloydb but no config.alloydb_config specified")
         #elif docstore.get('type') == 'cloudstorage':
         else:
-            log.info("No docstore type found for {vector_name}: {docstore}")
+            log.info(f"No docstore type found for {vector_name}: {docstore}")
 
 
 def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_limit_default=100000):
