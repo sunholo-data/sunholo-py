@@ -22,7 +22,7 @@ def add_file_to_gcs(filename: str, vector_name:str, bucket_name: str=None, metad
 
     storage_client = storage.Client()
 
-    bucket_name = bucket_name if bucket_name is not None else os.getenv('GCS_BUCKET', None)
+    bucket_name = bucket_name if bucket_name else os.getenv('GCS_BUCKET', None)
     if bucket_name is None:
         raise ValueError("No bucket found to upload to: GCS_BUCKET returned None")
     
