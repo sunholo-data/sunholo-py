@@ -182,7 +182,7 @@ def read_file_to_document(gs_file: pathlib.Path, split=False, metadata: dict = N
 
     if metadata:
         if metadata.get("uploaded_to_bucket"):
-            logging.info(f"Already uploaded to bucket, skipping {gs_file.name}")
+            logging.info(f"Already uploaded to bucket, skipping {pdf_path}")
             return []
 
     logging.info(f"Sending {pdf_path} to UnstructuredAPIFileLoader")

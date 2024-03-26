@@ -27,6 +27,7 @@ def send_doc_to_docstore(docs, vector_name):
             type = value.get('type')
             if type == 'alloydb':
                 # upload to alloydb
+                log.info(f"Uploading to docstore alloydb the docs for {vector_name}")
                 alloydb_config = load_config_key("alloydb_config", vector_name=vector_name, filename="config/llm_config.yaml")
                 if alloydb_config:
                     engine = create_alloydb_engine(alloydb_config, vector_name)
