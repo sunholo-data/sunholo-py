@@ -30,7 +30,7 @@ def send_doc_to_docstore(docs, vector_name):
                 alloydb_config = load_config_key("alloydb_config", vector_name=vector_name, filename="config/llm_config.yaml")
                 if alloydb_config:
                     engine = create_alloydb_engine(alloydb_config, vector_name)
-                    table_name = create_alloydb_table(table_name=vector_name, engine=engine, type = "docstore", alloydb_config=alloydb_config)
+                    table_name = f"{vector_name}_docstore"
                     saver = AlloyDBDocumentSaver.create_sync(
                         engine=engine,
                         table_name=table_name,

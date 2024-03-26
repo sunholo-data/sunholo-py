@@ -5,7 +5,7 @@ from sqlalchemy.exc import DatabaseError, ProgrammingError
 from asyncpg.exceptions import DuplicateTableError
 
 from google.cloud.alloydb.connector import Connector
-from langchain_google_alloydb_pg import AlloyDBEngine, AlloyDBVectorStore, Column
+from langchain_google_alloydb_pg import AlloyDBEngine, Column
 from google.cloud.alloydb.connector import IPTypes
 
 from ..logging import setup_logging
@@ -129,7 +129,7 @@ class AlloyDBClient:
         return result  
 
 alloydb_table_cache = {}  # Our cache, initially empty  # noqa: F841
-def create_alloydb_table(table_name, engine, type = "vectorstore", alloydb_config=None):
+def create_alloydb_table(table_name, engine, type = "vectorstore", alloydb_config=None, username=None):
     global alloydb_table_cache
 
     try:
@@ -162,7 +162,7 @@ def create_alloydb_table(table_name, engine, type = "vectorstore", alloydb_confi
 
                 return table_name
             
-            create_docstore_table(table_name, alloydb_config=alloydb_config)
+            create_docstore_table(table_name, alloydb_config=alloydb_config, username=username)
             alloydb_table_cache[table_name] = True 
 
             return table_name
@@ -184,7 +184,7 @@ def create_alloydb_table(table_name, engine, type = "vectorstore", alloydb_confi
 
             return table_name
 
-def create_docstore_table(table_name, alloydb_config):
+def create_docstore_table(table_name, alloydb_config, username):
     ALLOYDB_DB = os.environ.get("ALLOYDB_DB")
     if ALLOYDB_DB is None:
         logging.error(f"Could not locate ALLOYDB_DB environment variable for {table_name}")
@@ -196,6 +196,7 @@ def create_docstore_table(table_name, alloydb_config):
         cluster_name=alloydb_config["cluster"],
         instance_name=alloydb_config["instance"],
         db=alloydb_config.get("database") or ALLOYDB_DB,
+        user=username
     )
 
     # Execute other SQL statements
