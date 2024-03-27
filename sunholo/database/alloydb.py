@@ -5,7 +5,7 @@ from sqlalchemy.exc import DatabaseError, ProgrammingError
 from asyncpg.exceptions import DuplicateTableError
 
 from google.cloud.alloydb.connector import Connector
-from langchain_google_alloydb_pg import AlloyDBEngine, Column
+from langchain_google_alloydb_pg import AlloyDBEngine, Column, AlloyDBLoader
 from google.cloud.alloydb.connector import IPTypes
 
 from ..logging import log
@@ -214,3 +214,24 @@ def create_docstore_table(table_name, alloydb_config, username):
     client.execute_sql(f"CREATE TABLE {table_name} (page_content TEXT, doc_id TEXT, source TEXT, langchain_metadata JSONB)")
 
     return table_name
+
+def get_sources_from_docstore(sources, vector_name):
+    
+    engine = create_alloydb_engine(vector_name=vector_name)
+    
+    table_name = f"{vector_name}_docstore"
+    # Fetch efficiently using a single query with the IN operator
+    query = f"""
+        SELECT * 
+        FROM {table_name}
+        WHERE source IN {tuple(sources)} 
+    """
+    
+    loader = AlloyDBLoader.create_sync(
+                    engine=engine,
+                    query=query,
+                )
+    documents = loader.load()
+    log.info(f"Loaded {len(documents)} from the database.")
+
+    return documents
