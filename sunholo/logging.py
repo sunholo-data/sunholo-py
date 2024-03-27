@@ -172,7 +172,7 @@ class GoogleCloudLogging:
         self.structured_log(log_text=log_text, log_struct=log_struct, severity="CRITICAL")
 
 def is_logging_setup(logger=None):
-    logger = logger or log.getLogger()  # If no logger is specified, use the root logger
+    logger = logger or logging.getLogger()  # If no logger is specified, use the root logger
     return bool(logger.handlers)
 
 def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
@@ -231,8 +231,8 @@ def log_folder_location(folder_name):
     
     # Check if the folder exists
     if os.path.exists(folder_path) and os.path.isdir(folder_path):
-        log.info(f"The folder '{folder_name}' is located at: {folder_path}")
+        logging.info(f"The folder '{folder_name}' is located at: {folder_path}")
     else:
-        log.warning(f"The folder '{folder_name}' does not exist in the current working directory: {current_working_directory}")
+        logging.warning(f"The folder '{folder_name}' does not exist in the current working directory: {current_working_directory}")
 
 log = setup_logging("sunholo")
