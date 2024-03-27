@@ -17,21 +17,21 @@ import time
 import math
 
 from ..utils.config import get_module_filepath
-from ..logging import setup_logging
+from ..logging import log
 from ..utils.config import load_config_key
 
-logging = setup_logging()
+
 
 def setup_supabase(vector_name:str, verbose:bool=False):
     hello = f"Setting up supabase database: {vector_name}"
-    logging.debug(hello)
+    log.debug(hello)
     if verbose:
         print(hello)
     setup_database("supabase", vector_name, verbose)
 
 def setup_cloudsql(vector_name:str, verbose:bool=False):
     hello = f"Setting up cloudsql database: {vector_name}"
-    logging.debug(hello)
+    log.debug(hello)
     if verbose:
         print(hello)
     setup_database(vector_name, verbose)
@@ -58,7 +58,7 @@ def get_vector_size(vector_name: str, config_file:str):
     if llm_str == 'openai':
         vector_size = 1536 # openai
 
-    logging.debug(f'vector size: {vector_size}')
+    log.debug(f'vector size: {vector_size}')
     return vector_size
 
 def setup_database(type, vector_name:str, verbose:bool=False):
@@ -86,7 +86,7 @@ def delete_row_from_source(source: str, vector_name:str):
         import psycopg2
         from psycopg2.extensions import adapt
     except ImportError:
-        logging.error("Couldn't import psycopg2 - please install via 'pip install psycopg2'") 
+        log.error("Couldn't import psycopg2 - please install via 'pip install psycopg2'") 
 
     source = adapt(source).getquoted().decode()
     sql_params = {'source_delete': source}
@@ -108,7 +108,7 @@ def do_sql(sql, sql_params=None, return_rows=False, verbose=False, connection_en
         import psycopg2
         from psycopg2.extensions import adapt
     except ImportError:
-        logging.error("Couldn't import psycopg2 - please install via 'pip install psycopg2'") 
+        log.error("Couldn't import psycopg2 - please install via 'pip install psycopg2'") 
 
     rows = []
     connection_string = os.getenv(connection_env, None)
@@ -121,7 +121,7 @@ def do_sql(sql, sql_params=None, return_rows=False, verbose=False, connection_en
             cursor = connection.cursor()
 
             if verbose:
-                logging.info(f"SQL: {sql}")
+                log.info(f"SQL: {sql}")
             else:
                 pass
             # execute the SQL - raise the error if already found
@@ -132,31 +132,31 @@ def do_sql(sql, sql_params=None, return_rows=False, verbose=False, connection_en
 
             if return_rows:
                 rows = cursor.fetchall()
-            logging.debug("SQL successfully fetched")
+            log.debug("SQL successfully fetched")
             break  # If all operations were successful, break the loop
 
         except (psycopg2.errors.DuplicateObject, 
                 psycopg2.errors.DuplicateTable, 
                 psycopg2.errors.DuplicateFunction) as e:
-            logging.debug(str(e))
+            log.debug(str(e))
             if verbose:
                 print(str(e))
             continue
 
         except psycopg2.errors.InternalError as error:
-            logging.error(f"InternalError, retrying... Attempt {attempt+1} out of {max_retries}")
+            log.error(f"InternalError, retrying... Attempt {attempt+1} out of {max_retries}")
             time.sleep(math.pow(2, attempt))  # Exponential backoff
             continue  # Go to the next iteration of the loop to retry the operation
 
         except (Exception, psycopg2.Error) as error:
-            logging.error(f"Error while connecting to PostgreSQL: {str(error)}", exc_info=True)
+            log.error(f"Error while connecting to PostgreSQL: {str(error)}", exc_info=True)
             continue
 
         finally:
             if connection:
                 cursor.close()
                 connection.close()
-                logging.debug("PostgreSQL connection is closed")
+                log.debug("PostgreSQL connection is closed")
     
         # If we've exhausted all retries and still haven't succeeded, raise an error
         if attempt + 1 == max_retries:
@@ -171,7 +171,7 @@ def do_sql(sql, sql_params=None, return_rows=False, verbose=False, connection_en
 def execute_sql_from_file(filepath, params, return_rows=False, verbose=False, connection_env=None):
     
     filepath = get_module_filepath(filepath)
-    logging.info(f"Executing SQL from file {filepath}")
+    log.info(f"Executing SQL from file {filepath}")
 
     # read the SQL file
     with open(filepath, 'r') as file:

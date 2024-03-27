@@ -12,28 +12,28 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import os
-from ..logging import setup_logging
+from ..logging import log
 from ..utils.config import load_config_key
 
-logging = setup_logging()
+
 
 
 def pick_vectorstore(vs_str, vector_name, embeddings):
-    logging.debug('Picking vectorstore')
+    log.debug('Picking vectorstore')
         
     if vs_str == 'supabase':
         from supabase import Client, create_client
         from langchain.vectorstores import SupabaseVectorStore
         from ..database.database import setup_supabase
 
-        logging.debug(f"Initiating Supabase store: {vector_name}")
+        log.debug(f"Initiating Supabase store: {vector_name}")
         setup_supabase(vector_name)
 
         # init embedding and vector store
         supabase_url = os.getenv('SUPABASE_URL')
         supabase_key = os.getenv('SUPABASE_KEY')
 
-        logging.debug(f"Supabase URL: {supabase_url} vector_name: {vector_name}")
+        log.debug(f"Supabase URL: {supabase_url} vector_name: {vector_name}")
 
         supabase: Client = create_client(supabase_url, supabase_key)
 
@@ -42,14 +42,14 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
                                         table_name=vector_name,
                                         query_name=f'match_documents_{vector_name}')
 
-        logging.debug("Chose Supabase")
+        log.debug("Chose Supabase")
 
         return vectorstore
     
     elif vs_str == 'cloudsql':
         from langchain.vectorstores.pgvector import PGVector
 
-        logging.debug("Inititaing CloudSQL pgvector")
+        log.debug("Inititaing CloudSQL pgvector")
         #setup_cloudsql(vector_name) 
 
         # https://python.langchain.com/docs/modules/data_connection/vectorstores/integrations/pgvector
@@ -66,7 +66,7 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
             #pre_delete_collection=True # for testing purposes
             )
 
-        logging.debug("Chose CloudSQL")
+        log.debug("Chose CloudSQL")
 
         return vectorstore
     
@@ -75,20 +75,11 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
         from google.cloud.alloydb.connector import IPTypes
         from ..database.alloydb import create_alloydb_table, create_alloydb_engine
 
-        alloydb_config = load_config_key(
-            'alloydb_config', 
-            vector_name=vector_name, 
-            filename = "config/llm_config.yaml"
-        )
-
-        if alloydb_config is None:
-            logging.error("No alloydb_config was found")
-
-        engine = create_alloydb_engine(alloydb_config, vector_name)
+        engine = create_alloydb_engine(vector_name)
 
         create_alloydb_table(vector_name, engine)
 
-        logging.info("Chose AlloyDB")
+        log.info("Chose AlloyDB")
         vectorstore = AlloyDBVectorStore.create_sync(
                 engine=engine,
                 table_name=vector_name,
@@ -104,18 +95,18 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
 
         LANCEDB_BUCKET = os.environ.get("LANCEDB_BUCKET")
         if LANCEDB_BUCKET is None:
-            logging.error(f"Could not locate LANCEDB_BUCKET environment variable for {vector_name}")
-        logging.info(f"LANCEDB_BUCKET environment variable found for {vector_name} - {LANCEDB_BUCKET}")
+            log.error(f"Could not locate LANCEDB_BUCKET environment variable for {vector_name}")
+        log.info(f"LANCEDB_BUCKET environment variable found for {vector_name} - {LANCEDB_BUCKET}")
 
         db = lancedb.connect(LANCEDB_BUCKET)
 
-        logging.info(f"LanceDB Tables: {db.table_names()} using {LANCEDB_BUCKET}")
-        logging.info(f"Opening LanceDB table: {vector_name} using {LANCEDB_BUCKET}")
+        log.info(f"LanceDB Tables: {db.table_names()} using {LANCEDB_BUCKET}")
+        log.info(f"Opening LanceDB table: {vector_name} using {LANCEDB_BUCKET}")
     
         try:
             table = db.open_table(vector_name)
         except FileNotFoundError as err:
-            logging.info(f"{err} - Could not open table for {vector_name} - creating new table")
+            log.info(f"{err} - Could not open table for {vector_name} - creating new table")
             init = f"Creating new table for {vector_name}"
             table = db.create_table(
                         vector_name,
@@ -129,12 +120,12 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
                         mode="overwrite",
                     )
 
-        logging.info(f"Inititaing LanceDB object for {vector_name} using {LANCEDB_BUCKET}")
+        log.info(f"Inititaing LanceDB object for {vector_name} using {LANCEDB_BUCKET}")
         vectorstore = LanceDB(
             connection=table,
             embedding=embeddings,
         )
-        logging.info(f"Chose LanceDB for {vector_name} using {LANCEDB_BUCKET}")
+        log.info(f"Chose LanceDB for {vector_name} using {LANCEDB_BUCKET}")
 
         return vectorstore
 

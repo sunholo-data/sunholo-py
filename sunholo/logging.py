@@ -19,6 +19,7 @@ import logging
 import inspect
 import os
 
+
 class GoogleCloudLogging:
     
     _instances = {}  # Dictionary to hold instances keyed by a tuple of (project_id, logger_name)
@@ -48,8 +49,8 @@ class GoogleCloudLogging:
         try:
             caller_info = self._get_caller_info()
             if not is_running_on_gcp():
-                logging.basicConfig(level=self.log_level, format='%(asctime)s - %(levelname)s - %(message)s')
-                logging.info(f"Standard logging: {caller_info['file']}")
+                log.basicConfig(level=self.log_level, format='%(asctime)s - %(levelname)s - %(message)s')
+                log.info(f"Standard logging: {caller_info['file']}")
                 return logging
             
             print(f"Cloud logging for {caller_info['file']}")
@@ -58,8 +59,8 @@ class GoogleCloudLogging:
             return self  # Return the instance itself on success
         except Exception as e:
             # If there's an exception, use standard Python logging as a fallback
-            logging.basicConfig(level=self.log_level, format='%(asctime)s - %(levelname)s - %(message)s')
-            logging.warning(f"Failed to set up Google Cloud Logging. Using standard logging. Error: {e}")
+            log.basicConfig(level=self.log_level, format='%(asctime)s - %(levelname)s - %(message)s')
+            log.warning(f"Failed to set up Google Cloud log. Using standard log. Error: {e}")
             return logging
 
     def _get_caller_info(self):
@@ -82,7 +83,7 @@ class GoogleCloudLogging:
 
         Args:
             log_text (str, optional): The log message as a text string. Defaults to None.
-            log_struct (dict, optional): The log message as a dictionary for structured logging. Defaults to None.
+            log_struct (dict, optional): The log message as a dictionary for structured log. Defaults to None.
             logger_name (str, optional): The name of the logger to which to write the log entries. e.g. 
         logName="run.googleapis.com%2Fstderr"
             severity (str, optional): The severity level of the log entry. Defaults to "INFO".
@@ -92,11 +93,11 @@ class GoogleCloudLogging:
             raise ValueError("Must provide a logger name e.g. 'run.googleapis.com%2Fstderr'")
         
         if not is_running_on_gcp():
-            logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+            log.basicConfig(level=log.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
             if log_text:
-                logging.info(f"[{severity}][{logger_name or self.logger_name}] - {log_text}")
+                log.info(f"[{severity}][{logger_name or self.logger_name}] - {log_text}")
             elif log_struct:
-                logging.info(f"[{severity}][{logger_name or self.logger_name}] - {str(log_struct)}")
+                log.info(f"[{severity}][{logger_name or self.logger_name}] - {str(log_struct)}")
 
         logger = self.client.logger(logger_name or self.logger_name)
 
@@ -171,7 +172,7 @@ class GoogleCloudLogging:
         self.structured_log(log_text=log_text, log_struct=log_struct, severity="CRITICAL")
 
 def is_logging_setup(logger=None):
-    logger = logger or logging.getLogger()  # If no logger is specified, use the root logger
+    logger = logger or log.getLogger()  # If no logger is specified, use the root logger
     return bool(logger.handlers)
 
 def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
@@ -182,7 +183,7 @@ def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
     Parameters:
     logger_name (str): The name of the log to send to. If not provided, set to run.googleapis.com%2Fstderr
     log_level: The logging level to capture. Uses Python's logging module levels.
-               Default is logging.INFO.
+               Default is log.INFO.
     project_id: A string representing the Google Cloud project ID. If None, the project ID
                 will be retrieved from the metadata server.
 
@@ -192,7 +193,7 @@ def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
 
         # Now you can use Python's logging module as usual
         import logging
-        logging.info('This is an info message that will be sent to Google Cloud Logging.')
+        log.info('This is an info message that will be sent to Google Cloud log.')
         
     Note:
         This function requires that the 'google-cloud-logging' library is installed and
@@ -203,9 +204,7 @@ def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
         Google Kubernetes Engine, Google App Engine, etc.
     """
 
-
-
-    logger = logging.getLogger(logger_name)
+    logger = log.getLogger(logger_name)
     if is_logging_setup(logger):
         return logger
     
@@ -232,6 +231,8 @@ def log_folder_location(folder_name):
     
     # Check if the folder exists
     if os.path.exists(folder_path) and os.path.isdir(folder_path):
-        logging.info(f"The folder '{folder_name}' is located at: {folder_path}")
+        log.info(f"The folder '{folder_name}' is located at: {folder_path}")
     else:
-        logging.warning(f"The folder '{folder_name}' does not exist in the current working directory: {current_working_directory}")
+        log.warning(f"The folder '{folder_name}' does not exist in the current working directory: {current_working_directory}")
+
+log = setup_logging("sunholo")

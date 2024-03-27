@@ -1,5 +1,5 @@
 from ..utils import load_config_key
-from ..logging import setup_logging
+from ..logging import log
 from ..database.alloydb import create_alloydb_table, create_alloydb_engine
 from ..components import get_llm
 from ..gcs.add_file import add_file_to_gcs, get_summary_file_name
@@ -28,19 +28,17 @@ def send_doc_to_docstore(docs, vector_name):
             if type == 'alloydb':
                 # upload to alloydb
                 log.info(f"Uploading to docstore alloydb the docs for {vector_name}")
-                alloydb_config = load_config_key("alloydb_config", vector_name=vector_name, filename="config/llm_config.yaml")
-                if alloydb_config:
-                    engine = create_alloydb_engine(alloydb_config, vector_name)
-                    table_name = f"{vector_name}_docstore"
-                    saver = AlloyDBDocumentSaver.create_sync(
-                        engine=engine,
-                        table_name=table_name,
-                        metadata_columns=["source"]
-                    )
-                    saver.add_documents(docs)
-                    log.info(f"Saved docs to alloydb docstore: {table_name}")
-                else:
-                    log.error("docstore.type==alloydb but no config.alloydb_config specified")
+
+                engine = create_alloydb_engine(vector_name)
+                table_name = f"{vector_name}_docstore"
+                saver = AlloyDBDocumentSaver.create_sync(
+                    engine=engine,
+                    table_name=table_name,
+                    metadata_columns=["source"]
+                )
+                saver.add_documents(docs)
+                log.info(f"Saved docs to alloydb docstore: {table_name}")
+
             #elif docstore.get('type') == 'cloudstorage':
             else:
                 log.info(f"No docstore type found for {vector_name}: {docstore}")

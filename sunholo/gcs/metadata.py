@@ -1,12 +1,12 @@
 from google.cloud import storage
-from ..logging import setup_logging
+from ..logging import log
 
-logging = setup_logging()
+
 
 def get_object_metadata(bucket_name, object_name):
 
     if bucket_name is None or object_name is None:
-        logging.warning("Got invalid bucket name and object name")
+        log.warning("Got invalid bucket name and object name")
         return None
     storage_client = storage.Client()
 
@@ -19,5 +19,5 @@ def get_object_metadata(bucket_name, object_name):
     # Access custom metadata
     custom_metadata = blob.metadata
 
-    logging.info(f"Custom Metadata for {object_name}: {custom_metadata}")
+    log.info(f"Custom Metadata for {object_name}: {custom_metadata}")
     return custom_metadata

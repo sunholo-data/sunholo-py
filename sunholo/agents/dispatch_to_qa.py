@@ -11,11 +11,9 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from ..logging import setup_logging
+from ..logging import log
 from ..utils import load_config_key
 from ..auth import get_header
-
-logging = setup_logging()
 import requests
 import aiohttp
 
@@ -52,7 +50,7 @@ def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
     qna_endpoint, qna_data = prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs)
     header = get_header(vector_name)
 
-    logging.info(f"Send_to_qa to {qna_endpoint} this data: {qna_data} with this header: {header}")
+    log.info(f"Send_to_qa to {qna_endpoint} this data: {qna_data} with this header: {header}")
     try:
         qna_response = requests.post(qna_endpoint, json=qna_data, stream=stream, headers=header)
         qna_response.raise_for_status()
@@ -68,7 +66,7 @@ def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
             return qna_response.json()
 
     except requests.exceptions.HTTPError as err:
-        logging.error(f"HTTP error occurred: {err}")
+        log.error(f"HTTP error occurred: {err}")
         error_message = f"There was an error processing your request. Please try again later. {str(err)}"
         if stream:
             return iter([error_message])
@@ -76,7 +74,7 @@ def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
             return {"answer": error_message}
 
     except Exception as err:
-        logging.error(f"Other error occurred: {str(err)}")
+        log.error(f"Other error occurred: {str(err)}")
         error_message = f"Something went wrong. Please try again later. {str(err)}"
         if stream:
             return iter([error_message])
@@ -88,7 +86,7 @@ async def send_to_qa_async(user_input, vector_name, chat_history, stream=False, 
     qna_endpoint, qna_data = prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs)
     header = get_header(vector_name)
 
-    logging.info(f"send_to_qa_async to {qna_endpoint} this data: {qna_data} with this header: {header}")
+    log.info(f"send_to_qa_async to {qna_endpoint} this data: {qna_data} with this header: {header}")
 
     try:
         async with aiohttp.ClientSession() as session:
@@ -102,17 +100,17 @@ async def send_to_qa_async(user_input, vector_name, chat_history, stream=False, 
                 else:
                     # Return the complete response
                     qna_response = await resp.json()
-                    logging.info(f"Got back QA response: {qna_response}")
+                    log.info(f"Got back QA response: {qna_response}")
                     yield qna_response
     except aiohttp.ClientResponseError as e:
-        logging.error(f"HTTP error occurred: {e}")
+        log.error(f"HTTP error occurred: {e}")
         error_message = f"There was an error processing your request: {str(e)}"
         if stream:
             yield error_message.encode('utf-8')
         else:
             yield {"answer": error_message}
     except Exception as e:
-        logging.error(f"Other error occurred: {str(e)}")
+        log.error(f"Other error occurred: {str(e)}")
         error_message = f"Something went wrong: {str(e)}"
         if stream:
             yield error_message.encode('utf-8')

@@ -19,7 +19,7 @@ import datetime
 from langchain.schema import Document
 
 from ..components import get_embeddings, pick_vectorstore, load_memories, pick_embedding
-from ..logging import setup_logging
+from ..logging import log
 
 logging = setup_logging("embedder")
 
@@ -34,12 +34,12 @@ def embed_pubsub_chunk(data: dict):
     messageId = data['message'].get('messageId')
     publishTime = data['message'].get('publishTime')
 
-    logging.debug(f"This Function was triggered by messageId {messageId} published at {publishTime}")
+    log.debug(f"This Function was triggered by messageId {messageId} published at {publishTime}")
 
     try:
         the_json = json.loads(message_data)
     except Exception as err:
-        logging.error(f"Error - could not parse message_data: {err}: {message_data}")
+        log.error(f"Error - could not parse message_data: {err}: {message_data}")
         return "Could not parse message_data"
 
     if not isinstance(the_json, dict):
@@ -54,16 +54,16 @@ def embed_pubsub_chunk(data: dict):
     if page_content is None:
         return "No page content"
     elif len(page_content) < 100:
-        logging.warning(f"too little page content to add: {message_data}")
+        log.warning(f"too little page content to add: {message_data}")
         return "Too little characters"
 
     vector_name = metadata.get("vector_name", None)
     if vector_name is None:
         msg = f"FATAL: No vector name was found within metadata: {metadata}"
-        logging.error(msg)
+        log.error(msg)
         return msg
     
-    logging.info(f"Embedding: {vector_name} page_content: {page_content[:30]}...[{len(page_content)}] - {metadata}")
+    log.info(f"Embedding: {vector_name} page_content: {page_content[:30]}...[{len(page_content)}] - {metadata}")
 
     if 'eventTime' not in metadata:
         metadata['eventTime'] = datetime.datetime.now(datetime.UTC).isoformat(timespec='microseconds') + "Z"
@@ -73,7 +73,7 @@ def embed_pubsub_chunk(data: dict):
         if 'objectId' in metadata:
             metadata['source'] = metadata['objectId']
         else:
-            logging.warning(f"No source found in metadata: {metadata}")
+            log.warning(f"No source found in metadata: {metadata}")
     
     if 'original_source' not in metadata:
         metadata['original_source'] = metadata.get('source')
@@ -93,7 +93,7 @@ def embed_pubsub_chunk(data: dict):
     vectorstore_list = []
     for memory in memories:  # Iterate over the list
         for key, value in memory.items(): 
-            logging.info(f"Found memory {key}")
+            log.info(f"Found memory {key}")
             vectorstore = value.get('vectorstore')
             if vectorstore:
                 # check if vectorstore specific embedding is available
@@ -108,13 +108,13 @@ def embed_pubsub_chunk(data: dict):
     metadata_list = []
     import uuid
     for vector_store in vectorstore_list:
-        logging.debug(f"Adding single document for {vector_name} to vector store {vector_store}")
+        log.debug(f"Adding single document for {vector_name} to vector store {vector_store}")
         try:
             vector_store.add_documents([doc], ids = [str(uuid.uuid4())])
-            logging.info(f"Added doc for {vector_name} to {vector_store} - metadata: {metadata}")
+            log.info(f"Added doc for {vector_name} to {vector_store} - metadata: {metadata}")
             metadata_list.append(metadata)
         except Exception as err:
             error_message = traceback.format_exc()
-            logging.error(f"Could not add document for {vector_name} to {vector_store} for {metadata}: {str(err)} traceback: {error_message}")
+            log.error(f"Could not add document for {vector_name} to {vector_store} for {metadata}: {str(err)} traceback: {error_message}")
 
     return metadata_list

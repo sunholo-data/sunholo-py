@@ -11,9 +11,9 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from ..logging import setup_logging
+from ..logging import log
 
-logging = setup_logging()
+
 
 from ..components import get_llm
 from ..chunker.splitter import chunk_doc_to_docs
@@ -60,12 +60,12 @@ def summarise_docs(docs, vector_name, skip_if_less=10000):
 
     summaries = []
     for doc in docs:
-        logging.info(f"summarise: doc {doc}")
+        log.info(f"summarise: doc {doc}")
         if len(doc.page_content) < skip_if_less:
-            logging.info(f"Skipping summarisation as below {skip_if_less} characters")
+            log.info(f"Skipping summarisation as below {skip_if_less} characters")
             continue
         elif len(doc.page_content) > max_content_length:
-            logging.warning(f"Trimming content to {max_content_length} characters")
+            log.warning(f"Trimming content to {max_content_length} characters")
             doc.page_content = doc.page_content[:max_content_length]
 
         metadata = doc.metadata
@@ -80,18 +80,18 @@ def summarise_docs(docs, vector_name, skip_if_less=10000):
                 summary = chain.run(chunks)
                 break  # If the summary was successful, break the loop
             except Exception as e:
-                logging.error(f"Error while summarizing on attempt {attempt+1}: {e}")
+                log.error(f"Error while summarizing on attempt {attempt+1}: {e}")
                 print(f"Failure, waiting {delay} seconds before retrying...")
                 time.sleep(delay)  # Wait for the delay period
                 delay = min(delay * 2 + random.uniform(0, 1), max_delay)  # Exponential backoff with jitter
         else:
-            logging.error(f"Failed to summarize after 5 attempts")
+            log.error(f"Failed to summarize after 5 attempts")
             continue  # If we've failed after 5 attempts, move on to the next document
 
         
         metadata["type"] = "summary"
         summary = Document(page_content=summary, metadata=metadata)
-        logging.info(f"Summary: {summary}")
+        log.info(f"Summary: {summary}")
         summaries.append(summary)
         
     return summaries

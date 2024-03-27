@@ -11,30 +11,30 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from ..logging import setup_logging
+from ..logging import log
 
-logging = setup_logging()
+
 import base64
 import json
 
 def process_pubsub(data):
 
-    logging.debug(f'process_pubsub: {data}')
+    log.debug(f'process_pubsub: {data}')
     message_data = base64.b64decode(data['message']['data']).decode('utf-8')
     messageId = data['message'].get('messageId')
     publishTime = data['message'].get('publishTime')
 
-    logging.debug(f"This Function was triggered by messageId {messageId} published at {publishTime}")
+    log.debug(f"This Function was triggered by messageId {messageId} published at {publishTime}")
     # DANGER: Will trigger this dunction recursivly
-    #logging.info(f"bot_help.process_pubsub message data: {message_data}")
+    #log.info(f"bot_help.process_pubsub message data: {message_data}")
 
     try:
         message_data = json.loads(message_data)
     except:
-        logging.debug("Its not a json")
+        log.debug("Its not a json")
 
     if message_data:
         return message_data
     
-    logging.info(f"message_data was empty")
+    log.info(f"message_data was empty")
     return ''

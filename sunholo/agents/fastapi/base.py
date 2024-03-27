@@ -4,9 +4,9 @@ import socketio
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 
-from sunholo.logging import setup_logging
+from sunholo.logging import log
 
-logging = setup_logging()
+
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -40,7 +40,7 @@ def create_fastapi_app():
     # Handle Socket.IO events, e.g., a connection
     @sio.event
     async def connect(sid, environ):
-        logging.info("Socket.IO client connected", sid)
+        log.info("Socket.IO client connected", sid)
 
     # Homepage Route
     @app.get("/", response_class=HTMLResponse)

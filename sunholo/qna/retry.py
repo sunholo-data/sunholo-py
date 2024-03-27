@@ -15,9 +15,9 @@ import time
 from httpcore import ReadTimeout
 from httpx import ReadTimeout
 import traceback
-from ..logging import setup_logging
+from ..logging import log
 
-logging = setup_logging()
+
 
 def retry_qna(qa_function, question, max_retries=1, initial_delay=5):
     for retry in range(max_retries):
@@ -25,7 +25,7 @@ def retry_qna(qa_function, question, max_retries=1, initial_delay=5):
             return qa_function(question)
         except ReadTimeout as err:
             delay = initial_delay * (retry + 1)
-            logging.warning(f"Read timeout while asking: {question} - trying again after {delay} seconds. Error: {str(err)}")
+            log.warning(f"Read timeout while asking: {question} - trying again after {delay} seconds. Error: {str(err)}")
             time.sleep(delay)
             try:
                 result = qa_function(question)
@@ -36,7 +36,7 @@ def retry_qna(qa_function, question, max_retries=1, initial_delay=5):
                     raise
         except Exception as err:
             delay = initial_delay * (retry + 1)
-            logging.error(f"General error: {traceback.format_exc()}")
+            log.error(f"General error: {traceback.format_exc()}")
             time.sleep(delay)
             try:
                 result = qa_function(question)

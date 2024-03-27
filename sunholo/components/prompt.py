@@ -11,9 +11,9 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from ..logging import setup_logging
+from ..logging import log
 
-logging = setup_logging()
+
 import datetime
 
 from langchain.prompts.prompt import PromptTemplate
@@ -24,7 +24,7 @@ from .vectorstore import pick_vectorstore
 
 def pick_prompt(vector_name, chat_history=[]):
     """Pick a custom prompt"""
-    logging.debug('Picking prompt')
+    log.debug('Picking prompt')
 
     prompt_str = load_config_key("prompt", vector_name, filename = "config/llm_config.yaml")
 
@@ -84,7 +84,7 @@ Can you help, {agent_buddy} , with the above question?
 
     prompt_template = prompt_str_default + follow_up + memory_str + current_conversation + my_q + buddy_question + "\n## Your response:\n"
     
-    logging.debug(f"--Prompt_template: {prompt_template}") 
+    log.debug(f"--Prompt_template: {prompt_template}") 
     QA_PROMPT = PromptTemplate(
         template=prompt_template, input_variables=["context", "question"]
     )
@@ -94,7 +94,7 @@ Can you help, {agent_buddy} , with the above question?
 def pick_chat_buddy(vector_name):
     chat_buddy = load_config_key("chat_buddy", vector_name, filename = "config/llm_config.yaml")
     if chat_buddy is not None:
-        logging.info(f"Got chat buddy {chat_buddy} for {vector_name}")
+        log.info(f"Got chat buddy {chat_buddy} for {vector_name}")
         buddy_description = load_config_key("chat_buddy_description", vector_name)
         return chat_buddy, buddy_description
     return None, None
@@ -131,18 +131,18 @@ def get_chat_history(inputs, vector_name, last_chars=1000, summary_chars=1500) -
 
     recent_history = "\n".join(reversed(last_bits))
     recent_history = recent_history[-last_chars:]
-    logging.info(f"Recent chat history: {recent_history}")
+    log.info(f"Recent chat history: {recent_history}")
     
     # Summarize chat history too
     remaining_history = full_history
-    logging.info(f"Remaining chat history: {remaining_history}")
+    log.info(f"Remaining chat history: {remaining_history}")
     doc_history = Document(page_content=remaining_history)
     chat_summary = summarise_docs([doc_history], vector_name=vector_name, skip_if_less=last_chars)
     text_sum = ""
     for summ in chat_summary:
         text_sum += summ.page_content + "\n"
     
-    logging.info(f"Conversation Summary: {text_sum}")
+    log.info(f"Conversation Summary: {text_sum}")
     
     # Make sure the summary is not longer than `summary_chars` characters
     summary = text_sum[:summary_chars]

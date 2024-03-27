@@ -11,26 +11,26 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from ..logging import setup_logging
+from ..logging import log
 
-logging = setup_logging()
+
 
 from ..utils import load_config_key, load_config
 
 def route_qna(vector_name):
 
     agent_type = load_config_key('agent', vector_name, filename='config/llm_config.yaml')
-    logging.info(f'agent_type: {agent_type}')
+    log.info(f'agent_type: {agent_type}')
 
     agent_route, _ = load_config('config/cloud_run_urls.json')
-    logging.info(f'agent_route: {agent_route}')
+    log.info(f'agent_route: {agent_route}')
 
     try:
         agent_url = agent_route[agent_type]
     except KeyError:
         raise ValueError(f'agent_url not found for {agent_type}')
     
-    logging.info(f'agent_url: {agent_url}')
+    log.info(f'agent_url: {agent_url}')
     return agent_url
 
 def route_endpoint(vector_name):

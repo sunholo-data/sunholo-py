@@ -18,10 +18,10 @@ from google.auth import default
 
 import json
 import os
-from ..logging import setup_logging
+from ..logging import log
 from ..utils.gcp import get_gcp_project
 
-logging = setup_logging()
+
 
 class PubSubManager:
     """
@@ -40,7 +40,7 @@ class PubSubManager:
             self.project_id = project_id or get_gcp_project()
 
         if self.project_id:
-            logging.info(f"Pubsub Project ID: {self.project_id}")
+            log.info(f"Pubsub Project ID: {self.project_id}")
             # Create the Pub/Sub topic based on the project ID and memory_namespace
             self.publisher = pubsub_v1.PublisherClient()
             self.pubsub_topic = f"projects/{self.project_id}/topics/{pubsub_topic}"
@@ -58,7 +58,7 @@ class PubSubManager:
         except NotFound:
             # If the topic does not exist, create it
             self.publisher.create_topic(request={"name": self.pubsub_topic})
-            logging.info(f"Created Pub/Sub topic: {self.pubsub_topic}")
+            log.info(f"Created Pub/Sub topic: {self.pubsub_topic}")
             if self.verbose:
                 print(f"Created Pub/Sub topic: {self.pubsub_topic}")
     
@@ -68,19 +68,19 @@ class PubSubManager:
         # Create a subscriber client
         subscriber = pubsub_v1.SubscriberClient()
 
-        logging.debug(f"Checking subscription exists: {full_subscription_name}")
+        log.debug(f"Checking subscription exists: {full_subscription_name}")
         
         # Check if the subscription already exists
         try:
             subscriber.get_subscription(full_subscription_name)
-            logging.debug(f"Subscription {full_subscription_name} already exists.")
+            log.debug(f"Subscription {full_subscription_name} already exists.")
             return True
         except NotFound:
             return False
         except AlreadyExists:
             return True
         except Exception as e:
-            logging.debug(f"Failed to get subscription: {e}")
+            log.debug(f"Failed to get subscription: {e}")
             if self.verbose:
                 print(f"Failed to get subscription: {e}")
             return False
@@ -92,7 +92,7 @@ class PubSubManager:
             """
 
             if push_endpoint.startswith("https://"):
-                logging.debug(f"Using full URL for push endpoint")
+                log.debug(f"Using full URL for push endpoint")
             else:
                 raise ValueError("Push endpoint does not start with https://")
 
@@ -108,17 +108,17 @@ class PubSubManager:
 
             if not exists:
                 full_subscription_name = f"projects/{self.project_id}/subscriptions/{subscription_name}"
-                logging.debug(f"Creating subscription {full_subscription_name}")
+                log.debug(f"Creating subscription {full_subscription_name}")
                 try:
                     subscriber.create_subscription(name=full_subscription_name, 
                                                    topic=self.pubsub_topic, 
                                                    ack_deadline_seconds=600,
                                                    push_config=push_config)
-                    logging.info(f"Created push subscription: {full_subscription_name}")
+                    log.info(f"Created push subscription: {full_subscription_name}")
                     if self.verbose:
                         print(f"Created push subscription: {full_subscription_name}")
                 except Exception as e:
-                    logging.debug(f"Failed to create push subscription: {e}")
+                    log.debug(f"Failed to create push subscription: {e}")
                     if self.verbose:
                         print(f"Failed to create push subscription: {e}")
             
@@ -127,9 +127,9 @@ class PubSubManager:
     def _callback(self, future):
         try:
             message_id = future.result()
-            logging.info(f"Published message with ID: {message_id} to {self.pubsub_topic} for {self.memory_namespace}")
+            log.info(f"Published message with ID: {message_id} to {self.pubsub_topic} for {self.memory_namespace}")
         except Exception as e:
-            logging.error(f"Failed to publish message: {e}")
+            log.error(f"Failed to publish message: {e}")
 
     def publish_message(self, message:str, verbose=False):
         """Publishes the given data to Google Pub/Sub."""

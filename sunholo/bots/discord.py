@@ -13,9 +13,9 @@
 #   limitations under the License.
 import json, os
 import requests
-from ..logging import setup_logging
+from ..logging import log
 
-logging = setup_logging()
+
 
 def generate_discord_output(bot_output):
     source_documents = []
@@ -44,7 +44,7 @@ def discord_webhook(message_data):
     if webhook_url is None:
         return None
     
-    logging.info(f'webhook url: {webhook_url}')
+    log.info(f'webhook url: {webhook_url}')
 
     # If the message_data is not a dict, wrap it in a dict.
     if not isinstance(message_data, dict):
@@ -57,9 +57,9 @@ def discord_webhook(message_data):
     
     data = message_data
 
-    logging.info(f'Sending discord this data: {data}')
+    log.info(f'Sending discord this data: {data}')
     response = requests.post(webhook_url, json=data,
                             headers={'Content-Type': 'application/json'})
-    logging.debug(f'Sent data to discord: {response}')
+    log.debug(f'Sent data to discord: {response}')
     
     return response

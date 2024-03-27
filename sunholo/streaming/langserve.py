@@ -1,5 +1,5 @@
 import json
-from ..logging import setup_logging
+from ..logging import log
 
 log = setup_logging("langserve_streaming")
 

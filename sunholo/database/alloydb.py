@@ -8,18 +8,29 @@ from google.cloud.alloydb.connector import Connector
 from langchain_google_alloydb_pg import AlloyDBEngine, Column
 from google.cloud.alloydb.connector import IPTypes
 
-from ..logging import setup_logging
+from ..logging import log
+from ..utils.config import load_config_key
 
-logging = setup_logging()
 
-def create_alloydb_engine(alloydb_config, vector_name):
+
+def create_alloydb_engine(vector_name):
+
+    alloydb_config = load_config_key(
+        'alloydb_config', 
+        vector_name=vector_name, 
+        filename = "config/llm_config.yaml"
+    )
+
+    if alloydb_config is None:
+        log.error("No alloydb_config was found")
+
     ALLOYDB_DB = os.environ.get("ALLOYDB_DB")
     if ALLOYDB_DB is None:
-        logging.error(f"Could not locate ALLOYDB_DB environment variable for {vector_name}")
+        log.error(f"Could not locate ALLOYDB_DB environment variable for {vector_name}")
         raise ValueError("Could not locate ALLOYDB_DB environment variable")
-    logging.info(f"ALLOYDB_DB environment variable found for {vector_name} - {ALLOYDB_DB}")
+    log.info(f"ALLOYDB_DB environment variable found for {vector_name} - {ALLOYDB_DB}")
     
-    logging.info("Inititaing AlloyDB Langchain")
+    log.info("Inititaing AlloyDB Langchain")
 
     engine = AlloyDBEngine.from_instance(
         project_id=alloydb_config["project_id"],
@@ -100,7 +111,7 @@ class AlloyDBClient:
             creator=getconn
         )
         engine.dialect.description_encoding = None
-        logging.info(f"Created AlloyDB engine for {inst_uri} and user: {user}")
+        log.info(f"Created AlloyDB engine for {inst_uri} and user: {user}")
         return engine
 
     def execute_sql(self, sql_statement):
@@ -116,11 +127,11 @@ class AlloyDBClient:
         result = None
         with self.engine.connect() as conn:
             try:
-                logging.info(f"Executing SQL statement: {sql_}")
+                log.info(f"Executing SQL statement: {sql_}")
                 result = conn.execute(sql_)
             except DatabaseError as e:
                 if "already exists" in str(e):
-                    logging.warning(f"Error ignored: {str(e)}. Assuming object already exists.")
+                    log.warning(f"Error ignored: {str(e)}. Assuming object already exists.")
                 else:
                     raise  
             finally:
@@ -138,7 +149,7 @@ def create_alloydb_table(table_name, engine, type = "vectorstore", alloydb_confi
             vector_size = get_vector_size(table_name, config_file="config/llm_config.yaml")
             table_name = f"{table_name}_{type}_{vector_size}"
             if table_name in alloydb_table_cache:
-                logging.info(f"AlloyDB Table '{table_name}' exists, skipping creation.")
+                log.info(f"AlloyDB Table '{table_name}' exists, skipping creation.")
 
                 return table_name
             
@@ -150,7 +161,7 @@ def create_alloydb_table(table_name, engine, type = "vectorstore", alloydb_confi
                 metadata_columns=[Column("source", "TEXT", nullable=True)],
                 overwrite_existing=False
             )
-            logging.info(f"## Created AlloyDB Table: {table_name} with vector size: {vector_size}")
+            log.info(f"## Created AlloyDB Table: {table_name} with vector size: {vector_size}")
             alloydb_table_cache[table_name] = True 
 
             return table_name
@@ -158,7 +169,7 @@ def create_alloydb_table(table_name, engine, type = "vectorstore", alloydb_confi
         elif type == "docstore":
             table_name = f"{table_name}_docstore"
             if table_name in alloydb_table_cache:
-                logging.info(f"AlloyDB Table '{table_name}' exists, skipping creation.")
+                log.info(f"AlloyDB Table '{table_name}' exists, skipping creation.")
 
                 return table_name
             
@@ -172,14 +183,14 @@ def create_alloydb_table(table_name, engine, type = "vectorstore", alloydb_confi
         else:
             raise ValueError("type was not one of vectorstore, docstore or chatstore")
     except DuplicateTableError: 
-        logging.info("AlloyDB Table already exists (DuplicateTableError) - caching name")
+        log.info("AlloyDB Table already exists (DuplicateTableError) - caching name")
         alloydb_table_cache[table_name] = True 
 
         return table_name
     
     except ProgrammingError as err:
         if "already exists" in str(err):
-            logging.info("AlloyDB Table already exists (ProgrammingError) - caching name")
+            log.info("AlloyDB Table already exists (ProgrammingError) - caching name")
             alloydb_table_cache[table_name] = True
 
             return table_name
@@ -187,7 +198,7 @@ def create_alloydb_table(table_name, engine, type = "vectorstore", alloydb_confi
 def create_docstore_table(table_name, alloydb_config, username):
     ALLOYDB_DB = os.environ.get("ALLOYDB_DB")
     if ALLOYDB_DB is None:
-        logging.error(f"Could not locate ALLOYDB_DB environment variable for {table_name}")
+        log.error(f"Could not locate ALLOYDB_DB environment variable for {table_name}")
         raise ValueError("Could not locate ALLOYDB_DB environment variable")
         
     client = AlloyDBClient(

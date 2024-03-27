@@ -12,21 +12,19 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import json
-from ..logging import setup_logging
-
-logging = setup_logging()
+from ..logging import log
 
 def extract_chat_history(chat_history=None):
 
     if chat_history is None:
-        logging.info("No chat history found")
+        log.info("No chat history found")
         return []
 
-    logging.info(f"Extracting chat history: {chat_history}")
+    log.info(f"Extracting chat history: {chat_history}")
     paired_messages = []
 
     first_message = chat_history[0]
-    logging.info(f"Extracting first_message: {first_message}")
+    log.info(f"Extracting first_message: {first_message}")
     if is_bot(first_message):
         blank_human_message = {"name": "Human", "content": "", "embeds": []}
         paired_messages.append((create_message_element(blank_human_message), 
@@ -35,17 +33,17 @@ def extract_chat_history(chat_history=None):
 
     last_human_message = ""
     for message in chat_history:
-        logging.info(f"Extracing message: {message}")
+        log.info(f"Extracing message: {message}")
         if is_human(message):
             last_human_message = create_message_element(message)
-            logging.info(f"Extracted human message: {last_human_message}")
+            log.info(f"Extracted human message: {last_human_message}")
         elif is_bot(message):
             ai_message = create_message_element(message)
-            logging.info(f"Extracted AI message: {ai_message}")
+            log.info(f"Extracted AI message: {ai_message}")
             paired_messages.append((last_human_message, ai_message))
             last_human_message = ""
 
-    logging.info(f"Paired messages: {paired_messages}")
+    log.info(f"Paired messages: {paired_messages}")
 
     return paired_messages
 
@@ -57,10 +55,10 @@ def embeds_to_json(message):
 
 def create_message_element(message):
     if 'text' in message:  # This is a Slack or Google Chat message
-        logging.info(f"Found text element - {message['text']}")
+        log.info(f"Found text element - {message['text']}")
         return message['text']
     elif 'content' in message: # Discord message
-        logging.info(f"Found content element - {message['content']}")
+        log.info(f"Found content element - {message['content']}")
         return message['content']
     else:  
         raise KeyError(f"Could not extract 'content' or 'text' element from message: {message}, {type(message)}")

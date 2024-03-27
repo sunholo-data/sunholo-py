@@ -20,9 +20,9 @@ from ...agents import extract_chat_history, handle_special_commands
 from ...qna.parsers import parse_output
 from ...streaming import start_streaming_chat
 from ...archive import archive_qa
-from ...logging import setup_logging
+from ...logging import log
 
-logging = setup_logging()
+
 
 def register_qna_routes(app, stream_interpreter, qna_interpreter):
     @app.route('/qna/streaming/<vector_name>', methods=['POST'])
@@ -43,7 +43,7 @@ def register_qna_routes(app, stream_interpreter, qna_interpreter):
         if command_response is not None:
             return jsonify(command_response)
 
-        logging.info(f'Streaming data with stream_wait_time: {stream_wait_time} and stream_timeout: {stream_timeout}')
+        log.info(f'Streaming data with stream_wait_time: {stream_wait_time} and stream_timeout: {stream_timeout}')
         def generate_response_content():
             for chunk in start_streaming_chat(user_input,
                                               vector_name=vector_name,
@@ -75,7 +75,7 @@ def register_qna_routes(app, stream_interpreter, qna_interpreter):
         # The body of the route handler goes here
         # Use `qna_interpreter` where the original code used `interpreter_qna`
         data = request.get_json()
-        logging.info(f"qna/{vector_name} got data: {data}")
+        log.info(f"qna/{vector_name} got data: {data}")
 
         user_input = data['user_input'].strip()
 
@@ -95,7 +95,7 @@ def register_qna_routes(app, stream_interpreter, qna_interpreter):
         except Exception as err: 
             bot_output = {'answer': f'QNA_ERROR: An error occurred while processing /qna/{vector_name}: {str(err)} traceback: {traceback.format_exc()}'}
         
-        logging.info(f'==LLM Q:{user_input} - A:{bot_output["answer"]}')
+        log.info(f'==LLM Q:{user_input} - A:{bot_output["answer"]}')
         
         return jsonify(bot_output)
 

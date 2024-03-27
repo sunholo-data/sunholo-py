@@ -12,9 +12,9 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from ..pubsub import PubSubManager
-from ..logging import setup_logging
+from ..logging import log
 
-logging = setup_logging()
+
 
 import datetime
 
@@ -28,4 +28,4 @@ def archive_qa(bot_output, vector_name):
         
         pubsub_manager.publish_message(the_data)
     except Exception as e:
-        logging.warning(f"Could not publish message for {vector_name} to qna-to-pubsub-bq-archive - {str(e)}")
+        log.warning(f"Could not publish message for {vector_name} to qna-to-pubsub-bq-archive - {str(e)}")

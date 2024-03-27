@@ -6,10 +6,10 @@ import google.oauth2.id_token  # type: ignore
 from typing import Dict, Optional
 from ..utils.config import load_config_key, load_config
 from ..utils.gcp import is_running_on_cloudrun
-from ..logging import setup_logging
+from ..logging import log
 from ..agents.route import route_qna
 
-logging = setup_logging()
+
 
 def get_run_url(vector_name=None):
 
@@ -20,7 +20,7 @@ def get_run_url(vector_name=None):
     agent = load_config_key("agent", vector_name=vector_name, filename="config/llm_config.yaml")
 
     try:
-        logging.info(f'Looking up URL for {agent}')
+        log.info(f'Looking up URL for {agent}')
         url = cloud_urls[agent]
         return url
     except KeyError:
@@ -31,7 +31,7 @@ def get_id_token(url: str) -> str:
     # Use Application Default Credentials on Cloud Run
     if is_running_on_cloudrun():
         auth_req = google.auth.transport.requests.Request()
-        logging.info(f'Got id_token for {url}')
+        log.info(f'Got id_token for {url}')
         return google.oauth2.id_token.fetch_id_token(auth_req, url)
     else:
         # Use gcloud credentials locally
@@ -71,8 +71,8 @@ def get_header(vector_name) -> Optional[dict]:
                     'function': caller_frame.f_code.co_name,
                     'run_url': run_url
                 }
-        logging.info(f"Authenticating for run_url {run_url} from {caller_frame.f_code.co_name}")
+        log.info(f"Authenticating for run_url {run_url} from {caller_frame.f_code.co_name}")
         id_token = get_id_token(run_url)
         headers = {"Authorization": f"Bearer {id_token}"}
-        #logging.info(f"id_token {id_token}")
+        #log.info(f"id_token {id_token}")
         return headers

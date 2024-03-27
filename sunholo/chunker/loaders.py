@@ -21,7 +21,7 @@ from langchain_community.document_loaders import GoogleDriveLoader
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 
-from ..logging import setup_logging
+from ..logging import log
 from .pdfs import read_pdf_file
 from ..utils.config import load_config
 
@@ -35,7 +35,7 @@ import time
 from pydantic import BaseModel, Field
 from typing import Optional
 
-logging = setup_logging()
+
 
 UNSTRUCTURED_KEY=os.getenv('UNSTRUCTURED_KEY')
 
@@ -77,7 +77,7 @@ class MyGoogleDriveLoader(GoogleDriveLoader):
             service = build("drive", "v3", credentials=self._load_credentials())
             file = service.files().get(fileId=id).execute()
         except HttpError as err:
-            logging.error(f"Error loading file {url}: {str(err)}")
+            log.error(f"Error loading file {url}: {str(err)}")
             raise
 
         mime_type = file["mimeType"]
@@ -111,13 +111,13 @@ def ignore_files(filepath):
     return any(lower_filepath.endswith(ext) for ext in code_extensions)
 
 def read_git_repo(clone_url, branch="main", metadata=None):
-    logging.info(f"Reading git repo from {clone_url} - {branch}")
+    log.info(f"Reading git repo from {clone_url} - {branch}")
     GIT_PAT = os.getenv('GIT_PAT', None)
     if GIT_PAT is None:
-        logging.warning("No GIT_PAT is specified, won't be able to clone private git repositories")
+        log.warning("No GIT_PAT is specified, won't be able to clone private git repositories")
     else:
         clone_url = clone_url.replace('https://', f'https://{GIT_PAT}@')
-        logging.info("Using private GIT_PAT")
+        log.info("Using private GIT_PAT")
 
     with tempfile.TemporaryDirectory() as tmp_dir:
             try:    
@@ -126,7 +126,7 @@ def read_git_repo(clone_url, branch="main", metadata=None):
                                    branch=branch,
                                    file_filter=ignore_files)
             except Exception as err:
-                logging.error(f"Failed to load repository: {str(err)}")
+                log.error(f"Failed to load repository: {str(err)}")
                 return None
             docs = loader.load()
 
@@ -137,14 +137,14 @@ def read_git_repo(clone_url, branch="main", metadata=None):
                 for doc in docs:
                     doc.metadata.update(metadata)
             
-    logging.info(f"GitLoader read {len(docs)} doc(s) from {clone_url}")
+    log.info(f"GitLoader read {len(docs)} doc(s) from {clone_url}")
         
     return docs
 
 
 def read_gdrive_to_document(url: str, metadata: dict = None):
 
-    logging.info(f"Reading gdrive doc from {url}")
+    log.info(f"Reading gdrive doc from {url}")
 
     loader = MyGoogleDriveLoader(url=url)
     docs = loader.load_from_url(url)
@@ -156,7 +156,7 @@ def read_gdrive_to_document(url: str, metadata: dict = None):
         for doc in docs:
             doc.metadata.update(metadata)
     
-    logging.info(f"GoogleDriveLoader read {len(docs)} doc(s) from {url}")
+    log.info(f"GoogleDriveLoader read {len(docs)} doc(s) from {url}")
 
     return docs
 
@@ -171,7 +171,7 @@ def read_url_to_document(url: str, metadata: dict = None):
         for doc in docs:
             doc.metadata.update(metadata)
     
-    logging.info(f"UnstructuredURLLoader docs: {docs}")
+    log.info(f"UnstructuredURLLoader docs: {docs}")
     
     return docs
 
@@ -182,17 +182,17 @@ def read_file_to_document(gs_file: pathlib.Path, split=False, metadata: dict = N
 
     if metadata:
         if metadata.get("uploaded_to_bucket"):
-            logging.info(f"Already uploaded to bucket, skipping {pdf_path}")
+            log.info(f"Already uploaded to bucket, skipping {pdf_path}")
             return []
 
-    logging.info(f"Sending {pdf_path} to UnstructuredAPIFileLoader")
+    log.info(f"Sending {pdf_path} to UnstructuredAPIFileLoader")
     UNSTRUCTURED_URL = os.getenv("UNSTRUCTURED_URL", None)
     unstructured_kwargs = {"pdf_infer_table_structure": True,
                             "extract_image_block_types":  ["Image", "Table"]
                             }
     
     if UNSTRUCTURED_URL:
-        logging.debug(f"Found UNSTRUCTURED_URL: {UNSTRUCTURED_URL}")
+        log.debug(f"Found UNSTRUCTURED_URL: {UNSTRUCTURED_URL}")
         the_endpoint = f"{UNSTRUCTURED_URL}/general/v0/general"
         loader = UnstructuredAPIFileLoader(
             pdf_path,
@@ -210,7 +210,7 @@ def read_file_to_document(gs_file: pathlib.Path, split=False, metadata: dict = N
     try:
         docs = loader.load_and_split() if split else loader.load() # this takes a long time 30m+ for big PDF files
     except ValueError as e:
-        logging.info(f"Error for {gs_file} from UnstructuredAPIFileLoader: {str(e)}")
+        log.info(f"Error for {gs_file} from UnstructuredAPIFileLoader: {str(e)}")
         pdf_path = pathlib.Path(gs_file)
         if pdf_path.suffix == ".pdf":
             local_doc = read_pdf_file(pdf_path, metadata=metadata)
@@ -222,25 +222,25 @@ def read_file_to_document(gs_file: pathlib.Path, split=False, metadata: dict = N
             if txt_docs:
                 docs.extend(txt_docs)
             else:
-                logging.warning("Could not extract any docs for {gs_file}")
+                log.warning("Could not extract any docs for {gs_file}")
     
     end = time.time()
     elapsed_time = round((end - start) / 60, 2)
-    logging.info(f"Loaded docs for {gs_file} from read_file_to_docs took {elapsed_time} mins")
+    log.info(f"Loaded docs for {gs_file} from read_file_to_docs took {elapsed_time} mins")
 
     for doc in docs:
-        logging.info(f"doc_content: {doc.page_content[:30]} - length: {len(doc.page_content)}")
+        log.info(f"doc_content: {doc.page_content[:30]} - length: {len(doc.page_content)}")
         if metadata is not None:
             doc.metadata.update(metadata)
-            logging.info(f"doc_metadata: {doc.metadata}")
+            log.info(f"doc_metadata: {doc.metadata}")
     
-    logging.info(f"gs_file:{gs_file} read into {len(docs)} docs")
+    log.info(f"gs_file:{gs_file} read into {len(docs)} docs")
 
     return docs
 
 def convert_to_txt_and_extract(gs_file, split=None):
 
-    logging.info("trying file parsing locally via .txt conversion")
+    log.info("trying file parsing locally via .txt conversion")
     txt_file = None
     docs = []
     try:

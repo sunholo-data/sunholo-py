@@ -5,7 +5,7 @@ from google.cloud import storage
 import google.auth
 from google.auth.transport import requests
 
-from ..logging import setup_logging
+from ..logging import log
 
 log = setup_logging()
 

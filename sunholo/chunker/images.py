@@ -3,7 +3,7 @@ import datetime
 import tempfile
 import os
 from ..gcs.add_file import add_file_to_gcs, get_image_file_name
-from ..logging import setup_logging
+from ..logging import log
 logging = setup_logging("chunker")
 
 
@@ -16,7 +16,7 @@ def upload_doc_images(metadata):
         # Determine the file extension based on the MIME type
         mime_type = metadata.get("image_mime_type", "")
         object_id = metadata.get("objectId", "image")
-        logging.info(f"Found image_base64 for {object_id}")
+        log.info(f"Found image_base64 for {object_id}")
         timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         image_path = get_image_file_name(object_id, image_name=timestamp, mime_type=mime_type)
         
@@ -40,7 +40,7 @@ def upload_doc_images(metadata):
             bucket_filepath=image_path
         )
         os.remove(temp_image.name)
-        logging.info(f"Uploaded image to GCS: {image_gsurl}")
+        log.info(f"Uploaded image to GCS: {image_gsurl}")
 
         return image_gsurl
 

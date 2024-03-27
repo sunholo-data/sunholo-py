@@ -19,8 +19,8 @@ from google.cloud import storage
 
 def fetch_config(bucket_name, blob_name):
 
-    from ..logging import setup_logging
-    logging = setup_logging()
+    from ..logging import log
+    
 
     storage_client = storage.Client()
 
@@ -29,7 +29,7 @@ def fetch_config(bucket_name, blob_name):
 
     # Check if the file exists
     if not blob.exists():
-        logging.info(f"The blob {blob_name} does not exist in the bucket {bucket_name}")
+        log.info(f"The blob {blob_name} does not exist in the bucket {bucket_name}")
         return None
 
     # Download the file to a local file
@@ -41,14 +41,14 @@ def fetch_config(bucket_name, blob_name):
     return updated_time
 
 def get_module_filepath(filepath):
-    from ..logging import setup_logging
-    logging = setup_logging()
+    from ..logging import log
+    
     # Get the root directory of this Python script
     dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     # Build the full filepath by joining the directory with the filename
     filepath = os.path.join(dir_path, filepath)
 
-    logging.info(f"Found filepath {filepath}")
+    log.info(f"Found filepath {filepath}")
     return filepath
 
 # Global cache
@@ -56,8 +56,8 @@ config_cache = {}
 
 def load_config(filename: str=None) -> tuple[dict, str]:
     global config_cache
-    from ..logging import setup_logging
-    logging = setup_logging()
+    from ..logging import log
+    
     if filename is None:
         filename = os.getenv("_CONFIG_FILE", None)
         if filename is None:
@@ -65,13 +65,13 @@ def load_config(filename: str=None) -> tuple[dict, str]:
 
    # Check the cache first
     if filename in config_cache:
-        logging.debug(f"Returning cached config for {filename}")
+        log.debug(f"Returning cached config for {filename}")
         return config_cache[filename], filename
     
     # Join the script directory with the filename
     config_path = filename
 
-    logging.debug(f"Loading config file {os.getcwd()}/{config_path}")
+    log.debug(f"Loading config file {os.getcwd()}/{config_path}")
 
     with open(config_path, 'r') as f:
         if filename.endswith(".json"):
@@ -87,19 +87,19 @@ def load_config(filename: str=None) -> tuple[dict, str]:
     return config, filename
 
 def load_config_key(key: str, vector_name: str, filename: str=None) -> str:
-    from ..logging import setup_logging
-    logging = setup_logging()
+    from ..logging import log
+    
 
     assert isinstance(key, str), f"key must be a string got a {type(key)}"
     assert isinstance(vector_name, str), f"vector_name must be a string, got a {type(vector_name)}"
     
     config, filename = load_config(filename)
-    logging.info(f"Fetching {key} for {vector_name}")
+    log.info(f"Fetching {key} for {vector_name}")
     llm_config = config.get(vector_name, None)
     if llm_config is None:
         raise ValueError(f"No config array was found for {vector_name} in {filename}")
     
-    logging.info(f'llm_config: {llm_config} for {vector_name} - fetching "{key}"')
+    log.info(f'llm_config: {llm_config} for {vector_name} - fetching "{key}"')
 
     key_value = llm_config.get(key, None)
     

@@ -11,9 +11,9 @@ from ...agents import extract_chat_history, handle_special_commands
 from ...qna.parsers import parse_output
 from ...streaming import start_streaming_chat_async
 from ...archive import archive_qa
-from ...logging import setup_logging
+from ...logging import log
 
-logging = setup_logging()
+
 
 app = FastAPI()
 
@@ -36,7 +36,7 @@ def create_stream_qa_endpoint(stream_interpreter):
         if command_response is not None:
             return JSONResponse(content=command_response)
 
-        logging.info(f'Streaming data with stream_wait_time: {request.stream_wait_time} and stream_timeout: {request.stream_timeout}')
+        log.info(f'Streaming data with stream_wait_time: {request.stream_wait_time} and stream_timeout: {request.stream_timeout}')
 
         async def generate_response_content():
             async for chunk in start_streaming_chat_async(user_input,
@@ -78,7 +78,7 @@ def create_process_qna_endpoint(qna_interpreter):
         except Exception as err:
             bot_output = {'answer': f'QNA_ERROR: An error occurred while processing /qna/{vector_name}: {str(err)} traceback: {traceback.format_exc()}'}
         
-        logging.info(f'==LLM Q:{user_input} - A:{bot_output["answer"]}')
+        log.info(f'==LLM Q:{user_input} - A:{bot_output["answer"]}')
         
         return JSONResponse(content=bot_output)
     return process_qna

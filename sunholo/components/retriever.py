@@ -11,7 +11,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from ..logging import setup_logging
+from ..logging import log
 from .vectorstore import pick_vectorstore
 from ..utils import load_config_key
 from .llm import get_embeddings
@@ -24,13 +24,13 @@ from langchain_community.document_transformers import EmbeddingsRedundantFilter
 from langchain.retrievers.document_compressors import DocumentCompressorPipeline
 from langchain.retrievers import ContextualCompressionRetriever
 
-logging = setup_logging()
+
 
 def load_memories(vector_name):
     memories = load_config_key("memory", vector_name, filename="config/llm_config.yaml")
-    logging.info(f"Found memory settings for {vector_name}: {memories}")
+    log.info(f"Found memory settings for {vector_name}: {memories}")
     if len(memories) == 0:
-        logging.info(f"No memory settings found for {vector_name}")
+        log.info(f"No memory settings found for {vector_name}")
         return None
 
     return memories
@@ -42,10 +42,10 @@ def pick_retriever(vector_name, embeddings=None):
     retriever_list = []
     for memory in memories:  # Iterate over the list
         for key, value in memory.items():  # Now iterate over the dictionary
-            logging.info(f"Found memory {key}")
+            log.info(f"Found memory {key}")
             vectorstore = value.get('vectorstore', None)
             if vectorstore is not None:
-                logging.info(f"Found vectorstore {vectorstore}")
+                log.info(f"Found vectorstore {vectorstore}")
                 if embeddings is None:
                     embeddings = get_embeddings(vector_name)
                 vectorstore = pick_vectorstore(vectorstore, vector_name=vector_name, embeddings=embeddings)
@@ -53,7 +53,7 @@ def pick_retriever(vector_name, embeddings=None):
                 retriever_list.append(vs_retriever)
             
             if value.get('provider', None) == "GoogleCloudEnterpriseSearchRetriever":
-                logging.info(f"Found GoogleCloudEnterpriseSearchRetriever {value['provider']}")
+                log.info(f"Found GoogleCloudEnterpriseSearchRetriever {value['provider']}")
                 gcp_retriever = GoogleCloudEnterpriseSearchRetriever(
                     project_id=get_gcp_project(),
                     search_engine_id=value["db_id"],
@@ -66,7 +66,7 @@ def pick_retriever(vector_name, embeddings=None):
             #TODO: more memory stores here
 
     if len(retriever_list) == 0:
-        logging.info(f"No retrievers were created for {memories}")
+        log.info(f"No retrievers were created for {memories}")
         return None
         
     lotr = MergerRetriever(retrievers=retriever_list)

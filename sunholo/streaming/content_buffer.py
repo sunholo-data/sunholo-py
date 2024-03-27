@@ -17,25 +17,25 @@ from langchain.schema import LLMResult
 
 import threading
 import re
-from ..logging import setup_logging
+from ..logging import log
 
-logging = setup_logging()
+
 
 class ContentBuffer:
     def __init__(self):
         self.content = ""
-        logging.debug("Content buffer initialized")
+        log.debug("Content buffer initialized")
     
     def write(self, text: str):
         self.content += text
-        logging.debug(f"Written {text} to buffer")
+        log.debug(f"Written {text} to buffer")
     
     def read(self) -> str:
-        logging.debug(f"Read content from buffer")    
+        log.debug(f"Read content from buffer")    
         return self.content
 
     def clear(self):
-        logging.debug(f"Clearing content buffer")
+        log.debug(f"Clearing content buffer")
         self.content = ""
     
 
@@ -50,10 +50,10 @@ class BufferStreamingStdOutCallbackHandler(StreamingStdOutCallbackHandler):
         self.in_code_block = False
         self.in_question_block = False
         self.question_buffer = ""
-        logging.info("Starting to stream LLM")
+        log.info("Starting to stream LLM")
 
     def on_llm_new_token(self, token: str, **kwargs: Any) -> None:
-        logging.debug(f"on_llm_new_token: {token}")
+        log.debug(f"on_llm_new_token: {token}")
 
         self.buffer += token
 
@@ -87,7 +87,7 @@ class BufferStreamingStdOutCallbackHandler(StreamingStdOutCallbackHandler):
             # Process the remaining buffer content
             self.content_buffer.write(self.buffer)
             self.buffer = "" # Clear the remaining buffer
-            logging.info("Flushing remaining LLM response buffer")
+            log.info("Flushing remaining LLM response buffer")
 
         self.stream_finished.set() # Set the flag to signal that the stream has finished
-        logging.info("Streaming LLM response ended successfully")
+        log.info("Streaming LLM response ended successfully")

@@ -11,7 +11,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from ..logging import setup_logging
+from ..logging import log
 from ..utils.parsers import remove_whitespace
 from langchain.schema import Document
 import langchain.text_splitter as text_splitter
@@ -45,7 +45,7 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
 
         if len(content) < min_size:
             combined_documents_content += content + "\n"
-            logging.info(f"Appending document as its smaller than {min_size}: length {len(content)} - appended doc length {len(combined_documents_content)}")
+            log.info(f"Appending document as its smaller than {min_size}: length {len(content)} - appended doc length {len(combined_documents_content)}")
         else:
             if combined_documents_content:
                 combined_documents.append(Document(page_content=combined_documents_content, metadata=document.metadata))
@@ -64,7 +64,7 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
             # If a chunk is smaller than the min_size, append it to temporary_chunk with a line break and continue
             if len(chunk) < min_size:
                 temporary_chunk += chunk + "\n"
-                logging.info(f"Appending chunk as its smaller than {min_size}: length {len(chunk)}")
+                log.info(f"Appending chunk as its smaller than {min_size}: length {len(chunk)}")
                 continue
 
             # If there's content in temporary_chunk, append it to the current chunk
@@ -75,10 +75,10 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
             # If the combined chunk is still less than the min_size, append to temporary_chunk with a line break and continue
             if len(chunk) < min_size:
                 temporary_chunk += chunk + "\n"
-                logging.info(f"Appending chunk as its smaller than {min_size}: length {len(chunk)}")
+                log.info(f"Appending chunk as its smaller than {min_size}: length {len(chunk)}")
                 continue
             
-            logging.info(f"Adding chunk of length {len(chunk)}")
+            log.info(f"Adding chunk of length {len(chunk)}")
             document.metadata["chunk_number"] = chunk_number
             source_chunks.append(Document(page_content=chunk, metadata=document.metadata))
 
@@ -89,7 +89,7 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
         
         chunk_number += 1
 
-    logging.info(f"Chunked into {chunk_number} documents")
+    log.info(f"Chunked into {chunk_number} documents")
     return source_chunks
 
 def choose_splitter(extension: str, chunk_size: int=1024, chunk_overlap:int=0, vector_name: str=None):
@@ -102,9 +102,9 @@ def choose_splitter(extension: str, chunk_size: int=1024, chunk_overlap:int=0, v
             if chunk_config.get("type") == "semantic":
                 embedding_str = chunk_config.get("llm")
                 if not embedding_str:
-                    logging.error("Unable to find embedding 'config.chunker.llm' configuration needed for semantic chunking")
+                    log.error("Unable to find embedding 'config.chunker.llm' configuration needed for semantic chunking")
                 else:
-                    logging.info(f"Semantic chunking for {vector_name}")
+                    log.info(f"Semantic chunking for {vector_name}")
                     from langchain_experimental.text_splitter import SemanticChunker
                     from ..components import pick_embedding
                     embeddings = pick_embedding(embedding_str)

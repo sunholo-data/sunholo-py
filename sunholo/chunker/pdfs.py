@@ -13,19 +13,19 @@
 #   limitations under the License.
 import os
 import pathlib
-from ..logging import setup_logging
+from ..logging import log
 
 logging = setup_logging("chunker")
 
 def split_pdf_to_pages(pdf_path, temp_dir):
 
-    logging.info(f"Splitting PDF {pdf_path} into pages...")
+    log.info(f"Splitting PDF {pdf_path} into pages...")
 
     pdf_path = pathlib.Path(pdf_path)
     from pypdf import PdfReader, PdfWriter
     pdf = PdfReader(pdf_path)
 
-    logging.info(f"PDF file {pdf_path} contains {len(pdf.pages)} pages")
+    log.info(f"PDF file {pdf_path} contains {len(pdf.pages)} pages")
 
     # Get base name without extension
     basename = os.path.splitext(os.path.basename(pdf_path))[0]
@@ -33,7 +33,7 @@ def split_pdf_to_pages(pdf_path, temp_dir):
     page_files = []
     
     if len(pdf.pages) == 1:
-        logging.debug(f"Only one page in PDF {pdf_path} - sending back")
+        log.debug(f"Only one page in PDF {pdf_path} - sending back")
         return [str(pdf_path)]
     
     for page in range(len(pdf.pages)):
@@ -45,16 +45,16 @@ def split_pdf_to_pages(pdf_path, temp_dir):
         with open(output_filename, 'wb') as out:
             pdf_writer.write(out)
 
-        logging.info(f'Created PDF page: {output_filename}')
+        log.info(f'Created PDF page: {output_filename}')
         page_files.append(str(output_filename))
 
-    logging.info(f"Split PDF {pdf_path} into {len(page_files)} pages...")
+    log.info(f"Split PDF {pdf_path} into {len(page_files)} pages...")
     return page_files
 
 def read_pdf_file(pdf_path, metadata):
     from langchain.schema import Document
     from pypdf import PdfReader
-    logging.info(f"Trying local PDF parsing.  Reading PDF {pdf_path}...")
+    log.info(f"Trying local PDF parsing.  Reading PDF {pdf_path}...")
 
     pdf_path = pathlib.Path(pdf_path)
     
@@ -65,12 +65,12 @@ def read_pdf_file(pdf_path, metadata):
         for page in pdf.pages:
             text += page.extract_text() + "\n"
     except Exception as err:
-        logging.warning(f"Could not extract PDF via pypdf ERROR - {str(err)}")
+        log.warning(f"Could not extract PDF via pypdf ERROR - {str(err)}")
         return None
     
     if len(text) < 10:
-        logging.info(f"Could not read PDF {pdf_path} via pypdf - too short, only got {text}")
+        log.info(f"Could not read PDF {pdf_path} via pypdf - too short, only got {text}")
         return None
     
-    logging.info(f"Successfully read PDF {pdf_path}...")
+    log.info(f"Successfully read PDF {pdf_path}...")
     return Document(page_content=text, metadata=metadata)

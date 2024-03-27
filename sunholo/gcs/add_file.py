@@ -14,9 +14,9 @@
 import datetime
 import os
 from google.cloud import storage
-from ..logging import setup_logging
+from ..logging import log
 
-logging = setup_logging()
+
 
 def add_file_to_gcs(filename: str, vector_name:str, bucket_name: str=None, metadata:dict=None, bucket_filepath:str=None):
 
@@ -45,14 +45,14 @@ def add_file_to_gcs(filename: str, vector_name:str, bucket_name: str=None, metad
     blob_prev = bucket.blob(bucket_filepath_prev)
 
     if blob.exists():
-        logging.info(f"File {filename} already exists in gs://{bucket_name}/{bucket_filepath}")
+        log.info(f"File {filename} already exists in gs://{bucket_name}/{bucket_filepath}")
         return f"gs://{bucket_name}/{bucket_filepath}"
 
     if blob_prev.exists():
-        logging.info(f"File {filename} already exists in gs://{bucket_name}/{bucket_filepath_prev}")
+        log.info(f"File {filename} already exists in gs://{bucket_name}/{bucket_filepath_prev}")
         return f"gs://{bucket_name}/{bucket_filepath_prev}"
 
-    logging.debug(f"File {filename} does not already exist in bucket {bucket_name}/{bucket_filepath}")
+    log.debug(f"File {filename} does not already exist in bucket {bucket_name}/{bucket_filepath}")
 
     the_metadata = {
         "vector_name": vector_name,
@@ -69,15 +69,15 @@ def add_file_to_gcs(filename: str, vector_name:str, bucket_name: str=None, metad
     for attempt in range(max_retries):
         try:
             blob.upload_from_filename(filename)
-            logging.info(f"File {filename} uploaded to gs://{bucket_name}/{bucket_filepath}")
+            log.info(f"File {filename} uploaded to gs://{bucket_name}/{bucket_filepath}")
             break  # Success! Exit the loop.
         except Exception as e:
             # In case of an exception (timeout, etc.), wait and then retry
-            logging.warning(f"Upload attempt {attempt + 1} failed with error: {str(e)}. Retrying...")
+            log.warning(f"Upload attempt {attempt + 1} failed with error: {str(e)}. Retrying...")
             time.sleep(base_delay * (2 ** attempt))  # Exponential backoff
 
     else:  # This block executes if the loop completes without breaking
-        logging.error(f"Failed to upload file {filename} to gs://{bucket_name}/{bucket_filepath} after {max_retries} attempts.")
+        log.error(f"Failed to upload file {filename} to gs://{bucket_name}/{bucket_filepath} after {max_retries} attempts.")
 
     return f"gs://{bucket_name}/{bucket_filepath}"
 

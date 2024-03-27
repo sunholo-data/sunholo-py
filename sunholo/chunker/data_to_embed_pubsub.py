@@ -11,12 +11,12 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from ..logging import setup_logging
+from ..logging import log
 from ..pubsub import process_pubsub_message
 from .message_data import handle_gcs_message, handle_google_drive_message, handle_github_message, handle_http_message, handle_json_content_message
 from .publish import process_docs_chunks_vector_name
 
-logging = setup_logging()
+
 
 def data_to_embed_pubsub(data: dict):
     """Triggered from a message on a Cloud Pub/Sub topic.
@@ -29,10 +29,10 @@ def data_to_embed_pubsub(data: dict):
     metadata["vector_name"] = vector_name
 
     if message_data is None:
-        logging.error("No message_data was found in data: {data}")
+        log.error("No message_data was found in data: {data}")
         return
 
-    logging.debug(f"Found metadata in pubsub: {metadata}")
+    log.debug(f"Found metadata in pubsub: {metadata}")
 
     chunks = []
 

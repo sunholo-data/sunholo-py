@@ -11,7 +11,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from ..logging import setup_logging
+from ..logging import log
 
 import pathlib
 import tempfile
@@ -31,11 +31,11 @@ from . import loaders
 from ..utils.parsers import extract_urls
 from ..gcs.add_file import add_file_to_gcs, get_pdf_split_file_name
 
-logging = setup_logging()
+
 
 def handle_gcs_message(message_data: str, metadata: dict, vector_name: str):
     # Process message from Google Cloud Storage
-    logging.debug("Detected gs://")
+    log.debug("Detected gs://")
     bucket_name, file_name = message_data[5:].split("/", 1)
 
     # Create a client
@@ -56,7 +56,7 @@ def handle_gcs_message(message_data: str, metadata: dict, vector_name: str):
             if not metadata.get("source"):
                 metadata["source"] = str(file_name)
             if len(pages) > 1: # we send it back to GCS to parrallise the imports
-                logging.info(f"Got back {len(pages)} pages for file {tmp_file_path}")
+                log.info(f"Got back {len(pages)} pages for file {tmp_file_path}")
                 for pp in pages:
                     pp_basename = os.path.basename(pp)
                     # file_name/pdf_parts/file_name_1.pdf
@@ -66,8 +66,8 @@ def handle_gcs_message(message_data: str, metadata: dict, vector_name: str):
                                               bucket_name=bucket_name, 
                                               metadata=metadata,
                                               bucket_filepath=bucket_path)
-                    logging.info(f"{gs_file} is now in bucket {bucket_name}")
-                logging.info(f"Sent split pages for {file_name.name} back to GCS to parrallise the imports")
+                    log.info(f"{gs_file} is now in bucket {bucket_name}")
+                log.info(f"Sent split pages for {file_name.name} back to GCS to parrallise the imports")
                 return None, None
         else:
             # just original temp file
@@ -85,7 +85,7 @@ def handle_gcs_message(message_data: str, metadata: dict, vector_name: str):
 
         docs = []
         for page in pages:
-            logging.info(f"Sending file {page} to loaders.read_file_to_document {metadata}")
+            log.info(f"Sending file {page} to loaders.read_file_to_document {metadata}")
             docs2 = loaders.read_file_to_document(page, metadata=metadata)
             docs.extend(docs2)
 
@@ -95,7 +95,7 @@ def handle_gcs_message(message_data: str, metadata: dict, vector_name: str):
 
 def handle_google_drive_message(message_data: str, metadata: dict, vector_name: str):
     # Process message from Google Drive
-    logging.info("Got google drive URL")
+    log.info("Got google drive URL")
     urls = extract_urls(message_data)
 
     docs = []
@@ -105,7 +105,7 @@ def handle_google_drive_message(message_data: str, metadata: dict, vector_name: 
         metadata["type"] = "url_load"
         doc = loaders.read_gdrive_to_document(url, metadata=metadata)
         if doc is None:
-            logging.info("Could not load any Google Drive docs")
+            log.info("Could not load any Google Drive docs")
         else:
             docs.extend(doc)
 
@@ -115,7 +115,7 @@ def handle_google_drive_message(message_data: str, metadata: dict, vector_name: 
 
 def handle_github_message(message_data: str, metadata: dict, vector_name: str):
     # Process message from GitHub
-    logging.info("Got GitHub URL")
+    log.info("Got GitHub URL")
     urls = extract_urls(message_data)
 
     branch="main"
@@ -124,7 +124,7 @@ def handle_github_message(message_data: str, metadata: dict, vector_name: str):
         if match:
             branch = match.group(1)
     
-    logging.info(f"Using branch: {branch}")
+    log.info(f"Using branch: {branch}")
 
     docs = []
     for url in urls:
@@ -133,7 +133,7 @@ def handle_github_message(message_data: str, metadata: dict, vector_name: str):
         metadata["type"] = "url_load"
         doc = loaders.read_git_repo(url, branch=branch, metadata=metadata)
         if doc is None:
-            logging.info("Could not load GitHub files")
+            log.info("Could not load GitHub files")
         else:
             docs.extend(doc)
     
@@ -143,7 +143,7 @@ def handle_github_message(message_data: str, metadata: dict, vector_name: str):
 
 def handle_http_message(message_data: str, metadata: dict, vector_name:str):
     # Process message from a generic HTTP URL
-    logging.info(f"Got http message: {message_data}")
+    log.info(f"Got http message: {message_data}")
 
     # just in case, extract the URL again
     urls = extract_urls(message_data)
@@ -161,7 +161,7 @@ def handle_http_message(message_data: str, metadata: dict, vector_name:str):
     return chunks, metadata
 
 def handle_json_content_message(message_data: str, metadata: dict, vector_name: str):
-    logging.info("No tailored message_data detected, processing message json")
+    log.info("No tailored message_data detected, processing message json")
     # Process message containing direct JSON content
     the_json = json.loads(message_data)
     the_metadata = the_json.get("metadata", {})
@@ -172,7 +172,7 @@ def handle_json_content_message(message_data: str, metadata: dict, vector_name: 
         metadata["source"] = "No source embedded"
 
     if the_content is None:
-        logging.info("No content found")
+        log.info("No content found")
         return {"metadata": "No content found"}
     
     docs = [Document(page_content=the_content, metadata=metadata)]

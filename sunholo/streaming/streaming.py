@@ -21,7 +21,7 @@ from .content_buffer import ContentBuffer, BufferStreamingStdOutCallbackHandler
 
 from ..qna.parsers import parse_output
 
-from ..logging import setup_logging
+from ..logging import log
 from ..utils import load_config_key
 
 from .langserve import parse_langserve_token, parse_langserve_token_async
