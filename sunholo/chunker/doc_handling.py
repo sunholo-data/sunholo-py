@@ -44,10 +44,9 @@ def send_doc_to_docstore(docs, vector_name):
 
 def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_limit_default=100000):
     chunker_config = load_config_key("chunker", vector_name=vector_name, filename="config/llm_config.yaml")
-    summarise_chunking_config = chunker_config.get("summarise")
+    summarise_chunking_config = chunker_config.get("summarise") if chunker_config else None
     
     if not summarise_chunking_config:
-
         return docs
 
     # if model not specified will use default config.llm
