@@ -22,7 +22,7 @@ def create_alloydb_engine(vector_name):
     )
 
     if alloydb_config is None:
-        log.error("No alloydb_config was found")
+        raise ValueError("No alloydb_config was found")
 
     ALLOYDB_DB = os.environ.get("ALLOYDB_DB")
     if ALLOYDB_DB is None:
@@ -217,6 +217,9 @@ def create_docstore_table(table_name, alloydb_config, username):
 
 def get_sources_from_docstore(sources, vector_name):
     
+    if not sources:
+        log.warning("No sources found for alloydb fetch")
+
     engine = create_alloydb_engine(vector_name=vector_name)
     
     table_name = f"{vector_name}_docstore"
@@ -226,7 +229,7 @@ def get_sources_from_docstore(sources, vector_name):
         FROM {table_name}
         WHERE source IN {tuple(sources)} 
     """
-    
+    log.info(f"Alloydb doc query: {query}")
     loader = AlloyDBLoader.create_sync(
                     engine=engine,
                     query=query,
