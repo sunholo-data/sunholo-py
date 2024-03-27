@@ -191,7 +191,7 @@ def read_file_to_document(gs_file: pathlib.Path, split=False, metadata: dict = N
                             "extract_image_block_types":  ["Image", "Table"]
                             }
     
-    if UNSTRUCTURED_URL is not None:
+    if UNSTRUCTURED_URL:
         logging.debug(f"Found UNSTRUCTURED_URL: {UNSTRUCTURED_URL}")
         the_endpoint = f"{UNSTRUCTURED_URL}/general/v0/general"
         loader = UnstructuredAPIFileLoader(
@@ -211,6 +211,7 @@ def read_file_to_document(gs_file: pathlib.Path, split=False, metadata: dict = N
         docs = loader.load_and_split() if split else loader.load() # this takes a long time 30m+ for big PDF files
     except ValueError as e:
         logging.info(f"Error for {gs_file} from UnstructuredAPIFileLoader: {str(e)}")
+        pdf_path = pathlib.Path(gs_file)
         if pdf_path.suffix == ".pdf":
             local_doc = read_pdf_file(pdf_path, metadata=metadata)
             if local_doc is not None:
