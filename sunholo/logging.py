@@ -204,7 +204,7 @@ def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
         Google Kubernetes Engine, Google App Engine, etc.
     """
 
-    logger = log.getLogger(logger_name)
+    logger = logging.getLogger(logger_name)
     if is_logging_setup(logger):
         return logger
     
