@@ -64,7 +64,7 @@ def get_gcp_project():
     if project_id:
         os.environ["GCP_PROJECT"] = project_id 
 
-    log.warning("GCP Project ID not found. Ensure you are running on GCP or have the GCP_PROJECT environment variable set.")
+    logging.warning("GCP Project ID not found. Ensure you are running on GCP or have the GCP_PROJECT environment variable set.")
     return None
 
 
@@ -85,7 +85,7 @@ def get_region():
 
 def get_metadata(stem):
     if not is_running_on_gcp():
-        log.warning("Not running on GCP, skipping metadata server fetch. For local testing set via env var instead e.g. GCP_PROJECT")
+        logging.warning("Not running on GCP, skipping metadata server fetch. For local testing set via env var instead e.g. GCP_PROJECT")
         return None
     
     metadata_server_url = f'http://metadata.google.internal/computeMetadata/v1/{stem}'

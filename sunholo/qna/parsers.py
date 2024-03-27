@@ -14,8 +14,6 @@
 
 from sunholo.logging import log
 
-log = setup_logging()
-
 def document_to_dict(document):
     return {
         "page_content": document.page_content,

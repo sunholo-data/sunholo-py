@@ -1,8 +1,6 @@
 import json
 from ..logging import log
 
-log = setup_logging("langserve_streaming")
-
 async def parse_langserve_token_async(token):
     """
     Asynchronously parses the token to accumulate content from JSON for 'event: data' events,

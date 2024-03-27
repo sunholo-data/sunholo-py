@@ -9,8 +9,6 @@ import tempfile
 from langchain_google_alloydb_pg import AlloyDBDocumentSaver
 from langchain_core.output_parsers import StrOutputParser
 
-log = setup_logging("chunker")
-
 def send_doc_to_docstore(docs, vector_name):
 
     docstore_config = load_config_key("docstore", vector_name=vector_name, filename="config/llm_config.yaml")

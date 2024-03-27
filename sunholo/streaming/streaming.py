@@ -26,7 +26,6 @@ from ..utils import load_config_key
 
 from .langserve import parse_langserve_token, parse_langserve_token_async
 
-log = setup_logging("sunholo_streaming")
 
 def start_streaming_chat(question, 
                          vector_name,

@@ -21,7 +21,6 @@ from langchain.schema import Document
 from ..components import get_embeddings, pick_vectorstore, load_memories, pick_embedding
 from ..logging import log
 
-logging = setup_logging("embedder")
 
 def embed_pubsub_chunk(data: dict):
     """Triggered from a message on a Cloud Pub/Sub topic "embed_chunk" topic

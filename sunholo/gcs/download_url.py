@@ -7,7 +7,6 @@ from google.auth.transport import requests
 
 from ..logging import log
 
-log = setup_logging()
 
 def sign_gcs_url(bucket_name:str, object_name:str, expiry_secs = 86400):
     # https://stackoverflow.com/questions/64234214/how-to-generate-a-blob-signed-url-in-google-cloud-run

@@ -4,7 +4,6 @@ import tempfile
 import os
 from ..gcs.add_file import add_file_to_gcs, get_image_file_name
 from ..logging import log
-logging = setup_logging("chunker")
 
 
 def upload_doc_images(metadata):

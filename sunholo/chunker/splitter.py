@@ -18,7 +18,6 @@ import langchain.text_splitter as text_splitter
 from .images import upload_doc_images
 from .doc_handling import send_doc_to_docstore, summarise_docs
 
-logging = setup_logging("chunker")
 
 def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 800, vector_name=None, **kwargs):
     """Turns a Document object into a list of many Document chunks.
