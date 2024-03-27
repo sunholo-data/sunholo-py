@@ -232,7 +232,10 @@ def read_file_to_document(gs_file: pathlib.Path, split=False, metadata: dict = N
         log.info(f"doc_content: {doc.page_content[:30]} - length: {len(doc.page_content)}")
         if metadata is not None:
             doc.metadata.update(metadata)
-            log.info(f"doc_metadata: {doc.metadata}")
+            log_meta = metadata
+            if 'image_base64' in log_meta:
+                log_meta['image_base64'] = "XXXtruncatedXXXX"
+            log.info(f"doc_metadata: {log_meta}")
     
     log.info(f"gs_file:{gs_file} read into {len(docs)} docs")
 
