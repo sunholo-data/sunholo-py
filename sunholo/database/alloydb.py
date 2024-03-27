@@ -223,11 +223,12 @@ def get_sources_from_docstore(sources, vector_name):
     engine = create_alloydb_engine(vector_name=vector_name)
     
     table_name = f"{vector_name}_docstore"
-    # Fetch efficiently using a single query with the IN operator
+
+    like_patterns = ', '.join(f"'%{source}%'" for source in sources)  
     query = f"""
         SELECT * 
         FROM {table_name}
-        WHERE source IN {tuple(sources)} 
+        WHERE source LIKE ANY (ARRAY[{like_patterns}])
     """
     log.info(f"Alloydb doc query: {query}")
     loader = AlloyDBLoader.create_sync(
