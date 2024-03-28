@@ -15,6 +15,7 @@ import traceback
 import base64
 import json
 import datetime
+import yaml
 
 from langchain.schema import Document
 
@@ -78,9 +79,12 @@ def embed_pubsub_chunk(data: dict):
         metadata['original_source'] = metadata.get('source')
     else:
         metadata['source'] = metadata['original_source']
+    
+    if 'chunk_length' not in metadata:
+        metadata['chunk_length'] = len(page_content)
 
-    # add metadata to page_content too for vectorstores that don't suppoort the metdata field
-    chunk_metadata = f"Metadata:\n{json.dumps(metadata)}\n"
+    # add metadata to page_content too for vectorstores that don't support the metdata field
+    chunk_metadata = f"Metadata:\n{yaml.dump(metadata)}\n"
     page_content = f"{page_content}\n{chunk_metadata}"
 
     doc = Document(page_content=page_content, metadata=metadata)

@@ -151,12 +151,20 @@ def get_llm_chat(vector_name, model=None, config_file="config/llm_config.yaml"):
         raise NotImplementedError(f'No llm implemented for {llm_str}')
 
 def get_embeddings(vector_name):
-    llm_str = load_config_key("llm", vector_name, filename="config/llm_config.yaml")
+
+    llm_str = None
+    embed_dict = load_config_key("embedder", vector_name, filename="config/llm_config.yaml")
+
+    if embed_dict:
+        llm_str = embed_dict.get('llm')
+
+    if llm_str is None:
+        llm_str = load_config_key("llm", vector_name, filename="config/llm_config.yaml")
 
     return pick_embedding(llm_str)
 
 
-
+#TODO: specify model
 def pick_embedding(llm_str: str):
     # get embedding directly from llm_str
     # Configure embeddings based on llm_str
