@@ -229,6 +229,7 @@ def get_sources_from_docstore(sources, vector_name):
         SELECT * 
         FROM {table_name}
         WHERE source ILIKE ANY (ARRAY[{like_patterns}])
+        ORDER BY source ASC
     """
     log.info(f"Alloydb doc query: {query}")
     loader = AlloyDBLoader.create_sync(
