@@ -5,6 +5,7 @@ from ..components import get_llm
 from ..gcs.add_file import add_file_to_gcs, get_summary_file_name
 
 import tempfile
+import os
 
 from langchain_google_alloydb_pg import AlloyDBDocumentSaver
 from langchain_core.output_parsers import StrOutputParser
@@ -28,7 +29,12 @@ def send_doc_to_docstore(docs, vector_name):
                 log.info(f"Uploading to docstore alloydb the docs for {vector_name}")
 
                 engine = create_alloydb_engine(vector_name)
+                branch = os.getenv('BRANCH_NAME', None)
                 table_name = f"{vector_name}_docstore"
+                if branch:
+                    table_name = f"{table_name}_{branch}"
+
+                table_name = f"{vector_name}_docstore_{branch}"
                 saver = AlloyDBDocumentSaver.create_sync(
                     engine=engine,
                     table_name=table_name,
