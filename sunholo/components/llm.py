@@ -97,11 +97,11 @@ def get_llm(vector_name, model=None, config_file="config/llm_config.yaml"):
                                    location=model_garden_config['location'], 
                                    allowed_model_args=["max_tokens"])
     elif llm_str == 'anthropic':
-        from langchain_anthropic import AnthropicLLM
+        from langchain_anthropic import ChatAnthropic
         if model is None:
-            model = 'claude-2.1'
+            model = 'claude-3-opus-20240229'
             log.info(f"No 'model' value in config file - selecting default {model}")
-        return AnthropicLLM(model_name = model, temperature=0)
+        return ChatAnthropic(model_name = model, temperature=0)
 
     if llm_str is None:
         raise NotImplementedError(f'No llm implemented for {llm_str}')

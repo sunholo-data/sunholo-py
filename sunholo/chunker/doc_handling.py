@@ -29,6 +29,7 @@ def send_doc_to_docstore(docs, vector_name):
                 log.info(f"Uploading to docstore alloydb the docs for {vector_name}")
 
                 engine = create_alloydb_engine(vector_name)
+                
                 branch = os.getenv('BRANCH_NAME', None)
                 table_name = f"{vector_name}_docstore"
                 if branch:

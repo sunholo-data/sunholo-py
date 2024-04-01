@@ -77,12 +77,12 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
 
         engine = create_alloydb_engine(vector_name)
 
-        create_alloydb_table(vector_name, engine)
+        table_name = create_alloydb_table(vector_name, engine)
 
         log.info("Chose AlloyDB")
         vectorstore = AlloyDBVectorStore.create_sync(
                 engine=engine,
-                table_name=vector_name,
+                table_name=table_name,
                 embedding_service=embeddings,
                 metadata_columns=["source"]
                 #metadata_columns=["source", "eventTime"]

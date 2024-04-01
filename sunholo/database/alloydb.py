@@ -140,16 +140,16 @@ class AlloyDBClient:
         return result  
 
 alloydb_table_cache = {}  # Our cache, initially empty  # noqa: F841
-def create_alloydb_table(table_name, engine, type = "vectorstore", alloydb_config=None, username=None):
+def create_alloydb_table(vector_name, engine, type = "vectorstore", alloydb_config=None, username=None):
     global alloydb_table_cache
 
     try:
         if type == "vectorstore":
             from .database import get_vector_size
-            vector_size = get_vector_size(table_name, config_file="config/llm_config.yaml")
-            table_name = f"{table_name}_{type}_{vector_size}"
+            vector_size = get_vector_size(vector_name, config_file="config/llm_config.yaml")
+            table_name = f"{vector_name}_{type}_{vector_size}"
             if table_name in alloydb_table_cache:
-                log.info(f"AlloyDB Table '{table_name}' exists, skipping creation.")
+                log.info(f"AlloyDB Table '{table_name}' exists in cache, skipping creation.")
 
                 return table_name
             

@@ -48,9 +48,17 @@ def lookup_connection_env(vs_str):
     raise ValueError("Could not find vectorstore for {vs_str}")
 
 
-def get_vector_size(vector_name: str, config_file:str):
+def get_vector_size(vector_name: str, config_file:str="config/llm_config.yaml"):
 
-    llm_str = load_config_key("llm", vector_name, filename=config_file)
+    llm_str = None
+    embed_dict = load_config_key("embedder", vector_name, filename=config_file)
+
+    if embed_dict:
+        llm_str = embed_dict.get('llm')
+
+    if llm_str is None:
+        llm_str = load_config_key("llm", vector_name, filename=config_file)
+
     if not isinstance(llm_str, str):
         raise ValueError(f"get_vector_size() did not return a value string for {vector_name} - got {llm_str} instead")
     
@@ -59,6 +67,7 @@ def get_vector_size(vector_name: str, config_file:str):
         vector_size = 1536 # openai
 
     log.debug(f'vector size: {vector_size}')
+    
     return vector_size
 
 def setup_database(type, vector_name:str, verbose:bool=False):
