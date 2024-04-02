@@ -232,11 +232,11 @@ async def get_sources_from_docstore_async(sources, vector_name):
         ORDER BY source ASC
     """
     log.info(f"Alloydb doc query: {query}")
-    async with AlloyDBLoader.create(
+    loader = await AlloyDBLoader.create(
             engine=engine,
-            query=query,
-    ) as loader:
-        documents = await loader.load()
+            query=query)
+    
+    documents = await loader.aload()
 
     log.info(f"Loaded {len(documents)} from the database.")
 
