@@ -215,6 +215,19 @@ def create_docstore_table(table_name, alloydb_config, username):
 
     return table_name
 
+def derive_alloydb_branch():
+    ALLOYDB_DB = os.environ.get("ALLOYDB_DB")
+    if not ALLOYDB_DB:
+        raise ValueError("Can't find ALLOYDB_DB env var")
+    # db_multivac-internal-${BRANCH_NAME}
+
+    parts = ALLOYDB_DB.split('-', 2)  # Split into max of 3 parts
+    if len(parts) == 3:
+        result = parts[2]
+        return result  # Output: blah    
+    else:
+        raise ValueError(f"Not enough hyphens in the db string to derive branch - expected 'db_multivac-internal-dev' = 'dev' but got {ALLOYDB_DB}")
+
 async def get_sources_from_docstore_async(sources, vector_name):
     
     if not sources:
@@ -222,7 +235,9 @@ async def get_sources_from_docstore_async(sources, vector_name):
 
     engine = create_alloydb_engine(vector_name=vector_name)
     
-    table_name = f"{vector_name}_docstore"
+    # f"{vector_name}_docstore_{branch}"
+    branch = derive_alloydb_branch()
+    table_name = f"{vector_name}_docstore_{branch}"
 
     like_patterns = ', '.join(f"'%{source}%'" for source in sources)  
     query = f"""
