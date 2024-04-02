@@ -215,7 +215,7 @@ def create_docstore_table(table_name, alloydb_config, username):
 
     return table_name
 
-def get_sources_from_docstore(sources, vector_name):
+async def get_sources_from_docstore_async(sources, vector_name):
     
     if not sources:
         log.warning("No sources found for alloydb fetch")
@@ -232,11 +232,12 @@ def get_sources_from_docstore(sources, vector_name):
         ORDER BY source ASC
     """
     log.info(f"Alloydb doc query: {query}")
-    loader = AlloyDBLoader.create_sync(
-                    engine=engine,
-                    query=query,
-                )
-    documents = loader.load()
+    async with AlloyDBLoader.create(
+            engine=engine,
+            query=query,
+    ) as loader:
+        documents = await loader.load()
+
     log.info(f"Loaded {len(documents)} from the database.")
 
     return documents
