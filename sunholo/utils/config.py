@@ -71,7 +71,11 @@ def load_config(filename: str=None) -> tuple[dict, str]:
     # Join the script directory with the filename
     config_path = filename
 
-    log.debug(f"Loading config file {os.getcwd()}/{config_path}")
+    config_folder = os.getcwd()
+    if os.getenv("_CONFIG_FOLDER"):
+        config_folder = os.getenv("_CONFIG_FOLDER")
+
+    log.debug(f"Loading config file {config_folder}/{config_path}")
 
     with open(config_path, 'r') as f:
         if filename.endswith(".json"):
