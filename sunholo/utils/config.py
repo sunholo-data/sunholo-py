@@ -68,19 +68,24 @@ def load_config(filename: str=None) -> tuple[dict, str]:
         log.debug(f"Returning cached config for {filename}")
         return config_cache[filename], filename
     
+    if os.getenv("_CONFIG_FOLDER"):
+        log.debug(f"_CONFIG_FOLDER: {os.getenv('_CONFIG_FOLDER')}")
+        log.debug(f'_CONFIG_FOLDER listing: {os.listdir(os.getenv("_CONFIG_FOLDER"))}')
+                  
     # Join the script directory with the filename
     config_path = filename
     config_folder = os.getenv("_CONFIG_FOLDER") if os.getenv("_CONFIG_FOLDER") else os.getcwd()
 
-    log.debug(f"Loading config file {config_folder}/{config_path}")
+    config_file = f"{config_folder}/{config_path}"
+    log.debug(f"Loading config file {config_file}")
 
-    with open(config_path, 'r') as f:
+    with open(config_file, 'r') as f:
         if filename.endswith(".json"):
             config = json.load(f)
         elif filename.endswith(".yaml") or filename.endswith(".yml"):
             config = yaml.safe_load(f)
         else:
-            raise ValueError(f"Unsupported config file format: {config_path}. The supported formats are JSON and YAML.")
+            raise ValueError(f"Unsupported config file format: {config_file}. The supported formats are JSON and YAML.")
 
     # Store in cache
     config_cache[filename] = config    
