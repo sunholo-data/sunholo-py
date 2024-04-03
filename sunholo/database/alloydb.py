@@ -243,8 +243,9 @@ async def get_sources_from_docstore_async(sources, vector_name):
     query = f"""
         SELECT * 
         FROM {table_name}
-        WHERE source ILIKE ANY (ARRAY[{like_patterns}])
+        WHERE TRIM(source) ILIKE ANY (ARRAY[{like_patterns}])
         ORDER BY source ASC
+        LIMIT 1000
     """
     log.info(f"Alloydb doc query: {query}")
     loader = await AlloyDBLoader.create(
