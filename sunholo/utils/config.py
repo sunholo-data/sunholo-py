@@ -70,7 +70,6 @@ def load_config(filename: str=None) -> tuple[dict, str]:
     
     if os.getenv("_CONFIG_FOLDER"):
         log.debug(f"_CONFIG_FOLDER: {os.getenv('_CONFIG_FOLDER')}")
-        log.debug(f'_CONFIG_FOLDER listing: {os.listdir(os.getenv("_CONFIG_FOLDER"))}')
                   
     # Join the script directory with the filename
     config_path = filename
