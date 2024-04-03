@@ -35,7 +35,6 @@ def send_doc_to_docstore(docs, vector_name):
                 if branch:
                     table_name = f"{table_name}_{branch}"
 
-                table_name = f"{vector_name}_docstore_{branch}"
                 saver = AlloyDBDocumentSaver.create_sync(
                     engine=engine,
                     table_name=table_name,
