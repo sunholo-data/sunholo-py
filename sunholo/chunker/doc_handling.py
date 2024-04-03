@@ -30,10 +30,7 @@ def send_doc_to_docstore(docs, vector_name):
 
                 engine = create_alloydb_engine(vector_name)
                 
-                branch = os.getenv('BRANCH_NAME', None)
                 table_name = f"{vector_name}_docstore"
-                if branch:
-                    table_name = f"{table_name}_{branch}"
 
                 saver = AlloyDBDocumentSaver.create_sync(
                     engine=engine,
