@@ -147,7 +147,7 @@ def create_alloydb_table(vector_name, engine, type = "vectorstore", alloydb_conf
         if type == "vectorstore":
             from .database import get_vector_size
             vector_size = get_vector_size(vector_name, config_file="config/llm_config.yaml")
-            table_name = f"multivac.{vector_name}_{type}_{vector_size}"
+            table_name = f"{vector_name}_{type}_{vector_size}"
             if table_name in alloydb_table_cache:
                 log.info(f"AlloyDB Table '{table_name}' exists in cache, skipping creation.")
 
@@ -166,6 +166,7 @@ def create_alloydb_table(vector_name, engine, type = "vectorstore", alloydb_conf
                 log.info(f"Could not create the table, create it yourself - {str(err)}")
                 alloydb_table_cache[table_name] = True 
                 return table_name
+            
             log.info(f"## Created AlloyDB Table: {table_name} with vector size: {vector_size}")
             alloydb_table_cache[table_name] = True 
 
@@ -207,7 +208,7 @@ def create_vectorstore_table(table_name, alloydb_config, username):
         raise ValueError("Could not locate ALLOYDB_DB environment variable")
     
     sql = """
-CREATE TABLE IF NOT EXISTS multivac.{table_name} (
+CREATE TABLE IF NOT EXISTS {table_name} (
             "langchain_id" UUID PRIMARY KEY,
             "content" TEXT NOT NULL,
             "embedding" vector(1536) NOT NULL,
@@ -249,7 +250,7 @@ def create_docstore_table(table_name, alloydb_config, username):
     )
 
     # Execute other SQL statements
-    client.execute_sql(f"CREATE TABLE multivac.{table_name} (page_content TEXT, doc_id TEXT, source TEXT, langchain_metadata JSONB)")
+    client.execute_sql(f"CREATE TABLE {table_name} (page_content TEXT, doc_id TEXT, source TEXT, langchain_metadata JSONB)")
 
     return table_name
 
