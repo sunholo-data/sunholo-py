@@ -71,15 +71,14 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
         return vectorstore
     
     elif vs_str == 'alloydb':
-        from langchain_google_alloydb_pg import AlloyDBEngine, AlloyDBVectorStore
-        from google.cloud.alloydb.connector import IPTypes
+        from langchain_google_alloydb_pg import AlloyDBVectorStore
         from ..database.alloydb import create_alloydb_table, create_alloydb_engine
 
         engine = create_alloydb_engine(vector_name)
 
         table_name = create_alloydb_table(vector_name, engine)
 
-        log.info("Chose AlloyDB")
+        log.info("Chose AlloyDB with table name {table_name}")
         vectorstore = AlloyDBVectorStore.create_sync(
                 engine=engine,
                 table_name=table_name,
