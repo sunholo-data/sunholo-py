@@ -59,8 +59,8 @@ def pick_streaming(vector_name):
 
 def get_llm(vector_name, model=None, config_file="config/llm_config.yaml"):
     llm_str = load_config_key("llm", vector_name, filename=config_file)
-    model_lookup_filepath = get_module_filepath("lookup/model_lookup.yaml")
-    model_lookup, _ = load_config(model_lookup_filepath)
+    #model_lookup_filepath = get_module_filepath("lookup/model_lookup.yaml")
+    #model_lookup, _ = load_config(model_lookup_filepath)
 
     if not model:
         model = load_config_key("model", vector_name, filename=config_file)
