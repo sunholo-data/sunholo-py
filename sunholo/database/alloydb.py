@@ -152,15 +152,20 @@ def create_alloydb_table(vector_name, engine, type = "vectorstore", alloydb_conf
                 log.info(f"AlloyDB Table '{table_name}' exists in cache, skipping creation.")
 
                 return table_name
-            
-            engine.init_vectorstore_table(
-                table_name,
-                vector_size=vector_size,
-                #metadata_columns=[Column("source", "VARCHAR", nullable=True),
-                #                  Column("eventTime", "TIMESTAMPTZ", nullable=True)],
-                metadata_columns=[Column("source", "TEXT", nullable=True)],
-                overwrite_existing=False
-            )
+            log.info(f"# Creating AlloyDB table {table_name}")
+            try:
+                engine.init_vectorstore_table(
+                    table_name,
+                    vector_size=vector_size,
+                    #metadata_columns=[Column("source", "VARCHAR", nullable=True),
+                    #                  Column("eventTime", "TIMESTAMPTZ", nullable=True)],
+                    metadata_columns=[Column("source", "TEXT", nullable=True)],
+                    overwrite_existing=False
+                )
+            except Exception as err:
+                log.info(f"Could not create the table, create it yourself - {str(err)}")
+                alloydb_table_cache[table_name] = True 
+                return table_name
             log.info(f"## Created AlloyDB Table: {table_name} with vector size: {vector_size}")
             alloydb_table_cache[table_name] = True 
 
@@ -194,6 +199,39 @@ def create_alloydb_table(vector_name, engine, type = "vectorstore", alloydb_conf
             alloydb_table_cache[table_name] = True
 
             return table_name
+    
+def create_vectorstore_table(table_name, alloydb_config, username):
+    ALLOYDB_DB = os.environ.get("ALLOYDB_DB")
+    if ALLOYDB_DB is None:
+        log.error(f"Could not locate ALLOYDB_DB environment variable for {table_name}")
+        raise ValueError("Could not locate ALLOYDB_DB environment variable")
+    
+    sql = """
+CREATE TABLE IF NOT EXISTS multivac.{table_name} (
+            "langchain_id" UUID PRIMARY KEY,
+            "content" TEXT NOT NULL,
+            "embedding" vector(1536) NOT NULL,
+"source" TEXT ,
+"langchain_metadata" JSON
+);
+"""
+    ALLOYDB_DB = os.environ.get("ALLOYDB_DB")
+    if ALLOYDB_DB is None:
+        log.error(f"Could not locate ALLOYDB_DB environment variable for {table_name}")
+        raise ValueError("Could not locate ALLOYDB_DB environment variable")
+        
+    client = AlloyDBClient(
+        project_id=alloydb_config["project_id"],
+        region=alloydb_config["region"],
+        cluster_name=alloydb_config["cluster"],
+        instance_name=alloydb_config["instance"],
+        db=alloydb_config.get("database") or ALLOYDB_DB,
+        user=username
+    )
+
+    client.execute_sql(sql)
+
+    return table_name
 
 def create_docstore_table(table_name, alloydb_config, username):
     ALLOYDB_DB = os.environ.get("ALLOYDB_DB")
