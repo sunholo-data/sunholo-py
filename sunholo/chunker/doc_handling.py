@@ -62,7 +62,7 @@ def create_big_doc(docs):
         if doc_id is None:
             raise ValueError(f"Failed to create a doc_id from {doc.metadata}")
 
-        doc.metadata["docstore_doc_id"] = doc_id
+        doc.metadata["docstore_doc_id"] = str(doc_id)
 
         content = remove_whitespace(doc.page_content)
         big_doc.page_content += f"\n{content}"
