@@ -194,11 +194,18 @@ def read_file_to_documents(gs_file: pathlib.Path, metadata: dict = None):
     if UNSTRUCTURED_URL:
         log.debug(f"Found UNSTRUCTURED_URL: {UNSTRUCTURED_URL}")
         the_endpoint = f"{UNSTRUCTURED_URL}/general/v0/general"
-        loader = UnstructuredAPIFileLoader(
-            pdf_path,
-            url=the_endpoint,
-            mode="elements",
-            **unstructured_kwargs)
+        try:
+            loader = UnstructuredAPIFileLoader(
+                pdf_path,
+                url=the_endpoint,
+                mode="elements",
+                **unstructured_kwargs)
+        except Exception as err:
+            if "'utf-8' codec can't decode byte" in str(err):
+                log.error(f"Unstructured can't decode byte for {gs_file}: {str(err)} - aborting")
+                return []
+            else:
+                raise err
     else:
         loader = UnstructuredAPIFileLoader(
             pdf_path,
