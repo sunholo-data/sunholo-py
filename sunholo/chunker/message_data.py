@@ -85,8 +85,8 @@ def handle_gcs_message(message_data: str, metadata: dict, vector_name: str):
 
         docs = []
         for page in pages:
-            log.info(f"Sending file {page} to loaders.read_file_to_document {metadata}")
-            docs2 = loaders.read_file_to_document(page, metadata=metadata)
+            log.info(f"Sending file {page} to loaders.read_file_to_documents {metadata}")
+            docs2 = loaders.read_file_to_documents(page, metadata=metadata)
             docs.extend(docs2)
 
         chunks = chunk_doc_to_docs(docs, file_name.suffix, vector_name=vector_name)

@@ -175,7 +175,7 @@ def read_url_to_document(url: str, metadata: dict = None):
     
     return docs
 
-def read_file_to_document(gs_file: pathlib.Path, split=False, metadata: dict = None):
+def read_file_to_documents(gs_file: pathlib.Path, metadata: dict = None):
     
     docs = []
     pdf_path = str(pathlib.Path(gs_file))
@@ -208,7 +208,7 @@ def read_file_to_document(gs_file: pathlib.Path, split=False, metadata: dict = N
     
     start = time.time()
     try:
-        docs = loader.load_and_split() if split else loader.load() # this takes a long time 30m+ for big PDF files
+        docs = loader.load() # this takes a long time 30m+ for big PDF files
     except ValueError as e:
         log.info(f"Error for {gs_file} from UnstructuredAPIFileLoader: {str(e)}")
         pdf_path = pathlib.Path(gs_file)
@@ -228,20 +228,33 @@ def read_file_to_document(gs_file: pathlib.Path, split=False, metadata: dict = N
     elapsed_time = round((end - start) / 60, 2)
     log.info(f"Loaded docs for {gs_file} from read_file_to_docs took {elapsed_time} mins")
 
+    if not isinstance(docs, list):
+        log.warning(f"read_file_to_documents for {gs_file} returned not a list got {type(docs)})")
+        docs = [docs] 
+
+    total_doc_chars = 0
+    doc_chunk = 0
     for doc in docs:
-        log.info(f"doc_content: {doc.page_content[:30]} - length: {len(doc.page_content)}")
+        log.info(f"{gs_file} doc_content: {doc.page_content[:30]} - length: {len(doc.page_content)}")
+        total_doc_chars += len(doc.page_content)
+        doc.metadata["doc_chunk"] = doc_chunk
+        doc_chunk += 1
         if metadata is not None:
             doc.metadata.update(metadata)
-            log_meta = metadata
+            log_meta = metadata.copy()
             if 'image_base64' in log_meta:
                 log_meta['image_base64'] = "XXXtruncatedXXXX"
             log.info(f"doc_metadata: {log_meta}")
     
-    log.info(f"gs_file:{gs_file} read into {len(docs)} docs")
+    for doc in docs:
+        doc.metadata["parse_total_doc_chars"] = total_doc_chars
+        doc.metadata["parse_total_doc_chunks"] = doc_chunk
+    
+    log.info(f"gs_file:{gs_file} read into {len(docs)} docs. parse_total_doc_chars: {total_doc_chars} - parse_total_doc_chunks {doc_chunk}")
 
     return docs
 
-def convert_to_txt_and_extract(gs_file, split=None):
+def convert_to_txt_and_extract(gs_file, split=False):
 
     log.info("trying file parsing locally via .txt conversion")
     txt_file = None

@@ -5,12 +5,15 @@ from ..components import get_llm
 from ..gcs.add_file import add_file_to_gcs, get_summary_file_name
 
 import tempfile
-import os
+import uuid
+from langchain.docstore.document import Document
 
 from langchain_google_alloydb_pg import AlloyDBDocumentSaver
 from langchain_core.output_parsers import StrOutputParser
 
 def send_doc_to_docstore(docs, vector_name):
+
+    # docs all come from the same file but got split into a list of document objects
 
     docstore_config = load_config_key("docstore", vector_name=vector_name, filename="config/llm_config.yaml")
     if docstore_config is None:
@@ -32,12 +35,34 @@ def send_doc_to_docstore(docs, vector_name):
                 
                 table_name = f"{vector_name}_docstore"
 
+                # merge docs into one document object
+                big_doc = Document(page_content="", 
+                                   metadata={"images_base64": [],
+                                             "chunk_metadata": []})
+                for doc in docs:
+                    big_doc.page_content += f"\n{doc.page_content}"
+                    if doc.metadata.get("image_base64"):
+                        big_doc.metadata["images_base64"].extend(doc.metadata["image_base64"])
+                        doc.metadata["image_base64"] = "moved_to_parent_doc_images"
+
+                    for key, value in doc.metadata.items():
+                        if key not in big_doc.metadata:
+                            big_doc.metadata[key] = value
+                    
+                    big_doc.metadata["chunk_metadata"].append(doc.metadata)
+
+                big_doc.metadata["doc_id"] = uuid.uuid4()
+                big_doc.metadata["char_count"] = len(big_doc.page_content)
+                if len(big_doc.content) == 0 and not doc.metadata.get("images_base64"):
+                    log.warning("No content found to add for big_doc {metadata.}")
+                    return None
+                
                 saver = AlloyDBDocumentSaver.create_sync(
                     engine=engine,
                     table_name=table_name,
-                    metadata_columns=["source"]
+                    metadata_columns=["source", "doc_id", "images_base64", "chunk_metadata"]
                 )
-                saver.add_documents(docs)
+                saver.add_documents([big_doc])
                 log.info(f"Saved docs to alloydb docstore: {table_name}")
 
             #elif docstore.get('type') == 'cloudstorage':
