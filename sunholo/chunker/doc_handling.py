@@ -6,6 +6,7 @@ from ..gcs.add_file import add_file_to_gcs, get_summary_file_name
 
 import tempfile
 import uuid
+import json
 from langchain.docstore.document import Document
 
 from langchain_google_alloydb_pg import AlloyDBDocumentSaver
@@ -57,6 +58,10 @@ def send_doc_to_docstore(docs, vector_name):
                     log.warning("No content found to add for big_doc {metadata.}")
                     return None
                 
+                # Serialize lists in metadata to JSON strings before saving
+                for key in ["images_base64", "chunk_metadata"]:
+                    big_doc.metadata[key] = json.dumps(big_doc.metadata[key])
+
                 saver = AlloyDBDocumentSaver.create_sync(
                     engine=engine,
                     table_name=table_name,
