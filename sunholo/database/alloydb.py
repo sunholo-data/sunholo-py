@@ -259,12 +259,12 @@ def add_document_if_not_exists(doc, vector_name):
     if not doc_id:
         raise ValueError(f"No doc_id found for document: {doc.metadata}")
 
-    check_query = f"""
+    check_query = f'''
         SELECT * 
-        FROM {table_name}
-        WHERE doc_id = {doc_id}
+        FROM "{table_name}"
+        WHERE doc_id = "{doc_id}"
         LIMIT 1
-    """
+    '''
     #TODO add check for timeperiod etc.
 
     docs = load_alloydb_sql(check_query, vector_name)
