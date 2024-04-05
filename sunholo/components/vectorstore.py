@@ -83,7 +83,7 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
                 engine=engine,
                 table_name=table_name,
                 embedding_service=embeddings,
-                metadata_columns=["source"]
+                metadata_columns=["source", "docstore_doc_id"]
                 #metadata_columns=["source", "eventTime"]
             )
         return vectorstore

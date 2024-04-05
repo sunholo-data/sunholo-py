@@ -225,7 +225,7 @@ def read_file_to_documents(gs_file: pathlib.Path, metadata: dict = None):
                 docs.append(local_doc)
 
         elif "file type is not supported in partition" in str(e):
-            txt_docs = convert_to_txt_and_extract(gs_file, split=split)
+            txt_docs = convert_to_txt_and_extract(gs_file, split=False)
             if txt_docs:
                 docs.extend(txt_docs)
             else:

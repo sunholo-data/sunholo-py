@@ -1,17 +1,16 @@
 from ..utils import load_config_key
 from ..logging import log
-from ..database.alloydb import create_alloydb_engine
+from ..database.alloydb import add_document_if_not_exists
+from ..database.uuid import generate_uuid_from_object_id
 from ..components import get_llm
 from ..gcs.add_file import add_file_to_gcs, get_summary_file_name
 from ..utils.parsers import remove_whitespace
 from .images import upload_doc_images
 
 import tempfile
-import uuid
 import json
 from langchain.docstore.document import Document
 
-from langchain_google_alloydb_pg import AlloyDBDocumentSaver
 from langchain_core.output_parsers import StrOutputParser
 
 def send_doc_to_docstore(docs, vector_name):
@@ -25,8 +24,8 @@ def send_doc_to_docstore(docs, vector_name):
         return None, None
     
     log.info(f"Docstore config: {docstore_config}")
-    
-    doc_id = uuid.uuid4()
+
+    doc_id, big_doc, docs = create_big_doc(docs)
 
     for docstore in docstore_config:
         for key, value in docstore.items(): 
@@ -36,54 +35,10 @@ def send_doc_to_docstore(docs, vector_name):
                 # upload to alloydb
                 log.info(f"Uploading to docstore alloydb the docs for {vector_name}")
 
-                engine = create_alloydb_engine(vector_name)
-                
-                table_name = f"{vector_name}_docstore"
-
-                # merge docs into one document object
-                big_doc = Document(page_content="", 
-                                   metadata={"images_gsurls": [],
-                                             "chunk_metadata": []})
-                for doc in docs:
-                    doc.metadata["docstore_doc_id"] = doc_id
-
-                    content = remove_whitespace(doc.page_content)
-                    big_doc.page_content += f"\n{content}"
-                    
-                    image_gsurl = upload_doc_images(doc.metadata)
-                    if image_gsurl:
-                        doc.metadata["image_gsurl"] = image_gsurl
-                        doc.metadata["image_base64"] = None
-                        doc.metadata["uploaded_to_bucket"] = True
-                        big_doc.metadata["images_gsurls"].append(image_gsurl)
-
-                    for key, value in doc.metadata.items():
-                        if key not in big_doc.metadata:
-                            big_doc.metadata[key] = value
-                    
-                    big_doc.metadata["chunk_metadata"].append(doc.metadata)
-
-                big_doc.metadata["doc_id"] = doc_id
-                big_doc.metadata["char_count"] = len(big_doc.page_content)
-                if len(big_doc.page_content) == 0 and not doc.metadata.get("images_gsurls"):
-                    log.warning("No content found to add for big_doc {metadata.}")
-                    return None
-                
-                # Serialize lists in metadata to JSON strings before saving
-                for key in ["images_gsurls", "chunk_metadata"]:
-                    big_doc.metadata[key] = json.dumps(big_doc.metadata[key])
-
-                source = big_doc.metadata.get("source")
-                if not source:
-                    log.warning(f"No source found for big_doc {doc_id} {big_doc.metadata}")
-
-                saver = AlloyDBDocumentSaver.create_sync(
-                    engine=engine,
-                    table_name=table_name,
-                    metadata_columns=["source", "doc_id", "images_gsurls", "chunk_metadata"]
-                )
-                saver.add_documents([big_doc])
-                log.info(f"Saved {source} to alloydb docstore: {table_name}")
+                saved_doc_id = add_document_if_not_exists(big_doc, vector_name=vector_name)
+                if saved_doc_id is not None:
+                    if saved_doc_id != doc_id:
+                        raise ValueError(f"Something went wrong with doc_ids: {doc_id} vs saved_doc_id: {saved_doc_id}")
 
             #elif docstore.get('type') == 'cloudstorage':
             else:
@@ -92,6 +47,54 @@ def send_doc_to_docstore(docs, vector_name):
     log.info("Added doc to docstores: {doc_id}")
     return doc_id, docs
 
+def create_big_doc(docs):
+    # merge docs into one document object
+    big_doc = Document(page_content="", 
+                        metadata={"images_gsurls": [],
+                                  "chunk_metadata": []})
+    doc_id = None
+    for doc in docs:
+        if doc_id is None:
+            first_source = doc.metadata.get("source")
+            if first_source:
+                doc_id = generate_uuid_from_object_id(first_source)
+        
+        if doc_id is None:
+            raise ValueError(f"Failed to create a doc_id from {doc.metadata}")
+
+        doc.metadata["docstore_doc_id"] = doc_id
+
+        content = remove_whitespace(doc.page_content)
+        big_doc.page_content += f"\n{content}"
+        
+        image_gsurl = upload_doc_images(doc.metadata)
+        if image_gsurl:
+            doc.metadata["image_gsurl"] = image_gsurl
+            doc.metadata["image_base64"] = None
+            doc.metadata["uploaded_to_bucket"] = True
+            big_doc.metadata["images_gsurls"].append(image_gsurl)
+
+        for key, value in doc.metadata.items():
+            if key not in big_doc.metadata:
+                big_doc.metadata[key] = value
+        
+        big_doc.metadata["chunk_metadata"].append(doc.metadata)
+
+    big_doc.metadata["doc_id"] = doc_id
+    big_doc.metadata["char_count"] = len(big_doc.page_content)
+    if len(big_doc.page_content) == 0 and not doc.metadata.get("images_gsurls"):
+        log.warning("No content found to add for big_doc {metadata.}")
+        return None
+    
+    # Serialize lists in metadata to JSON strings before saving
+    for key in ["images_gsurls", "chunk_metadata"]:
+        big_doc.metadata[key] = json.dumps(big_doc.metadata[key])
+
+    source = big_doc.metadata.get("source")
+    if not source:
+        log.warning(f"No source found for big_doc {doc_id} {big_doc.metadata}")
+    
+    return doc_id, big_doc, docs
 
 def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_limit_default=100000):
     chunker_config = load_config_key("chunker", vector_name=vector_name, filename="config/llm_config.yaml")

@@ -15,13 +15,13 @@ import traceback
 import base64
 import json
 import datetime
-import yaml
+import uuid
 
 from langchain.schema import Document
 
 from ..components import get_embeddings, pick_vectorstore, load_memories, pick_embedding
 from ..logging import log
-
+from ..database.uuid import generate_uuid_from_object_id
 
 def embed_pubsub_chunk(data: dict):
     """Triggered from a message on a Cloud Pub/Sub topic "embed_chunk" topic
@@ -81,6 +81,18 @@ def embed_pubsub_chunk(data: dict):
     
     if 'chunk_length' not in metadata:
         metadata['chunk_length'] = len(page_content)
+    
+    if 'doc_id' not in metadata:
+        log.warning(f"No doc_id found in metadata for {metadata['source']}- creating one")
+        if 'objectId' in metadata:
+            doc_id = generate_uuid_from_object_id(metadata['objectId'])
+        elif 'source' in metadata:
+            doc_id = generate_uuid_from_object_id(metadata["source"])
+        else:
+            log.warning(f"Could not derive a uuid - creating random uuid for {metadata}")
+            doc_id = uuid.uuid4()
+    else:
+        doc_id = metadata["doc_id"]
 
     doc = Document(page_content=page_content, metadata=metadata)
 
@@ -104,11 +116,11 @@ def embed_pubsub_chunk(data: dict):
 
     # can have multiple vectorstores per embed
     metadata_list = []
-    import uuid
+    
     for vector_store in vectorstore_list:
         log.debug(f"Adding single document for {vector_name} to vector store {vector_store}")
         try:
-            vector_store.add_documents([doc], ids = [str(uuid.uuid4())])
+            vector_store.add_documents([doc], ids = [doc_id])
             log.info(f"Added doc for {vector_name} to {vector_store} - metadata: {metadata}")
             metadata_list.append(metadata)
         except Exception as err:

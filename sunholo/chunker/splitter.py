@@ -17,6 +17,7 @@ from langchain.schema import Document
 import langchain.text_splitter as text_splitter
 from .images import upload_doc_images
 from .doc_handling import send_doc_to_docstore, summarise_docs
+from ..database.uuid import generate_uuid_from_object_id
 
 
 def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 800, vector_name=None, **kwargs):
@@ -39,6 +40,11 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
 
         if docstore_doc_id:
             document.metadata["docstore_doc_id"] = docstore_doc_id
+        
+        if document.metadata.get("objectId"):
+            document.metadata["doc_id"] = generate_uuid_from_object_id(document.metadata["objectId"])
+        else:
+            log.warning(f"Could not create a doc_id for document: {document.metadata}")
 
         # look for images and upload them for later extraction, add metadata of location
         image_gsurl = upload_doc_images(document.metadata)

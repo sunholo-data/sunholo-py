@@ -1,17 +1,16 @@
 import pg8000
 import sqlalchemy
 import os
+
 from sqlalchemy.exc import DatabaseError, ProgrammingError
 from asyncpg.exceptions import DuplicateTableError
 
 from google.cloud.alloydb.connector import Connector
-from langchain_google_alloydb_pg import AlloyDBEngine, Column, AlloyDBLoader
+from langchain_google_alloydb_pg import AlloyDBEngine, Column, AlloyDBLoader, AlloyDBDocumentSaver
 from google.cloud.alloydb.connector import IPTypes
 
 from ..logging import log
 from ..utils.config import load_config_key
-
-
 
 def create_alloydb_engine(vector_name):
 
@@ -157,9 +156,9 @@ def create_alloydb_table(vector_name, engine, type = "vectorstore", alloydb_conf
                 engine.init_vectorstore_table(
                     table_name,
                     vector_size=vector_size,
-                    #metadata_columns=[Column("source", "VARCHAR", nullable=True),
-                    #                  Column("eventTime", "TIMESTAMPTZ", nullable=True)],
-                    metadata_columns=[Column("source", "TEXT", nullable=True)],
+                    metadata_columns=[Column("source", "TEXT", nullable=True),
+                                      Column("docstore_doc_id", nullable=True),
+                                      Column("eventTime", "TIMESTAMPTZ", nullable=True)],
                     overwrite_existing=False
                 )
             except Exception as err:
@@ -254,12 +253,67 @@ def create_docstore_table(table_name, alloydb_config, username):
 
     return table_name
 
+def add_document_if_not_exists(doc, vector_name):
+    table_name = f"{vector_name}_docstore"
+    doc_id = doc.metadata.get("doc_id")
+    if not doc_id:
+        raise ValueError(f"No doc_id found for document: {doc.metadata}")
+
+    check_query = f"""
+        SELECT * 
+        FROM {table_name}
+        WHERE doc_id = {doc_id}
+        LIMIT 1
+    """
+    #TODO add check for timeperiod etc.
+
+    docs = load_alloydb_sql(check_query, vector_name)
+    if docs:
+        log.info(f"Found existing document with same doc_id - {doc_id}, skipping import")
+        return doc_id
+
+    engine = create_alloydb_engine(vector_name)
+
+    saver = AlloyDBDocumentSaver.create_sync(
+        engine=engine,
+        table_name=table_name,
+        metadata_columns=["source", "doc_id", "images_gsurls", "chunk_metadata"]
+    )
+    saver.add_documents([doc])
+    source = doc.metadata.get("source")
+    doc_id = doc.metadata.get("doc_id")
+    log.info(f"Saved {doc_id} - {source} to alloydb docstore: {table_name}")
+
+    return doc_id
+
+def load_alloydb_sql(sql, vector_name):
+    engine = create_alloydb_engine(vector_name=vector_name)
+    log.info(f"Alloydb doc query: {sql}")
+
+    loader = AlloyDBLoader.create_sync(
+            engine=engine,
+            query=sql)
+    
+    documents = loader.load()
+    log.info(f"Loaded {len(documents)} from the database.")
+    return documents
+
+async def load_alloydb_sql_async(sql, vector_name):
+    engine = create_alloydb_engine(vector_name=vector_name)    
+    log.info(f"Alloydb doc query: {sql}")
+
+    loader = await AlloyDBLoader.create(
+            engine=engine,
+            query=sql)
+    
+    documents = await loader.aload()
+    log.info(f"Loaded {len(documents)} from the database.")
+    return documents
+
 async def get_sources_from_docstore_async(sources, vector_name):
     
     if not sources:
         log.warning("No sources found for alloydb fetch")
-
-    engine = create_alloydb_engine(vector_name=vector_name)
 
     table_name = f"{vector_name}_docstore"
 
@@ -275,14 +329,6 @@ async def get_sources_from_docstore_async(sources, vector_name):
         ORDER BY source ASC
         LIMIT 500
     """
-    log.info(f"Alloydb doc query: {query}")
-        
-    loader = await AlloyDBLoader.create(
-            engine=engine,
-            query=query)
+    documents = await load_alloydb_sql_async(query, vector_name)
     
-    documents = await loader.aload()
-
-    log.info(f"Loaded {len(documents)} from the database.")
-
     return documents
