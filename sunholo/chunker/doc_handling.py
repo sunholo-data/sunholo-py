@@ -82,7 +82,8 @@ def create_big_doc(docs):
 
     big_doc.metadata["doc_id"] = doc_id
     big_doc.metadata["char_count"] = len(big_doc.page_content)
-    if len(big_doc.page_content) == 0 and not doc.metadata.get("images_gsurls"):
+
+    if len(big_doc.page_content) == 0 and not big_doc.metadata.get("images_gsurls"):
         log.warning("No content found to add for big_doc {metadata.}")
         return None
     
