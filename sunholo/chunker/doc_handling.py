@@ -1,8 +1,10 @@
 from ..utils import load_config_key
 from ..logging import log
-from ..database.alloydb import create_alloydb_table, create_alloydb_engine
+from ..database.alloydb import create_alloydb_engine
 from ..components import get_llm
 from ..gcs.add_file import add_file_to_gcs, get_summary_file_name
+from ..utils.parsers import remove_whitespace
+from .images import upload_doc_images
 
 import tempfile
 import uuid
@@ -20,10 +22,12 @@ def send_doc_to_docstore(docs, vector_name):
     if docstore_config is None:
         log.info(f"No docstore config found for {vector_name} ")
         
-        return
+        return None, None
     
     log.info(f"Docstore config: {docstore_config}")
-     
+    
+    doc_id = uuid.uuid4()
+
     for docstore in docstore_config:
         for key, value in docstore.items(): 
             log.info(f"Found memory {key}")
@@ -38,13 +42,20 @@ def send_doc_to_docstore(docs, vector_name):
 
                 # merge docs into one document object
                 big_doc = Document(page_content="", 
-                                   metadata={"images_base64": [],
+                                   metadata={"images_gsurls": [],
                                              "chunk_metadata": []})
                 for doc in docs:
-                    big_doc.page_content += f"\n{doc.page_content}"
-                    if doc.metadata.get("image_base64"):
-                        big_doc.metadata["images_base64"].append(doc.metadata["image_base64"])
-                        doc.metadata["image_base64"] = "moved_to_parent_doc_images"
+                    doc.metadata["docstore_doc_id"] = doc_id
+
+                    content = remove_whitespace(doc.page_content)
+                    big_doc.page_content += f"\n{content}"
+                    
+                    image_gsurl = upload_doc_images(doc.metadata)
+                    if image_gsurl:
+                        doc.metadata["image_gsurl"] = image_gsurl
+                        doc.metadata["image_base64"] = None
+                        doc.metadata["uploaded_to_bucket"] = True
+                        big_doc.metadata["images_gsurls"].append(image_gsurl)
 
                     for key, value in doc.metadata.items():
                         if key not in big_doc.metadata:
@@ -52,27 +63,34 @@ def send_doc_to_docstore(docs, vector_name):
                     
                     big_doc.metadata["chunk_metadata"].append(doc.metadata)
 
-                big_doc.metadata["doc_id"] = uuid.uuid4()
+                big_doc.metadata["doc_id"] = doc_id
                 big_doc.metadata["char_count"] = len(big_doc.page_content)
-                if len(big_doc.page_content) == 0 and not doc.metadata.get("images_base64"):
+                if len(big_doc.page_content) == 0 and not doc.metadata.get("images_gsurls"):
                     log.warning("No content found to add for big_doc {metadata.}")
                     return None
                 
                 # Serialize lists in metadata to JSON strings before saving
-                for key in ["images_base64", "chunk_metadata"]:
+                for key in ["images_gsurls", "chunk_metadata"]:
                     big_doc.metadata[key] = json.dumps(big_doc.metadata[key])
+
+                source = big_doc.metadata.get("source")
+                if not source:
+                    log.warning(f"No source found for big_doc {doc_id} {big_doc.metadata}")
 
                 saver = AlloyDBDocumentSaver.create_sync(
                     engine=engine,
                     table_name=table_name,
-                    metadata_columns=["source", "doc_id", "images_base64", "chunk_metadata"]
+                    metadata_columns=["source", "doc_id", "images_gsurls", "chunk_metadata"]
                 )
                 saver.add_documents([big_doc])
-                log.info(f"Saved docs to alloydb docstore: {table_name}")
+                log.info(f"Saved {source} to alloydb docstore: {table_name}")
 
             #elif docstore.get('type') == 'cloudstorage':
             else:
                 log.info(f"No docstore type found for {vector_name}: {docstore}")
+    
+    log.info("Added doc to docstores: {doc_id}")
+    return doc_id, docs
 
 
 def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_limit_default=100000):

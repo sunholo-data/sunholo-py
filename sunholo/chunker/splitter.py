@@ -27,7 +27,7 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
         return None
 
     # send full parsed doc to docstore
-    send_doc_to_docstore(documents, vector_name=vector_name)
+    docstore_doc_id, documents = send_doc_to_docstore(documents, vector_name=vector_name)
 
     documents = summarise_docs(documents, vector_name=vector_name)
 
@@ -36,6 +36,9 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
     combined_documents = []
     for document in documents:
         content = remove_whitespace(document.page_content)
+
+        if docstore_doc_id:
+            document.metadata["docstore_doc_id"] = docstore_doc_id
 
         # look for images and upload them for later extraction, add metadata of location
         image_gsurl = upload_doc_images(document.metadata)
