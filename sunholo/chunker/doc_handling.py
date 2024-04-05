@@ -43,7 +43,7 @@ def send_doc_to_docstore(docs, vector_name):
                 for doc in docs:
                     big_doc.page_content += f"\n{doc.page_content}"
                     if doc.metadata.get("image_base64"):
-                        big_doc.metadata["images_base64"].extend(doc.metadata["image_base64"])
+                        big_doc.metadata["images_base64"].append(doc.metadata["image_base64"])
                         doc.metadata["image_base64"] = "moved_to_parent_doc_images"
 
                     for key, value in doc.metadata.items():
