@@ -11,6 +11,7 @@ import tempfile
 import json
 from langchain.docstore.document import Document
 
+from langchain.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
 def send_doc_to_docstore(docs, vector_name):
@@ -123,9 +124,11 @@ def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_lim
 
                 log.info(f"Creating summary for {metadata} for doc [{len(context)}]")
                 
-                prompt = f"Summarise the context below.  Be careful not to add any speculation or any details that are not covered in the original:\n## Context:{context}\n## Your Summary:\n"
-
+                prompt_template = f"Summarise the context below.  Be careful not to add any speculation or any details that are not covered in the original:\n## Context:{context}\n## Your Summary:\n"
+                
+                prompt = ChatPromptTemplate.from_template(prompt_template)
                 summary = summary_llm | prompt | StrOutputParser()
+                
                 log.info(f"Created a summary for {metadata}: {len(context)} > {len(summary)}")
                 
                 # Create a temporary file for the summary

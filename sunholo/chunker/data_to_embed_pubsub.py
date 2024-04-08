@@ -26,7 +26,8 @@ def data_to_embed_pubsub(data: dict):
 
     message_data, metadata, vector_name = process_pubsub_message(data)
 
-    metadata["vector_name"] = vector_name
+    if metadata:
+        metadata["vector_name"] = vector_name
 
     if message_data is None:
         log.error("No message_data was found in data: {data}")
