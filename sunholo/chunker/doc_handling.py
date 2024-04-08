@@ -24,7 +24,7 @@ def send_doc_to_docstore(docs, vector_name):
     if docstore_config is None:
         log.info(f"No docstore config found for {vector_name} ")
         
-        return None, None
+        return None, docs
     
     log.info(f"Docstore config: {docstore_config}")
 
@@ -105,6 +105,10 @@ def create_big_doc(docs):
     return doc_id, big_doc, docs
 
 def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_limit_default=25000):
+
+    if not docs:
+        return None
+
     chunker_config = load_config_key("chunker", vector_name=vector_name, filename="config/llm_config.yaml")
     summarise_chunking_config = chunker_config.get("summarise") if chunker_config else None
     
