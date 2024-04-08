@@ -127,9 +127,9 @@ def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_lim
                 prompt_template = "Summarise the context below.  Be careful not to add any speculation or any details that are not covered in the original:\n## Context:{context}\n## Your Summary:\n"
                 
                 prompt = PromptTemplate.from_template(prompt_template)
-                summary_chain = summary_llm | prompt | StrOutputParser()
+                summary_chain = prompt | summary_llm | StrOutputParser()
 
-                summary = summary_chain.invoke({"context": doc.page_content})
+                summary = summary_chain.invoke({"context": context})
                 
                 log.info(f"Created a summary for {metadata}: {len(context)} > {len(summary)}")
                 
