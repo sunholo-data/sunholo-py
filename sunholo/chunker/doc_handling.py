@@ -134,11 +134,18 @@ def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_lim
                 log.info(f"Created a summary for {metadata}: {len(context)} > {len(summary)}")
                 
                 # Create a temporary file for the summary
+                bucket_name = os.getenv("DOC_BUCKET")
+                if not bucket_name:
+                    raise ValueError("No DOC_BUCKET configured for summary")
                 with tempfile.NamedTemporaryFile(mode='w+', delete=False) as temp_file:
                     temp_file.write(summary)
                     temp_file_path = temp_file.name  # Get the temporary file's path
                     bucket_filepath=get_summary_file_name(metadata["objectId"])
-                    summary_loc = add_file_to_gcs(temp_file_path, vector_name=vector_name, metadata=metadata, bucket_filepath=bucket_filepath)
+                    summary_loc = add_file_to_gcs(temp_file_path, 
+                                                  vector_name=vector_name, 
+                                                  bucket_name=bucket_name, 
+                                                  metadata=metadata, 
+                                                  bucket_filepath=bucket_filepath)
                     doc.metadata["summary_file"] = summary_loc
         except Exception as err:
             log.error(f"Failed to create a summary for {metadata}: {str(err)}")
