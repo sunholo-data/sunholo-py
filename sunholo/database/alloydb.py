@@ -157,7 +157,7 @@ def create_alloydb_table(vector_name, engine, type = "vectorstore", alloydb_conf
                     table_name,
                     vector_size=vector_size,
                     metadata_columns=[Column("source", "TEXT", nullable=True),
-                                      Column("docstore_doc_id", nullable=True),
+                                      Column("docstore_doc_id", "UUID", nullable=True),
                                       Column("eventTime", "TIMESTAMPTZ", nullable=True)],
                     overwrite_existing=False
                 )
