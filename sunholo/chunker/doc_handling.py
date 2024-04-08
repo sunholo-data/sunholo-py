@@ -9,6 +9,7 @@ from .images import upload_doc_images
 
 import tempfile
 import json
+import os
 from langchain.docstore.document import Document
 
 from langchain.prompts import PromptTemplate
