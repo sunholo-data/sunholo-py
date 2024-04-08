@@ -135,7 +135,7 @@ def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_lim
 
                 log.info(f"Creating summary for {metadata} for doc [{len(context)}]")
                 
-                prompt_template = "Summarise the context below.  Include in the summary which document it comes from via the metadata, and name any parties involved. Finish the summary with a list of relevant keywords that will help the summary be found via search engines. Be careful not to add any speculation or any details that are not covered in the original:\n## Context:{context}\n## Metadata\n{metadata}\n## Your Summary:\n"
+                prompt_template = "Summarise the context below.  Include in the summary which document it comes from via the metadata.objectId and source, and ensure you include any companies, people or entites involved. Finish the summary with a list of relevant keywords that will help the summary be found via search engines. Be careful not to add any speculation or any details that are not covered in the original:\n## Context:{context}\n## Metadata\n{metadata}\n## Your Summary:\n"
                 
                 prompt = PromptTemplate.from_template(prompt_template)
                 summary_chain = prompt | summary_llm | StrOutputParser()
