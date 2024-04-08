@@ -78,7 +78,7 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
 
         table_name = create_alloydb_table(vector_name, engine)
 
-        log.info("Chose AlloyDB with table name {table_name}")
+        log.info(f"Chose AlloyDB with table name {table_name}")
         vectorstore = AlloyDBVectorStore.create_sync(
                 engine=engine,
                 table_name=table_name,
