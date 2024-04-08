@@ -255,6 +255,10 @@ def create_docstore_table(table_name, alloydb_config, username):
 
 def add_document_if_not_exists(doc, vector_name):
     table_name = f"{vector_name}_docstore"
+    if not doc:
+        log.warning("Got None type for document")
+        return None
+    
     doc_id = doc.metadata.get("doc_id")
     if not doc_id:
         raise ValueError(f"No doc_id found for document: {doc.metadata}")
