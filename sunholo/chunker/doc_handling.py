@@ -142,7 +142,7 @@ def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_lim
 
                 str_metadata = json.dumps(metadata)
 
-                summary = summary_chain.invoke({"context": context, "metadata": str_metadata[1000:]})
+                summary = summary_chain.invoke({"context": context, "metadata": str_metadata[:2000]})
                 
                 log.info(f"Created a summary for {metadata}: {len(context)} > {len(summary)}")
                 
