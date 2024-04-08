@@ -55,18 +55,9 @@ def pick_streaming(vector_name):
         return True
     
     return False
- 
 
-def get_llm(vector_name, model=None, config_file="config/llm_config.yaml"):
-    llm_str = load_config_key("llm", vector_name, filename=config_file)
-    #model_lookup_filepath = get_module_filepath("lookup/model_lookup.yaml")
-    #model_lookup, _ = load_config(model_lookup_filepath)
 
-    if not model:
-        model = load_config_key("model", vector_name, filename=config_file)
-
-    log.debug(f"Chose LLM: {llm_str}")
-    # Configure LLMs based on llm_str
+def llm_str_to_llm(llm_str, model=None, vector_name=None, config_file="config/llm_config.yaml"):
     if llm_str == 'openai':
         # Setup for OpenAI LLM
         from langchain_openai import ChatOpenAI
@@ -104,7 +95,18 @@ def get_llm(vector_name, model=None, config_file="config/llm_config.yaml"):
         return ChatAnthropic(model_name = model, temperature=0)
 
     if llm_str is None:
-        raise NotImplementedError(f'No llm implemented for {llm_str}')
+        raise NotImplementedError(f'No llm implemented for {llm_str}') 
+
+def get_llm(vector_name, model=None, config_file="config/llm_config.yaml"):
+    llm_str = load_config_key("llm", vector_name, filename=config_file)
+    #model_lookup_filepath = get_module_filepath("lookup/model_lookup.yaml")
+    #model_lookup, _ = load_config(model_lookup_filepath)
+
+    if not model:
+        model = load_config_key("model", vector_name, filename=config_file)
+
+    log.debug(f"Chose LLM: {llm_str}")
+    return llm_str_to_llm(llm_str, model=model, vector_name=vector_name, config_file=config_file)
 
 def get_llm_chat(vector_name, model=None, config_file="config/llm_config.yaml"):
     llm_str = load_config_key("llm", vector_name, filename=config_file)

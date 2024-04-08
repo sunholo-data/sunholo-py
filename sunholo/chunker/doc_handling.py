@@ -2,7 +2,7 @@ from ..utils import load_config_key
 from ..logging import log
 from ..database.alloydb import add_document_if_not_exists
 from ..database.uuid import generate_uuid_from_object_id
-from ..components import get_llm, pick_llm
+from ..components.llm import llm_str_to_llm
 from ..gcs.add_file import add_file_to_gcs, get_summary_file_name
 from ..utils.parsers import remove_whitespace
 from .images import upload_doc_images
@@ -113,9 +113,11 @@ def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_lim
 
     # if model not specified will use default config.llm
     model = summarise_chunking_config.get("model")
-    summary_llm   = summarise_chunking_config.get("llm") if summarise_chunking_config.get("llm") else get_llm(vector_name, model=model)
+    summary_llm_str   = summarise_chunking_config.get("llm") if summarise_chunking_config.get("llm") else chunker_config.get("llm")
     summary_threshold = summarise_chunking_config.get("threshold") if summarise_chunking_config.get("threshold") else summary_threshold_default
     model_limit = summarise_chunking_config.get("model_limit") if summarise_chunking_config.get("model_limit") else model_limit_default
+
+    summary_llm = llm_str_to_llm(summary_llm_str, model=model)
 
     for doc in docs:
         try:
