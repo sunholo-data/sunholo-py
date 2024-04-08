@@ -11,7 +11,7 @@ import tempfile
 import json
 from langchain.docstore.document import Document
 
-from langchain.prompts import ChatPromptTemplate
+from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
 def send_doc_to_docstore(docs, vector_name):
@@ -126,7 +126,7 @@ def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_lim
                 
                 prompt_template = f"Summarise the context below.  Be careful not to add any speculation or any details that are not covered in the original:\n## Context:{context}\n## Your Summary:\n"
                 
-                prompt = ChatPromptTemplate.from_template(prompt_template)
+                prompt = PromptTemplate.from_template(prompt_template)
                 summary_chain = summary_llm | prompt | StrOutputParser()
 
                 summary = summary_chain.invoke({"context": doc.page_content})
