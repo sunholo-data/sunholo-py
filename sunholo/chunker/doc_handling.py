@@ -104,7 +104,7 @@ def create_big_doc(docs):
     
     return doc_id, big_doc, docs
 
-def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_limit_default=100000):
+def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_limit_default=25000):
     chunker_config = load_config_key("chunker", vector_name=vector_name, filename="config/llm_config.yaml")
     summarise_chunking_config = chunker_config.get("summarise") if chunker_config else None
     
@@ -136,7 +136,9 @@ def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_lim
                 prompt = PromptTemplate.from_template(prompt_template)
                 summary_chain = prompt | summary_llm | StrOutputParser()
 
-                summary = summary_chain.invoke({"context": context, "metadata": json.dumps(metadata)})
+                str_metadata = json.dumps(metadata)
+
+                summary = summary_chain.invoke({"context": context, "metadata": str_metadata[1000:]})
                 
                 log.info(f"Created a summary for {metadata}: {len(context)} > {len(summary)}")
                 
