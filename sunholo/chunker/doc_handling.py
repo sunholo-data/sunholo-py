@@ -8,6 +8,7 @@ from ..utils.parsers import remove_whitespace
 from .images import upload_doc_images
 
 import tempfile
+import traceback
 import json
 import os
 from langchain.docstore.document import Document
@@ -46,7 +47,7 @@ def send_doc_to_docstore(docs, vector_name):
             else:
                 log.info(f"No docstore type found for {vector_name}: {docstore}")
     
-    log.info("Added doc to docstores: {doc_id}")
+    log.info(f"Added doc to docstores: {doc_id}")
     return doc_id, docs
 
 def create_big_doc(docs):
@@ -152,7 +153,7 @@ def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_lim
                                                   bucket_filepath=bucket_filepath)
                     doc.metadata["summary_file"] = summary_loc
         except Exception as err:
-            log.error(f"Failed to create a summary for {metadata}: {str(err)}")
+            log.error(f"Failed to create a summary for {metadata}: {str(err)} traceback: {traceback.format_exc()}")
     
     
     return docs
