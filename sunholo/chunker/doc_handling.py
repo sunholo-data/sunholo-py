@@ -85,8 +85,8 @@ def create_big_doc(docs):
     big_doc.metadata["char_count"] = len(big_doc.page_content)
 
     if len(big_doc.page_content) == 0 and not big_doc.metadata.get("images_gsurls"):
-        log.warning("No content found to add for big_doc {metadata.}")
-        return None
+        log.warning(f"No content found to add for big_doc {first_source}")
+        return None, None, None
     
     # Serialize lists in metadata to JSON strings before saving
     for key in ["images_gsurls", "chunk_metadata"]:
