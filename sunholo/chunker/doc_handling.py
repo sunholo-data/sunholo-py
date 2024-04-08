@@ -131,29 +131,41 @@ def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_lim
 
                 log.info(f"Creating summary for {metadata} for doc [{len(context)}]")
                 
-                prompt_template = "Summarise the context below.  Be careful not to add any speculation or any details that are not covered in the original:\n## Context:{context}\n## Your Summary:\n"
+                prompt_template = "Summarise the context below.  Include in the summary which document it comes from via the metadata, and name any parties involved. Be careful not to add any speculation or any details that are not covered in the original:\n## Context:{context}\n## Metadata\n{metadata}## Your Summary:\n"
                 
                 prompt = PromptTemplate.from_template(prompt_template)
                 summary_chain = prompt | summary_llm | StrOutputParser()
 
-                summary = summary_chain.invoke({"context": context})
+                summary = summary_chain.invoke({"context": context, "metadata": json.dumps(metadata)})
                 
                 log.info(f"Created a summary for {metadata}: {len(context)} > {len(summary)}")
                 
+                if len(summary) < 100:
+                    log.info(f"Summary not long enough {metadata}, skipping")
+                    continue
+
                 # Create a temporary file for the summary
                 bucket_name = os.getenv("DOC_BUCKET")
                 if not bucket_name:
                     raise ValueError("No DOC_BUCKET configured for summary")
                 with tempfile.NamedTemporaryFile(mode='w+', delete=False) as temp_file:
                     temp_file.write(summary)
-                    temp_file_path = temp_file.name  # Get the temporary file's path
-                    bucket_filepath=get_summary_file_name(metadata["objectId"])
-                    summary_loc = add_file_to_gcs(temp_file_path, 
-                                                  vector_name=vector_name, 
-                                                  bucket_name=bucket_name, 
-                                                  metadata=metadata, 
-                                                  bucket_filepath=bucket_filepath)
-                    doc.metadata["summary_file"] = summary_loc
+                    temp_file.flush()
+                    temp_file_path = temp_file.name
+
+                    log.info(f"Wrote summary to file {temp_file_path}: {summary[30:]}")
+
+                    file_size = os.path.getsize(temp_file_path)
+                    if file_size > 0:
+                        bucket_filepath = get_summary_file_name(metadata["objectId"])
+                        summary_loc = add_file_to_gcs(temp_file_path, 
+                                                    vector_name=vector_name, 
+                                                    bucket_name=bucket_name, 
+                                                    metadata=metadata, 
+                                                    bucket_filepath=bucket_filepath)
+                        doc.metadata["summary_file"] = summary_loc
+                    else:
+                        log.error(f"Summary file {temp_file_path} is empty. Skipping upload.")
         except Exception as err:
             log.error(f"Failed to create a summary for {metadata}: {str(err)} traceback: {traceback.format_exc()}")
     
