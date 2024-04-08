@@ -315,9 +315,11 @@ async def get_sources_from_docstore_async(sources, vector_name):
     if not sources:
         log.warning("No sources found for alloydb fetch")
 
+    unique_sources = set(sources)
+
     table_name = f"{vector_name}_docstore"
 
-    like_patterns = ', '.join(f"'%{source}%'" for source in sources)  
+    like_patterns = ', '.join(f"'%{source}%'" for source in unique_sources)  
     if not like_patterns:
         log.warning("Alloydb doc query found no like_patterns")
         return []
