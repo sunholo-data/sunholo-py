@@ -62,7 +62,7 @@ def create_big_doc(docs):
     doc_id = None
     for doc in docs:
         if doc_id is None:
-            first_source = doc.metadata.get("source")
+            first_source = doc.metadata.get("objectId")
             if first_source:
                 doc_id = generate_uuid_from_object_id(first_source)
         
