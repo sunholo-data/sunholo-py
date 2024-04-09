@@ -136,14 +136,28 @@ def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_lim
 
                 log.info(f"Creating summary for {metadata} for doc [{len(context)}]")
                 
-                prompt_template = "Summarise the context below.  Include in the summary which document it comes from via the metadata.objectId and source, and ensure you include any companies, people or entites involved. Finish the summary with a list of relevant keywords that will help the summary be found via search engines. Be careful not to add any speculation or any details that are not covered in the original:\n## Context:{context}\n## Metadata\n{metadata}\n## Your Summary:\n"
-                
+                prompt_template = """
+Summarise the context below.  
+Include in the summary the title showing which document it comes from, and ensure you include any companies, people or entites involved within the text. 
+Finish the summary with a list of relevant keywords that will help the summary be found via search engines. 
+Be careful not to add any speculation or any details that are not covered in the original:
+## Context:
+{context}
+## Metadata
+{metadata}
+## Your Summary:
+"""                
                 prompt = PromptTemplate.from_template(prompt_template)
                 summary_chain = prompt | summary_llm | StrOutputParser()
+                doc_source = doc.metadata.get('source')
+                doc_objectId = doc.metadata.get('objectId')
+                doc_eventTime = doc.metadata.get('eventTime')
+
+                full_context = f"# {doc_source}\n\n## {doc_objectId}\n{doc_eventTime}\n\n## Text\n{context}"
 
                 str_metadata = json.dumps(metadata)
 
-                summary = summary_chain.invoke({"context": context, "metadata": str_metadata[:2000]})
+                summary = summary_chain.invoke({"context": full_context, "metadata": str_metadata[:2000]})
                 
                 log.info(f"Created a summary for {metadata}: {len(context)} > {len(summary)}")
                 
