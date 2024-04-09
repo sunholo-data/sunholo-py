@@ -87,9 +87,15 @@ def handle_gcs_message(message_data: str, metadata: dict, vector_name: str):
         for page in pages:
             log.info(f"Sending file {page} to loaders.read_file_to_documents {metadata}")
             docs2 = loaders.read_file_to_documents(page, metadata=metadata)
+            if docs2 is None:
+                log.warning(f"loaders.read_file_to_documents docs2 failed to load file {metadata}")
             docs.extend(docs2)
 
-        chunks = chunk_doc_to_docs(docs, file_name.suffix, vector_name=vector_name)
+        if docs is None:
+            log.warning(f"loaders.read_file_to_documents docs failed to load file {metadata}")
+            return None, metadata
+        else:
+            chunks = chunk_doc_to_docs(docs, file_name.suffix, vector_name=vector_name)
 
         return chunks, metadata
 

@@ -93,7 +93,7 @@ def get_summary_file_name(object_id):
     base_name = os.path.basename(object_id).rsplit('.', 1)[0]
 
     # Return the full object name for the image
-    return f"{os.path.dirname(object_id)}/{base_name}/summary.txt"    
+    return f"{os.path.dirname(object_id)}/{base_name}/summary.md"    
 
 def get_image_file_name(object_id, image_name, mime_type):
     # Get the base file name without the file extension and directory
