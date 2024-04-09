@@ -113,7 +113,7 @@ def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_lim
     summarise_chunking_config = chunker_config.get("summarise") if chunker_config else None
     
     if not summarise_chunking_config:
-        return docs
+        return None
 
     # if model not specified will use default config.llm
     model = summarise_chunking_config.get("model")
@@ -123,6 +123,7 @@ def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_lim
 
     summary_llm = llm_str_to_llm(summary_llm_str, model=model)
 
+    doc_summaries = {}
     for doc in docs:
         try:
             if len(doc.page_content) > summary_threshold:
@@ -169,12 +170,13 @@ def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_lim
                                                     bucket_name=bucket_name, 
                                                     metadata=metadata, 
                                                     bucket_filepath=bucket_filepath)
-                        doc.metadata["summary_file"] = summary_loc
+                        
+                        doc_summaries[metadata["objectId"]] = summary_loc
                     else:
                         log.error(f"Summary file {temp_file_path} is empty. Skipping upload.")
         except Exception as err:
             log.error(f"Failed to create a summary for {metadata}: {str(err)} traceback: {traceback.format_exc()}")
     
     
-    return docs
+    return doc_summaries
 
