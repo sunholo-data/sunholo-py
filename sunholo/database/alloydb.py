@@ -332,7 +332,7 @@ async def get_sources_from_docstore_async(sources, vector_name):
         SELECT * 
         FROM {table_name}
         WHERE TRIM(source) ILIKE ANY (ARRAY[{like_patterns}])
-        ORDER BY source ASC
+        ORDER BY langchain_metadata->>'objectId' ASC;
         LIMIT 500
     """
     documents = await load_alloydb_sql_async(query, vector_name)
