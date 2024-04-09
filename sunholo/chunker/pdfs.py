@@ -31,14 +31,15 @@ def split_pdf_to_pages(pdf_path, temp_dir):
     page_files = []
     
     if len(pdf.pages) == 1:
-        log.debug(f"Only one page in PDF {pdf_path} - sending back")
+        #log.debug(f"Only one page in PDF {pdf_path} - sending back")
         return [str(pdf_path)]
     
     for page in range(len(pdf.pages)):
         pdf_writer = PdfWriter()
         pdf_writer.add_page(pdf.pages[page])
-
-        output_filename = pathlib.Path(temp_dir, f'{basename}_p{page}.pdf')
+        
+        page_str = "{:02d}".format(page + 1)  
+        output_filename = pathlib.Path(temp_dir, f'{basename}_p{page_str}.pdf')
 
         with open(output_filename, 'wb') as out:
             pdf_writer.write(out)
