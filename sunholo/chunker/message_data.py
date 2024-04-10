@@ -51,7 +51,7 @@ def handle_gcs_message(message_data: str, metadata: dict, vector_name: str):
         tmp_file_path = os.path.join(temp_dir, file_name.name)
         blob.download_to_filename(tmp_file_path)
 
-        if file_name.suffix == ".pdf":
+        if file_name.suffix.lower() == ".pdf":
             pages = split_pdf_to_pages(tmp_file_path, temp_dir)
             if not metadata.get("source"):
                 metadata["source"] = str(file_name)
