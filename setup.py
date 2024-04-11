@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.41.24'
+version = '0.42.0'
 
 setup(
     name='sunholo',
@@ -32,6 +32,7 @@ setup(
         "langchain-openai",
         "langchain-google-genai",
         "langchain-anthropic",
+        "langfuse",
         "pg8000",
         "sqlalchemy"
         # pydantic==1.10.13

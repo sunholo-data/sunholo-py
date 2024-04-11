@@ -6,6 +6,7 @@ from ..components.llm import llm_str_to_llm
 from ..gcs.add_file import add_file_to_gcs, get_summary_file_name
 from ..utils.parsers import remove_whitespace
 from .images import upload_doc_images
+from ..langfuse.callback import create_langfuse_callback
 
 import tempfile
 import traceback
@@ -157,7 +158,12 @@ Be careful not to add any speculation or any details that are not covered in the
 
                 str_metadata = json.dumps(metadata)
 
-                summary = summary_chain.invoke({"context": full_context, "metadata": str_metadata[:2000]})
+                cb_langfuse = create_langfuse_callback()
+
+                summary = summary_chain.invoke(
+                        {"context": full_context, "metadata": str_metadata[:2000]},
+                        config={"callbacks": [cb_langfuse]}
+                    )
                 
                 log.info(f"Created a summary for {metadata}: {len(context)} > {len(summary)}")
                 
