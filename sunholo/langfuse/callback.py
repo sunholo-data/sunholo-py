@@ -1,7 +1,7 @@
 from langfuse.callback import CallbackHandler
 from fastapi import Request
 from typing import Dict, Any
-
+from ..logging import log
 
 def create_langfuse_callback(**kwargs):
 
@@ -23,6 +23,8 @@ def add_langfuse_tracing(
     :return: updated config
     """
 
+    log.debug(f"add_langfuse_tracing config: {config} {request}")
+
     if "callbacks" not in config:
         config["callbacks"] = []
 
@@ -32,6 +34,7 @@ def add_langfuse_tracing(
     )
     config["callbacks"].extend([langfuse_handler])
 
+    log.debug(f"add_langfuse_tracing modfied config {config}")
     return config
 
 
