@@ -28,9 +28,12 @@ def add_langfuse_tracing(
     if "callbacks" not in config:
         config["callbacks"] = []
 
+    user_id = request.headers.get("user_id")
+    session_id = request.headers.get("session_id")
+
     langfuse_handler = create_langfuse_callback(
-        user_id = config.get("user_id"),
-        session_id = config.get("session_id")
+        user_id = user_id,
+        session_id = session_id
     )
     config["callbacks"].extend([langfuse_handler])
 
