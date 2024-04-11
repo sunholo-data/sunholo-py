@@ -86,6 +86,12 @@ async def send_to_qa_async(user_input, vector_name, chat_history, stream=False, 
     qna_endpoint, qna_data = prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs)
     header = get_header(vector_name)
 
+    # Check if 'user_id' and 'session_id' are in kwargs and add them to the header
+    if 'user_id' in kwargs:
+        header['X-User-ID'] = kwargs['user_id']  # Custom header names, adjust as needed
+    if 'session_id' in kwargs:
+        header['X-Session-ID'] = kwargs['session_id']
+
     log.info(f"send_to_qa_async to {qna_endpoint} this data: {qna_data} with this header: {header}")
 
     try:
