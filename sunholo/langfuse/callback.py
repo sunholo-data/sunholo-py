@@ -53,5 +53,4 @@ def add_langfuse_tracing(
 
 #add_routes(app, my_chain,
 #           path="/my-chain",
-#           per_req_config_modifier=_add_tracing,
-#           config_keys=["configurable", "session_id", "user_id"])
+#           per_req_config_modifier=add_langfuse_tracing)
