@@ -1,11 +1,21 @@
-from langfuse.callback import CallbackHandler
+from langfuse import Langfuse
 from fastapi import Request
+
 from typing import Dict, Any
+from importlib.metadata import version
+
 from ..logging import log
 
 def create_langfuse_callback(**kwargs):
 
-    langfuse_handler = CallbackHandler(**kwargs)
+    langfuse = Langfuse()
+    
+    # Create trace with tags
+    trace = langfuse.trace(
+        **kwargs
+    )
+
+    langfuse_handler = trace.get_langchain_handler()
 
     # Tests the SDK connection with the server
     langfuse_handler.auth_check()
@@ -23,16 +33,12 @@ def add_langfuse_tracing(
     :return: updated config
     """
 
-    log.debug(f"add_langfuse_tracing config: {config} {request}")
-
     if "callbacks" not in config:
         config["callbacks"] = []
 
     user_id = request.headers.get("X-User-ID")
     session_id = request.headers.get("X-Session-ID")
     message_source = request.headers.get("X-Message-Source")
-
-    from importlib.metadata import version
 
     package_version = version('sunholo')
 
@@ -48,10 +54,10 @@ def add_langfuse_tracing(
     config["callbacks"].extend([langfuse_handler])
 
     log.debug(f"add_langfuse_tracing modfied config {config}")
+
     return config
 
 
 #add_routes(app, my_chain,
 #           path="/my-chain",
-#           per_req_config_modifier=_add_tracing,
-#           config_keys=["configurable", "session_id", "user_id"])
+#           per_req_config_modifier=_add_tracing)
