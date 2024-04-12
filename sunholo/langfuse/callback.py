@@ -30,10 +30,20 @@ def add_langfuse_tracing(
 
     user_id = request.headers.get("X-User-ID")
     session_id = request.headers.get("X-Session-ID")
+    message_source = request.headers.get("X-Message-Source")
+
+    from importlib.metadata import version
+
+    package_version = version('sunholo')
+
+    tags = [f"sunholo-v{package_version}"]
+    if message_source:
+        tags = tags.append(message_source)
 
     langfuse_handler = create_langfuse_callback(
         user_id = user_id,
-        session_id = session_id
+        session_id = session_id,
+        tags = tags
     )
     config["callbacks"].extend([langfuse_handler])
 

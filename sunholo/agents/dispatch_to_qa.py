@@ -49,6 +49,7 @@ def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
 
     qna_endpoint, qna_data = prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs)
     header = get_header(vector_name)
+    header = add_header_ids(header, **kwargs)
 
     log.info(f"Send_to_qa to {qna_endpoint} this data: {qna_data} with this header: {header}")
     try:
@@ -85,12 +86,7 @@ async def send_to_qa_async(user_input, vector_name, chat_history, stream=False, 
     
     qna_endpoint, qna_data = prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs)
     header = get_header(vector_name)
-
-    # Check if 'user_id' and 'session_id' are in kwargs and add them to the header
-    if 'user_id' in kwargs:
-        header['X-User-ID'] = kwargs['user_id']  # Custom header names, adjust as needed
-    if 'session_id' in kwargs:
-        header['X-Session-ID'] = kwargs['session_id']
+    header = add_header_ids(header, **kwargs)
 
     log.info(f"send_to_qa_async to {qna_endpoint} this data: {qna_data} with this header: {header}")
 
@@ -122,3 +118,15 @@ async def send_to_qa_async(user_input, vector_name, chat_history, stream=False, 
             yield error_message.encode('utf-8')
         else:
             yield {"answer": error_message}
+
+
+def add_header_ids(header, **kwargs):
+        # Check if 'user_id' and 'session_id' are in kwargs and add them to the header
+    if 'user_id' in kwargs:
+        header['X-User-ID'] = kwargs['user_id']  # Custom header names, adjust as needed
+    if 'session_id' in kwargs:
+        header['X-Session-ID'] = kwargs['session_id']
+    if 'message_source' in kwargs:
+        header['X-Message-Source'] = kwargs['message_source']
+    
+    return header
