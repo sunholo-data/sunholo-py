@@ -17,6 +17,7 @@ def add_langfuse_tracing(
         request: Request) -> Dict[str, Any]:
     """
     Config modifier function to add a tracing callback
+    By @jmaness https://github.com/langchain-ai/langserve/issues/311
 
     :param config: config dict
     :param request: HTTP request
