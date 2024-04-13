@@ -5,10 +5,8 @@ from ..logging import log
 
 def create_langfuse_callback(**kwargs):
 
+    # TODO: maybe use langfuse.trace here instead later
     langfuse_handler = CallbackHandler(**kwargs)
-
-    # Tests the SDK connection with the server
-    langfuse_handler.auth_check()
 
     return langfuse_handler
 
@@ -34,17 +32,16 @@ def add_langfuse_tracing(
     message_source = request.headers.get("X-Message-Source")
 
     # can't import tags yet via CallbackHandler
-    #from importlib.metadata import version
-    #package_version = version('sunholo')
-    #tags = [f"sunholo-v{package_version}"]
-    #if message_source:
-    #    tags = tags.append(message_source)
-
+    from importlib.metadata import version
+    package_version = version('sunholo')
+    tags = [f"sunholo-v{package_version}"]
+    if message_source:
+        tags = tags.append(message_source)
 
     langfuse_handler = create_langfuse_callback(
         user_id = user_id,
         session_id = session_id,
-        #tags = tags
+        tags = tags
     )
     config["callbacks"].extend([langfuse_handler])
 
