@@ -350,7 +350,7 @@ def _get_sources_from_docstore(sources, vector_name, search_type="OR"):
 
 async def get_sources_from_docstore_async(sources, vector_name, search_type="OR"):
     
-    query = _get_sources_from_docstore(sources, search_type=search_type)
+    query = _get_sources_from_docstore(sources, vector_name=vector_name, search_type=search_type)
     if not query:
         return []
     
@@ -360,7 +360,7 @@ async def get_sources_from_docstore_async(sources, vector_name, search_type="OR"
 
 def get_sources_from_docstore(sources, vector_name, search_type="OR"):
     
-    query = _get_sources_from_docstore(sources, search_type=search_type)
+    query = _get_sources_from_docstore(sources, vector_name=vector_name, search_type=search_type)
     if not query:
         return []
     
