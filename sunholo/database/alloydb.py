@@ -302,15 +302,17 @@ def load_alloydb_sql(sql, vector_name):
     log.info(f"Loaded {len(documents)} from the database.")
     return documents
 
-async def load_alloydb_sql_async(sql, vector_name):
-    engine = create_alloydb_engine(vector_name=vector_name)    
-    log.info(f"Alloydb doc query: {sql}")
+_alloydb_loader = None
 
-    loader = await AlloyDBLoader.create(
-            engine=engine,
-            query=sql)
-    
-    documents = await loader.aload()
+async def load_alloydb_sql_async(sql, vector_name):
+    global _alloydb_loader
+    if _alloydb_loader is None:
+        engine = create_alloydb_engine(vector_name=vector_name)
+        _alloydb_loader = await AlloyDBLoader.create(engine=engine, query=sql)
+    else:
+        _alloydb_loader.query = sql  # Update the query if the loader is reused
+
+    documents = await _alloydb_loader.aload()
     log.info(f"Loaded {len(documents)} from the database.")
     return documents
 
