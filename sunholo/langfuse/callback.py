@@ -36,8 +36,9 @@ def add_langfuse_tracing(
     package_version = version('sunholo')
     tags = [f"sunholo-v{package_version}"]
     if message_source:
-        tags = tags.append(message_source)
+        tags.append(message_source)
 
+    log.info(f"Adding langfuse tags to trace: {tags}")
     langfuse_handler = create_langfuse_callback(
         user_id = user_id,
         session_id = session_id,
@@ -45,7 +46,7 @@ def add_langfuse_tracing(
     )
     config["callbacks"].extend([langfuse_handler])
 
-    log.debug(f"add_langfuse_tracing modfied config {config}")
+    log.debug(f"add_langfuse_tracing modified config {config}")
     return config
 
 
