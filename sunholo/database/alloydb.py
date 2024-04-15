@@ -292,7 +292,7 @@ def add_document_if_not_exists(doc, vector_name):
 
 def load_alloydb_sql(sql, vector_name):
     engine = create_alloydb_engine(vector_name=vector_name)
-    log.info(f"Alloydb doc query: {sql}")
+    log.info(f"Alloydb (sync) doc query: {sql}")
 
     loader = AlloyDBLoader.create_sync(
             engine=engine,
@@ -300,6 +300,7 @@ def load_alloydb_sql(sql, vector_name):
     
     documents = loader.load()
     log.info(f"Loaded {len(documents)} from the database.")
+
     return documents
 
 _alloydb_loader = None
@@ -312,31 +313,57 @@ async def load_alloydb_sql_async(sql, vector_name):
     else:
         _alloydb_loader.query = sql  # Update the query if the loader is reused
 
+    log.info(f"Alloydb (async) doc query: {sql}")
     documents = await _alloydb_loader.aload()
     log.info(f"Loaded {len(documents)} from the database.")
+    
     return documents
 
-async def get_sources_from_docstore_async(sources, vector_name):
-    
+
+def _get_sources_from_docstore(sources, vector_name, search_type="OR"):
     if not sources:
         log.warning("No sources found for alloydb fetch")
+        return []
 
     unique_sources = set(sources)
-
     table_name = f"{vector_name}_docstore"
 
-    like_patterns = ', '.join(f"'%{source}%'" for source in unique_sources)  
-    if not like_patterns:
+    # Choose the delimiter based on the search_type argument
+    delimiter = ' AND ' if search_type.upper() == "AND" else ' OR '
+
+    # Build the conditional expressions based on the chosen delimiter
+    conditions = delimiter.join(f"TRIM(source) ILIKE '%{source}%'" for source in unique_sources)
+    if not conditions:
         log.warning("Alloydb doc query found no like_patterns")
         return []
     
     query = f"""
         SELECT * 
         FROM {table_name}
-        WHERE TRIM(source) ILIKE ANY (ARRAY[{like_patterns}])
+        WHERE {conditions}
         ORDER BY langchain_metadata->>'objectId' ASC
         LIMIT 500;
     """
+
+    return query
+
+
+async def get_sources_from_docstore_async(sources, vector_name, search_type="OR"):
+    
+    query = _get_sources_from_docstore(sources, search_type=search_type)
+    if not query:
+        return []
+    
     documents = await load_alloydb_sql_async(query, vector_name)
+    
+    return documents
+
+def get_sources_from_docstore(sources, vector_name, search_type="OR"):
+    
+    query = _get_sources_from_docstore(sources, search_type=search_type)
+    if not query:
+        return []
+    
+    documents = load_alloydb_sql(query, vector_name)
     
     return documents

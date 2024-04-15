@@ -54,7 +54,7 @@ def construct_download_link(source_uri: str) -> str:
     signed_url = sign_gcs_url(bucket_name, object_name)
     if signed_url:
         the_name = os.path.basename(object_name)
-        log.info("Creating signed URL for {the_name} - {signed_url}")
+        log.info(f"Creating signed URL for {the_name} - {signed_url}")
         return signed_url, the_name, True
     
     log.error(f"Failed to generate signed URL for {source_uri}")
