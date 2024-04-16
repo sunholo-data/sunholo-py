@@ -80,10 +80,9 @@ def load_config(filename: str=None) -> tuple[dict, str]:
         log.debug(f"_CONFIG_FOLDER: {os.getenv('_CONFIG_FOLDER')}")
                   
     # Join the script directory with the filename
-    config_path = filename
     config_folder = os.getenv("_CONFIG_FOLDER") if os.getenv("_CONFIG_FOLDER") else os.getcwd()
 
-    config_file = f"{config_folder}/{config_path}"
+    config_file = os.path.join(config_folder, filename)
     log.debug(f"Loading config file {config_file}")
 
     with open(config_file, 'r') as f:
