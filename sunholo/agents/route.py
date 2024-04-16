@@ -12,14 +12,15 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from ..logging import log
-
-
-
 from ..utils import load_config_key, load_config
 
 def route_qna(vector_name):
 
-    agent_type = load_config_key('agent', vector_name, filename='config/llm_config.yaml')
+    agent_type = load_config_key('agent_type', vector_name, filename='config/llm_config.yaml')
+
+    if not agent_type:
+        agent_type = load_config_key('agent', vector_name, filename='config/llm_config.yaml')
+
     log.info(f'agent_type: {agent_type}')
 
     agent_route, _ = load_config('config/cloud_run_urls.json')
@@ -35,7 +36,9 @@ def route_qna(vector_name):
 
 def route_endpoint(vector_name):
 
-    agent_type = load_config_key('agent', vector_name, filename='config/llm_config.yaml')
+    agent_type = load_config_key('agent_type', vector_name, filename='config/llm_config.yaml')
+    if not agent_type:
+        load_config_key('agent', vector_name, filename='config/llm_config.yaml')
 
     stem = route_qna(vector_name)
 
