@@ -7,18 +7,25 @@ from google.auth.transport import requests
 
 from ..logging import log
 
+gcs_credentials, project_id = google.auth.default()
+# Perform a refresh request to get the access token of the current credentials (Else, it's None)
+gcs_r = requests.Request()
+gcs_credentials.refresh(gcs_r)
+
+# Prepare global variables for client reuse
+gcs_client = storage.Client()
+gcs_bucket_cache = {}
+
+def get_bucket(bucket_name):
+    if bucket_name not in gcs_bucket_cache:
+        gcs_bucket_cache[bucket_name] = gcs_client.get_bucket(bucket_name)
+    return gcs_bucket_cache[bucket_name]
 
 def sign_gcs_url(bucket_name:str, object_name:str, expiry_secs = 86400):
     # https://stackoverflow.com/questions/64234214/how-to-generate-a-blob-signed-url-in-google-cloud-run
 
-    credentials, project_id = google.auth.default()
 
-    # Perform a refresh request to get the access token of the current credentials (Else, it's None)
-    r = requests.Request()
-    credentials.refresh(r)
-
-    client = storage.Client()
-    bucket = client.get_bucket(bucket_name)
+    bucket = get_bucket(bucket_name)
     blob = bucket.get_blob(object_name)
     if not blob:
         return None
@@ -26,8 +33,8 @@ def sign_gcs_url(bucket_name:str, object_name:str, expiry_secs = 86400):
     expires = datetime.now() + timedelta(seconds=expiry_secs)
 
     # If you use a service account credential, you can use the embedded email
-    if hasattr(credentials, "service_account_email"):
-        service_account_email = credentials.service_account_email
+    if hasattr(gcs_credentials, "service_account_email"):
+        service_account_email = gcs_credentials.service_account_email
     else:
         service_account_email = os.getenv('GCS_MAIL_USER')
         if service_account_email is None:
@@ -39,7 +46,7 @@ def sign_gcs_url(bucket_name:str, object_name:str, expiry_secs = 86400):
         version="v4",
         expiration=expires,
         service_account_email=service_account_email, 
-        access_token=credentials.token)
+        access_token=gcs_credentials.token)
     log.debug(f"Generated signed URL: {url}")
     return url
 
