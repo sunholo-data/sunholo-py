@@ -3,52 +3,47 @@ from urllib.parse import quote
 from datetime import datetime, timedelta
 from google.cloud import storage 
 import google.auth
-from google.auth.transport import requests
+from google.auth.transport.requests import Request
+from google.auth.exceptions import RefreshError
 
 from ..logging import log
 
-gcs_credentials, project_id = google.auth.default()
 # Perform a refresh request to get the access token of the current credentials (Else, it's None)
-gcs_r = requests.Request()
-gcs_credentials.refresh(gcs_r)
-
-# Prepare global variables for client reuse
-gcs_client = storage.Client()
+# Initialize global variables for client reuse
+gcs_credentials, project_id = google.auth.default()
+gcs_client = storage.Client(credentials=gcs_credentials)
 gcs_bucket_cache = {}
 
+# Prepare global variables for client reuse
 def get_bucket(bucket_name):
     if bucket_name not in gcs_bucket_cache:
         gcs_bucket_cache[bucket_name] = gcs_client.get_bucket(bucket_name)
     return gcs_bucket_cache[bucket_name]
 
-def sign_gcs_url(bucket_name:str, object_name:str, expiry_secs = 86400):
-    # https://stackoverflow.com/questions/64234214/how-to-generate-a-blob-signed-url-in-google-cloud-run
+def sign_gcs_url(bucket_name:str, object_name:str, expiry_secs=86400):
+    try:
+        bucket = get_bucket(bucket_name)
+        blob = bucket.blob(object_name)
+        expires = datetime.now() + timedelta(seconds=expiry_secs)
+        service_account_email = getattr(gcs_credentials, "service_account_email", os.getenv('GCS_MAIL_USER'))
 
-
-    bucket = get_bucket(bucket_name)
-    blob = bucket.get_blob(object_name)
-    if not blob:
-        return None
-
-    expires = datetime.now() + timedelta(seconds=expiry_secs)
-
-    # If you use a service account credential, you can use the embedded email
-    if hasattr(gcs_credentials, "service_account_email"):
-        service_account_email = gcs_credentials.service_account_email
-    else:
-        service_account_email = os.getenv('GCS_MAIL_USER')
-        if service_account_email is None:
+        if not service_account_email:
             log.error("For local testing must set a GCS_MAIL_USER to sign GCS URLs")
-        log.error("Could not create the credentials for signed requests - no credentials.service_account_email or GCS_MAIL_USER with roles/iam.serviceAccountTokenCreator")
-        return None
+            return None
 
-    url = blob.generate_signed_url(
-        version="v4",
-        expiration=expires,
-        service_account_email=service_account_email, 
-        access_token=gcs_credentials.token)
-    log.debug(f"Generated signed URL: {url}")
-    return url
+        return blob.generate_signed_url(
+            version="v4",
+            expiration=expires,
+            service_account_email=service_account_email,
+            access_token=gcs_credentials.token
+        )
+    except RefreshError:
+        log.info("Refreshing gcs_credentials due to token expiration.")
+        gcs_credentials.refresh(Request())
+        return sign_gcs_url(bucket_name, object_name, expiry_secs)
+    except Exception as e:
+        log.error(f"Failed to generate signed URL: {e}")
+        return None
 
 
 def construct_download_link(source_uri: str) -> str:
