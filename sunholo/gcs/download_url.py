@@ -11,7 +11,6 @@ from ..logging import log
 # Perform a refresh request to get the access token of the current credentials (Else, it's None)
 gcs_credentials, project_id = google.auth.default()
 gcs_r = requests.Request()
-gcs_credentials.refresh(gcs_r)
 
 # Prepare global variables for client reuse
 gcs_client = storage.Client()
@@ -30,6 +29,8 @@ def sign_gcs_url(bucket_name:str, object_name:str, expiry_secs = 86400):
     # If you use a service account credential, you can use the embedded email
     if hasattr(gcs_credentials, "service_account_email"):
         service_account_email = gcs_credentials.service_account_email
+        if not gcs_credentials.token:
+            gcs_credentials.refresh(gcs_r)
     else:
         service_account_email = os.getenv('GCS_MAIL_USER')
         if service_account_email is None:

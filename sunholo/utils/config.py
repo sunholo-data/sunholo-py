@@ -16,6 +16,7 @@ import os
 import json
 import yaml
 from google.cloud import storage
+from datetime import datetime, timedelta
 
 def fetch_config(bucket_name, blob_name):
 
@@ -63,10 +64,17 @@ def load_config(filename: str=None) -> tuple[dict, str]:
         if filename is None:
             raise ValueError("No _CONFIG_FILE env value specified")
 
+    current_time = datetime.now()
+
    # Check the cache first
     if filename in config_cache:
-        log.debug(f"Returning cached config for {filename}")
-        return config_cache[filename], filename
+        cached_config, cache_time = config_cache[filename]
+        if (current_time - cache_time) < timedelta(minutes=5):
+            log.debug(f"Returning cached config for {filename}")
+            return cached_config, filename
+        else:
+            log.debug(f"Cache expired for {filename}, reloading...")
+
     
     if os.getenv("_CONFIG_FOLDER"):
         log.debug(f"_CONFIG_FOLDER: {os.getenv('_CONFIG_FOLDER')}")
@@ -86,8 +94,8 @@ def load_config(filename: str=None) -> tuple[dict, str]:
         else:
             raise ValueError(f"Unsupported config file format: {config_file}. The supported formats are JSON and YAML.")
 
-    # Store in cache
-    config_cache[filename] = config    
+    # Store in cache with the current time
+    config_cache[filename] = (config, current_time) 
     
     return config, filename
 
