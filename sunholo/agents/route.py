@@ -16,20 +16,17 @@ from ..utils import load_config_key, load_config
 
 def route_qna(vector_name):
 
-    agent_type = load_config_key('agent_type', vector_name, filename='config/llm_config.yaml')
+    agent = load_config_key('agent', vector_name, filename='config/llm_config.yaml')
 
-    if not agent_type:
-        agent_type = load_config_key('agent', vector_name, filename='config/llm_config.yaml')
-
-    log.info(f'agent_type: {agent_type}')
+    log.info(f'agent_type: {agent}')
 
     agent_route, _ = load_config('config/cloud_run_urls.json')
     log.info(f'agent_route: {agent_route}')
 
     try:
-        agent_url = agent_route[agent_type]
+        agent_url = agent_route[agent]
     except KeyError:
-        raise ValueError(f'agent_url not found for {agent_type}')
+        raise ValueError(f'agent_url not found for {agent}')
     
     log.info(f'agent_url: {agent_url}')
     return agent_url
