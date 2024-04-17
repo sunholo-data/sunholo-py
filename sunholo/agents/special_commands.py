@@ -134,7 +134,6 @@ def app_to_store(safe_file_name, vector_name, via_bucket_pubsub=False, metadata:
         safe_file_name, 
         vector_name=vector_name, 
         metadata=metadata, 
-        bucket_filepath=f"{vector_name}/uploads/cmds/{os.path.basename(safe_file_name)}"
         )
 
     # we send the gs:// to the pubsub ourselves

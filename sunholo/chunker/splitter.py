@@ -25,7 +25,7 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
        If a document or chunk is smaller than min_size, it will be merged with adjacent documents or chunks."""
 
     if len(documents)==0:
-        log.warning("No documents found to chunk in chun_doc_to_docs")
+        log.warning("No documents found to chunk in chunk_doc_to_docs")
         return None
 
     # send full parsed doc to docstore
