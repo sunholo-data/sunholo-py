@@ -35,6 +35,7 @@ command_descriptions = {
 def handle_special_commands(user_input, 
                             vector_name, 
                             paired_messages,
+                            bucket=None,
                             cmds = ["!saveurl", "!savethread"]):
     now = datetime.datetime.now()
     hourmin = now.strftime("%H%M%S")
@@ -55,7 +56,7 @@ def handle_special_commands(user_input,
                 file.write(f"## Thread history at {the_datetime}\nUser: {user_input}")
                 for human_message, ai_message in paired_messages:
                     file.write(f"Human: {human_message}\nAI: {ai_message}\n")
-            gs_file = app_to_store(chat_file_path, vector_name, via_bucket_pubsub=True)
+            gs_file = app_to_store(chat_file_path, vector_name, via_bucket_pubsub=True, bucket=bucket)
             return f"Saved chat history to {gs_file}"
 
     elif user_input.startswith("!saveurl") and "!saveurl" in cmds:
@@ -128,11 +129,12 @@ def get_gcs_text_file(user_input, vector_name):
         return f"!{command} file does not exist for date {dream_date_str}"
     
 
-def app_to_store(safe_file_name, vector_name, via_bucket_pubsub=False, metadata:dict=None):
+def app_to_store(safe_file_name, vector_name, via_bucket_pubsub=False, metadata:dict=None, bucket=None):
     
     gs_file = add_file_to_gcs(
         safe_file_name, 
         vector_name=vector_name, 
+        bucket_name=bucket,
         metadata=metadata, 
         )
 
