@@ -23,11 +23,32 @@ from ..utils.parsers import contains_url, extract_urls
 from ..chunker.publish import publish_text
 from ..gcs.add_file import add_file_to_gcs
 
-def handle_special_commands(user_input, vector_name, paired_messages):
+# config file?
+command_descriptions = {
+    "!saveurl": "- `!saveurl [https:// url]` - add the contents found at this URL to database.",
+    "!savethread": "- `!savethread` - save the current conversation thread to the database",
+    "!deletesource": "- `!deletesource [gs:// source]` - delete a source from database",
+    "!sources": "- `!sources` - get sources added in last 24hrs",
+    "!help": "- `!help` - see this message"
+}
+
+def handle_special_commands(user_input, 
+                            vector_name, 
+                            paired_messages,
+                            cmds = ["!saveurl", "!savethread"]):
     now = datetime.datetime.now()
     hourmin = now.strftime("%H%M%S")
     the_datetime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    if user_input.startswith("!savethread"):
+
+    if user_input.startswith("!help"):
+        help_message = "*Commands*\n"
+        cmds.append("!help")
+        for cmd in cmds:
+            if cmd in command_descriptions:
+                help_message += command_descriptions[cmd] + "\n"
+        return help_message
+
+    if user_input.startswith("!savethread") and "!savethread" in cmds:
         with tempfile.TemporaryDirectory() as temp_dir:
             chat_file_path = os.path.join(temp_dir, f"{hourmin}_chat_history.txt")
             with open(chat_file_path, 'w') as file:
@@ -37,7 +58,7 @@ def handle_special_commands(user_input, vector_name, paired_messages):
             gs_file = app_to_store(chat_file_path, vector_name, via_bucket_pubsub=True)
             return f"Saved chat history to {gs_file}"
 
-    elif user_input.startswith("!saveurl"):
+    elif user_input.startswith("!saveurl") and "!saveurl" in cmds:
         if contains_url(user_input):
             urls = extract_urls(user_input)
             branch="main"
@@ -51,42 +72,25 @@ def handle_special_commands(user_input, vector_name, paired_messages):
         else:
             return "No URLs were found"
 
-    elif user_input.startswith("!deletesource"):
+    elif user_input.startswith("!deletesource") and "!deletesource in cmds":
         source = user_input.replace("!deletesource", "")
         source = source.replace("source:","").strip()
         delete_row_from_source(source, vector_name=vector_name)
         return f"Deleting source: {source}"
 
-    elif user_input.startswith("!sources"):
+    elif user_input.startswith("!sources") and "!sources" in cmds:
         rows = return_sources_last24(vector_name)
         if rows is None:
             return "No sources were found"
         else:
             msg = "\n".join([f"{row}" for row in rows])
             return f"*sources:*\n{msg}"
-
-
-    elif user_input.startswith("!help"):
-        return f"""*Commands*
-- `!saveurl [https:// url]` - add the contents found at this URL to database. 
-- `!help`- see this message
-- `!sources` - get sources added in last 24hrs
-- `!deletesource [gs:// source]` - delete a source from database
-- `!dream` - get last night's dream. Use `!dream 2023-07-30` to get a dream from a specific date. Also works with `!journal` and `!practice`
-*Tips*
-- See user guide here: https://docs.google.com/document/d/1WMi5X4FVHCihIkZ69gzxkVzr86m4WQj3H75LjSPjOtQ
-- Attach files to Discord messages to upload them into database
-- If you have access, upload big files (>5MB) to the Google Cloud Storage bucket
-- URLs of GoogleDrive work only if shared with **edmonbrain-app@devo-mark-sandbox.iam.gserviceaccount.com** in your own drive
-- URLs of GitHub (https://github.com/* branch:main) will git clone and add all repo files. e.g. `!saveurl https://github.com/me/repo branch:master`. 
-- For private GitHub repositories, the app has a GitHub PAT that will need access linked to MarkEdmondson1234 account
-*Slash Commands*
-"""
     
     # check for special text file request via !dream !journal or !practice
-    result = get_gcs_text_file(user_input, vector_name)
-    if result:
-        return result
+    if "!dream" in cmds or "!journal" in cmds or "!practice" in cmds:
+        result = get_gcs_text_file(user_input, vector_name)
+        if result:
+            return result
 
     # If no special commands were found, return None
     return None
@@ -126,7 +130,12 @@ def get_gcs_text_file(user_input, vector_name):
 
 def app_to_store(safe_file_name, vector_name, via_bucket_pubsub=False, metadata:dict=None):
     
-    gs_file = add_file_to_gcs(safe_file_name, vector_name, metadata=metadata)
+    gs_file = add_file_to_gcs(
+        safe_file_name, 
+        vector_name=vector_name, 
+        metadata=metadata, 
+        bucket_filepath=f"{vector_name}/uploads/cmds/{os.path.basename(safe_file_name)}"
+        )
 
     # we send the gs:// to the pubsub ourselves
     if not via_bucket_pubsub:
