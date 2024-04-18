@@ -48,8 +48,9 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
         if docstore_doc_id:
             document.metadata["docstore_doc_id"] = docstore_doc_id
         
-        if document.metadata.get("objectId"):
-            document.metadata["doc_id"] = generate_uuid_from_object_id(document.metadata["objectId"])
+        if document.metadata.get("objectId") or document.metadata.get("url"):
+            the_id = document.metadata.get("objectId") or document.metadata.get("url")
+            document.metadata["doc_id"] = generate_uuid_from_object_id(the_id)
         else:
             log.warning(f"Could not create a doc_id for document: {document.metadata}")
 

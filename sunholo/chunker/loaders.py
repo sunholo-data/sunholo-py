@@ -170,6 +170,9 @@ def read_url_to_document(url: str, metadata: dict = None):
     if metadata is not None:
         for doc in docs:
             doc.metadata.update(metadata)
+
+    if not doc.metadata.get("source") and doc.metadata.get("url"):
+        doc.metadata["source"] = doc.metadata["url"]
     
     log.info(f"UnstructuredURLLoader docs: {docs}")
     

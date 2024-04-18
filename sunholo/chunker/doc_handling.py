@@ -99,7 +99,7 @@ def create_big_doc(docs):
     for key in ["images_gsurls", "chunk_metadata"]:
         big_doc.metadata[key] = json.dumps(big_doc.metadata[key])
 
-    source = big_doc.metadata.get("source")
+    source = big_doc.metadata.get("source") or doc.metadata.get("url")
     if not source:
         log.warning(f"No source found for big_doc {doc_id} {big_doc.metadata}")
     
