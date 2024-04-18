@@ -34,7 +34,7 @@ command_descriptions = {
 
 def handle_special_commands(user_input, 
                             vector_name, 
-                            paired_messages,
+                            chat_history,
                             bucket=None,
                             cmds = ["!saveurl", "!savethread"]):
     now = datetime.datetime.now()
@@ -53,9 +53,9 @@ def handle_special_commands(user_input,
         with tempfile.TemporaryDirectory() as temp_dir:
             chat_file_path = os.path.join(temp_dir, f"{hourmin}_chat_history.txt")
             with open(chat_file_path, 'w') as file:
-                file.write(f"## Thread history at {the_datetime}\nUser: {user_input}")
-                for human_message, ai_message in paired_messages:
-                    file.write(f"Human: {human_message}\nAI: {ai_message}\n")
+                file.write(f"## Thread history at {the_datetime}\nUser: {user_input}\n")
+                for message in chat_history:
+                    file.write(f"{message}\n")
             gs_file = app_to_store(chat_file_path, vector_name, via_bucket_pubsub=True, bucket=bucket)
             return f"Saved chat history to {gs_file}"
 
