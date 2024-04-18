@@ -72,6 +72,8 @@ def embed_pubsub_chunk(data: dict):
     if 'source' not in metadata:
         if 'objectId' in metadata:
             metadata['source'] = metadata['objectId']
+        elif 'url' in metadata:
+            metadata['source'] = metadata['url']
         else:
             log.warning(f"No source found in metadata: {metadata}")
     
@@ -89,6 +91,8 @@ def embed_pubsub_chunk(data: dict):
             doc_id = generate_uuid_from_object_id(metadata['objectId'])
         elif 'source' in metadata:
             doc_id = generate_uuid_from_object_id(metadata["source"])
+        elif 'url' in metadata:
+            doc_id = generate_uuid_from_object_id(metadata["url"])
         else:
             log.warning(f"Could not derive a uuid - creating random uuid for {metadata}")
             doc_id = uuid.uuid4()
