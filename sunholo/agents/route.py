@@ -35,7 +35,7 @@ def route_endpoint(vector_name):
 
     agent_type = load_config_key('agent_type', vector_name, filename='config/llm_config.yaml')
     if not agent_type:
-        load_config_key('agent', vector_name, filename='config/llm_config.yaml')
+        agent_type = load_config_key('agent', vector_name, filename='config/llm_config.yaml')
 
     stem = route_qna(vector_name)
 
@@ -45,7 +45,10 @@ def route_endpoint(vector_name):
     if agent_type in agent_config:
         endpoints_config = agent_config[agent_type]
     else:
+        log.warning('Using default endpoints configuration')
         endpoints_config = agent_config['default']
+    
+    log.info(f"endpoints_config: {endpoints_config}")
 
     # Replace placeholders in the config
     endpoints = {}

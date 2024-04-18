@@ -108,7 +108,7 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
     log.info(f"Chunked into {chunk_number} documents")
     return source_chunks
 
-def choose_splitter(extension: str, chunk_size: int=1024, chunk_overlap:int=0, vector_name: str=None):
+def choose_splitter(extension: str, chunk_size: int=1024, chunk_overlap:int=200, vector_name: str=None):
 
     if vector_name:
         # check if there is a chunking configuration
