@@ -31,6 +31,7 @@ def sign_gcs_url(bucket_name:str, object_name:str, expiry_secs = 86400):
         service_account_email = gcs_credentials.service_account_email
         if not gcs_credentials.token:
             gcs_credentials.refresh(gcs_r)
+            service_account_email = gcs_credentials.service_account_email
     else:
         service_account_email = os.getenv('GCS_MAIL_USER')
         if service_account_email is None:
