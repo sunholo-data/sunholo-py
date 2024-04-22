@@ -22,6 +22,7 @@ from ..database import delete_row_from_source, return_sources_last24
 from ..utils.parsers import contains_url, extract_urls
 from ..chunker.publish import publish_text
 from ..gcs.add_file import add_file_to_gcs
+from ..utils.config import load_config_key
 
 # config file?
 command_descriptions = {
@@ -36,10 +37,16 @@ def handle_special_commands(user_input,
                             vector_name, 
                             chat_history,
                             bucket=None,
-                            cmds = ["!saveurl", "!savethread"]):
+                            cmds=None,
+                            config_file="config/llm_config.yaml"):
     now = datetime.datetime.now()
     hourmin = now.strftime("%H%M%S")
     the_datetime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    if not cmds:
+        cmds = load_config_key("user_special_cmds", vector_name=vector_name, filename=config_file)
+        if not cmds:
+            return None
 
     if user_input.startswith("!help"):
         help_message = "*Commands*\n"
@@ -73,7 +80,7 @@ def handle_special_commands(user_input,
         else:
             return "No URLs were found"
 
-    elif user_input.startswith("!deletesource") and "!deletesource in cmds":
+    elif user_input.startswith("!deletesource") and "!deletesource" in cmds:
         source = user_input.replace("!deletesource", "")
         source = source.replace("source:","").strip()
         delete_row_from_source(source, vector_name=vector_name)
