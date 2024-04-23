@@ -33,7 +33,7 @@ class GoogleCloudLogging:
     def __init__(self, project_id=None, log_level=logging.INFO, logger_name=None):
         if not hasattr(self, 'initialized'):  # Avoid re-initialization
             self.project_id = project_id or get_gcp_project()
-            self.client = Client(project=self.project_id)
+            self.client = Client(project=self.project_id) if is_running_on_gcp() else None
             self.logger_name = logger_name
             self.log_level = log_level
             self.initialized = True  # Mark as initialized
