@@ -13,10 +13,6 @@
 #   limitations under the License.
 import os
 from ..logging import log
-from ..utils.config import load_config_key
-
-
-
 
 def pick_vectorstore(vs_str, vector_name, embeddings):
     log.debug('Picking vectorstore')

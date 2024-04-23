@@ -12,9 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from ..logging import log
-from ..utils.config import load_config_key, load_config, get_module_filepath
-
-
+from ..utils.config import load_config_key
 
 def pick_llm(vector_name):
     log.debug('Picking llm')

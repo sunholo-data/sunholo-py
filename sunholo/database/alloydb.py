@@ -9,6 +9,7 @@ from google.cloud.alloydb.connector import Connector
 from langchain_google_alloydb_pg import AlloyDBEngine, Column, AlloyDBLoader, AlloyDBDocumentSaver
 from google.cloud.alloydb.connector import IPTypes
 
+from .database import get_vector_size
 from ..logging import log
 from ..utils.config import load_config_key
 
@@ -136,7 +137,43 @@ class AlloyDBClient:
             finally:
                 conn.close()
 
-        return result  
+        return result
+
+    @staticmethod
+    def _and_or_ilike(sources, search_type="OR", operator="ILIKE"):
+        unique_sources = set(sources)
+        # Choose the delimiter based on the search_type argument
+        delimiter = ' AND ' if search_type.upper() == "AND" else ' OR '
+
+        # Build the conditional expressions based on the chosen delimiter
+        conditions = delimiter.join(f"TRIM(source) {operator} '%{source}%'" for source in unique_sources)
+        if not conditions:
+            log.warning("Alloydb doc query found no like_patterns")
+            return []
+        
+        return conditions
+
+    def delete_sources_from_alloydb(self, sources, vector_name):
+        """
+        Deletes from both vectorstore and docstore
+        """
+
+        vector_length = get_vector_size(vector_name)
+
+        conditions = self._and_or_ilike(sources, operator="=")
+
+        if not conditions:
+            log.warning("No conditions were specified, not deleting whole table!")
+            return False
+
+        query = f"""
+            DELETE FROM {vector_name}_docstore
+            WHERE {conditions};
+            DELETE FROM {vector_name}_vectorstore_{vector_length}
+            WHERE {conditions}
+        """
+
+        return self.execute_sql(query)
 
 alloydb_table_cache = {}  # Our cache, initially empty  # noqa: F841
 def create_alloydb_table(vector_name, engine, type = "vectorstore", alloydb_config=None, username=None):
@@ -319,23 +356,27 @@ async def load_alloydb_sql_async(sql, vector_name):
     
     return documents
 
+def and_or_ilike(sources, search_type="OR", operator="ILIKE"):
+    unique_sources = set(sources)
+    # Choose the delimiter based on the search_type argument
+    delimiter = ' AND ' if search_type.upper() == "AND" else ' OR '
+
+    # Build the conditional expressions based on the chosen delimiter
+    conditions = delimiter.join(f"TRIM(source) {operator} '%{source}%'" for source in unique_sources)
+    if not conditions:
+        log.warning("Alloydb doc query found no like_patterns")
+        return []
+    
+    return conditions
 
 def _get_sources_from_docstore(sources, vector_name, search_type="OR"):
     if not sources:
         log.warning("No sources found for alloydb fetch")
         return []
 
-    unique_sources = set(sources)
     table_name = f"{vector_name}_docstore"
 
-    # Choose the delimiter based on the search_type argument
-    delimiter = ' AND ' if search_type.upper() == "AND" else ' OR '
-
-    # Build the conditional expressions based on the chosen delimiter
-    conditions = delimiter.join(f"TRIM(source) ILIKE '%{source}%'" for source in unique_sources)
-    if not conditions:
-        log.warning("Alloydb doc query found no like_patterns")
-        return []
+    conditions = and_or_ilike(sources, search_type=search_type)
     
     query = f"""
         SELECT * 
@@ -367,3 +408,23 @@ def get_sources_from_docstore(sources, vector_name, search_type="OR"):
     documents = load_alloydb_sql(query, vector_name)
     
     return documents
+
+def delete_sources_from_alloydb(sources, vector_name):
+    """
+    Deletes from both vectorstroe and docstore
+    """
+
+    vector_length = get_vector_size(vector_name)
+
+    conditions = and_or_ilike(sources, operator="=")
+
+    if not conditions:
+        log.warning("No conditions were specified, not deleting whole table!")
+        return False
+
+    query = f"""
+        DELETE FROM {vector_name}_docstore
+        WHERE {conditions};
+        DELETE FROM {vector_name}_vectorstore_{vector_length}
+        WHERE {conditions}
+    """

@@ -10,11 +10,21 @@ from ..logging import log
 
 # Perform a refresh request to get the access token of the current credentials (Else, it's None)
 gcs_credentials, project_id = google.auth.default()
-gcs_r = requests.Request()
 
 # Prepare global variables for client reuse
 gcs_client = storage.Client()
 gcs_bucket_cache = {}
+
+def refresh_credentials():
+    if not gcs_credentials.token or gcs_credentials.expired or not gcs_credentials.valid:
+        try:
+            gcs_credentials.refresh(requests.Request())
+        except Exception as e:
+            log.error(f"Failed to refresh credentials: {e}")
+            return False
+    return True
+# do this at module load time
+refresh_credentials()
 
 def get_bucket(bucket_name):
     if bucket_name not in gcs_bucket_cache:
@@ -22,17 +32,16 @@ def get_bucket(bucket_name):
     return gcs_bucket_cache[bucket_name]
 
 def sign_gcs_url(bucket_name:str, object_name:str, expiry_secs = 86400):
+    if not refresh_credentials():
+        log.error("Could not refresh the credentials properly.")
+        return None
     # https://stackoverflow.com/questions/64234214/how-to-generate-a-blob-signed-url-in-google-cloud-run
 
     expires = datetime.now() + timedelta(seconds=expiry_secs)
 
+    service_account_email = getattr(gcs_credentials, 'service_account_email', None)
     # If you use a service account credential, you can use the embedded email
-    if hasattr(gcs_credentials, "service_account_email"):
-        service_account_email = gcs_credentials.service_account_email
-        if not gcs_credentials.token:
-            gcs_credentials.refresh(gcs_r)
-            service_account_email = gcs_credentials.service_account_email
-    else:
+    if not service_account_email:
         service_account_email = os.getenv('GCS_MAIL_USER')
         if service_account_email is None:
             log.error("For local testing must set a GCS_MAIL_USER to sign GCS URLs")
@@ -52,14 +61,17 @@ def sign_gcs_url(bucket_name:str, object_name:str, expiry_secs = 86400):
         return url
     except RefreshError:
         log.info("Refreshing gcs_credentials due to token expiration.")
-        gcs_credentials.refresh(gcs_r)
-        return sign_gcs_url(bucket_name, object_name, expiry_secs)
+        refreshed = refresh_credentials()
+        if refreshed:
+            return sign_gcs_url(bucket_name, object_name, expiry_secs)
+        log.error("Failed to refresh gcs credentials")
+        return None
     except Exception as e:
         log.error(f"Failed to generate signed URL: {e}")
         return None
 
 
-def construct_download_link(source_uri: str) -> str:
+def construct_download_link(source_uri: str) -> tuple[str, str, bool]:
     """Creates a viewable Cloud Storage web browser link from a gs:// URI.""" 
     if not source_uri.startswith("gs://"):
         return source_uri, source_uri, False  # Return the URI as is if it doesn't start with gs://
