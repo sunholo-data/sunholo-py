@@ -7,23 +7,31 @@ from google.auth.transport import requests
 from google.auth.exceptions import RefreshError
 
 from ..logging import log
+from ..utils.gcp import is_running_on_gcp
 
-# Perform a refresh request to get the access token of the current credentials (Else, it's None)
-gcs_credentials, project_id = google.auth.default()
-
-# Prepare global variables for client reuse
-gcs_client = storage.Client()
+gcs_credentials = None
+project_id = None
+gcs_client = None
 gcs_bucket_cache = {}
 
+if is_running_on_gcp():
+    # Perform a refresh request to get the access token of the current credentials (Else, it's None)
+    gcs_credentials, project_id = google.auth.default()
+    # Prepare global variables for client reuse
+    gcs_client = storage.Client()
+
 def refresh_credentials():
+    if not is_running_on_gcp():
+        log.info("Not running on Google Cloud so no credentials available for GCS.")
+        return False
     if not gcs_credentials.token or gcs_credentials.expired or not gcs_credentials.valid:
         try:
             gcs_credentials.refresh(requests.Request())
         except Exception as e:
-            log.error(f"Failed to refresh credentials: {e}")
+            log.error(f"Failed to refresh gcs credentials: {e}")
             return False
     return True
-# do this at module load time
+
 refresh_credentials()
 
 def get_bucket(bucket_name):
