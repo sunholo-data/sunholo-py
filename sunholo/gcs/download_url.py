@@ -88,7 +88,7 @@ def construct_download_link(source_uri: str) -> tuple[str, str, bool]:
     return construct_download_link_simple(bucket_name, object_name)
 
 
-def construct_download_link_simple(bucket_name:str, object_name:str) -> str:
+def construct_download_link_simple(bucket_name:str, object_name:str) -> tuple[str, str, bool]:
     """Creates a viewable Cloud Storage web browser link from a gs:// URI.
 
     Args:
