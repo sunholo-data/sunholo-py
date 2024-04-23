@@ -49,8 +49,9 @@ class GoogleCloudLogging:
         try:
             caller_info = self._get_caller_info()
             if not is_running_on_gcp():
-                log.basicConfig(level=self.log_level, format='%(asctime)s - %(levelname)s - %(message)s')
-                log.info(f"Standard logging: {caller_info['file']}")
+                import logging
+                logging.basicConfig(level=self.log_level, format='%(asctime)s - %(levelname)s - %(message)s')
+                logging.info(f"Standard logging: {caller_info['file']}")
                 return logging
             
             print(f"Cloud logging for {caller_info['file']}")
