@@ -60,8 +60,9 @@ class GoogleCloudLogging:
             return self  # Return the instance itself on success
         except Exception as e:
             # If there's an exception, use standard Python logging as a fallback
-            log.basicConfig(level=self.log_level, format='%(asctime)s - %(levelname)s - %(message)s')
-            log.warning(f"Failed to set up Google Cloud log. Using standard log. Error: {e}")
+            import logging
+            logging.basicConfig(level=self.log_level, format='%(asctime)s - %(levelname)s - %(message)s')
+            logging.warning(f"Failed to set up Google Cloud log. Using standard log. Error: {e}")
             return logging
 
     def _get_caller_info(self):

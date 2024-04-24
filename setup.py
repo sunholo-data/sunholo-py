@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.46.4'
+version = '0.47.0'
 
 setup(
     name='sunholo',
@@ -23,6 +23,7 @@ setup(
     install_requires=[
         # List your dependencies here
         "asyncpg",
+        "fastapi",
         "google-cloud-alloydb-connector[pg8000]",
         "google-cloud-logging",
         "google-cloud-storage",
