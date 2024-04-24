@@ -22,6 +22,7 @@ setup(
     },
     install_requires=[
         # List your dependencies here
+        "asyncpg",
         "google-cloud-alloydb-connector[pg8000]",
         "google-cloud-logging",
         "google-cloud-storage",
@@ -31,6 +32,7 @@ setup(
         "langchain-community",
         "langchain-openai",
         "langchain-google-genai",
+        "langchain_google_alloydb_pg",
         "langchain-anthropic",
         "langfuse",
         "pg8000",
