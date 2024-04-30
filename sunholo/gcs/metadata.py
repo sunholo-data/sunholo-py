@@ -1,9 +1,12 @@
 from google.cloud import storage
 from ..logging import log
-
+from ..utils.gcp import is_running_on_gcp
 
 
 def get_object_metadata(bucket_name, object_name):
+
+    if not is_running_on_gcp():
+        return None
 
     if bucket_name is None or object_name is None:
         log.warning("Got invalid bucket name and object name")
