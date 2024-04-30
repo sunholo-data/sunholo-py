@@ -89,3 +89,20 @@ jesper:
     - supabase-vectorstore:
         vectorstore: supabase
         self_query: false
+sample_vector:
+  llm: azure
+  model: gpt-4-turbo-1106-preview
+  agent: langserve
+  display_name: Sample vector for tests
+  avatar_url: https://avatars.githubusercontent.com/u/126733545?s=48&v=4
+  description: An Azure OpenAI example
+  memory:
+    - lancedb-vectorstore:
+        vectorstore: lancedb
+        provider: LanceDB 
+  embedder:
+    llm: azure
+  azure:
+    azure_openai_endpoint: https://openai-central-se-amass.openai.azure.com/
+    openai_api_version: 2024-02-01
+    embed_model: text-embedding-ada-002 # or text-embedding-3-large
