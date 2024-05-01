@@ -35,7 +35,7 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
     for doc in documents:
         # Assuming each doc has a unique identifier in its metadata under 'objectId'
         objectId = doc.metadata.get("objectId")
-        if objectId in doc_summaries:
+        if objectId and objectId in doc_summaries:
             # If the objectId is found in doc_summaries, add the summary location to the document's metadata
             doc.metadata["summary_location"] = doc_summaries[objectId]
 

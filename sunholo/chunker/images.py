@@ -4,6 +4,7 @@ import tempfile
 import os
 from ..gcs.add_file import add_file_to_gcs, get_image_file_name
 from ..logging import log
+from ..utils.gcp import is_running_on_gcp
 
 
 def upload_doc_images(metadata):
@@ -29,17 +30,24 @@ def upload_doc_images(metadata):
         # wipe this so it doesn't get stuck in loop
         metadata["image_base64"] = None
         metadata["uploaded_to_bucket"] = True
-        
-        # Use the provided function to upload the file to GCS
-        image_gsurl = add_file_to_gcs(
-            filename=temp_image_path,
-            vector_name=metadata["vector_name"],
-            bucket_name=metadata["bucket_name"],
-            metadata=metadata,
-            bucket_filepath=image_path
-        )
-        os.remove(temp_image.name)
-        log.info(f"Uploaded image to GCS: {image_gsurl}")
 
-        return image_gsurl
+        if is_running_on_gcp():
+            # Use the provided function to upload the file to GCS
+            image_gsurl = add_file_to_gcs(
+                filename=temp_image_path,
+                vector_name=metadata["vector_name"],
+                bucket_name=metadata["bucket_name"],
+                metadata=metadata,
+                bucket_filepath=image_path
+            )
+            os.remove(temp_image.name)
+            log.info(f"Uploaded image to GCS: {image_gsurl}")
+
+            return image_gsurl
+        
+        else:
+            #TODO: other blob storage
+            return None
+
+        
 
