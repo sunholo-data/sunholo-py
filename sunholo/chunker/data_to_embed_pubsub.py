@@ -60,9 +60,10 @@ def data_to_embed_pubsub(data: dict):
     if metadata.get("return_chunks"):
         log.info("attributes.return_chunks=True detected, skipping process chunks queue")
         output_list = []
-        for chunk in chunks:
-            output_list.append({"page_content": chunk.page_content, "metadata": chunk.metadata})
-            
+        if chunks:
+            for chunk in chunks:
+                output_list.append({"page_content": chunk.page_content, "metadata": chunk.metadata})
+                
         return output_list
 
     process_docs_chunks_vector_name(chunks, vector_name, metadata)
