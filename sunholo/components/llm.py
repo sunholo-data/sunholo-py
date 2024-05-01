@@ -197,7 +197,7 @@ def get_embeddings(vector_name):
     if llm_str is None:
         llm_str = load_config_key("llm", vector_name, filename="config/llm_config.yaml")
 
-    return pick_embedding(llm_str)
+    return pick_embedding(llm_str, vector_name=vector_name)
 
 
 #TODO: specify model
