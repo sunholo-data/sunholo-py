@@ -53,11 +53,15 @@ def data_to_embed_pubsub(data: dict):
     else: 
         chunks, metadata = handle_json_content_message(message_data, metadata, vector_name) 
 
-    process_docs_chunks_vector_name(chunks, vector_name, metadata)
-
     # to be really sure
     if metadata:
         metadata["vector_name"] = vector_name
+
+    if metadata.get("return_chunks"):
+        log.info("attributes.return_chunks=True detected, skipping process chunks queue")
+        return chunks
+
+    process_docs_chunks_vector_name(chunks, vector_name, metadata)
 
     return metadata
 
