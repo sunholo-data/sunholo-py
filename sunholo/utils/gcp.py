@@ -56,6 +56,9 @@ def get_service_account_email():
     return service_email
 
 def get_gcp_project():
+    if not is_running_on_gcp():
+        return None
+    
     project_id = get_env_project_id()
     if project_id:
         return project_id
@@ -69,6 +72,8 @@ def get_gcp_project():
 
 
 def get_region():
+    if not is_running_on_gcp():
+        return None
     # The "instance/zone" metadata includes the region as part of the zone name
     region = os.getenv("GCP_REGION")
     if region:
@@ -85,7 +90,6 @@ def get_region():
 
 def get_metadata(stem):
     if not is_running_on_gcp():
-        logging.warning("Not running on GCP, skipping metadata server fetch. For local testing set via env var instead e.g. GCP_PROJECT")
         return None
     
     metadata_server_url = f'http://metadata.google.internal/computeMetadata/v1/{stem}'
