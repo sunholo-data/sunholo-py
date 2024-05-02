@@ -3,46 +3,29 @@ sidebar_position: 1
 slug: /
 ---
 
-# Tutorial Intro
+# Introduction
 
-Let's discover **Docusaurus in less than 5 minutes**.
+Welcome to the dev portal for the `sunholo` project, which is the open-source component for the Sunholo Multivac.
 
-## Getting Started
+`sunholo` is a library of helpful utilities for deploying GenAI applications on the cloud.  It includes various python modules and functions that have been needed to help develop GenAI applications called VACs (Virtual Agent Computers) on the Multivac system.  Whilst its primary purpose is to enable Multivac applications, it may also be useful for more general GenAI applications, for instance if you are looking for ways to manage many GenAI configurations.
 
-Get started by **creating a new site**.
 
-Or **try Docusaurus immediately** with **[docusaurus.new](https://docusaurus.new)**.
+## Skills needed
 
-### What you'll need
+To start using the package, a good background is:
 
-- [Node.js](https://nodejs.org/en/download/) version 18.0 or above:
-  - When installing Node.js, you are recommended to check all checkboxes related to dependencies.
+* Basic Python skills
+* Knowledge about GenAI models and components such as vectorstores
+* Can deploy a [Langchain Langserve template](https://templates.langchain.com/) locally
+* Familiar with cloud providers, in particular Google Cloud Platform
 
-## Generate a new site
+If you have the above, then you should be able to get some value from the `sunholo` package.
 
-Generate a new Docusaurus site using the **classic template**.
+## Getting started
 
-The classic template will automatically be added to your project after you run the command:
+`sunholo` is available on pip https://pypi.org/project/sunholo/ 
 
-```bash
-npm init docusaurus@latest my-website classic
+```sh
+pip install sunholo
 ```
 
-You can type this command into Command Prompt, Powershell, Terminal, or any other integrated terminal of your code editor.
-
-The command also installs all necessary dependencies you need to run Docusaurus.
-
-## Start your site
-
-Run the development server:
-
-```bash
-cd my-website
-npm run start
-```
-
-The `cd` command changes the directory you're working with. In order to work with your newly created Docusaurus site, you'll need to navigate the terminal there.
-
-The `npm run start` command builds your website locally and serves it through a development server, ready for you to view at http://localhost:3000/.
-
-Open `index.md` (this page) and edit some lines: the site **reloads automatically** and displays your changes.

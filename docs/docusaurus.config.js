@@ -44,15 +44,16 @@ const config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+            'https://github.com/sunholo-data/sunholo-py/tree/main/docs/',
         },
-        blog: {
-          showReadingTime: true,
+        blog: false,
+        //blog: {
+        //  showReadingTime: true,
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
-        },
+        //  editUrl:
+        //    'https://github.com/sunholo-data/sunholo-py/tree/main/docs/',
+        //},
         theme: {
           customCss: './src/css/custom.css',
         },
@@ -66,10 +67,10 @@ const config = {
       // Replace with your project's social card
       image: 'img/docusaurus-social-card.jpg',
       navbar: {
-        title: 'My Site',
+        title: 'Sunholo',
         logo: {
-          alt: 'My Site Logo',
-          src: 'img/logo.svg',
+          alt: 'Sunholo Logo',
+          src: 'img/eclipse1.png',
         },
         items: [
           {
@@ -80,7 +81,7 @@ const config = {
           },
           {to: '/blog', label: 'Blog', position: 'left'},
           {
-            href: 'https://github.com/facebook/docusaurus',
+            href: 'https://github.com/sunholo-data/sunholo-py',
             label: 'GitHub',
             position: 'right',
           },
@@ -102,16 +103,8 @@ const config = {
             title: 'Community',
             items: [
               {
-                label: 'Stack Overflow',
-                href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-              },
-              {
                 label: 'Discord',
-                href: 'https://discordapp.com/invite/docusaurus',
-              },
-              {
-                label: 'Twitter',
-                href: 'https://twitter.com/docusaurus',
+                href: 'https://discord.gg/RANn65Rh9a',
               },
             ],
           },
@@ -124,12 +117,12 @@ const config = {
               },
               {
                 label: 'GitHub',
-                href: 'https://github.com/facebook/docusaurus',
+                href: 'https://github.com/sunholo-data/sunholo-py',
               },
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Holosun ApS`,
       },
       prism: {
         theme: prismThemes.github,
