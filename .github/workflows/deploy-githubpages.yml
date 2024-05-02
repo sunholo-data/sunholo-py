@@ -2,15 +2,18 @@ name: Deploy to GitHub Pages
 
 defaults:
   run:
-    working-directory: ./docs
+    working-directory: docs/
 
 
 on:
   push:
     branches:
       - main
-    # Review gh actions docs if you want to further define triggers, paths, etc
-    # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#on
+    paths:
+    - 'docs/'
+
+  # Allow manual trigger 
+  workflow_dispatch:   
 
 jobs:
   build:
