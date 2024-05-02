@@ -9,7 +9,7 @@ on:
     branches:
       - main
     paths:
-    - 'docs/'
+    - 'docs/**'
     - '.github/workflows/deploy-githubpages.yml'
 
   # Allow manual trigger 
