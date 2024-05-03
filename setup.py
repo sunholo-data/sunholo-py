@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.49.4'
+version = '0.49.5'
 
 setup(
     name='sunholo',
@@ -25,7 +25,8 @@ setup(
         "langchain",
         "langchain_experimental",
         "langchain-community",
-        "google-cloud-logging",
+        "google-cloud-logging", #logging init
+        "fastapi" #langfuse needs this
         # Add the minimal dependencies that your package requires here
     ],
     extras_require={
