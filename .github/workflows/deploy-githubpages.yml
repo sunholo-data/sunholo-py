@@ -33,7 +33,7 @@ jobs:
         run: npm ci
 
       - name: Export docstrings
-        run: python build_scripts/export_docstrings.py
+        run: python ../build_scripts/export_docstrings.py
 
       - name: Build website
         run: npm run build
