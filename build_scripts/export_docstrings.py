@@ -15,13 +15,20 @@ def list_functions(module):
                 source_file = inspect.getfile(func)
                 result.append((func_name, func, signature, source_file))
             except TypeError:
-                # If function signature or source file cannot be retrieved, skip it
                 continue
     return result
+
 def list_classes(module):
     classes = inspect.getmembers(module, inspect.isclass)
-    return [(cls_name, cls, inspect.getfile(cls)) for cls_name, cls in classes if cls.__module__.startswith("sunholo")]
-
+    result = []
+    for cls_name, cls in classes:
+        if cls.__module__ and cls.__module__.startswith("sunholo"):
+            try:
+                source_file = inspect.getfile(cls)
+                result.append((cls_name, cls, source_file))
+            except (TypeError, OSError):
+                continue
+    return result
 def list_all_functions_and_classes_in_package(package):
     functions = []
     classes = []
