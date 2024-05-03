@@ -17,7 +17,7 @@ def list_all_functions_in_package(package):
             functions.extend(list_functions(module))
     return functions
 
-def write_docstrings_to_md(module, output_file='docs/docs/functions.md'):
+def write_docstrings_to_md(module, output_file='../docs/docs/functions.md'):
     functions = list_all_functions_in_package(module)
     if not functions:
         print("No functions found in module.")
