@@ -47,7 +47,7 @@ def list_all_functions_and_classes_in_package(package):
     explore(package)
     return functions, classes
 
-def append_docstrings_to_md(package, output_file='docs/docs/functions.md'):
+def append_docstrings_to_md(package, output_file='docs/docs/reference.md'):
     functions, classes = list_all_functions_and_classes_in_package(package)
 
     if not functions and not classes:
@@ -57,7 +57,7 @@ def append_docstrings_to_md(package, output_file='docs/docs/functions.md'):
         print(f"Found classes: {[cls_name for cls_name, _, _ in classes]}")
 
     with open(output_file, 'a') as f:
-        f.write("## Functions\n\n")
+        f.write("# Functions\n\n")
         for func_name, func, signature, source_file in functions:
             relative_file_path = os.path.relpath(source_file)
             docstring = inspect.getdoc(func)
@@ -65,7 +65,7 @@ def append_docstrings_to_md(package, output_file='docs/docs/functions.md'):
             f.write(f"*Source*: [{relative_file_path}]({GITHUB_BASE_URL + relative_file_path})\n")
             f.write(f"\n{docstring or 'No docstring available.'}\n\n")
 
-        f.write("## Classes\n\n")
+        f.write("# Classes\n\n")
         seen_classes = []
         for cls_name, cls, source_file in classes:
             if cls_name in seen_classes:
