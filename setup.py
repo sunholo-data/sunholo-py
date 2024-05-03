@@ -24,9 +24,11 @@ setup(
         # List your dependencies here
         "asyncpg",
         "fastapi",
+        "flask",
         "google-cloud-alloydb-connector[pg8000]",
         "google-cloud-logging",
         "google-cloud-storage",
+        "google-cloud-pubsub",
         "lancedb",
         "langchain",
         "langchain_experimental",
