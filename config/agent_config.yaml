@@ -1,3 +1,4 @@
+# this config file controls the behaviour of agent-types such as langserve, controlling what endpoints are used
 default:
   stream: "{stem}/stream"
   invoke: "{stem}/invoke"

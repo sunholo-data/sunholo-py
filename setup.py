@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.49.1'
+version = '0.49.2'
 
 setup(
     name='sunholo',
@@ -39,7 +39,7 @@ setup(
         "langchain-anthropic",
         "langfuse",
         "pg8000",
-        "socketio",
+        #"socketio==5.1", replace with something more modern
         "sqlalchemy"
         # pydantic==1.10.13
         # "supabase",
