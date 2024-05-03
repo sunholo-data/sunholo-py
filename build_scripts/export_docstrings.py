@@ -2,6 +2,8 @@ import inspect
 import sunholo
 import os
 
+GITHUB_BASE_URL = "https://github.com/sunholo-data/sunholo-py/blob/main/"
+
 def list_functions(module):
     functions = inspect.getmembers(module, inspect.isfunction)
     return [(func_name, func, inspect.signature(func), inspect.getfile(func)) for func_name, func in functions if func.__module__.startswith("sunholo")]
@@ -38,7 +40,7 @@ def append_docstrings_to_md(package, output_file='docs/docs/functions.md'):
             relative_file_path = os.path.relpath(source_file)
             docstring = inspect.getdoc(func)
             f.write(f"## {func_name}{signature}\n")
-            f.write(f"*Source*: [{relative_file_path}]({relative_file_path})\n")
+            f.write(f"*Source*: [{relative_file_path}]({GITHUB_BASE_URL + relative_file_path})\n")
             f.write(f"{docstring or 'No docstring available.'}\n\n")
 
         f.write("# Classes\n\n")
@@ -46,7 +48,7 @@ def append_docstrings_to_md(package, output_file='docs/docs/functions.md'):
             relative_file_path = os.path.relpath(source_file)
             cls_docstring = inspect.getdoc(cls)
             f.write(f"## {cls_name}\n")
-            f.write(f"*Source*: [{relative_file_path}]({relative_file_path})\n")
+            f.write(f"*Source*: [{relative_file_path}]({GITHUB_BASE_URL + relative_file_path})\n")
             f.write(f"{cls_docstring or 'No docstring available.'}\n\n")
             for method_name, method in inspect.getmembers(cls, inspect.isfunction):
                 signature = inspect.signature(method)
