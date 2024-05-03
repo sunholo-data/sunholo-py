@@ -92,7 +92,7 @@ sample_vector:
   embedder:
     llm: azure
   azure:
-    azure_openai_endpoint: https://openai-central-se-amass.openai.azure.com/
+    azure_openai_endpoint: https://openai-central-blah.openai.azure.com/
     openai_api_version: 2024-02-01
     embed_model: text-embedding-ada-002 # or text-embedding-3-large
 ```
@@ -144,3 +144,42 @@ crewai:
   invoke: "{stem}/qna/{vector_name}"
 ```
 
+## users_config.yaml
+
+This lets you do user authentication by matching the tags within `llm_config.yaml` with user email domains
+
+```yaml
+user_groups:
+  - name: "admin"
+    domain: "sunholo.com"
+    role: "ADMIN"
+    tags:
+      - "admin_user"
+
+  - name: "eduvac"
+    emails:
+      - "multivac@sunholo.com"
+    role: "eduvac"
+    tags:
+      - "eduvac"
+
+  # Example of another firm using both domain and specific emails
+  - name: "another_firm"
+    domain: "anotherfirm.com"
+    emails:
+      - "specialcase@anotherfirm.com"
+    role: "partner"
+    tags:
+      - "partner"
+
+default_user:
+  role: "USER"
+  tags:
+    - "user"
+
+free_user:
+  role: "USER-FREE"
+  tags:
+    - "user"
+    - "free"
+```

@@ -103,6 +103,6 @@ sample_vector:
   embedder:
     llm: azure
   azure:
-    azure_openai_endpoint: https://openai-central-se-amass.openai.azure.com/
+    azure_openai_endpoint: https://openai-blah.openai.azure.com/
     openai_api_version: 2024-02-01
     embed_model: text-embedding-ada-002 # or text-embedding-3-large
