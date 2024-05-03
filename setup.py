@@ -23,6 +23,8 @@ setup(
     install_requires=[
         # Base dependencies
         "langchain",
+        "langchain_experimental",
+        "langchain-community",
         "google-cloud-logging",
         # Add the minimal dependencies that your package requires here
     ],
@@ -61,12 +63,11 @@ setup(
             "langchain-google-genai",
             "langchain_google_alloydb_pg",
         ],
-        'langchain': [
-            "langchain",
-            "langchain_experimental",
-            "langchain-community",
+        'openai': [
             "langchain-openai",
-            "langchain-anthropic",
+        ],
+        'anthropic': [
+            "langchain-anthropic",        
         ],
         'apis': [
             "fastapi",

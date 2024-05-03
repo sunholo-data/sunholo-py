@@ -25,7 +25,44 @@ If you have the above, then you should be able to get some value from the `sunho
 
 `sunholo` is available on pip https://pypi.org/project/sunholo/ 
 
+Minimal deps:
+
 ```sh
 pip install sunholo
 ```
 
+All dependencies:
+
+```sh
+pip install sunholo[all]
+```
+
+Data base functions:
+
+```sh
+pip install sunholo[database]
+```
+
+Google Cloud Platform:
+
+```sh
+pip install sunholo[gcp]
+```
+
+OpenAI
+
+```sh
+pip install sunholo[openai]
+```
+
+Anthropic
+
+```sh
+pip install sunholo[anthropic]
+```       
+
+APIs
+
+```sh
+pip install sunholo[apis]
+```
