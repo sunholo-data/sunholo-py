@@ -11,6 +11,7 @@ on:
     paths:
     - 'docs/**'
     - '.github/workflows/deploy-githubpages.yml'
+    - 'sunholo/**'
 
   # Allow manual trigger 
   workflow_dispatch:   
