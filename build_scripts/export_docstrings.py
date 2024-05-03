@@ -1,20 +1,15 @@
 import inspect
-import sunholo
-
+import os
+import importlib.util
 
 def list_functions(module):
-    functions = []
-    for name, obj in inspect.getmembers(module):
-        if inspect.isfunction(obj):
-            functions.append((name, obj))
+    functions = inspect.getmembers(module, inspect.isfunction)
     return functions
 
 def list_all_functions_in_package(package):
     functions = []
-    for name in dir(package):
-        module = getattr(package, name)
-        if inspect.ismodule(module):
-            functions.extend(list_functions(module))
+    for _, module in inspect.getmembers(package, inspect.ismodule):
+        functions.extend(list_functions(module))
     return functions
 
 def write_docstrings_to_md(module, output_file='../docs/docs/functions.md'):
