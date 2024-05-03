@@ -1,6 +1,5 @@
 import inspect
-import os
-import importlib.util
+import sunholo
 
 def list_functions(module):
     functions = inspect.getmembers(module, inspect.isfunction)
@@ -12,14 +11,21 @@ def list_all_functions_in_package(package):
         functions.extend(list_functions(module))
     return functions
 
-def write_docstrings_to_md(module, output_file='../docs/docs/functions.md'):
-    functions = list_all_functions_in_package(module)
+def write_docstrings_to_md(package, output_file='../docs/docs/functions.md'):
+    functions = list_all_functions_in_package(package)
     if not functions:
         print("No functions found in module.")
     else:
         print(f"Found functions: {[name for name, _ in functions]}")
 
     with open(output_file, 'w') as f:
+        # Write the header lines
+        f.write("---\n")
+        f.write("sidebar_position: 2\n")
+        f.write("slug: /function-reference\n")
+        f.write("---\n\n")
+
+        # Write each function's documentation
         for name, func in functions:
             docstring = inspect.getdoc(func)
             if docstring:
@@ -30,5 +36,4 @@ def write_docstrings_to_md(module, output_file='../docs/docs/functions.md'):
                 print(f"No docstring for function: {name}")
 
 if __name__ == "__main__":
-    import sunholo
     write_docstrings_to_md(sunholo)
