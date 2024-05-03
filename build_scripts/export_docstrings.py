@@ -32,7 +32,7 @@ def write_docstrings_to_md(package, output_file='../docs/docs/functions.md'):
             docstring = inspect.getdoc(func)
             if docstring:
                 print(f"writing docstring for {name}")
-                f.write(f"## {name}\n\n")
+                f.write(f"## {name}()\n")
                 f.write(f"{docstring}\n\n")
             else:
                 print(f"No docstring for function: {name}")

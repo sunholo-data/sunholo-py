@@ -1,18 +1,26 @@
 import os
-import glob
+import importlib.util
 
-# Get a list of all .py files in the package directory
-module_files = glob.glob(os.path.dirname(__file__) + "/*.py")
+def import_submodules(package_name):
+    """Import all submodules of a package."""
+    package_path = os.path.dirname(__file__)
+    package_dir = os.path.join(package_path, package_name)
+    
+    # Traverse the directory structure
+    for root, dirs, files in os.walk(package_dir):
+        for file in files:
+            if file.endswith('.py') and not file.startswith('_'):
+                module_name = os.path.splitext(file)[0]
+                module_path = os.path.relpath(os.path.join(root, file), package_path)
+                module_name = package_name + '.' + module_path.replace(os.path.sep, '.')
+                
+                # Import the module dynamically
+                spec = importlib.util.spec_from_file_location(module_name, os.path.join(package_path, module_path))
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
 
-# Exclude __init__.py itself
-module_files = [f for f in module_files if not f.endswith('__init__.py')]
-
-# Get the module names (remove the directory path and file extension)
-modules = [os.path.basename(f)[:-3] for f in module_files]
-
-# Import all modules dynamically
-for module in modules:
-    __import__(f"{__name__}.{module}", fromlist=[module])
+# Import submodules dynamically
+import_submodules('sunholo')
 
 # Set __all__ to include all imported modules
-__all__ = modules
+__all__ = [module for module in dir() if not module.startswith('_')]
