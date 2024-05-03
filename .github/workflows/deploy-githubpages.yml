@@ -35,19 +35,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Upgrade pip and setuptools
-        run: pip install --upgrade pip
-
-      - name: Install setuptools
-        run: pip install setuptools
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.x'
 
       - name: Install pip dependencies
-        run: pip install -e .
+        run: pip install --upgrade pip && pip install setuptools && pip install -e . && python build_scripts/export_docstrings.py
         working-directory: ${{ github.workspace }}
       
-      - name: Export docstrings
-        run: python ../build_scripts/export_docstrings.py
-
       - name: Build website
         run: npm run build
 
