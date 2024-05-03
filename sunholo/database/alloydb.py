@@ -76,15 +76,13 @@ class AlloyDBClient:
                  password=None, 
                  db="postgres"):
         """Initializes the AlloyDB client.
-
-        Args:
-            project_id (str): GCP project ID where the AlloyDB instance resides.
-            region (str): The region where the AlloyDB instance is located.
-            cluster_name (str): The name of the AlloyDB cluster.
-            instance_name (str): The name of the AlloyDB instance.
-            user (str): The database user name.
-            password (str): The database user's password.
-            db_name (str): The name of the database.
+         - project_id (str): GCP project ID where the AlloyDB instance resides.
+         - region (str): The region where the AlloyDB instance is located.
+         - cluster_name (str): The name of the AlloyDB cluster.
+         - instance_name (str): The name of the AlloyDB instance.
+         - user (str): The database user name.
+         - password (str): The database user's password.
+         - db_name (str): The name of the database.
         """
         self.connector = Connector()
         self.inst_uri = self._build_instance_uri(project_id, region, cluster_name, instance_name)
@@ -117,11 +115,8 @@ class AlloyDBClient:
     def execute_sql(self, sql_statement):
         """Executes a given SQL statement with error handling.
 
-        Args:
-            sql_statement (str): The SQL statement to execute.
-
-        Returns:
-            The result of the execution, if any.
+         - sql_statement (str): The SQL statement to execute.
+         - Returns: The result of the execution, if any.
         """
         sql_ = sqlalchemy.text(sql_statement)
         result = None
@@ -411,7 +406,7 @@ def get_sources_from_docstore(sources, vector_name, search_type="OR"):
 
 def delete_sources_from_alloydb(sources, vector_name):
     """
-    Deletes from both vectorstroe and docstore
+    Deletes from both vectorstore and docstore
     """
 
     vector_length = get_vector_size(vector_name)
