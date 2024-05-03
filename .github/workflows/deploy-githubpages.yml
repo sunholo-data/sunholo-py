@@ -12,6 +12,7 @@ on:
     - 'docs/**'
     - '.github/workflows/deploy-githubpages.yml'
     - 'sunholo/**'
+    - 'setup.py'
     - 'build_scripts/export_docstrings.py'
 
   # Allow manual trigger 
