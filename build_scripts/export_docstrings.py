@@ -3,6 +3,7 @@ import sunholo
 
 def list_functions(module):
     functions = inspect.getmembers(module, inspect.isfunction)
+    print(functions)
     return functions
 
 def list_all_functions_in_package(package):
