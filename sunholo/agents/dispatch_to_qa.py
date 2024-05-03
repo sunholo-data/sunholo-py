@@ -121,7 +121,11 @@ async def send_to_qa_async(user_input, vector_name, chat_history, stream=False, 
 
 
 def add_header_ids(header, **kwargs):
-        # Check if 'user_id' and 'session_id' are in kwargs and add them to the header
+
+    if not header:
+        return None
+    
+    # Check if 'user_id' and 'session_id' are in kwargs and add them to the header
     if 'user_id' in kwargs:
         header['X-User-ID'] = kwargs['user_id']  # Custom header names, adjust as needed
     if 'session_id' in kwargs:
