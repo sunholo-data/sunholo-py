@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.49.3'
+version = '0.49.4'
 
 setup(
     name='sunholo',
@@ -21,36 +21,59 @@ setup(
         'sunholo.lookup': ['*.yaml']
     },
     install_requires=[
-        # List your dependencies here
-        "asyncpg",
-        "fastapi",
-        "flask",
-        "google-cloud-alloydb-connector[pg8000]",
-        "google-cloud-logging",
-        "google-cloud-storage",
-        "google-cloud-pubsub",
-        "lancedb",
+        # Base dependencies
         "langchain",
-        "langchain_experimental",
-        "langchain-community",
-        "langchain-openai",
-        "langchain-google-genai",
-        "langchain_google_alloydb_pg",
-        "langchain-anthropic",
-        "langfuse",
-        "pg8000",
-        "python-socketio",
-        "sqlalchemy"
-        # pydantic==1.10.13
-        # "supabase",
-        # "openai",
-        # "tiktoken",
-        # "google-cloud-storage",
-        # "google-api-python-client",
-        # "google-auth-httplib2",
-        # "google-auth-oauthlib",
-        # "psycopg2-binary"
+        "google-cloud-logging",
+        # Add the minimal dependencies that your package requires here
     ],
+    extras_require={
+        # Define optional dependencies with feature names
+        'all': [
+            "asyncpg",
+            "flask",
+            "google-cloud-alloydb-connector[pg8000]",
+            "google-cloud-logging",
+            "google-cloud-storage",
+            "google-cloud-pubsub",
+            "lancedb",
+            "langchain",
+            "langchain_experimental",
+            "langchain-community",
+            "langchain-openai",
+            "langchain-google-genai",
+            "langchain_google_alloydb_pg",
+            "langchain-anthropic",
+            "langfuse",
+            "pg8000",
+            "python-socketio"
+        ],
+        'database': [
+            "asyncpg",
+            "sqlalchemy",
+            "google-cloud-alloydb-connector[pg8000]",
+            "pg8000",
+            "lancedb",
+        ],
+        'gcp': [
+            "google-cloud-storage",
+            "google-cloud-logging",
+            "google-cloud-pubsub",
+            "langchain-google-genai",
+            "langchain_google_alloydb_pg",
+        ],
+        'langchain': [
+            "langchain",
+            "langchain_experimental",
+            "langchain-community",
+            "langchain-openai",
+            "langchain-anthropic",
+        ],
+        'apis': [
+            "fastapi",
+            "flask"
+            "python-socketio",
+        ]
+    },
     classifiers=[
         'Development Status :: 3 - Alpha',      # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as the current state of your package
         'Intended Audience :: Developers',      # Define that your audience are developers
