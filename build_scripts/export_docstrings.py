@@ -6,8 +6,18 @@ GITHUB_BASE_URL = "https://github.com/sunholo-data/sunholo-py/blob/main/"
 
 def list_functions(module):
     functions = inspect.getmembers(module, inspect.isfunction)
-    return [(func_name, func, inspect.signature(func), inspect.getfile(func)) for func_name, func in functions if func.__module__.startswith("sunholo")]
-
+    result = []
+    for func_name, func in functions:
+        # Skip if the function doesn't have a module or if it's not in the "sunholo" package
+        if func.__module__ and func.__module__.startswith("sunholo"):
+            try:
+                signature = inspect.signature(func)
+                source_file = inspect.getfile(func)
+                result.append((func_name, func, signature, source_file))
+            except TypeError:
+                # If function signature or source file cannot be retrieved, skip it
+                continue
+    return result
 def list_classes(module):
     classes = inspect.getmembers(module, inspect.isclass)
     return [(cls_name, cls, inspect.getfile(cls)) for cls_name, cls in classes if cls.__module__.startswith("sunholo")]
