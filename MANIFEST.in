@@ -1,0 +1,5 @@
+include README.md
+include sunholo/database/sql/sb/*.sql
+include sunholo/lookup/*.yaml
+exclude *.md
+exclude docs/*
