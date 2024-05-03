@@ -24,6 +24,8 @@ def write_docstrings_to_md(package, output_file='../docs/docs/functions.md'):
         f.write("sidebar_position: 2\n")
         f.write("slug: /function-reference\n")
         f.write("---\n\n")
+        f.write("# Function Reference\n\n")
+        f.write("Below is a function reference generated from the docstrings of the functions within the sunholo module\n\n")
 
         # Write each function's documentation
         for name, func in functions:
@@ -34,6 +36,9 @@ def write_docstrings_to_md(package, output_file='../docs/docs/functions.md'):
                 f.write(f"{docstring}\n\n")
             else:
                 print(f"No docstring for function: {name}")
+
+    with open(output_file, 'r') as f:
+        print(f.read())
 
 if __name__ == "__main__":
     write_docstrings_to_md(sunholo)
