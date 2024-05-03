@@ -1,0 +1,33 @@
+user_groups:
+  - name: "admin"
+    domain: "sunholo.com"
+    role: "ADMIN"
+    tags:
+      - "admin_user"
+
+  - name: "eduvac"
+    emails:
+      - "multivac@sunholo.com"
+    role: "eduvac"
+    tags:
+      - "eduvac"
+
+  # Example of another firm using both domain and specific emails
+  - name: "another_firm"
+    domain: "anotherfirm.com"
+    emails:
+      - "specialcase@anotherfirm.com"
+    role: "partner"
+    tags:
+      - "partner"
+
+default_user:
+  role: "USER"
+  tags:
+    - "user"
+
+free_user:
+  role: "USER-FREE"
+  tags:
+    - "user"
+    - "free"
