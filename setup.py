@@ -39,7 +39,6 @@ setup(
         "langchain-anthropic",
         "langfuse",
         "pg8000",
-        "setuptools",
         "socketio",
         "sqlalchemy"
         # pydantic==1.10.13
