@@ -5,6 +5,7 @@ def import_submodules(package_name):
     """Import all submodules of a package."""
     package_path = os.path.dirname(__file__)
     package_dir = os.path.join(package_path, package_name)
+    imported_modules = []
     
     # Traverse the directory structure
     for root, dirs, files in os.walk(package_dir):
@@ -18,9 +19,12 @@ def import_submodules(package_name):
                 spec = importlib.util.spec_from_file_location(module_name, os.path.join(package_path, module_path))
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
+                imported_modules.append(module_name)
+    
+    return imported_modules
 
-# Import submodules dynamically
-import_submodules('sunholo')
+# Import submodules dynamically and get the list of imported modules
+imported_modules = import_submodules('sunholo')
 
 # Set __all__ to include all imported modules
-__all__ = [module for module in dir() if not module.startswith('_')]
+__all__ = imported_modules
