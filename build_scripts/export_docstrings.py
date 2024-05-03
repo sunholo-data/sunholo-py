@@ -3,13 +3,16 @@ import sunholo
 
 def list_functions(module):
     functions = inspect.getmembers(module, inspect.isfunction)
-    print(functions)
-    return functions
+    return [func for func in functions if func[1].__module__.startswith("sunholo")]
 
 def list_all_functions_in_package(package):
     functions = []
     for _, module in inspect.getmembers(package, inspect.ismodule):
         functions.extend(list_functions(module))
+        # Recursively find submodules
+        submodules = inspect.getmembers(module, inspect.ismodule)
+        for _, submodule in submodules:
+            functions.extend(list_functions(submodule))
     return functions
 
 def write_docstrings_to_md(package, output_file='docs/docs/functions.md'):
