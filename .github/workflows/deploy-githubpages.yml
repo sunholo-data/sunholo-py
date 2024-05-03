@@ -35,7 +35,7 @@ jobs:
         run: npm ci
 
       - name: Install pip dependencies
-        run: pip install .
+        run: pip install -e . && pip list
         working-directory: ${{ github.workspace }}
       
       - name: Export docstrings
