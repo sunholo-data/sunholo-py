@@ -1,5 +1,4 @@
 from langfuse.callback import CallbackHandler
-from fastapi import Request
 from typing import Dict, Any
 from ..logging import log
 
@@ -12,7 +11,7 @@ def create_langfuse_callback(**kwargs):
 
 def add_langfuse_tracing(
         config: Dict[str, Any],
-        request: Request) -> Dict[str, Any]:
+        request) -> Dict[str, Any]:
     """
     Config modifier function to add a tracing callback
     By @jmaness https://github.com/langchain-ai/langserve/issues/311
@@ -21,6 +20,7 @@ def add_langfuse_tracing(
     :param request: HTTP request
     :return: updated config
     """
+
 
     log.debug(f"add_langfuse_tracing config: {config} {request}")
 
