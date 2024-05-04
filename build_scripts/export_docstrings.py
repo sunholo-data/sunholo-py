@@ -47,40 +47,46 @@ def list_all_functions_and_classes_in_package(package):
     explore(package)
     return functions, classes
 
-def append_docstrings_to_md(package, output_file='docs/docs/reference.md'):
+def write_docstrings_to_md(package):
     functions, classes = list_all_functions_and_classes_in_package(package)
 
     if not functions and not classes:
         print("No functions or classes found in module.")
-    else:
-        print(f"Found functions: {[name for name, _, _, _ in functions]}")
-        print(f"Found classes: {[cls_name for cls_name, _, _ in classes]}")
+        return
+    
+    print(f"Found functions: {[name for name, _, _, _ in functions]}")
+    print(f"Found classes: {[cls_name for cls_name, _, _ in classes]}")
 
-    with open(output_file, 'a') as f:
-        f.write("# Functions\n\n")
-        for func_name, func, signature, source_file in functions:
-            relative_file_path = os.path.relpath(source_file)
-            docstring = inspect.getdoc(func)
-            f.write(f"### {func_name}{signature}\n")
-            f.write(f"*Source*: [{relative_file_path}]({GITHUB_BASE_URL + relative_file_path})\n")
-            f.write(f"\n{docstring or 'No docstring available.'}\n\n")
+    source_files = set([src for _, _, _, src in functions] + [src for _, _, src in classes])
 
-        f.write("# Classes\n\n")
-        seen_classes = []
-        for cls_name, cls, source_file in classes:
-            if cls_name in seen_classes:
-                continue
-            seen_classes.append(cls_name)
-            relative_file_path = os.path.relpath(source_file)
-            cls_docstring = inspect.getdoc(cls)
-            f.write(f"### {cls_name}\n")
-            f.write(f"*Source*: [{relative_file_path}]({GITHUB_BASE_URL + relative_file_path})\n")
-            f.write(f"\n{cls_docstring or 'No docstring available.'}\n\n")
-            for method_name, method in inspect.getmembers(cls, inspect.isfunction):
-                signature = inspect.signature(method)
-                method_docstring = inspect.getdoc(method)
-                f.write(f"* {method_name}{signature}\n")
-                f.write(f"   - {method_docstring or 'No docstring available.'}\n\n")
+    for source_file in source_files:
+        relative_file_path = os.path.relpath(source_file)
+        relative_md_path = os.path.splitext(relative_file_path)[0] + '.md'
+        md_file_path = os.path.join('docs', 'docs', relative_md_path)
+        os.makedirs(os.path.dirname(md_file_path), exist_ok=True)
+
+        with open(md_file_path, 'w') as f:
+            f.write(f"# {os.path.basename(source_file)}\n\n")
+            f.write(f"*Source*: [{relative_file_path}]({GITHUB_BASE_URL + relative_file_path})\n\n")
+
+            f.write("## Functions\n\n")
+            for func_name, func, signature, src in functions:
+                if src == source_file:
+                    docstring = inspect.getdoc(func)
+                    f.write(f"### {func_name}{signature}\n")
+                    f.write(f"\n{docstring or 'No docstring available.'}\n\n")
+
+            f.write("## Classes\n\n")
+            for cls_name, cls, src in classes:
+                if src == source_file:
+                    cls_docstring = inspect.getdoc(cls)
+                    f.write(f"### {cls_name}\n")
+                    f.write(f"\n{cls_docstring or 'No docstring available.'}\n\n")
+                    for method_name, method in inspect.getmembers(cls, inspect.isfunction):
+                        signature = inspect.signature(method)
+                        method_docstring = inspect.getdoc(method)
+                        f.write(f"* {method_name}{signature}\n")
+                        f.write(f"   - {method_docstring or 'No docstring available.'}\n\n")
 
 if __name__ == "__main__":
-    append_docstrings_to_md(sunholo)
+    write_docstrings_to_md(sunholo)
