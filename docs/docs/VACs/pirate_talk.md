@@ -8,7 +8,7 @@ It demonstrates how to deploy a Langserve application on Multivac, and the confi
 
 This VAC application translates your questions into pirate speak! Ohh arr.
 
-![](img/vacs/vac-pirate-speak.png)
+![](vac-pirate-speak.png)
 
 ## Config yaml
 
