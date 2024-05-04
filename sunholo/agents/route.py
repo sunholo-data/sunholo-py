@@ -16,8 +16,12 @@ from ..utils import load_config_key, load_config
 
 def route_qna(vector_name):
 
-    agent = load_config_key('agent', vector_name, filename='config/llm_config.yaml')
+    agent_url = load_config_key('agent_url', vector_name=vector_name, filename='config/llm_config.yaml')
+    if agent_url:
+        log.info('agent_url found in llm_config.yaml')
+        return agent_url
 
+    agent = load_config_key('agent', vector_name, filename='config/llm_config.yaml')
     log.info(f'agent_type: {agent}')
 
     agent_route, _ = load_config('config/cloud_run_urls.json')

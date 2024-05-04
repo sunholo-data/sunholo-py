@@ -101,18 +101,32 @@ def load_config(filename: str=None) -> tuple[dict, str]:
 def load_config_key(key: str, vector_name: str, filename: str=None) -> str:
     from ..logging import log
     
-
     assert isinstance(key, str), f"key must be a string got a {type(key)}"
     assert isinstance(vector_name, str), f"vector_name must be a string, got a {type(vector_name)}"
     
     config, filename = load_config(filename)
     log.info(f"Fetching {key} for {vector_name}")
-    llm_config = config.get(vector_name, None)
-    if llm_config is None:
+    apiVersion = config.get('apiVersion')
+    kind = config.get('kind')
+    vac = config.get('vac')
+
+    if not apiVersion or not kind:
+        log.warning("Deprecated config file, move to config with `apiVersion` and `kind` set")
+        vac_config = config.get(vector_name)
+    else:
+        log.info(f"Loaded config file {kind}/{apiVersion}")
+    
+    if kind == 'vacConfig':
+        vac = config.get('vac')
+        if not vac:
+            raise ValueError("Deprecated config file, move to config with `vac:` at top level for `vector_name`")
+        vac_config = vac.get(vector_name)
+
+    if not vac_config:
         raise ValueError(f"No config array was found for {vector_name} in {filename}")
     
-    log.info(f'llm_config: {llm_config} for {vector_name} - fetching "{key}"')
+    log.info(f'vac_config: {vac_config} for {vector_name} - fetching "{key}"')
 
-    key_value = llm_config.get(key, None)
+    key_value = vac_config.get(key)
     
     return key_value
