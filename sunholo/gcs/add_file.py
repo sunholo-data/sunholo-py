@@ -20,7 +20,11 @@ from ..logging import log
 
 def add_file_to_gcs(filename: str, vector_name:str, bucket_name: str=None, metadata:dict=None, bucket_filepath:str=None):
 
-    storage_client = storage.Client()
+    try:
+        storage_client = storage.Client()
+    except Exception as err:
+        log.error(f"Error creating storage client: {str(err)}")
+        return None
 
     bucket_name = bucket_name if bucket_name else os.getenv('GCS_BUCKET', None)
     if bucket_name is None:

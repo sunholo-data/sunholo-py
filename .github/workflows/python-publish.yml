@@ -32,6 +32,13 @@ jobs:
         pip install build
     - name: Build package
       run: python -m build
+    - name: Test minimal install
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+        pip install dist/sunholo*.whl  # Install the built package
+        python -c "import sunholo"  # Test that the package is importable
+        deactivate
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
       with:

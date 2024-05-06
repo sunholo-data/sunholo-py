@@ -57,6 +57,8 @@ def handle_special_commands(user_input,
         return help_message
 
     if user_input.startswith("!savethread") and "!savethread" in cmds:
+        if not bucket:
+            return "Can't save threads without a bucket destination set-up in config"
         with tempfile.TemporaryDirectory() as temp_dir:
             chat_file_path = os.path.join(temp_dir, f"{hourmin}_chat_history.txt")
             with open(chat_file_path, 'w') as file:

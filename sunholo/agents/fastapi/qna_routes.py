@@ -13,10 +13,6 @@ from ...streaming import start_streaming_chat_async
 from ...archive import archive_qa
 from ...logging import log
 
-
-
-app = FastAPI()
-
 class VACRequest(BaseModel):
     user_input: str
     chat_history: Optional[list] = None
@@ -24,7 +20,6 @@ class VACRequest(BaseModel):
     stream_timeout: Optional[int] = 120
     message_author: Optional[str] = None
     image_url: Optional[str] = None
-
 
 
 def create_stream_qa_endpoint(stream_interpreter):

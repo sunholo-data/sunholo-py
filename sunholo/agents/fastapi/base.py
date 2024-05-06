@@ -1,15 +1,16 @@
-import os
-import socketio
+try:
+    import socketio
+except ImportError:
+    socketio = None
 
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+try:
+    from fastapi import FastAPI, Request
+    from fastapi.responses import HTMLResponse
+    from fastapi.middleware.cors import CORSMiddleware
+except ImportError:
+    FastAPI = None
 
-from sunholo.logging import log
-
-
-
-from fastapi.middleware.cors import CORSMiddleware
-
+from ...logging import log
 
 def create_fastapi_app():
     """Creates and configures a FastAPI app for image-based Q&A with Socket.IO integration.
@@ -22,7 +23,14 @@ def create_fastapi_app():
         FastAPI: The configured FastAPI app instance.
     """
 
-    # Create Socket.IO server and FastAPI app 
+    if not socketio:
+        raise ImportError("socketio is not available, please install via `pip install fastapi-socketio`")
+
+
+    if not FastAPI:
+        raise ImportError("FastAPI is not available, please install via `pip install fastapi`")
+
+    # Create Socket.IO server and FastAPI app     
     sio = socketio.AsyncServer(async_mode='asgi')
     app = FastAPI()
     socket_app = socketio.ASGIApp(sio, other_asgi_app=app)
