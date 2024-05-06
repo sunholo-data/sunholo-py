@@ -12,14 +12,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import time
-from httpcore import ReadTimeout
-from httpx import ReadTimeout
 import traceback
 from ..logging import log
 
 
-
 def retry_qna(qa_function, question, max_retries=1, initial_delay=5):
+    from httpcore import ReadTimeout
+    from httpx import ReadTimeout
     for retry in range(max_retries):
         try:
             return qa_function(question)

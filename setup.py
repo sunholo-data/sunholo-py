@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.50.10'
+version = '0.50.11'
 
 setup(
     name='sunholo',
@@ -38,6 +38,8 @@ setup(
             "google-cloud-logging",
             "google-cloud-storage",
             "google-cloud-pubsub",
+            "httpcore",
+            "httpx",
             "lancedb",
             "langchain",
             "langchain_experimental",
@@ -76,7 +78,9 @@ setup(
         ],
         'apis': [
             "fastapi",
-            "flask"
+            "flask",
+            "httpcore",
+            "httpx",
             "python-socketio",
         ]
     },
