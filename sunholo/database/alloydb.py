@@ -9,7 +9,7 @@ try:
     from langchain_google_alloydb_pg import AlloyDBEngine, Column, AlloyDBLoader, AlloyDBDocumentSaver
     from google.cloud.alloydb.connector import IPTypes
 except ImportError as err:
-    print(f"No AlloyDBEngine: {str(err)}")
+    print(f"No AlloyDBEngine: {str(err)} - install via `pip install sunholo['database']`")
 
 from .database import get_vector_size
 from ..logging import log

@@ -1,5 +1,9 @@
-from fastapi import FastAPI, Request, Response, APIRouter
-from fastapi.responses import StreamingResponse, JSONResponse
+try:
+    from fastapi import FastAPI, Request, Response, APIRouter
+    from fastapi.responses import StreamingResponse, JSONResponse
+except ImportError:
+    FastAPI = None
+
 import json
 import traceback
 import asyncio
@@ -78,7 +82,7 @@ def create_process_qna_endpoint(qna_interpreter):
         return JSONResponse(content=bot_output)
     return process_qna
 
-def register_qna_fastapi_routes(app: FastAPI, stream_interpreter, qna_interpreter):
+def register_qna_fastapi_routes(app, stream_interpreter, qna_interpreter):
     router = APIRouter()
 
     # Register your routes on the router
