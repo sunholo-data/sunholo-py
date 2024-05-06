@@ -15,14 +15,20 @@
 import os
 import json
 import yaml
-from google.cloud import storage
 from datetime import datetime, timedelta
 
+try:
+    from google.cloud import storage
+except ImportError:
+    storage = None
+
 def fetch_config(bucket_name, blob_name):
-
     from ..logging import log
-    
 
+    if not storage:
+        log.debug("No google.cloud.storage client installed. Skipping config load from bucket")
+        return None
+    
     storage_client = storage.Client()
 
     bucket = storage_client.bucket(bucket_name)
