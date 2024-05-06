@@ -16,13 +16,17 @@ import tempfile
 import os
 import re
 
-from google.cloud import storage
+try:
+    from google.cloud import storage
+except ImportError:
+    storage = None
 
 from ..database import delete_row_from_source, return_sources_last24
 from ..utils.parsers import contains_url, extract_urls
 from ..chunker.publish import publish_text
 from ..gcs.add_file import add_file_to_gcs
 from ..utils.config import load_config_key
+from ..logging import log
 
 # config file?
 command_descriptions = {
@@ -106,6 +110,10 @@ def handle_special_commands(user_input,
     return None
 
 def get_gcs_text_file(user_input, vector_name):
+    if not storage:
+        log.debug("No storage client is available")
+        return None
+
     command = None
     for keyword in ["!dream", "!journal", "!practice"]:
         if user_input.startswith(keyword):
