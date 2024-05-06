@@ -11,13 +11,15 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from google.cloud import pubsub_v1
-from google.api_core.exceptions import NotFound
-from google.api_core.exceptions import AlreadyExists
-from google.auth import default
+try:
+    from google.cloud import pubsub_v1
+    from google.api_core.exceptions import NotFound
+    from google.api_core.exceptions import AlreadyExists
+    from google.auth import default
+except ImportError:
+    pubsub_v1 = None
 
 import json
-import os
 from ..logging import log
 from ..utils.gcp import get_gcp_project
 
@@ -33,6 +35,10 @@ class PubSubManager:
         self.publisher = None
         self.verbose = verbose
         self.memory_namespace = memory_namespace
+
+        if not pubsub_v1:
+            log.warning('google.cloud.pubsub not installed, install via `pip install google-cloud-pubsub`')
+            return None
 
         # Get the project ID from the default Google Cloud settings or the environment variable
         if self.project_id is None:
