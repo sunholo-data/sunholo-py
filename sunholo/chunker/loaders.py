@@ -18,9 +18,6 @@ from langchain_community.document_loaders import UnstructuredURLLoader
 from langchain_community.document_loaders import GitLoader
 from langchain_community.document_loaders import GoogleDriveLoader
 
-from googleapiclient.errors import HttpError
-from googleapiclient.discovery import build
-
 from ..logging import log
 from .pdfs import read_pdf_file
 from ..utils.config import load_config
@@ -34,8 +31,6 @@ import time
 
 from pydantic import BaseModel, Field
 from typing import Optional
-
-
 
 UNSTRUCTURED_KEY=os.getenv('UNSTRUCTURED_KEY')
 
@@ -71,6 +66,8 @@ class MyGoogleDriveLoader(GoogleDriveLoader):
 
     def load_from_url(self, url: str):
         id = self._extract_id(url)
+        from googleapiclient.errors import HttpError
+        from googleapiclient.discovery import build
 
         # Identify type of URL
         try:

@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.50.8'
+version = '0.50.9'
 
 setup(
     name='sunholo',
@@ -33,6 +33,7 @@ setup(
         'all': [
             "asyncpg",
             "flask",
+            "google-api-python-client",
             "google-cloud-alloydb-connector[pg8000]",
             "google-cloud-logging",
             "google-cloud-storage",
@@ -69,6 +70,9 @@ setup(
         ],
         'anthropic': [
             "langchain-anthropic",        
+        ],
+        'chunker':[
+            "google-api-python-client"
         ],
         'apis': [
             "fastapi",
