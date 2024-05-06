@@ -5,9 +5,12 @@ import os
 from sqlalchemy.exc import DatabaseError, ProgrammingError
 from asyncpg.exceptions import DuplicateTableError
 
-from google.cloud.alloydb.connector import Connector
-from langchain_google_alloydb_pg import AlloyDBEngine, Column, AlloyDBLoader, AlloyDBDocumentSaver
-from google.cloud.alloydb.connector import IPTypes
+try:
+    from google.cloud.alloydb.connector import Connector
+    from langchain_google_alloydb_pg import AlloyDBEngine, Column, AlloyDBLoader, AlloyDBDocumentSaver
+    from google.cloud.alloydb.connector import IPTypes
+except ImportError:
+    print("No AlloyDBEngine")
 
 from .database import get_vector_size
 from ..logging import log

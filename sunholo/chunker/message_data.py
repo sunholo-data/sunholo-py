@@ -18,8 +18,11 @@ import tempfile
 import os
 import re
 import json
+try:
+    from google.cloud import storage
+except ImportError:
+    storage = None
 
-from google.cloud import storage
 from langchain.schema import Document
 
 
@@ -34,6 +37,10 @@ from ..gcs.add_file import add_file_to_gcs, get_pdf_split_file_name
 
 
 def handle_gcs_message(message_data: str, metadata: dict, vector_name: str):
+
+    if not storage:
+        log.warning("No GCS storage client")
+        return None, None
     # Process message from Google Cloud Storage
     log.debug("Detected gs://")
     bucket_name, file_name = message_data[5:].split("/", 1)

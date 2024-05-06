@@ -1,11 +1,14 @@
-from google.cloud import storage
+try:
+    from google.cloud import storage
+except ImportError:
+    storage = None
+
 from ..logging import log
-from ..utils.gcp import is_running_on_gcp
 
 
 def get_object_metadata(bucket_name, object_name):
 
-    if not is_running_on_gcp():
+    if not storage:
         return None
 
     if bucket_name is None or object_name is None:

@@ -13,13 +13,21 @@
 #   limitations under the License.
 import datetime
 import os
-from google.cloud import storage
+
+try:
+    from google.cloud import storage
+except ImportError:
+    storage = None
+
 from ..logging import log
 
 
 
 def add_file_to_gcs(filename: str, vector_name:str, bucket_name: str=None, metadata:dict=None, bucket_filepath:str=None):
 
+    if not storage:
+        return None
+    
     try:
         storage_client = storage.Client()
     except Exception as err:

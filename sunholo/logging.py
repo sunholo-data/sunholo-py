@@ -13,7 +13,11 @@
 #   limitations under the License.
 # https://cloud.google.com/python/docs/reference/logging/latest/google.cloud.logging_v2.client.Client
 
-from google.cloud.logging import Client
+try:
+    from google.cloud.logging import Client
+except ImportError:
+    Client = None
+
 from .utils.gcp import get_gcp_project, is_running_on_gcp
 import logging
 import inspect

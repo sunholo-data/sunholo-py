@@ -1,10 +1,13 @@
 import os
 from urllib.parse import quote
 from datetime import datetime, timedelta
-from google.cloud import storage 
-import google.auth
-from google.auth.transport import requests
-from google.auth.exceptions import RefreshError
+try:
+    from google.cloud import storage 
+    import google.auth
+    from google.auth.transport import requests
+    from google.auth.exceptions import RefreshError
+except ImportError:
+    storage = None
 
 from ..logging import log
 from ..utils.gcp import is_running_on_gcp
