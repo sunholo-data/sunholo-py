@@ -1,8 +1,17 @@
-from langfuse.callback import CallbackHandler
+
 from typing import Dict, Any
 from ..logging import log
 
+try:
+    from langfuse.callback import CallbackHandler
+except ImportError:
+    CallbackHandler = None
+
 def create_langfuse_callback(**kwargs):
+
+    if not CallbackHandler:
+        log.warning("No CallbackHandler found, install langfuse? `pip install langfuse`")
+        return None
 
     # TODO: maybe use langfuse.trace here instead later
     langfuse_handler = CallbackHandler(**kwargs)
