@@ -13,13 +13,12 @@
 #   limitations under the License.
 import os
 import datetime
-from flask import Flask
+
 from ...utils import fetch_config
 from ...logging import log
 
-
-
 def create_app(name):
+    from flask import Flask
     # Initialize Flask app
     app = Flask(name)
     app.config['TRAP_HTTP_EXCEPTIONS'] = True

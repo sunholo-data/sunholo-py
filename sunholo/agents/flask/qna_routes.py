@@ -11,7 +11,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from flask import request, jsonify, Response
+
 
 import json
 import traceback
@@ -23,8 +23,9 @@ from ...archive import archive_qa
 from ...logging import log
 
 
-
 def register_qna_routes(app, stream_interpreter, qna_interpreter):
+    from flask import request, jsonify, Response
+
     @app.route('/qna/streaming/<vector_name>', methods=['POST'])
     def stream_qa(vector_name):
         data = request.get_json()
