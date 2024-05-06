@@ -10,11 +10,12 @@ from ..logging import log
 from ..agents.route import route_qna
 
 
-
 def get_run_url(vector_name=None):
 
     if not vector_name:
         raise ValueError('Vector name was not specified')
+    
+    cloud_urls = route_qna(vector_name)
     
     cloud_urls, _ = load_config('config/cloud_run_urls.json')
     agent = load_config_key("agent", vector_name=vector_name, filename="config/llm_config.yaml")
