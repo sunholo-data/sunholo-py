@@ -1,10 +1,10 @@
-from langfuse import Langfuse
-from langfuse.api import NotFoundError
 from ..logging import log
 import yaml
 
 # Load the YAML file
 def load_prompt_from_yaml(key, prefix="sunholo", file_path=None):
+    from langfuse import Langfuse
+
     # Initialize Langfuse client
     langfuse = Langfuse()
 
@@ -18,11 +18,11 @@ def load_prompt_from_yaml(key, prefix="sunholo", file_path=None):
 
         return langfuse_prompt.get_langchain_prompt()
     
-    except NotFoundError:
+    except Exception as err:
         if not file_path:
-            log.error(f"Could not fine langfuse template {langfuse_template} and no file_path was provided")
+            log.error(f"Could not fine langfuse template {langfuse_template} and no file_path was provided {str(err)}")
             raise
-        log.warning(f"Could not find langfuse template: {langfuse_template} - attempting to load from {file_path}")
+        log.warning(f"Could not find langfuse template: {langfuse_template} - {str(err)} - attempting to load from {file_path}")
 
     with open(file_path, 'r') as file:
         data = yaml.safe_load(file)
