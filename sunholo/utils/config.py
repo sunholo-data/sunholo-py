@@ -22,7 +22,26 @@ try:
 except ImportError:
     storage = None
 
-def fetch_config(bucket_name, blob_name):
+def fetch_config(bucket_name: str, blob_name: str):
+    """
+    Fetch the configuration file from a Google Cloud Storage bucket.
+
+    Args:
+        bucket_name (str): The name of the GCS bucket.
+        blob_name (str): The name of the blob/file to fetch.
+
+    Returns:
+        datetime or None: The last modified time of the file, or None if the blob does not exist.
+
+    Example:
+    ```python
+    last_updated = fetch_config('my-bucket', 'config.yaml')
+    if last_updated:
+        print(f'Configuration file was last updated on {last_updated}')
+    else:
+        print('Configuration file not found in the specified bucket.')
+    ```
+    """
     from ..logging import log
 
     if not storage:
@@ -47,7 +66,22 @@ def fetch_config(bucket_name, blob_name):
 
     return updated_time
 
-def get_module_filepath(filepath):
+def get_module_filepath(filepath: str):
+    """
+    Get the absolute path of a module file based on its relative path.
+
+    Args:
+        filepath (str): The relative path of the file.
+
+    Returns:
+        str: The absolute file path.
+
+    Example:
+    ```python
+    abs_path = get_module_filepath('config/config.yaml')
+    print(f'Absolute path: {abs_path}')
+    ```
+    """
     from ..logging import log
     
     # Get the root directory of this Python script
@@ -56,12 +90,30 @@ def get_module_filepath(filepath):
     filepath = os.path.join(dir_path, filepath)
 
     log.info(f"Found filepath {filepath}")
+
     return filepath
 
 # Global cache
 config_cache = {}
 
 def load_config(filename: str=None) -> tuple[dict, str]:
+    """
+    Load configuration from a yaml or json file.
+    Will look relative to `_CONFIG_FOLDER` environment variable if available, else current directory.
+
+    Args:
+        filename (str, optional): The name of the configuration file. Defaults to the `_CONFIG_FILE` environment variable.
+
+    Returns:
+        tuple[dict, str]: The configuration as a dictionary and the derived absolute filename.
+
+    Example:
+    ```python
+    config, filename = load_config('config.yaml')
+    print(f'Config: {config}')
+    print(f'Loaded from file: {filename}')
+    ```
+    """
     global config_cache
     from ..logging import log
     
@@ -104,7 +156,24 @@ def load_config(filename: str=None) -> tuple[dict, str]:
     
     return config, filename
 
-def load_config_key(key: str, vector_name: str, filename: str=None) -> str:
+def load_config_key(key: str, vector_name: str, filename: str=None):
+    """
+    Load a specific key from a configuration file.
+
+    Args:
+        key (str): The key to fetch from the configuration.
+        vector_name (str): The name of the vector in the configuration file.
+        filename (str, optional): The configuration file name. Defaults to the `_CONFIG_FILE` environment variable.
+
+    Returns:
+        str: The value associated with the specified key.
+
+    Example:
+    ```python
+    api_url = load_config_key('apiUrl', 'myVector', 'config.yaml')
+    print(f'API URL: {api_url}')
+    ```
+    """
     from ..logging import log
     
     assert isinstance(key, str), f"key must be a string got a {type(key)}"
