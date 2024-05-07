@@ -1,14 +1,11 @@
 # from https://github.com/sunholo-data/genai-databases-retrieval-app/blob/main/langchain_tools_demo/agent.py
-import os
 import inspect
-import google.auth.transport.requests  # type: ignore
-import google.oauth2.id_token  # type: ignore
+
 from typing import Dict, Optional
 from ..utils.config import load_config_key, load_config
 from ..utils.gcp import is_running_on_cloudrun
 from ..logging import log
 from ..agents.route import route_qna
-
 
 def get_run_url(vector_name=None):
 
@@ -31,6 +28,8 @@ def get_id_token(url: str) -> str:
     """Helper method to generate ID tokens for authenticated requests"""
     # Use Application Default Credentials on Cloud Run
     if is_running_on_cloudrun():
+        import google.auth.transport.requests  # type: ignore
+        import google.oauth2.id_token  # type: ignore
         auth_req = google.auth.transport.requests.Request()
         log.info(f'Got id_token for {url}')
         return google.oauth2.id_token.fetch_id_token(auth_req, url)
