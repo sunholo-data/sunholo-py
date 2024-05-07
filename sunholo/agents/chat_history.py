@@ -1,21 +1,30 @@
-#   Copyright [2024] [Holosun ApS]
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
 import json
 from ..logging import log
 
 def extract_chat_history(chat_history=None):
+    """
+    Extracts paired chat history between human and AI messages.
 
+    This function takes a chat history and returns a list of pairs of messages,
+    where each pair consists of a human message followed by the corresponding AI response.
+
+    Args:
+        chat_history (list): List of chat messages.
+
+    Returns:
+        list: List of tuples with paired human and AI messages.
+
+    Example:
+    ```python
+    chat_history = [
+        {"name": "Human", "text": "Hello, AI!"},
+        {"name": "AI", "text": "Hello, Human! How can I help you today?"}
+    ]
+    paired_messages = extract_chat_history(chat_history)
+    print(paired_messages)
+    # Output: [("Hello, AI!", "Hello, Human! How can I help you today?")]
+    ```
+    """
     if chat_history is None:
         log.info("No chat history found")
         return []
@@ -47,13 +56,50 @@ def extract_chat_history(chat_history=None):
 
     return paired_messages
 
-def embeds_to_json(message):
+def embeds_to_json(message: dict):
+    """
+    Converts the 'embeds' field in a message to a JSON string.
+
+    Args:
+        message (dict): The message containing the 'embeds' field.
+
+    Returns:
+        str: JSON string representation of the 'embeds' field or an empty string if no embeds are found.
+
+    Example:
+    ```python
+    message = {"embeds": [{"type": "image", "url": "https://example.com/image.png"}]}
+    json_string = embeds_to_json(message)
+    print(json_string)
+    # Output: '[{"type": "image", "url": "https://example.com/image.png"}]'
+    ```
+    """
     if len(message['embeds'] > 0):
         return json.dumps(message.get("embeds"))
     else:
         return ""
 
-def create_message_element(message):
+def create_message_element(message: dict):
+    """
+    Extracts the main content of a message.
+
+    Args:
+        message (dict): The message to extract content from.
+
+    Returns:
+        str: The text or content of the message.
+
+    Raises:
+        KeyError: If neither 'content' nor 'text' fields are found.
+
+    Example:
+    ```python
+    message = {"text": "Hello, AI!"}
+    content = create_message_element(message)
+    print(content)
+    # Output: 'Hello, AI!'
+    ```
+    """
     if 'text' in message:  # This is a Slack or Google Chat message
         log.info(f"Found text element - {message['text']}")
         return message['text']
@@ -63,7 +109,23 @@ def create_message_element(message):
     else:  
         raise KeyError(f"Could not extract 'content' or 'text' element from message: {message}, {type(message)}")
 
-def is_human(message):
+def is_human(message: dict):
+    """
+    Checks if a message was sent by a human.
+
+    Args:
+        message (dict): The message to check.
+
+    Returns:
+        bool: True if the message was sent by a human, otherwise False.
+
+    Example:
+    ```python
+    message = {"name": "Human"}
+    print(is_human(message))
+    # Output: True
+    ```
+    """
     if 'name' in message:
         return message["name"] == "Human"
     elif 'sender' in message:  # Google Chat
@@ -72,15 +134,45 @@ def is_human(message):
         # Slack: Check for the 'user' field and absence of 'bot_id' field
         return 'user' in message and 'bot_id' not in message
 
-def is_bot(message):
+def is_bot(message: dict):
+    """
+    Checks if a message was sent by a bot.
+
+    Args:
+        message (dict): The message to check.
+
+    Returns:
+        bool: True if the message was sent by a bot, otherwise False.
+
+    Example:
+    ```python
+    message = {"name": "AI"}
+    print(is_bot(message))
+    # Output: True
+    ```
+    """
     return not is_human(message)
 
-def is_ai(message):
+def is_ai(message: dict):
+    """
+    Checks if a message was specifically sent by an AI.
+
+    Args:
+        message (dict): The message to check.
+
+    Returns:
+        bool: True if the message was sent by an AI, otherwise False.
+
+    Example:
+    ```python
+    message = {"name": "AI"}
+    print(is_ai(message))
+    # Output: True
+    ```
+    """
     if 'name' in message:
         return message["name"] == "AI"
     elif 'sender' in message:  # Google Chat
         return message['sender']['type'] == 'BOT'
     else:
         return 'bot_id' in message  # Slack
-
-
