@@ -37,7 +37,7 @@ All dependencies:
 pip install sunholo[all]
 ```
 
-Data base functions:
+Database functions:
 
 ```sh
 pip install sunholo[database]
@@ -66,3 +66,20 @@ APIs
 ```sh
 pip install sunholo[apis]
 ```
+
+Sunholo is derived from the Edmonbrain project, the original blog post you can read here: https://code.markedmondson.me/running-llms-on-gcp/ and owes a lot to Langchain ( https://github.com/langchain-ai/langchain )
+
+The package includes:
+
+* `agents/` - functions for working with agents, including easy flask apps, parsing chat history and dispatching requests to different agent endpoints
+* `archive/` - functions to record all Q&A activity to BigQuery via PubSub
+* `bots/` - functions for special cases regarding frontend bots such as GChat, Web Apps, Discord and Slack
+* `chunker/` - functions to slice up documents for sending into vector stores
+* `components/` - functions to help configure which LLM, prompt, vectorstore or document retriever you will use based on a yaml config file
+* `database/` - database setup functions and SQL to run on those sources such as Supabase or PostgreSQL
+* `embedder/` - functions to send chunks into embedding vector stores
+* `pubsub/` - use of PubSub for a message queue between components
+* `qna/` - utilities for running agents such as retry strats and parsing of output/input
+* `streaming/` - creation of streaming responses from LLM bots
+* `summarise/` - creation of summaries of large documents
+* `utils/` - reading configuration files, Google Cloud Platform metadata

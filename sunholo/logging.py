@@ -37,7 +37,7 @@ class GoogleCloudLogging:
     def __init__(self, project_id=None, log_level=logging.INFO, logger_name=None):
         if not hasattr(self, 'initialized'):  # Avoid re-initialization
             self.project_id = project_id or get_gcp_project()
-            self.client = Client(project=self.project_id) if is_running_on_gcp() else None
+            self.client = Client(project=self.project_id)
             self.logger_name = logger_name
             self.log_level = log_level
             self.initialized = True  # Mark as initialized
@@ -220,9 +220,13 @@ def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
     if logger_name is None:
         logger_name = "sunholo"
 
-    # Instantiate the GoogleCloudLogging class
-    gc_logger = GoogleCloudLogging(project_id, log_level=log_level, logger_name=logger_name)
-
+    if Client:
+        # Instantiate the GoogleCloudLogging class
+        gc_logger = GoogleCloudLogging(project_id, log_level=log_level, logger_name=logger_name)
+    else:
+        print("Could not find GoogleCloudLogging Client, install via `pip install google-cloud-logging`")
+        return logger
+    
     # Setup logging and return the logger instance
     return gc_logger.setup_logging()
 

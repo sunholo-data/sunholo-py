@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.50.12'
+version = '0.50.13'
 
 setup(
     name='sunholo',
@@ -25,7 +25,6 @@ setup(
         "langchain",
         "langchain_experimental",
         "langchain-community",
-        "google-cloud-logging", #logging init
         # Add the minimal dependencies that your package requires here
     ],
     extras_require={
