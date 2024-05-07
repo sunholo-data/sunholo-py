@@ -18,6 +18,20 @@ import socket
 import logging
 
 def is_running_on_cloudrun():
+    """
+    Check if the current environment is a Google Cloud Run instance.
+
+    Returns:
+        bool: `True` if running on Cloud Run, `False` otherwise.
+
+    Example:
+    ```python
+    if is_running_on_cloudrun():
+        print("Running on Cloud Run.")
+    else:
+        print("Not running on Cloud Run.")
+    ```
+    """
     if os.getenv("K_SERVICE"):
         return True
     return False
@@ -61,6 +75,23 @@ def get_env_project_id():
 
 is_gcp_cached = None  # Global variable for caching the result
 def is_running_on_gcp():
+    """
+    Check if the current environment is a Google Cloud Platform (GCP) instance.
+
+    This function attempts to reach the GCP metadata server to determine if the code
+    is running on a GCP instance.
+
+    Returns:
+        bool: `True` if running on GCP, `False` otherwise.
+
+    Example:
+    ```python
+    if is_running_on_gcp():
+        print("Running on GCP.")
+    else:
+        print("Not running on GCP.")
+    ```
+    """
     global is_gcp_cached
     if is_gcp_cached is not None:
         return is_gcp_cached
@@ -76,6 +107,12 @@ def is_running_on_gcp():
     return is_gcp_cached
 
 def get_service_account_email():
+    """
+    Retrieve the service account email from environment variables or the GCP metadata server.
+
+    Returns:
+        str or None: The service account email if found, None otherwise.
+    """
     service_email = os.getenv("GCP_DEFAULT_SERVICE_EMAIL")
     if service_email:
         return service_email
@@ -84,6 +121,12 @@ def get_service_account_email():
     return service_email
 
 def get_gcp_project():
+    """
+    Retrieve the GCP project ID from environment variables or the GCP metadata server.
+
+    Returns:
+        str or None: The project ID if found, None otherwise.
+    """
     if not is_running_on_gcp():
         return None
     
@@ -100,6 +143,15 @@ def get_gcp_project():
 
 
 def get_region():
+    """
+    Retrieve the region of the GCP instance.
+
+    This function attempts to retrieve the region by extracting it from the zone information
+    available in the GCP metadata server.
+
+    Returns:
+        str or None: The region if found, None otherwise.
+    """
     if not is_running_on_gcp():
         return None
     # The "instance/zone" metadata includes the region as part of the zone name
@@ -117,6 +169,15 @@ def get_region():
     return None
 
 def get_metadata(stem):
+    """
+    Retrieve metadata information from the GCP metadata server.
+
+    Args:
+        stem (str): The metadata path to query.
+
+    Returns:
+        str or None: The metadata information if found, None otherwise.
+    """
     if not is_running_on_gcp():
         return None
     
