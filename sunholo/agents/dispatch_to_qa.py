@@ -21,6 +21,30 @@ from .langserve import prepare_request_data
 from .route import route_endpoint
 
 def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs):
+    """
+    Prepares the request payload for sending a query to the QA system.
+
+    Args:
+        user_input (str): The user's input query.
+        chat_history (list): The history of previous chat messages.
+        vector_name (str): The name of the vector.
+        stream (bool): Whether the request will be streamed.
+        **kwargs: Additional key-value pairs for request data.
+
+    Returns:
+        tuple: The endpoint URL and the prepared data payload.
+
+    Example:
+    ```python
+    user_input = "What is AI?"
+    chat_history = []
+    vector_name = "my_vector"
+    stream = False
+    endpoint, payload = prep_request_payload(user_input, chat_history, vector_name, stream)
+    print(endpoint, payload)
+    # Output: 'http://example.com/invoke' {'user_input': 'What is AI?', 'chat_history': []}
+    ```
+    """
 
     # Add chat_history/vector_name to kwargs so langserve can use them too
     kwargs['chat_history'] = chat_history
@@ -46,7 +70,26 @@ def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs
     return qna_endpoint, qna_data
 
 def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
+    """
+    Sends a query to the QA system synchronously.
 
+    Args:
+        user_input (str): The user's input query.
+        vector_name (str): The name of the vector.
+        chat_history (list): The history of previous chat messages.
+        stream (bool): Whether to stream the response.
+        **kwargs: Additional key-value pairs for request data.
+
+    Returns:
+        Union[dict, generator]: The response from the QA system, either as a JSON object or as a generator for streaming.
+
+    Example:
+    ```python
+    response = send_to_qa("What is AI?", "my_vector", [])
+    print(response)
+    # Output: {'answer': 'The definition of AI is ...'}
+    ```
+    """
     qna_endpoint, qna_data = prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs)
     header = get_header(vector_name)
     header = add_header_ids(header, **kwargs)
@@ -83,7 +126,26 @@ def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
             return {"answer": error_message}
 
 async def send_to_qa_async(user_input, vector_name, chat_history, stream=False, **kwargs):
-    
+    """
+    Sends a query to the QA system asynchronously.
+
+    Args:
+        user_input (str): The user's input query.
+        vector_name (str): The name of the vector.
+        chat_history (list): The history of previous chat messages.
+        stream (bool): Whether to stream the response.
+        **kwargs: Additional key-value pairs for request data.
+
+    Returns:
+        generator: A generator that yields chunks of the streamed response or the entire response.
+
+    Example:
+    ```python
+    async def example_async_query():
+        async for response_chunk in send_to_qa_async("What is AI?", "my_vector", []):
+            print(response_chunk)
+    ```
+    """    
     qna_endpoint, qna_data = prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs)
     header = get_header(vector_name)
     header = add_header_ids(header, **kwargs)
@@ -121,7 +183,24 @@ async def send_to_qa_async(user_input, vector_name, chat_history, stream=False, 
 
 
 def add_header_ids(header, **kwargs):
+    """
+    Adds user and session IDs to the request header if they are provided.
 
+    Args:
+        header (dict): The original request header.
+        **kwargs: Additional key-value pairs for header data.
+
+    Returns:
+        dict: The updated header.
+
+    Example:
+    ```python
+    header = {"Authorization": "Bearer some_token"}
+    updated_header = add_header_ids(header, user_id="user_123", session_id="session_456")
+    print(updated_header)
+    # Output: {'Authorization': 'Bearer some_token', 'X-User-ID': 'user_123', 'X-Session-ID': 'session_456'}
+    ```
+    """
     if not header:
         return None
     
