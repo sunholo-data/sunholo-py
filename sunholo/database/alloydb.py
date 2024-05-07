@@ -1,15 +1,14 @@
+import os
 try:
     import pg8000
     import sqlalchemy
-    import os
-
     from sqlalchemy.exc import DatabaseError, ProgrammingError
     from asyncpg.exceptions import DuplicateTableError
     from google.cloud.alloydb.connector import Connector
     from langchain_google_alloydb_pg import AlloyDBEngine, Column, AlloyDBLoader, AlloyDBDocumentSaver
     from google.cloud.alloydb.connector import IPTypes
-except ImportError as err:
-    print(f"No AlloyDBEngine: {str(err)} - install via `pip install sunholo['database']`")
+except ImportError:
+    print("No sunholo database functions - install via `pip install sunholo['database']`")
 
 from .database import get_vector_size
 from ..logging import log

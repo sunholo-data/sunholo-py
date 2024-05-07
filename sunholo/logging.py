@@ -224,7 +224,7 @@ def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
         # Instantiate the GoogleCloudLogging class
         gc_logger = GoogleCloudLogging(project_id, log_level=log_level, logger_name=logger_name)
     else:
-        print("Could not find GoogleCloudLogging Client, install via `pip install google-cloud-logging`")
+        print("Could not find GoogleCloudLogging Client, install via `pip install sunholo[gcp]`")
         return logger
     
     # Setup logging and return the logger instance

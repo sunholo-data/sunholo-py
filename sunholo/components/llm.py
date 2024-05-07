@@ -182,6 +182,13 @@ def get_llm_chat(vector_name, model=None, config_file="config/llm_config.yaml"):
         log.info(f"OpenAI Azure object: {mo}")
 
         return mo
+    elif llm_str == "ollama":
+        from langchain_community.chat_models import ChatOllama
+        if model is None:
+            model = 'llama3'
+            log.info(f"No 'model' value in config file - selecting default {model}")
+    
+        return ChatOllama(model=model, temprature=0)
 
     if llm_str is None:
         raise NotImplementedError(f'No llm implemented for {llm_str}')
