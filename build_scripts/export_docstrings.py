@@ -7,9 +7,11 @@ GITHUB_BASE_URL = "https://github.com/sunholo-data/sunholo-py/blob/main/"
 def list_functions(module):
     functions = inspect.getmembers(module, inspect.isfunction)
     result = []
+    seen = set()
     for func_name, func in functions:
         # Skip if the function doesn't have a module or if it's not in the "sunholo" package
-        if func.__module__ and func.__module__.startswith("sunholo"):
+        if func.__module__ and func.__module__.startswith("sunholo") and func_name not in seen:
+            seen.add(func_name)
             try:
                 signature = inspect.signature(func)
                 source_file = inspect.getfile(func)
@@ -21,8 +23,10 @@ def list_functions(module):
 def list_classes(module):
     classes = inspect.getmembers(module, inspect.isclass)
     result = []
+    seen = set()
     for cls_name, cls in classes:
-        if cls.__module__ and cls.__module__.startswith("sunholo"):
+        if cls.__module__ and cls.__module__.startswith("sunholo") and cls_name not in seen:
+            seen.add(cls_name)
             try:
                 source_file = inspect.getfile(cls)
                 result.append((cls_name, cls, source_file))
@@ -70,15 +74,19 @@ def write_docstrings_to_md(package):
             f.write(f"*Source*: [{relative_file_path}]({GITHUB_BASE_URL + relative_file_path})\n\n")
 
             f.write("## Functions\n\n")
+            seen_functions = set()
             for func_name, func, signature, src in functions:
-                if src == source_file:
+                if src == source_file and func_name not in seen_functions:
+                    seen_functions.add(func_name)
                     docstring = inspect.getdoc(func)
                     f.write(f"### {func_name}{signature}\n")
                     f.write(f"\n{docstring or 'No docstring available.'}\n\n")
 
             f.write("## Classes\n\n")
+            seen_classes = set()
             for cls_name, cls, src in classes:
-                if src == source_file:
+                if src == source_file and cls_name not in seen_classes:
+                    seen_classes.add(cls_name)
                     cls_docstring = inspect.getdoc(cls)
                     f.write(f"### {cls_name}\n")
                     f.write(f"\n{cls_docstring or 'No docstring available.'}\n\n")
@@ -87,6 +95,7 @@ def write_docstrings_to_md(package):
                         method_docstring = inspect.getdoc(method)
                         f.write(f"* {method_name}{signature}\n")
                         f.write(f"   - {method_docstring or 'No docstring available.'}\n\n")
+
 
 if __name__ == "__main__":
     write_docstrings_to_md(sunholo)
