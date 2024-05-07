@@ -35,10 +35,12 @@ def is_gcp_logged_in():
         bool: `True` if GCP credentials are available, `False` otherwise.
 
     Example:
-        >>> if is_gcp_logged_in():
-        ...     print("GCP credentials found.")
-        ... else:
-        ...     print("GCP credentials not found or invalid.")
+    ```python
+    if is_gcp_logged_in():
+        print("GCP credentials found.")
+    else:
+        print("GCP credentials not found or invalid.")
+    ```
     """
     try:
         import google.auth
