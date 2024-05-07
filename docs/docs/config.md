@@ -168,9 +168,4 @@ default_user:
   tags:
     - "user"
 
-free_user:
-  role: "USER-FREE"
-  tags:
-    - "user"
-    - "free"
 ```

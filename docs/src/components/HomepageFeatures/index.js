@@ -4,42 +4,45 @@ import styles from './styles.module.css';
 
 const FeatureList = [
   {
-    title: 'Easy to Use',
-    Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
+    title: 'GenAI Experimentation',
+    Img: require('@site/static/img/multivac-deployments.png').default,
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Update GenAI service dependencies via a config file. 
+        Launch new configurations in minutes, leveraging common resources such
+        as VPC, IAM, analytics, prompt libraries, model evals and database instances.
       </>
     ),
   },
   {
-    title: 'Focus on What Matters',
-    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
+    title: 'GenAI in the Cloud',
+    Img: require('@site/static/img/multivac-venn.png').default,
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        The Sunholo Multivac system offers an abstraction between your GenAI application
+        and the Cloud.  Deploy applications running Langchain/LlamaIndex or your
+        custom code to cloud services such as vectorstores and serverless compute.
       </>
     ),
   },
   {
-    title: 'Powered by React',
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
+    title: 'Flexible and Scalable',
+    Img: require('@site/static/img/multivac-arch.png').default,
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        Develop Locally and deploy Globally by publishing to the Multivac SaaS, or your own Cloud PaaS.
+        Event based serverless backend allows flexiblity to use bundled UIs such as webapps or chatbots, or
+        hook into APIs to create your own user experience.
       </>
     ),
   },
 ];
 
-function Feature({Svg, title, description}) {
+function Feature({Img, title, description}) {
   return (
     <div className={clsx('col col--4')}>
       <div className="text--center">
-        <Svg className={styles.featureSvg} role="img" />
+      <img src={Img} className={styles.featureImg} alt={title} /> 
       </div>
       <div className="text--center padding-horiz--md">
         <Heading as="h3">{title}</Heading>
