@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.2.1">
 <title data-rh="true">gcp.py | Sunholo Dev Portal</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://dev.sunholo.com/docs/sunholo/utils/gcp"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="gcp.py | Sunholo Dev Portal"><meta data-rh="true" name="description" content="Source: sunholo/utils/gcp.py"><meta data-rh="true" property="og:description" content="Source: sunholo/utils/gcp.py"><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://dev.sunholo.com/docs/sunholo/utils/gcp"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/utils/gcp" hreflang="en"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/utils/gcp" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.f6c7f565.css">
-<script src="/assets/js/runtime~main.76ddb66c.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.145b5634.js" defer="defer"></script>
 <script src="/assets/js/main.e657eb53.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -12,21 +12,43 @@
 <p><em>Source</em>: <a href="https://github.com/sunholo-data/sunholo-py/blob/main/sunholo/utils/gcp.py" target="_blank" rel="noopener noreferrer">sunholo/utils/gcp.py</a></p>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="functions">Functions<a href="#functions" class="hash-link" aria-label="Direct link to Functions" title="Direct link to Functions">​</a></h2>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="is_running_on_cloudrun">is_running_on_cloudrun()<a href="#is_running_on_cloudrun" class="hash-link" aria-label="Direct link to is_running_on_cloudrun()" title="Direct link to is_running_on_cloudrun()">​</a></h3>
-<p>No docstring available.</p>
+<p>Check if the current environment is a Google Cloud Run instance.</p>
+<p>Returns:
+bool: <code>True</code> if running on Cloud Run, <code>False</code> otherwise.</p>
+<p>Example:</p>
+<div class="language-python codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-python codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token keyword" style="color:#00009f">if</span><span class="token plain"> is_running_on_cloudrun</span><span class="token punctuation" style="color:#393A34">(</span><span class="token punctuation" style="color:#393A34">)</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token keyword" style="color:#00009f">print</span><span class="token punctuation" style="color:#393A34">(</span><span class="token string" style="color:#e3116c">&quot;Running on Cloud Run.&quot;</span><span class="token punctuation" style="color:#393A34">)</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token keyword" style="color:#00009f">else</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token keyword" style="color:#00009f">print</span><span class="token punctuation" style="color:#393A34">(</span><span class="token string" style="color:#e3116c">&quot;Not running on Cloud Run.&quot;</span><span class="token punctuation" style="color:#393A34">)</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="is_running_on_gcp">is_running_on_gcp()<a href="#is_running_on_gcp" class="hash-link" aria-label="Direct link to is_running_on_gcp()" title="Direct link to is_running_on_gcp()">​</a></h3>
-<p>No docstring available.</p>
+<p>Check if the current environment is a Google Cloud Platform (GCP) instance.</p>
+<p>This function attempts to reach the GCP metadata server to determine if the code
+is running on a GCP instance.</p>
+<p>Returns:
+bool: <code>True</code> if running on GCP, <code>False</code> otherwise.</p>
+<p>Example:</p>
+<div class="language-python codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-python codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token keyword" style="color:#00009f">if</span><span class="token plain"> is_running_on_gcp</span><span class="token punctuation" style="color:#393A34">(</span><span class="token punctuation" style="color:#393A34">)</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token keyword" style="color:#00009f">print</span><span class="token punctuation" style="color:#393A34">(</span><span class="token string" style="color:#e3116c">&quot;Running on GCP.&quot;</span><span class="token punctuation" style="color:#393A34">)</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token keyword" style="color:#00009f">else</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token keyword" style="color:#00009f">print</span><span class="token punctuation" style="color:#393A34">(</span><span class="token string" style="color:#e3116c">&quot;Not running on GCP.&quot;</span><span class="token punctuation" style="color:#393A34">)</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="get_gcp_project">get_gcp_project()<a href="#get_gcp_project" class="hash-link" aria-label="Direct link to get_gcp_project()" title="Direct link to get_gcp_project()">​</a></h3>
-<p>No docstring available.</p>
+<p>Retrieve the GCP project ID from environment variables or the GCP metadata server.</p>
+<p>Returns:
+str or None: The project ID if found, None otherwise.</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="get_env_project_id">get_env_project_id()<a href="#get_env_project_id" class="hash-link" aria-label="Direct link to get_env_project_id()" title="Direct link to get_env_project_id()">​</a></h3>
 <p>Attempts to retrieve the project ID from environment variables.</p>
 <p>Returns:
 str or None: The project ID if found in environment variables, None otherwise.</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="get_metadatastem">get_metadata(stem)<a href="#get_metadatastem" class="hash-link" aria-label="Direct link to get_metadata(stem)" title="Direct link to get_metadata(stem)">​</a></h3>
-<p>No docstring available.</p>
+<p>Retrieve metadata information from the GCP metadata server.</p>
+<p>Args:
+stem (str): The metadata path to query.</p>
+<p>Returns:
+str or None: The metadata information if found, None otherwise.</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="get_region">get_region()<a href="#get_region" class="hash-link" aria-label="Direct link to get_region()" title="Direct link to get_region()">​</a></h3>
-<p>No docstring available.</p>
+<p>Retrieve the region of the GCP instance.</p>
+<p>This function attempts to retrieve the region by extracting it from the zone information
+available in the GCP metadata server.</p>
+<p>Returns:
+str or None: The region if found, None otherwise.</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="get_service_account_email">get_service_account_email()<a href="#get_service_account_email" class="hash-link" aria-label="Direct link to get_service_account_email()" title="Direct link to get_service_account_email()">​</a></h3>
-<p>No docstring available.</p>
+<p>Retrieve the service account email from environment variables or the GCP metadata server.</p>
+<p>Returns:
+str or None: The service account email if found, None otherwise.</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="is_gcp_logged_in">is_gcp_logged_in()<a href="#is_gcp_logged_in" class="hash-link" aria-label="Direct link to is_gcp_logged_in()" title="Direct link to is_gcp_logged_in()">​</a></h3>
 <p>Check if the current environment has valid Google Cloud Platform (GCP) credentials.</p>
 <p>This function attempts to obtain the default application credentials from the environment.
