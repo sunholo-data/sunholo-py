@@ -73,19 +73,25 @@ def write_docstrings_to_md(package):
             f.write(f"# {os.path.basename(source_file)}\n\n")
             f.write(f"*Source*: [{relative_file_path}]({GITHUB_BASE_URL + relative_file_path})\n\n")
 
-            f.write("## Functions\n\n")
             seen_functions = set()
+            functions_written = False
             for func_name, func, signature, src in functions:
                 if src == source_file and func_name not in seen_functions:
+                    if not functions_written:
+                        f.write("## Functions\n\n")
+                        functions_written = True
                     seen_functions.add(func_name)
                     docstring = inspect.getdoc(func)
                     f.write(f"### {func_name}{signature}\n")
                     f.write(f"\n{docstring or 'No docstring available.'}\n\n")
 
-            f.write("## Classes\n\n")
             seen_classes = set()
+            classes_written = False
             for cls_name, cls, src in classes:
                 if src == source_file and cls_name not in seen_classes:
+                    if not classes_written:
+                        f.write("## Classes\n\n")
+                        classes_written = True
                     seen_classes.add(cls_name)
                     cls_docstring = inspect.getdoc(cls)
                     f.write(f"### {cls_name}\n")
