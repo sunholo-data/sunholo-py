@@ -22,6 +22,32 @@ def is_running_on_cloudrun():
         return True
     return False
 
+
+
+def is_gcp_logged_in():
+    """
+    Check if the current environment has valid Google Cloud Platform (GCP) credentials.
+
+    This function attempts to obtain the default application credentials from the environment.
+    It will return `True` if credentials are available, otherwise it returns `False`.
+
+    Returns:
+        bool: `True` if GCP credentials are available, `False` otherwise.
+
+    Example:
+        >>> if is_gcp_logged_in():
+        ...     print("GCP credentials found.")
+        ... else:
+        ...     print("GCP credentials not found or invalid.")
+    """
+    try:
+        import google.auth
+        from google.auth.exceptions import DefaultCredentialsError
+        credentials, project = google.auth.default()
+        return True
+    except DefaultCredentialsError:
+        return False
+
 def get_env_project_id():
     """
     Attempts to retrieve the project ID from environment variables.

@@ -18,7 +18,7 @@ try:
 except ImportError:
     Client = None
 
-from .utils.gcp import get_gcp_project, is_running_on_gcp
+from .utils.gcp import get_gcp_project, is_running_on_gcp, is_gcp_logged_in
 import logging
 import inspect
 import os
@@ -37,7 +37,7 @@ class GoogleCloudLogging:
     def __init__(self, project_id=None, log_level=logging.INFO, logger_name=None):
         if not hasattr(self, 'initialized'):  # Avoid re-initialization
             self.project_id = project_id or get_gcp_project()
-            self.client = Client(project=self.project_id)
+            self.client = Client(project=self.project_id) if is_gcp_logged_in() else None
             self.logger_name = logger_name
             self.log_level = log_level
             self.initialized = True  # Mark as initialized
@@ -52,7 +52,7 @@ class GoogleCloudLogging:
 
         try:
             caller_info = self._get_caller_info()
-            if not is_running_on_gcp():
+            if not is_running_on_gcp() and not is_gcp_logged_in():
                 import logging
                 logging.basicConfig(level=self.log_level, format='%(asctime)s - %(levelname)s - %(message)s')
                 logging.info(f"Standard logging: {caller_info['file']}")
@@ -98,7 +98,7 @@ class GoogleCloudLogging:
         if not logger_name and not self.logger_name:
             raise ValueError("Must provide a logger name e.g. 'run.googleapis.com%2Fstderr'")
         
-        if not is_running_on_gcp():
+        if not is_running_on_gcp() and not is_gcp_logged_in():
             log.basicConfig(level=log.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
             if log_text:
                 log.info(f"[{severity}][{logger_name or self.logger_name}] - {log_text}")
