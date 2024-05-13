@@ -196,12 +196,24 @@ def load_config_key(key: str, vector_name: str, filename: str=None):
         if not vac:
             raise ValueError("Deprecated config file, move to config with `vac:` at top level for `vector_name`")
         vac_config = vac.get(vector_name)
-
-    if not vac_config:
-        raise ValueError(f"No config array was found for {vector_name} in {filename}")
+        if not vac_config:
+            raise ValueError(f"No config array was found for {vector_name} in {filename}")
+        
+        log.info(f'vac_config: {vac_config} for {vector_name} - fetching "{key}"')
+        key_value = vac_config.get(key)
+        if not key_value:
+            raise ValueError(f'{key} not found for {vector_name} in config')
+        
+        return key_value
     
-    log.info(f'vac_config: {vac_config} for {vector_name} - fetching "{key}"')
-
-    key_value = vac_config.get(key)
-    
-    return key_value
+    elif kind == 'promptConfig':
+        prompts = config.get('prompts')
+        if not prompts:
+            raise ValueError("Deprecated config file, move to config with 'prompts:' at top level for `vector_name`")
+        prompt_for_vector_name = prompts.get(vector_name)
+        if not prompt_for_vector_name:
+            raise ValueError(f"Could not find prompt for vector_name {vector_name}")
+        log.info(f'prompts: {prompt_for_vector_name} for {vector_name} - fetching "{key}"')
+        key_value = prompt_for_vector_name.get(key)
+        
+        return key_value

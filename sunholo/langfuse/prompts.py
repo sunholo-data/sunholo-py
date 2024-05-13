@@ -1,4 +1,5 @@
 from ..logging import log
+from ..utils import load_config_key
 import yaml
 
 # Load the YAML file
@@ -24,6 +25,4 @@ def load_prompt_from_yaml(key, prefix="sunholo", file_path=None):
             raise
         log.warning(f"Could not find langfuse template: {langfuse_template} - {str(err)} - attempting to load from {file_path}")
 
-    with open(file_path, 'r') as file:
-        data = yaml.safe_load(file)
-        return data[key]
+    return load_config_key(key, vector_name=prefix, filename="config/prompt_config.yaml")
