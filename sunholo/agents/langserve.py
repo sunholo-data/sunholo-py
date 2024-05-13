@@ -21,8 +21,8 @@ def fetch_input_schema(endpoint, vector_name):
 
     This function also logs the fetching process, providing information about the fetched schema or any errors encountered.
 
-    Examples:
-    ---------
+    Examples
+
     ```python
     # Example usage to fetch a schema for a weather API
     endpoint = "http://api.example.com/schema/weather"
@@ -38,6 +38,7 @@ def fetch_input_schema(endpoint, vector_name):
     cached_schema = fetch_input_schema(endpoint, vector_name)
     print("Cached Schema:", cached_schema)
     ```
+
     """
     # Check if the schema is already in the cache
     if endpoint in langserve_input_schema_cache:
@@ -82,9 +83,9 @@ def prepare_request_data(user_input, endpoint, vector_name, **kwargs):
     If the input schema is not found or invalid, an error is logged and None is returned.
 
     Example:
-    --------
-    # Example usage of prepare_request_data
+    
     ```python
+    # Example usage of prepare_request_data
     user_input = "What is the weather today?"
     endpoint = "http://api.example.com/getWeather"
     vector_name = "weatherQuery"
