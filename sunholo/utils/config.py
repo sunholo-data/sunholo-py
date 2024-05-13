@@ -201,8 +201,6 @@ def load_config_key(key: str, vector_name: str, filename: str=None):
         
         log.info(f'vac_config: {vac_config} for {vector_name} - fetching "{key}"')
         key_value = vac_config.get(key)
-        if not key_value:
-            raise ValueError(f'{key} not found for {vector_name} in config')
         
         return key_value
     
@@ -213,6 +211,7 @@ def load_config_key(key: str, vector_name: str, filename: str=None):
         prompt_for_vector_name = prompts.get(vector_name)
         if not prompt_for_vector_name:
             raise ValueError(f"Could not find prompt for vector_name {vector_name}")
+        
         log.info(f'prompts: {prompt_for_vector_name} for {vector_name} - fetching "{key}"')
         key_value = prompt_for_vector_name.get(key)
         
