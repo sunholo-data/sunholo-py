@@ -35,10 +35,18 @@ def prepare_request_data(user_input, endpoint, vector_name, **kwargs):
         key = next(iter(input_schema['properties']))
         input_data = {key: user_input}
 
+        # Check for the special 'configurable' key in kwargs
+        config_data = {}
+        if 'configurable' in kwargs:
+            config_data['configurable'] = kwargs.pop('configurable')
+
         # Merge kwargs into request_data
         input_data.update(kwargs)
         input_data['vector_name'] = vector_name
         request_data = {"input": input_data}
+        if config_data:
+            request_data['config'] = config_data
+            
         return request_data
     else:
         log.error("Invalid or no input schema available.")
