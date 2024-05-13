@@ -6,7 +6,39 @@ from ..auth import get_header
 langserve_input_schema_cache = {}
 
 def fetch_input_schema(endpoint, vector_name):
-    """ Fetch the input schema from the endpoint, with caching """
+    """
+    Fetch the input schema from the Langserve endpoint and vector name, including a caching mechanism
+    to avoid redundant network calls. If the schema for a given endpoint is already cached, it retrieves
+    it directly from the cache; otherwise, it makes an HTTP GET request to fetch the schema.
+
+    Parameters:
+    - endpoint (str): The URL of the endpoint from which the schema needs to be fetched.
+    - vector_name (str): The name of the vector that might modify the headers sent with the request.
+
+    Returns:
+    dict or None: Returns the fetched schema as a dictionary if the request is successful and the schema is valid.
+                  Returns None if there is an error fetching the schema.
+
+    This function also logs the fetching process, providing information about the fetched schema or any errors encountered.
+
+    Examples:
+    ---------
+    ```python
+    # Example usage to fetch a schema for a weather API
+    endpoint = "http://api.example.com/schema/weather"
+    vector_name = "weatherQuery"
+    schema = fetch_input_schema(endpoint, vector_name)
+    if schema:
+        print("Schema fetched successfully:", schema)
+    else:
+        print("Failed to fetch schema")
+
+    # Example demonstrating the caching functionality
+    # Assuming the schema has already been fetched once and is cached
+    cached_schema = fetch_input_schema(endpoint, vector_name)
+    print("Cached Schema:", cached_schema)
+    ```
+    """
     # Check if the schema is already in the cache
     if endpoint in langserve_input_schema_cache:
         return langserve_input_schema_cache[endpoint]
@@ -26,8 +58,54 @@ def fetch_input_schema(endpoint, vector_name):
         return None
 
 def prepare_request_data(user_input, endpoint, vector_name, **kwargs):
-    """ Prepare the request data based on the input schema from the endpoint. 
-        Additional data can be passed via kwargs.
+    """
+    Prepare the request data for an API call to a Langserve endpoint based on the input schema from the specified endpoint. 
+    The function constructs a request payload incorporating user input, endpoint-specific configurations, 
+    and additional parameters passed through keyword arguments (kwargs).
+
+    Parameters:
+    - user_input (str): The main user input data to be processed.
+    - endpoint (str): The endpoint URL or identifier used to fetch the corresponding input schema.
+    - vector_name (str): The name of the vector, indicating the specific processing or analysis vector to be used.
+    - **kwargs: Arbitrary keyword arguments. Special handling for 'configurable' which, if present, 
+                is moved to a separate 'config' dictionary in the output payload.
+
+    The function extracts the input schema based on the provided endpoint and vector name, logs this schema, 
+    and constructs the payload under the 'input' key based on this schema. If 'configurable' is present in kwargs, 
+    it is placed in a separate 'config' dictionary within the payload, allowing configuration settings to be 
+    specified separately from the input data.
+
+    Returns:
+    dict: A dictionary structured as { "input": {...}, "config": {...} } if 'configurable' is provided; 
+          otherwise, the 'config' key is omitted.
+
+    If the input schema is not found or invalid, an error is logged and None is returned.
+
+    Example:
+    --------
+    # Example usage of prepare_request_data
+    ```python
+    user_input = "What is the weather today?"
+    endpoint = "http://api.example.com/getWeather"
+    vector_name = "weatherQuery"
+    kwargs = {"location": "New York", "configurable": {"temperature": "Celsius"}}
+
+    request_data = prepare_request_data(user_input, endpoint, vector_name, **kwargs)
+    print(request_data)
+    # Output:
+    # {
+    #   "input": {
+    #     "query": "What is the weather today?",
+    #     "vector_name": "weatherQuery",
+    #     "location": "New York"
+    #   },
+    #   "config": {
+    #     "configurable": {
+    #       "temperature": "Celsius"
+    #     }
+    #   }
+    # }
+    ```
     """
     input_schema = fetch_input_schema(endpoint, vector_name)
     log.info(f"Found input schema: {input_schema}")
@@ -46,7 +124,7 @@ def prepare_request_data(user_input, endpoint, vector_name, **kwargs):
         request_data = {"input": input_data}
         if config_data:
             request_data['config'] = config_data
-            
+
         return request_data
     else:
         log.error("Invalid or no input schema available.")
