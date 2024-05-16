@@ -12,7 +12,7 @@ Its code is open-source here: https://github.com/sunholo-data/vacs-public/tree/d
 
 This VAC application incorporates the following features:
 
-* A Pydantic typed Question input schema:
+### A Pydantic typed Question input schema:
 
 ```python
 class ChatEntry(BaseModel):
@@ -29,7 +29,9 @@ class Question(BaseModel):
 
 The `sunholo` functions within [`sunholo/agents/langserve.py`](../sunholo/agents/langserve) query this input schema before sending it the payload to make sure it is in the correct format.
 
-* A configurable model choice so paid users can use a more expensive but smarter model
+### A configurable model 
+
+This allows the developer to set a choice for model to use, e.g. paid users can use a more expensive but smarter model
 
 Using Langserve configurables within sunholo streaming functions such as [`generate_proxy_stream_async()`](../sunholo/streaming) you can configure Langserve attributes on the fly.
 
@@ -61,7 +63,7 @@ generate = await generate_proxy_stream_async
     })
 ```
 
-* prompt including chat history, summary and pulled in document context
+### prompt including chat history, summary and pulled in document context
 
 The main GenAI prompt uses these components to keep the conversation history relevant, and inserts the material that has been selected to learn within the client settings.
 
@@ -74,15 +76,15 @@ _inputs = RunnableParallel({
     })
 ```
 
-* Retrieve from docstore
+### Retrieve from docstore
 
 The initial implementation uses AlloyDB as its storage backend.  It uses `get_sources_from_docstore_async()`[../sunholo/database/alloydb] to fetch sources based on the `source_filters` and `source_filters_and_or` arguments.  You could replace this with any docstore.
 
-* Prompt management
+### Prompt management
 
 The prompts themselves are managed by Langfuse, or a back up yaml file using the [`kind: promptConfig`](../config.md) configuration.
 
-* GenAI analytics
+### GenAI analytics
 
 The GenAI calls are sent to the [Multivac Langfuse instance](https://langfuse.sunholo.com) using the callback function provided via [add_langfuse_tracing()](../sunholo/langfuse/callback)
 
