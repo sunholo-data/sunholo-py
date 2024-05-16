@@ -24,7 +24,6 @@ def fetch_input_schema(endpoint, vector_name):
     Examples
 
     ```python
-    # Example usage to fetch a schema for a weather API
     endpoint = "http://api.example.com/schema/weather"
     vector_name = "weatherQuery"
     schema = fetch_input_schema(endpoint, vector_name)
@@ -33,8 +32,6 @@ def fetch_input_schema(endpoint, vector_name):
     else:
         print("Failed to fetch schema")
 
-    # Example demonstrating the caching functionality
-    # Assuming the schema has already been fetched once and is cached
     cached_schema = fetch_input_schema(endpoint, vector_name)
     print("Cached Schema:", cached_schema)
     ```
@@ -85,7 +82,6 @@ def prepare_request_data(user_input, endpoint, vector_name, **kwargs):
     Example:
     
     ```python
-    # Example usage of prepare_request_data
     user_input = "What is the weather today?"
     endpoint = "http://api.example.com/getWeather"
     vector_name = "weatherQuery"
