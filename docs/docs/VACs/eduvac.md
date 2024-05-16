@@ -31,7 +31,7 @@ The `sunholo` functions within [`sunholo/agents/langserve.py`](../sunholo/agents
 
 * A configurable model choice so paid users can use a more expensive but smarter model
 
-Using Langserve configurables within sunholo streaming functions such as [`generate_proxy_stream_async()`](../sunholo/streaming/streaming) you can configure Langserve attributes on the fly.
+Using Langserve configurables within sunholo streaming functions such as [`generate_proxy_stream_async()`](../sunholo/streaming) you can configure Langserve attributes on the fly.
 
 ```python
 config_model = quick_model.configurable_alternatives(
