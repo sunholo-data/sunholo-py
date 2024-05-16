@@ -91,24 +91,58 @@ The GenAI calls are sent to the [Multivac Langfuse instance](https://langfuse.su
 
 An explanation of the configuration is below:
 
-* `vac.pirate_speak` - this is the key that all other configurations are derived from, referred to as "vector_name"
-* `llm`: The configuration specifies an LLM model.  You can swap this for any model supported by `sunholo` so that it can work with the `pick_llm()` function via `model = pick_llm("pirate_speak")`.
-* `agent`: Required to specify what type of agent this VAC is, which determines which Cloud Run or other runtime is queried via the endpoints
+* `vac.eduvac` - this is the key that all other configurations are derived from, referred to as "vector_name"
+* `llm`: The configuration specifies an LLM model.  You can swap this for any model supported by `sunholo` so that it can work with the [`get_llm()`](sunholo/components/llm) function via `model = get_llm("eduvac")`.
+* `agent`: Required to specify what type of agent this VAC is, which determines which Cloud Run or other runtime is queried via the endpoints.  This agent is derived from Langserve.
+* `agent_type`: If the agent is not the same as the `agent_type` then it is specified here to get the correct routing.
 * `display_name`: Used by end clients such as the webapp for the UI.
 * `avatar_url`: Used by end clients such as the webapp for the UI.
 * `description`: Used by end clients such as the webapp for the UI.
 * `tags`: Used to specify which users are authorized to see this VAC, defined via `users_config.yaml`
+* `upload`: This block determines if the user can upload file mime types and where they end up.  For eduvac this is only available for users with the "eduvac" permission tag.
+* `buckets`: Which Google Cloud Storage bucket uploads are available
+* `docstore`: Whether the VAC has access to a docstore.  Downloads entire documents after parsing.
+* `alloydb`: For Eduvac, alloydb is used for chunking and the docstore.  This configures connection.
+* `embedder`: Configurations for embedding after chunking.  In this case it specifies which LLM embedding model will be used.
+* `chunker`: Configurations for chunking.  When new documents are added to the bucket or uploaded, they will be automatically chunked according to the settings here.  In this case, semantic chunking is used which uses an LLM to determine what are optimal chunk sizes.
+
 
 ```yaml
 kind: vacConfig
 apiVersion: v1
 vac:
-    pirate_speak:
+  eduvac:
+    llm: anthropic
+    model: claude-3-opus-20240229
+    agent: eduvac # needs to match cloud run service name
+    agent_type: langserve
+    display_name: Edu-VAC
+    tags: ["eduvac", "free"]
+    avatar_url: ../public/eduvac_small.png
+    description: "Educate yourself in your own personal documents via guided learning from Eduvac, the ever patient teacher bot.  Use the settings below ![](../public/settings_chat_small.png) to examine and select available syllabus. If you'd like to learn from your own private documents, get in touch at multivac@sunholo.com. "
+    upload:  
+      mime_types:
+        - all
+      buckets:
+        all: multivac-eduvac-bucket
+    buckets:
+      raw: multivac-eduvac-bucket
+    docstore:
+      - alloydb-docstore:
+          type: alloydb
+    alloydb_config:
+      project_id: multivac-alloydb
+      region: europe-west1
+      cluster: multivac-alloydb-cluster
+      instance: primary-instance-1
+    embedder:
+      llm: openai # if different from llm is what embedding model uses
+    chunker:
+      type: semantic
+      llm: openai
+      summarise:
         llm: openai
-        agent: langserve
-        #agent_url: you can specify manually your URL endpoint here, or on Multivac it will be populated automatically
-        display_name: Pirate Speak
-        tags: ["free"] # for user access, matches users_config.yaml
-        avatar_url: https://avatars.githubusercontent.com/u/126733545?s=48&v=4
-        description: A Langserve demo using a demo [Langchain Template](https://templates.langchain.com/) that will repeat back what you say but in a pirate accent.  Ooh argh me hearties!  Langchain templates cover many different GenAI use cases and all can be streamed to Multivac clients.
+        model: gpt-3.5-turbo
+        threshold: 3000
+        model_limit: 30000
 ```

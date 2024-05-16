@@ -89,19 +89,6 @@ def prepare_request_data(user_input, endpoint, vector_name, **kwargs):
 
     request_data = prepare_request_data(user_input, endpoint, vector_name, **kwargs)
     print(request_data)
-    # Output:
-    # {
-    #   "input": {
-    #     "query": "What is the weather today?",
-    #     "vector_name": "weatherQuery",
-    #     "location": "New York"
-    #   },
-    #   "config": {
-    #     "configurable": {
-    #       "temperature": "Celsius"
-    #     }
-    #   }
-    # }
     ```
     """
     input_schema = fetch_input_schema(endpoint, vector_name)
