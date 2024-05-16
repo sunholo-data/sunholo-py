@@ -16,8 +16,7 @@ def fetch_input_schema(endpoint, vector_name):
     - vector_name (str): The name of the vector that might modify the headers sent with the request.
 
     Returns:
-    dict or None: Returns the fetched schema as a dictionary if the request is successful and the schema is valid.
-                  Returns None if there is an error fetching the schema.
+    dict or None: Returns the fetched schema as a dictionary if the request is successful and the schema is valid. Returns None if there is an error fetching the schema.
 
     This function also logs the fetching process, providing information about the fetched schema or any errors encountered.
 
