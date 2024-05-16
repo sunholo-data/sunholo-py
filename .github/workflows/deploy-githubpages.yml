@@ -40,7 +40,7 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install pip dependencies
+      - name: Export Docstrings
         run: pip install --upgrade pip && pip install setuptools && pip install -e .[all] && python build_scripts/export_docstrings.py
         working-directory: ${{ github.workspace }}
       

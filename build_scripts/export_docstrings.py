@@ -102,8 +102,9 @@ def write_docstrings_to_md(package):
                         f.write(f"* {method_name}{signature}\n")
                         f.write(f"   - {method_docstring or 'No docstring available.'}\n\n")
         
-        with open(md_file_path, 'w') as f:    
-            print(f.read())    
+        with open(md_file_path, 'r') as f:  # Open in 'r' mode (read mode)
+            contents = f.read()
+            print(contents)   
 
 
 if __name__ == "__main__":
