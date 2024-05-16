@@ -101,6 +101,9 @@ def write_docstrings_to_md(package):
                         method_docstring = inspect.getdoc(method)
                         f.write(f"* {method_name}{signature}\n")
                         f.write(f"   - {method_docstring or 'No docstring available.'}\n\n")
+        
+        with open(md_file_path, 'w') as f:    
+            print(f.read())    
 
 
 if __name__ == "__main__":
