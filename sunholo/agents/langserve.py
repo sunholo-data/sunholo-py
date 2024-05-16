@@ -73,8 +73,7 @@ def prepare_request_data(user_input, endpoint, vector_name, **kwargs):
     specified separately from the input data.
 
     Returns:
-    dict: A dictionary structured as { "input": {...}, "config": {...} } if 'configurable' is provided; 
-          otherwise, the 'config' key is omitted.
+    dict: A dictionary structured as `{ "input": {...}, "config": {...} }` if 'configurable' is provided; otherwise, the 'config' key is omitted.
 
     If the input schema is not found or invalid, an error is logged and None is returned.
     """
