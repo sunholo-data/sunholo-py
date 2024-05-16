@@ -65,7 +65,7 @@ def prepare_request_data(user_input, endpoint, vector_name, **kwargs):
     - user_input (str): The main user input data to be processed.
     - endpoint (str): The endpoint URL or identifier used to fetch the corresponding input schema.
     - vector_name (str): The name of the vector, indicating the specific processing or analysis vector to be used.
-    - **kwargs: Arbitrary keyword arguments. Special handling for 'configurable' which, if present, 
+    - `**kwargs`: Arbitrary keyword arguments. Special handling for 'configurable' which, if present, 
                 is moved to a separate 'config' dictionary in the output payload.
 
     The function extracts the input schema based on the provided endpoint and vector name, logs this schema, 
@@ -78,18 +78,6 @@ def prepare_request_data(user_input, endpoint, vector_name, **kwargs):
           otherwise, the 'config' key is omitted.
 
     If the input schema is not found or invalid, an error is logged and None is returned.
-
-    Example:
-    
-    ```python
-    user_input = "What is the weather today?"
-    endpoint = "http://api.example.com/getWeather"
-    vector_name = "weatherQuery"
-    kwargs = {"location": "New York", "configurable": {"temperature": "Celsius"}}
-
-    request_data = prepare_request_data(user_input, endpoint, vector_name, **kwargs)
-    print(request_data)
-    ```
     """
     input_schema = fetch_input_schema(endpoint, vector_name)
     log.info(f"Found input schema: {input_schema}")
