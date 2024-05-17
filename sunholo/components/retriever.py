@@ -43,8 +43,8 @@ def pick_retriever(vector_name, embeddings=None):
     for memory in memories:  # Iterate over the list
         for key, value in memory.items():  # Now iterate over the dictionary
             log.info(f"Found memory {key}")
-            vectorstore = value.get('vectorstore', None)
-            if vectorstore is not None:
+            vectorstore = value.get('vectorstore')
+            if vectorstore:
                 log.info(f"Found vectorstore {vectorstore}")
                 if embeddings is None:
                     embeddings = get_embeddings(vector_name)
@@ -52,7 +52,7 @@ def pick_retriever(vector_name, embeddings=None):
                 vs_retriever = vectorstore.as_retriever(search_kwargs=dict(k=3))
                 retriever_list.append(vs_retriever)
             
-            if value.get('provider', None) == "GoogleCloudEnterpriseSearchRetriever":
+            if value.get('provider') == "GoogleCloudEnterpriseSearchRetriever":
                 log.info(f"Found GoogleCloudEnterpriseSearchRetriever {value['provider']}")
                 gcp_retriever = GoogleCloudEnterpriseSearchRetriever(
                     project_id=get_gcp_project(),
