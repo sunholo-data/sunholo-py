@@ -172,10 +172,10 @@ def get_llm_chat(vector_name, model=None, config_file="config/llm_config.yaml"):
 
         mo = AzureChatOpenAI(
             temperature=0, 
-            azure_endpoint=AZURE_OPENAI_ENDPOINT, # take from link I added
+            azure_endpoint=AZURE_OPENAI_ENDPOINT,
             openai_api_version=openai_api_version, 
             azure_deployment=model, # or "gpt-35-turbo-1106"
-            openai_api_key=AZURE_OPENAI_API_KEY, # take from link I added
+            openai_api_key=AZURE_OPENAI_API_KEY, 
             openai_api_type="azure",
         )
         log.info(f"OpenAI Azure object: {mo}")
@@ -241,18 +241,14 @@ def pick_embedding(llm_str: str, vector_name: str=None):
         if not AZURE_OPENAI_ENDPOINT:
             raise ValueError("AZURE_OPENAI_API_KEY env or config value azure.azure_openai_endpoint has not been set")
         
-        azure_deployment = azure_config.get("azure_deployment")
-        if not azure_deployment:
-            raise ValueError("config.azure_deployment has not been set")
-        
         openai_api_version = azure_config.get("openai_api_version")
         if not openai_api_version:
-            raise ValueError("config.openai_api_version has not been set")
+            raise ValueError("config.azure.openai_api_version has not been set")
         
         model = azure_config.get("embed_model") if azure_config.get("embed_model") else "text-embedding-3-large"
 
         return AzureOpenAIEmbeddings(azure_endpoint=AZURE_OPENAI_ENDPOINT,
-                                     deployment=azure_deployment, 
+                                     openai_api_key=AZURE_OPENAI_API_KEY, 
                                      model=model)
 
     if llm_str is None:
