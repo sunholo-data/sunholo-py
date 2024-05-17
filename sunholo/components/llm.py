@@ -159,13 +159,12 @@ def get_llm_chat(vector_name, model=None, config_file="config/llm_config.yaml"):
             raise ValueError("AZURE_OPENAI_API_KEY env has not been set")
 
         # "https://<your-endpoint>.openai.azure.com/"
-        AZURE_OPENAI_ENDPOINT = os.environ("AZURE_OPENAI_ENDPOINT") or azure_config.get("azure_openai_endpoint")
+        AZURE_OPENAI_ENDPOINT = os.environ.get("AZURE_OPENAI_ENDPOINT") or azure_config.get("azure_openai_endpoint")
 
         if not AZURE_OPENAI_ENDPOINT:
             raise ValueError("AZURE_OPENAI_API_KEY env or config value azure.azure_openai_endpoint has not been set")
         
-        
-        openai_api_version = azure_config.get("openai_api_version") or "2024-02-01"
+        openai_api_version = azure_config.get("openai_api_version", "2024-02-01")
 
         if model is None:
             model = "gpt-4-turbo-1106-preview"
