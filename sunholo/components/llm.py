@@ -236,7 +236,7 @@ def pick_embedding(llm_str: str, vector_name: str=None):
             raise ValueError("AZURE_OPENAI_API_KEY env has not been set")
 
         # "https://<your-endpoint>.openai.azure.com/"
-        AZURE_OPENAI_ENDPOINT = os.environ("AZURE_OPENAI_ENDPOINT") or azure_config.get("azure_openai_endpoint")
+        AZURE_OPENAI_ENDPOINT = os.environ.get("AZURE_OPENAI_ENDPOINT") or azure_config.get("azure_openai_endpoint")
 
         if not AZURE_OPENAI_ENDPOINT:
             raise ValueError("AZURE_OPENAI_API_KEY env or config value azure.azure_openai_endpoint has not been set")
