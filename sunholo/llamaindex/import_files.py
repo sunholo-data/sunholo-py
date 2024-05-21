@@ -92,6 +92,12 @@ def do_llamaindex(message_data, metadata, vector_name):
     description = load_config_key("description", vector_name=vector_name, filename="config/llm_config.yaml")
 
     try:
+        corpura = rag.list_corpora()
+        log.info(f"Corpora: {corpura} - {type(corpura)}")
+    except Exception as err:
+        log.warning(f"Could not list any corpora - {str(err)}")
+
+    try:
         corpus = rag.get_corpus(name=corpus_name)
     except Exception as err:
         log.warning(f"Failed to fetch corpus - creating new corpus {str(err)}")
