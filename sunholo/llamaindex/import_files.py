@@ -86,12 +86,13 @@ def do_llamaindex(message_data, metadata, vector_name):
     if not project_id:
         raise ValueError("Need config.gcp.project_id to configure llamaindex on VertexAI")
 
+    corpus_name = f"projects/{project_id}/locations/us-central1/ragCorpora/{vector_name}"
     corpus = None
     #display_name = load_config_key("display_name", vector_name=vector_name, filename="config/llm_config.yaml")
     description = load_config_key("description", vector_name=vector_name, filename="config/llm_config.yaml")
 
     try:
-        corpus = rag.get_corpus(name=vector_name)
+        corpus = rag.get_corpus(name=corpus_name)
     except Exception as err:
         log.warning(f"Failed to fetch corpus - creating new corpus {str(err)}")
         try:
@@ -106,8 +107,6 @@ def do_llamaindex(message_data, metadata, vector_name):
 
     # native support for cloud storage and drive links
     chunker_config = load_config_key("chunker", vector_name=vector_name, filename="config/llm_config.yaml")
-
-    corpus_name = f"projects/{project_id}/locations/us-central1/ragCorpora/{vector_name}"
 
     if message_data.startswith("gs://") or message_data.startswith("https://drive.google.com"):
         log.info("rag.import_files for {message_data}")
