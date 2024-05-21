@@ -7,13 +7,15 @@ try:
     from fastapi import FastAPI, Request
     from fastapi.responses import HTMLResponse
     from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 except ImportError:
     FastAPI = None
 
 from ...logging import log
 
-def create_fastapi_app():
-    """Creates and configures a FastAPI app for image-based Q&A with Socket.IO integration.
+def create_fastapi_app(origins = ["*"],
+                       origin_regex = r"https://(.*\.)?sunholo\.com"):
+    """Creates and configures a FastAPI app for GenAI with Socket.IO integration.
 
     Args:
         image_qna_stream_fn: Streaming Q&A function (likely from gemini.genai)
@@ -39,7 +41,8 @@ def create_fastapi_app():
     # CORS Configuration 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=origins,
+        allow_origin_regex=origin_regex,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -65,5 +68,17 @@ def create_fastapi_app():
         </body>
         </html>
         """
+    
+    @app.get("/docs")
+    async def get_documentation():
+        """Endpoint to serve Swagger UI for API documentation"""
+        return get_swagger_ui_html(openapi_url="/openapi.json", title="docs")
+
+
+    @app.get("/redoc")
+    async def get_documentation():
+        """Endpoint to serve ReDoc for API documentation"""
+        return get_redoc_html(openapi_url="/openapi.json", title="redoc")
+
 
     return app 
