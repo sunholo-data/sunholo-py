@@ -77,9 +77,9 @@ def do_llamaindex(message_data, metadata, vector_name):
     # Imported file to corpus: {'status': 'success'}
     ```
     """
-    gcp_config = load_config_key("gcp", vector_name=vector_name, filename = "config/llm_config.yaml")
+    gcp_config = load_config_key("gcp_config", vector_name=vector_name, filename = "config/llm_config.yaml")
     if not gcp_config:
-        raise ValueError("Need config.gcp to configure llamaindex on VertexAI")
+        raise ValueError(f"Need config.{vector_name}.gcp_config to configure llamaindex on VertexAI")
 
     init_vertex(gcp_config)
     project_id = gcp_config.get('project_id')

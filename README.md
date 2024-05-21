@@ -1,7 +1,7 @@
 ## Introduction
 This is the Sunholo Python project, a comprehensive toolkit for working with language models and vector stores on Google Cloud Platform. It provides a wide range of functionalities and utilities to facilitate the development and deployment of language model applications.
 
-This is the sunholo-py project. It provides a collection of useful tools and functionalities for working with language models, databases, and various bots.
+Please refer to the website for full documentation at https://dev.sunholo.com/
 
 # sunholo-py
 
