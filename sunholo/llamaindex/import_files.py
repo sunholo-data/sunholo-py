@@ -122,9 +122,10 @@ def do_llamaindex(message_data, metadata, vector_name):
             chunk_size=chunker_config.get("chunk_size"),  # Optional
             chunk_overlap=chunker_config.get("overlap"),  # Optional
         )
-        log.info(f"Imported file to corpus: {response}")
+        log.info(f"Imported file to corpus: {response} with metadata: {metadata}")
 
-        return response
+        metadata["source"] = message_data
+        return metadata
     
     else:
         raise NotImplementedError("Only gs:// and https://drive data is supported")
