@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.53.3'
+version = '0.54.0'
 
 setup(
     name='sunholo',
@@ -32,6 +32,7 @@ setup(
         'all': [
             "asyncpg",
             "flask",
+            "google-cloud-aiplatform",
             "google-api-python-client",
             "google-cloud-alloydb-connector[pg8000]",
             "google-cloud-logging",
@@ -60,6 +61,7 @@ setup(
             "lancedb",
         ],
         'gcp': [
+            "google-cloud-aiplatform",
             "google-cloud-storage",
             "google-cloud-logging",
             "google-cloud-pubsub",

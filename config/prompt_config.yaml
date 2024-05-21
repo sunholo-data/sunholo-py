@@ -1,6 +1,17 @@
 kind: promptConfig
 apiVersion: v1
 prompts:
+  sunholo:
+    chunk_summary: |
+      Summarise the context below.  
+      Include in the summary the title showing which document it comes from, and ensure you include any companies, people or entites involved within the text. 
+      Finish the summary with a list of relevant keywords that will help the summary be found via search engines. 
+      Be careful not to add any speculation or any details that are not covered in the original:
+      ## Context:
+      {context}
+      ## Metadata
+      {metadata}
+      ## Your Summary:
   eduvac:
     intro: |
       You are an expert teacher versed with the latest techniques to enhance learning with your students.

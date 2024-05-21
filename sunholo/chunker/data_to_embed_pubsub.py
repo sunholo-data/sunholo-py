@@ -15,8 +15,8 @@ from ..logging import log
 from ..pubsub import process_pubsub_message
 from .message_data import handle_gcs_message, handle_google_drive_message, handle_github_message, handle_http_message, handle_json_content_message
 from .publish import process_docs_chunks_vector_name
-
-
+from ..utils.config import load_config_key
+from ..llamaindex.import_files import do_llamaindex
 
 def data_to_embed_pubsub(data: dict):
     """Triggered from a message on a Cloud Pub/Sub topic.
@@ -34,6 +34,15 @@ def data_to_embed_pubsub(data: dict):
         return
 
     log.debug(f"Found metadata in pubsub: {metadata}")
+
+    # llamaindex handles its own chunking/embeding
+    agent = load_config_key("agent", vector_name=vector_name, filename = "config/llm_config.yaml")
+    if agent == "llamaindex":
+        # https://cloud.google.com/vertex-ai/generative-ai/docs/llamaindex-on-vertexai
+        log.info(f"llamaindex on vertex indexing for {vector_name}")
+        llama = do_llamaindex(message_data, metadata, vector_name)
+
+        return llama
 
     chunks = []
 

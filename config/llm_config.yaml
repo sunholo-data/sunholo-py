@@ -110,3 +110,17 @@ vac:
       azure_openai_endpoint: https://openai-blah.openai.azure.com/
       openai_api_version: 2024-02-01
       embed_model: text-embedding-ada-002 # or text-embedding-3-large
+  personal_llama:
+    llm: vertex
+    model: gemini-1.5-pro-preview-0514
+    agent: llamaindex
+    display_name: LlamaIndex via Vertex AI
+    memory:
+      - llamaindex-native:
+          vectorstore: llamaindex
+    gcp_config:
+      project_id: llamaindex_project
+      location: europe-west1          
+    chunker:
+      chunk_size: 1000
+      overlap: 200
