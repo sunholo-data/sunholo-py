@@ -109,9 +109,9 @@ def do_llamaindex(message_data, metadata, vector_name):
     chunker_config = load_config_key("chunker", vector_name=vector_name, filename="config/llm_config.yaml")
 
     if message_data.startswith("gs://") or message_data.startswith("https://drive.google.com"):
-        log.info("rag.import_files for {message_data}")
+        log.info(f"rag.import_files for {message_data}")
         response = rag.import_files(
-            corpus_name=corpus_name,
+            corpus_name=corpus.name,
             paths=[message_data],
             chunk_size=chunker_config.get("chunk_size"),  # Optional
             chunk_overlap=chunker_config.get("overlap"),  # Optional
