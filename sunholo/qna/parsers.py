@@ -21,11 +21,18 @@ def document_to_dict(document):
     }
 
 def parse_output(bot_output):
+    if isinstance(bot_output, str):
+        return bot_output
     if isinstance(bot_output, dict) and 'source_documents' in bot_output:
         if 'source_documents' in bot_output:
             bot_output['source_documents'] = [document_to_dict(doc) for doc in bot_output['source_documents']]
         if bot_output.get("answer", None) is None or bot_output.get("answer") == "":
             bot_output['answer'] = "(No text was returned)"
         return bot_output
+    elif isinstance(bot_output, dict):
+        if not bot_output.get("answer"):
+            raise ValueError(f"VAC output was not a string or a dict with the key 'answer' - got: {bot_output}")
+        else:
+            return bot_output["answer"]
     else:
-        log.error(f"Couldn't parse output for {bot_output}")
+        log.error(f"Couldn't parse output for:\n {bot_output}")
