@@ -93,10 +93,9 @@ def register_qna_routes(app, stream_interpreter, qna_interpreter):
             # {"answer": "The answer", "source_documents": [{"page_content": "The page content", "metadata": "The metadata"}]}
             bot_output = parse_output(bot_output)
             archive_qa(bot_output, vector_name)
+            log.info(f'==LLM Q:{user_input} - A:{bot_output}')
         except Exception as err: 
             bot_output = {'answer': f'QNA_ERROR: An error occurred while processing /qna/{vector_name}: {str(err)} traceback: {traceback.format_exc()}'}
-        
-        log.info(f'==LLM Q:{user_input} - A:{bot_output["answer"]}')
         
         return jsonify(bot_output)
 
