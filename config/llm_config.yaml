@@ -113,7 +113,7 @@ vac:
   personal_llama:
     llm: vertex
     model: gemini-1.5-pro-preview-0514
-    agent: llamaindex
+    agent: vertex-genai
     display_name: LlamaIndex via Vertex AI
     memory:
       - llamaindex-native:

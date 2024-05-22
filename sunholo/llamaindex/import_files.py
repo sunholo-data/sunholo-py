@@ -83,10 +83,11 @@ def do_llamaindex(message_data, metadata, vector_name):
 
     init_vertex(gcp_config)
     project_id = gcp_config.get('project_id')
+    location = gcp_config.get('location')
     if not project_id:
         raise ValueError("Need config.gcp.project_id to configure llamaindex on VertexAI")
 
-    corpus_name = f"projects/{project_id}/locations/us-central1/ragCorpora/{vector_name}"
+    corpus_name = f"projects/{project_id}/locations/{location}/ragCorpora/{vector_name}"
     corpus = None
     #display_name = load_config_key("display_name", vector_name=vector_name, filename="config/llm_config.yaml")
     description = load_config_key("description", vector_name=vector_name, filename="config/llm_config.yaml")
@@ -151,3 +152,30 @@ def do_llamaindex(message_data, metadata, vector_name):
         #    description=description,
         #)
 
+
+def llamaindex_chunker_check(message_data, metadata, vector_name):
+    # llamaindex handles its own chunking/embedding
+    memories = load_config_key("memory", vector_name=vector_name, filename = "config/llm_config.yaml")
+    total_memories = len(memories)
+    llama = None
+    for memory in memories:  # Iterate over the list
+        for key, value in memory.items():  # Now iterate over the dictionary
+            log.info(f"Found memory {key}")
+            vectorstore = value.get('vectorstore')
+            if vectorstore:
+                log.info(f"Found vectorstore {vectorstore}")
+                if vectorstore == "llamaindex":
+                    # https://cloud.google.com/vertex-ai/generative-ai/docs/llamaindex-on-vertexai
+                    log.info(f"llamaindex on vertex indexing for {vector_name}")
+                    llama = do_llamaindex(message_data, metadata, vector_name)
+                    log.info(f"Processed llamaindex: {llama}")
+
+    # If llamaindex is the only entry, return
+    if llama and total_memories == 1:
+
+        return llama
+    
+    elif llama:
+        log.info("Llamaindex found but not the only memory, continuing with other processes.")
+
+        return None
