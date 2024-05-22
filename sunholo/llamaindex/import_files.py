@@ -49,6 +49,29 @@ def init_vertex(gcp_config):
     location = gcp_config.get('location')
     vertexai.init(project=project_id, location=location)
 
+def get_corpus(gcp_config):
+    project_id = gcp_config.get('project_id')
+    location = gcp_config.get('location')
+    rag_id = gcp_config.get('rag_id')
+    if not project_id:
+        raise ValueError("Need config.gcp.project_id to configure llamaindex on VertexAI")
+    if not rag_id:
+        raise ValueError("Need config.gcp.rag_id to configure llamaindex on VertexAI.  Create via `rag.create_corpus(display_name=vector_name, description=description)`")
+
+    corpus_name = f"projects/{project_id}/locations/{location}/ragCorpora/{rag_id}"  
+
+    try:
+        return rag.get_corpus(name=corpus_name)
+    except Exception as err:
+        #log.warning(f"Failed to fetch corpus - creating new corpus {str(err)}")
+        # it does not create a unique corpus, display_name can be in multiple rag_ids
+        #try:
+        #    corpus = rag.create_corpus(display_name=vector_name, description=description)
+        #except Exception as err:
+        #    log.error(f"Failed to get or create corpus {str(err)}")
+        raise ValueError(f"Failed to get or create corpus: {str(err)}")
+    
+
 def do_llamaindex(message_data, metadata, vector_name):
     """
     Configures and manages the corpus for a VertexAI project using the specified vector name
@@ -82,33 +105,15 @@ def do_llamaindex(message_data, metadata, vector_name):
         raise ValueError(f"Need config.{vector_name}.gcp_config to configure llamaindex on VertexAI")
 
     init_vertex(gcp_config)
-    project_id = gcp_config.get('project_id')
-    location = gcp_config.get('location')
-    if not project_id:
-        raise ValueError("Need config.gcp.project_id to configure llamaindex on VertexAI")
-
-    corpus_name = f"projects/{project_id}/locations/{location}/ragCorpora/{vector_name}"
-    corpus = None
+    corpus = get_corpus(gcp_config)
     #display_name = load_config_key("display_name", vector_name=vector_name, filename="config/llm_config.yaml")
-    description = load_config_key("description", vector_name=vector_name, filename="config/llm_config.yaml")
+    #description = load_config_key("description", vector_name=vector_name, filename="config/llm_config.yaml")
 
     try:
         corpura = rag.list_corpora()
         log.info(f"Corpora: {corpura} - {type(corpura)}")
     except Exception as err:
         log.warning(f"Could not list any corpora - {str(err)}")
-
-    try:
-        corpus = rag.get_corpus(name=corpus_name)
-    except Exception as err:
-        log.warning(f"Failed to fetch corpus - creating new corpus {str(err)}")
-        try:
-            corpus = rag.create_corpus(display_name=vector_name, description=description)
-        except Exception as err:
-            log.error(f"Failed to get or create corpus {str(err)}")
-
-    if not corpus:
-        raise ValueError("Could not find corpus to add files to")
 
     log.info(f"Found llamaindex corpus: {corpus}")
 

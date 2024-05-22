@@ -120,7 +120,8 @@ vac:
           vectorstore: llamaindex
     gcp_config:
       project_id: llamaindex_project
-      location: europe-west1          
+      location: europe-west1
+      rag_id: 4611686018427387904 # created via rag.create for now     
     chunker:
       chunk_size: 1000
       overlap: 200
