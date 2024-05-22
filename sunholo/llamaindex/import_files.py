@@ -50,6 +50,42 @@ def init_vertex(gcp_config):
     vertexai.init(project=project_id, location=location)
 
 def get_corpus(gcp_config):
+    """
+    Retrieves a LlamaIndex corpus from Vertex AI based on the provided Google Cloud configuration.
+    
+    This function constructs a corpus name using project details from the configuration and attempts
+    to fetch the corresponding corpus. If the corpus cannot be retrieved, it raises an error.
+    
+    Parameters:
+    - gcp_config (dict): Configuration dictionary that must include:
+        - project_id (str): Google Cloud project identifier.
+        - location (str): Google Cloud location.
+        - rag_id (str): Identifier for the RAG (Retrieval-Augmented Generation) corpus.
+    
+    Returns:
+    - The corpus object fetched from Vertex AI.
+    
+    Raises:
+    - ValueError: If any of the required configurations (project_id, location, or rag_id) are missing,
+      or if the corpus cannot be retrieved.
+
+    Example:
+    ```python
+    # Example configuration dictionary
+    gcp_config = {
+        'project_id': 'your-project-id',
+        'location': 'your-location',
+        'rag_id': 'your-rag-id'
+    }
+
+    # Fetch the corpus
+    try:
+        corpus = get_corpus(gcp_config)
+        print("Corpus fetched successfully:", corpus)
+    except ValueError as e:
+        print("Error fetching corpus:", str(e))
+    ```
+    """
     project_id = gcp_config.get('project_id')
     location = gcp_config.get('location')
     rag_id = gcp_config.get('rag_id')
