@@ -24,7 +24,8 @@ from ...logging import log
 from ...utils.config import load_config
 
 try:
-    from langfuse import Langfuse, langfuse_context
+    from langfuse import Langfuse
+    from langfuse.decorators import langfuse_context
     langfuse = Langfuse()
 except ImportError as err:
     print(f"No langfuse installed for agents.flask.register_qna_routes, install via `pip install sunholo[http]` - {str(err)}")
@@ -40,8 +41,8 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
     @app.route('/vac/streaming/<vector_name>', methods=['POST'])
     def stream_qa(vector_name):
         trace = create_langfuse_trace(request, vector_name)
+        trace.update(tags=['streaming'])
 
-        log.info(f"Calling /vac/streaming/{vector_name} - langfuse trace: {langfuse_context.get_current_trace_url()}")
         data = request.get_json()
         if trace:
             trace.update(input=data)
@@ -66,13 +67,12 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
         log.info(f'Streaming data with stream_wait_time: {stream_wait_time} and stream_timeout: {stream_timeout}')
         def generate_response_content():
             config, _ = load_config("config/llm_config.yaml")
-            vac_config = config[vector_name]
-            model = vac_config.get("model") or vac_config.get("llm")
-            
+            vac_configs = config.get("vac")
+            if vac_configs:
+                vac_config = vac_configs[vector_name]
             if trace:
-                generation = trace.generation(
+                span = trace.generation(
                     name="VAC",
-                    model=model,
                     metadata=vac_config,
                     input = {'user_input': user_input, 'vector_name': vector_name, 'chat_history': paired_messages, 'message_author': message_author},
                 )
@@ -89,9 +89,12 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                 if isinstance(chunk, dict) and 'answer' in chunk:
                     # When we encounter the dictionary, we yield it as a JSON string
                     # and stop the generator.
+                    if trace:
+                        chunk["trace"] = trace.id
+                        chunk["trace_url"] = langfuse_context.get_current_trace_url()
                     archive_qa(chunk, vector_name)
                     if trace:
-                        generation.end(
+                        span.end(
                             output=json.dumps(chunk)
                         )
                     yield f"###JSON_START###{json.dumps(chunk)}###JSON_END###"
@@ -103,7 +106,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                     yield chunk
             
             if trace:
-                generation.end(
+                span.end(
                     output=chunks
                 )
 
@@ -120,7 +123,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
     def process_qna(vector_name):
         trace = create_langfuse_trace(request, vector_name)
         data = request.get_json()
-        log.info(f"qna/{vector_name} got data: {data}")
+        log.info(f"vac/{vector_name} got data: {data}")
 
         if trace:
             trace.update(input=data)
@@ -140,24 +143,26 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
 
         try:
             config, _ = load_config("config/llm_config.yaml")
-            vac_config = config[vector_name]
-            model = vac_config.get("model") or vac_config.get("llm")
-            
+            vac_configs = config.get("vac")
+            if vac_configs:
+                vac_config = vac_configs[vector_name]
             if trace:
-                generation = trace.generation(
+                span = trace.span(
                     name="VAC",
-                    model=model,
                     metadata=vac_config,
                     input = {'user_input': user_input, 'vector_name': vector_name, 'chat_history': paired_messages, 'message_author': message_author},
                 )
             bot_output = vac_interpreter(user_input, vector_name, chat_history=paired_messages, message_author=message_author)
             # {"answer": "The answer", "source_documents": [{"page_content": "The page content", "metadata": "The metadata"}]}
             bot_output = parse_output(bot_output)
+            if trace:
+                bot_output["trace"] = trace.id
+                bot_output["trace_url"] = langfuse_context.get_current_trace_url()
             archive_qa(bot_output, vector_name)
             log.info(f'==LLM Q:{user_input} - A:{bot_output}')
 
             if trace:
-                generation.end(
+                span.end(
                     output=jsonify(bot_output),
                 )
         except Exception as err: 
@@ -173,6 +178,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
 def create_langfuse_trace(request, vector_name):
     try:
         from langfuse import Langfuse
+        from langfuse.decorators import langfuse_context
         langfuse = Langfuse()
     except ImportError as err:
         print(f"No langfuse installed for agents.flask.register_qna_routes, install via `pip install sunholo[http]` - {str(err)}")
@@ -189,9 +195,11 @@ def create_langfuse_trace(request, vector_name):
     tags = [f"sunholo-v{package_version}"]
     if message_source:
         tags.append(message_source)
-    
+
+    log.info(f"Calling /vac/{vector_name} - langfuse trace: {langfuse_context.get_current_trace_url()}")
+
     return langfuse.trace(
-        name = f"/vac/streaming/{vector_name}",
+        name = f"/vac/{vector_name}",
         user_id = user_id,
         session_id = session_id,
         tags = tags,
