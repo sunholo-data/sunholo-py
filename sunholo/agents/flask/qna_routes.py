@@ -103,13 +103,13 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                     return
                 else:
                     # Otherwise, we yield the plain text chunks as they come in.
-                    chunks += chunk
-                    yield chunk
+                    if chunk:
+                        chunks += chunk
+                        
+                        yield chunk
             
             if trace:
-                span.end(
-                    output=chunks
-                )
+                span.end(output=chunks)
                 trace.update(output=chunks)
 
         # Here, the generator function will handle streaming the content to the client.
