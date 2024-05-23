@@ -97,6 +97,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                         span.end(
                             output=json.dumps(chunk)
                         )
+                        trace.update(output=json.dumps(chunk))
                     yield f"###JSON_START###{json.dumps(chunk)}###JSON_END###"
   
                     return
@@ -109,6 +110,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                 span.end(
                     output=chunks
                 )
+                trace.update(output=chunks)
 
         # Here, the generator function will handle streaming the content to the client.
         response = Response(generate_response_content(), content_type='text/plain; charset=utf-8')
@@ -162,9 +164,8 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
             log.info(f'==LLM Q:{user_input} - A:{bot_output}')
 
             if trace:
-                span.end(
-                    output=jsonify(bot_output),
-                )
+                span.end(output=jsonify(bot_output),)
+                trace.update(output=jsonify(bot_output), metadata=vac_config)
         except Exception as err: 
             bot_output = {'answer': f'QNA_ERROR: An error occurred while processing /vac/{vector_name}: {str(err)} traceback: {traceback.format_exc()}'}
         
