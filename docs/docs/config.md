@@ -110,8 +110,8 @@ This configuration file sets up standard endpoints for each type of agent, corre
 ```yaml
 # this config file controls the behaviour of agent-types such as langserve, controlling what endpoints are used
 default:
-  stream: "{stem}/stream"
-  invoke: "{stem}/invoke"
+  stream: "{stem}/vac/streaming/{vector_name}"
+  invoke: "{stem}/vac/{vector_name}"
 
 langserve:
   stream: "{stem}/{vector_name}/stream"
@@ -123,16 +123,16 @@ langserve:
   stream_log: "{stem}/{vector_name}/stream_log"
 
 edmonbrain:
-  stream: "{stem}/qna/streaming/{vector_name}"
-  invoke: "{stem}/qna/{vector_name}"
+  stream: "{stem}/vac/streaming/{vector_name}"
+  invoke: "{stem}/vac/{vector_name}"
 
 openinterpreter:
-  stream: "{stem}/qna/streaming/{vector_name}"
-  invoke: "{stem}/qna/{vector_name}"
+  stream: "{stem}/vac/streaming/{vector_name}"
+  invoke: "{stem}/vac/{vector_name}"
 
 crewai:
-  stream: "{stem}/qna/streaming/{vector_name}"
-  invoke: "{stem}/qna/{vector_name}"
+  stream: "{stem}/vac/streaming/{vector_name}"
+  invoke: "{stem}/vac/{vector_name}"
 ```
 
 ## users_config.yaml

@@ -15,7 +15,6 @@ from ..logging import log
 from ..pubsub import process_pubsub_message
 from .message_data import handle_gcs_message, handle_google_drive_message, handle_github_message, handle_http_message, handle_json_content_message
 from .publish import process_docs_chunks_vector_name
-from ..utils.config import load_config_key
 from ..llamaindex.import_files import llamaindex_chunker_check
 
 def data_to_embed_pubsub(data: dict):

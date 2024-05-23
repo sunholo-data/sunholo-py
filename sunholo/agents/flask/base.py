@@ -11,16 +11,10 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-import datetime
-
 def create_app(name):
     from flask import Flask
     # Initialize Flask app
     app = Flask(name)
     app.config['TRAP_HTTP_EXCEPTIONS'] = True
-
-    # Setup a global variable to store the last modification time
-    app.last_mod_time = None
-    app.last_check_time = datetime.datetime.now()
    
     return app

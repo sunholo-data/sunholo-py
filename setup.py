@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.54.9'
+version = '0.55.0'
 
 setup(
     name='sunholo',
@@ -56,7 +56,6 @@ setup(
         'database': [
             "asyncpg",
             "sqlalchemy",
-            "google-cloud-alloydb-connector[pg8000]",
             "pg8000",
             "lancedb",
         ],
@@ -67,6 +66,8 @@ setup(
             "google-cloud-pubsub",
             "langchain-google-genai",
             "langchain_google_alloydb_pg",
+            "google-api-python-client",
+            "google-cloud-alloydb-connector[pg8000]",
         ],
         'openai': [
             "langchain-openai",
@@ -74,10 +75,8 @@ setup(
         'anthropic': [
             "langchain-anthropic",        
         ],
-        'chunker':[
-            "google-api-python-client"
-        ],
-        'apis': [
+        'http': [
+            "langfuse",
             "fastapi",
             "flask",
             "httpcore",
