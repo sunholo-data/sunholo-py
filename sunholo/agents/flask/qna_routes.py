@@ -26,8 +26,8 @@ from ...utils.config import load_config
 try:
     from langfuse import Langfuse, langfuse_context
     langfuse = Langfuse()
-except ImportError:
-    print("No langfuse installed for agents.flask.register_qna_routes, install via `pip install sunholo[http]`")
+except ImportError as err:
+    print(f"No langfuse installed for agents.flask.register_qna_routes, install via `pip install sunholo[http]` - {str(err)}")
     langfuse = None
  
 try:
@@ -43,7 +43,8 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
 
         log.info(f"Calling /vac/streaming/{vector_name} - langfuse trace: {langfuse_context.get_current_trace_url()}")
         data = request.get_json()
-        trace.update(input=data)
+        if trace:
+            trace.update(input=data)
 
         user_input = data['user_input'].strip()  # Extract user input from the payload
         chat_history = data.get('chat_history', None)
@@ -57,7 +58,9 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
 
         command_response = handle_special_commands(user_input, vector_name, paired_messages)
         if command_response is not None:
-            trace.update(output=jsonify(command_response))
+            if trace:
+                trace.update(output=jsonify(command_response))
+
             return jsonify(command_response)
 
         log.info(f'Streaming data with stream_wait_time: {stream_wait_time} and stream_timeout: {stream_timeout}')
@@ -66,12 +69,13 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
             vac_config = config[vector_name]
             model = vac_config.get("model") or vac_config.get("llm")
             
-            generation = trace.generation(
-                name="VAC",
-                model=model,
-                metadata=vac_config,
-                input = {'user_input': user_input, 'vector_name': vector_name, 'chat_history': paired_messages, 'message_author': message_author},
-            )
+            if trace:
+                generation = trace.generation(
+                    name="VAC",
+                    model=model,
+                    metadata=vac_config,
+                    input = {'user_input': user_input, 'vector_name': vector_name, 'chat_history': paired_messages, 'message_author': message_author},
+                )
             chunks = ""
             for chunk in start_streaming_chat(user_input,
                                               vector_name=vector_name,
@@ -86,9 +90,10 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                     # When we encounter the dictionary, we yield it as a JSON string
                     # and stop the generator.
                     archive_qa(chunk, vector_name)
-                    generation.end(
-                        output=json.dumps(chunk)
-                    )
+                    if trace:
+                        generation.end(
+                            output=json.dumps(chunk)
+                        )
                     yield f"###JSON_START###{json.dumps(chunk)}###JSON_END###"
   
                     return
@@ -97,15 +102,17 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                     chunks += chunk
                     yield chunk
             
-            generation.end(
-                output=chunks
-            )
+            if trace:
+                generation.end(
+                    output=chunks
+                )
 
         # Here, the generator function will handle streaming the content to the client.
         response = Response(generate_response_content(), content_type='text/plain; charset=utf-8')
         response.headers['Transfer-Encoding'] = 'chunked'  
         
-        langfuse.flush()  
+        if langfuse:
+            langfuse.flush()  
 
         return response
 
@@ -114,7 +121,9 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
         trace = create_langfuse_trace(request, vector_name)
         data = request.get_json()
         log.info(f"qna/{vector_name} got data: {data}")
-        trace.update(input=data)
+
+        if trace:
+            trace.update(input=data)
 
         user_input = data['user_input'].strip()
 
@@ -124,7 +133,9 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
 
         command_response = handle_special_commands(user_input, vector_name, paired_messages)
         if command_response is not None:
-            trace.update(output=jsonify(command_response))
+            if trace:
+                trace.update(output=jsonify(command_response))
+
             return jsonify(command_response)
 
         try:
@@ -132,32 +143,41 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
             vac_config = config[vector_name]
             model = vac_config.get("model") or vac_config.get("llm")
             
-            generation = trace.generation(
-                name="VAC",
-                model=model,
-                metadata=vac_config,
-                input = {'user_input': user_input, 'vector_name': vector_name, 'chat_history': paired_messages, 'message_author': message_author},
-            )
+            if trace:
+                generation = trace.generation(
+                    name="VAC",
+                    model=model,
+                    metadata=vac_config,
+                    input = {'user_input': user_input, 'vector_name': vector_name, 'chat_history': paired_messages, 'message_author': message_author},
+                )
             bot_output = vac_interpreter(user_input, vector_name, chat_history=paired_messages, message_author=message_author)
             # {"answer": "The answer", "source_documents": [{"page_content": "The page content", "metadata": "The metadata"}]}
             bot_output = parse_output(bot_output)
             archive_qa(bot_output, vector_name)
             log.info(f'==LLM Q:{user_input} - A:{bot_output}')
-            generation.end(
-                output=jsonify(bot_output),
-            )
+
+            if trace:
+                generation.end(
+                    output=jsonify(bot_output),
+                )
         except Exception as err: 
             bot_output = {'answer': f'QNA_ERROR: An error occurred while processing /vac/{vector_name}: {str(err)} traceback: {traceback.format_exc()}'}
         
-        langfuse.flush()
+        if langfuse:
+            langfuse.flush()
 
         return jsonify(bot_output)
 
     # Any other QNA related routes can be added here
 
 def create_langfuse_trace(request, vector_name):
-    if not langfuse:
-        print("No langfuse installed for agents.flask.register_qna_routes, install via `pip install sunholo[http]`")
+    try:
+        from langfuse import Langfuse
+        langfuse = Langfuse()
+    except ImportError as err:
+        print(f"No langfuse installed for agents.flask.register_qna_routes, install via `pip install sunholo[http]` - {str(err)}")
+        
+        return None
 
     user_id = request.headers.get("X-User-ID")
     session_id = request.headers.get("X-Session-ID")
@@ -169,6 +189,7 @@ def create_langfuse_trace(request, vector_name):
     tags = [f"sunholo-v{package_version}"]
     if message_source:
         tags.append(message_source)
+    
     return langfuse.trace(
         name = f"/vac/streaming/{vector_name}",
         user_id = user_id,
