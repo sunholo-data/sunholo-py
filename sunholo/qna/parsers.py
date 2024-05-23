@@ -33,6 +33,6 @@ def parse_output(bot_output):
         if not bot_output.get("answer"):
             raise ValueError(f"VAC output was not a string or a dict with the key 'answer' - got: {bot_output}")
         else:
-            return bot_output["answer"]
+            return bot_output
     else:
         log.error(f"Couldn't parse output for:\n {bot_output}")
