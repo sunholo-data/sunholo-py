@@ -28,6 +28,7 @@ try:
     langfuse = Langfuse()
 except ImportError:
     print("No langfuse installed for agents.flask.register_qna_routes, install via `pip install sunholo[http]`")
+    langfuse = None
  
 try:
     from flask import request, jsonify, Response
@@ -155,6 +156,9 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
     # Any other QNA related routes can be added here
 
 def create_langfuse_trace(request, vector_name):
+    if not langfuse:
+        print("No langfuse installed for agents.flask.register_qna_routes, install via `pip install sunholo[http]`")
+
     user_id = request.headers.get("X-User-ID")
     session_id = request.headers.get("X-Session-ID")
     message_source = request.headers.get("X-Message-Source")

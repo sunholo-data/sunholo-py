@@ -61,10 +61,10 @@ Anthropic
 pip install sunholo[anthropic]
 ```       
 
-APIs
+HTTP tools
 
 ```sh
-pip install sunholo[apis]
+pip install sunholo[http]
 ```
 
 Sunholo is derived from the Edmonbrain project, the original blog post you can read here: https://code.markedmondson.me/running-llms-on-gcp/ and owes a lot to Langchain ( https://github.com/langchain-ai/langchain )
