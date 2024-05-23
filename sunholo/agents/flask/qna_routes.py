@@ -109,7 +109,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
 
         return response
 
-    @app.route('/qna/<vector_name>', methods=['POST'])
+    @app.route('/vac/<vector_name>', methods=['POST'])
     def process_qna(vector_name):
         trace = create_langfuse_trace(request, vector_name)
         data = request.get_json()
