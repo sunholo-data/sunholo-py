@@ -22,7 +22,7 @@ def document_to_dict(document):
 
 def parse_output(bot_output):
     if isinstance(bot_output, str):
-        return bot_output
+        return {"answer": bot_output}
     if isinstance(bot_output, dict) and 'source_documents' in bot_output:
         if 'source_documents' in bot_output:
             bot_output['source_documents'] = [document_to_dict(doc) for doc in bot_output['source_documents']]
