@@ -18,54 +18,6 @@ import yaml
 from datetime import datetime, timedelta
 from collections import defaultdict
 
-try:
-    from google.cloud import storage
-except ImportError:
-    storage = None
-
-def fetch_config(bucket_name: str, blob_name: str):
-    """
-    Fetch the configuration file from a Google Cloud Storage bucket.
-
-    Args:
-        bucket_name (str): The name of the GCS bucket.
-        blob_name (str): The name of the blob/file to fetch.
-
-    Returns:
-        datetime or None: The last modified time of the file, or None if the blob does not exist.
-
-    Example:
-    ```python
-    last_updated = fetch_config('my-bucket', 'config.yaml')
-    if last_updated:
-        print(f'Configuration file was last updated on {last_updated}')
-    else:
-        print('Configuration file not found in the specified bucket.')
-    ```
-    """
-    from ..logging import log
-
-    if not storage:
-        log.debug("No google.cloud.storage client installed. Skipping config load from bucket")
-        return None
-    
-    storage_client = storage.Client()
-
-    bucket = storage_client.bucket(bucket_name)
-    blob = storage.Blob(blob_name, bucket)
-
-    # Check if the file exists
-    if not blob.exists():
-        log.info(f"The blob {blob_name} does not exist in the bucket {bucket_name}")
-        return None
-
-    # Download the file to a local file
-    blob.download_to_filename(blob_name)
-
-    # Get the blob's updated time
-    updated_time = blob.updated
-
-    return updated_time
 
 def get_module_filepath(filepath: str):
     """
@@ -105,13 +57,14 @@ def load_all_configs():
     from ..logging import log
 
     config_folder = os.getenv("_CONFIG_FOLDER", os.getcwd())
-    config_file = os.path.join(config_folder, "config")
-    
+    config_folder = os.path.join(config_folder, "config")
+
     log.info(f"Loading all configs from folder: {config_folder}")
     current_time = datetime.now()
 
     configs_by_kind = defaultdict(dict)
     for filename in os.listdir(config_folder):
+        log.info(f"config file: {filename}")
         if filename.endswith(('.yaml', '.yml', '.json')):
             config_file = os.path.join(config_folder, filename)
             
@@ -237,6 +190,15 @@ def load_config_key(key: str, vector_name: str, filename: str=None, kind: str=No
     
     configs_by_kind = load_all_configs()
     log.info(f"configs by kind: {configs_by_kind}")
+
+    if kind:
+        log.info(f"Got kind: {kind} - applying to configs")
+    
+    if filename:
+        log.warning(f"Got filename argument: {filename} for config - deprecated - use `kind='vacConfig'` instead")
+    
+    if not configs_by_kind:
+        log.warning("Did not load configs via folder")
              
     if kind and configs_by_kind.get(kind):
         config = configs_by_kind[kind]
