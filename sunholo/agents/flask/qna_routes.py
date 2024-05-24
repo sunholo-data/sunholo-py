@@ -98,6 +98,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
         response = Response(generate_response_content(), content_type='text/plain; charset=utf-8')
         response.headers['Transfer-Encoding'] = 'chunked'  
 
+        log.debug(f"streaming response: {response}")
         if trace:
             generation.end(output=response)
             span.end(output=response)
