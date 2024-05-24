@@ -41,7 +41,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
     @app.route('/vac/streaming/<vector_name>', methods=['POST'])
     def stream_qa(vector_name):
         prep = prep_vac(request, vector_name)
-        log.debug("Processing prep: {prep}")
+        log.debug(f"Processing prep: {prep}")
         trace = prep["trace"]
         span = prep["span"]
         command_response = prep["command_response"]
@@ -109,7 +109,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
     @app.route('/vac/<vector_name>', methods=['POST'])
     def process_qna(vector_name):
         prep = prep_vac(request, vector_name)
-        log.debug("Processing prep: {prep}")
+        log.debug(f"Processing prep: {prep}")
         trace = prep["trace"]
         span = prep["span"]
         command_response = prep["command_response"]
@@ -209,7 +209,7 @@ def prep_vac(request, vector_name):
                  'chat_history': paired_messages, 
                  'message_author': message_author,
                  'stream_wait_time': stream_wait_time,
-                 'stream_timeout':stream_timeout},
+                 'stream_timeout':stream_timeout}
 
     if trace:
         span = trace.span(
