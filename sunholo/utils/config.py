@@ -16,6 +16,7 @@ import os
 import json
 import yaml
 from datetime import datetime, timedelta
+from collections import defaultdict
 
 try:
     from google.cloud import storage
@@ -95,6 +96,58 @@ def get_module_filepath(filepath: str):
 
 # Global cache
 config_cache = {}
+def load_all_configs():
+    """
+    Load all configuration files from the specified directory into a dictionary.
+    Files are expected to be either YAML or JSON and must contain a 'kind' key at the root.
+    Caching is used to avoid reloading files within a 5-minute window.
+    """
+    from ..logging import log
+
+    config_folder = os.getenv("_CONFIG_FOLDER", os.getcwd())
+    log.debug(f"Loading all configs from folder: {config_folder}")
+    current_time = datetime.now()
+
+    configs_by_kind = defaultdict(dict)
+    for filename in os.listdir(config_folder):
+        if filename.endswith(('.yaml', '.yml', '.json')):
+            config_file = os.path.join(config_folder, filename)
+            
+            # Check cache first
+            if filename in config_cache:
+                cached_config, cache_time = config_cache[filename]
+                if (current_time - cache_time) < timedelta(minutes=5):
+                    log.debug(f"Returning cached config for {filename}")
+                    config = cached_config
+                else:
+                    config = reload_config_file(config_file, filename)
+            else:
+                config = reload_config_file(config_file, filename)
+
+            kind = config.get('kind')
+            if kind:
+                configs_by_kind[kind] = config
+            else:
+                log.warning(f"No 'kind' found in {filename}")
+
+    return configs_by_kind
+
+def reload_config_file(config_file, filename):
+    """
+    Helper function to load a config file and update the cache.
+    """
+    from ..logging import log
+    with open(config_file, 'r') as file:
+        if filename.endswith('.json'):
+            config = json.load(file)
+        else:
+            config = yaml.safe_load(file)
+    
+    config_cache[filename] = (config, datetime.now())
+    log.debug(f"Loaded and cached {filename}")
+    return config
+
+
 
 def load_config(filename: str=None) -> tuple[dict, str]:
     """
@@ -156,14 +209,15 @@ def load_config(filename: str=None) -> tuple[dict, str]:
     
     return config, filename
 
-def load_config_key(key: str, vector_name: str, filename: str=None):
+def load_config_key(key: str, vector_name: str, filename: str=None, kind: str=None):
     """
     Load a specific key from a configuration file.
 
     Args:
         key (str): The key to fetch from the configuration.
         vector_name (str): The name of the vector in the configuration file.
-        filename (str, optional): The configuration file name. Defaults to the `_CONFIG_FILE` environment variable.
+        filename (str, optional): The configuration file name. Defaults to the `_CONFIG_FILE` environment variable. Deprecated - use 'kind' instead
+        kind: (str, optional): Specify the type of configuration to retrieve e.g. 'vacConfig' which will pick from files within `_CONFIG_FOLDER`
 
     Returns:
         str: The value associated with the specified key.
@@ -179,7 +233,13 @@ def load_config_key(key: str, vector_name: str, filename: str=None):
     assert isinstance(key, str), f"key must be a string got a {type(key)}"
     assert isinstance(vector_name, str), f"vector_name must be a string, got a {type(vector_name)}"
     
-    config, filename = load_config(filename)
+    configs_by_kind = load_all_configs()
+    if kind and configs_by_kind.get(kind):
+        config = configs_by_kind[kind]
+        filename = kind
+    else:
+        config, filename = load_config(filename)
+
     log.info(f"Fetching {key} for {vector_name}")
     apiVersion = config.get('apiVersion')
     kind = config.get('kind')
