@@ -47,7 +47,7 @@ def start_streaming_chat(question,
     stop_event = Event()
 
     def start_chat(stop_event, result_queue, exception_queue):
-        # autogen_qna(user_input, vector_name, chat_history=None, message_author=None):
+        # autogen_qna(user_input, vector_name, chat_history=None):
         try:
             final_result = qna_func(question, vector_name, chat_history, callback=chat_callback_handler, **kwargs)
             result_queue.put(final_result)

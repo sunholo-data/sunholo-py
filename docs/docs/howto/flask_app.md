@@ -58,7 +58,7 @@ def vac_stream(question: str, vector_name: str, chat_history=[], callback=None, 
 
 
 # used for batched responses
-def vac(question: str, vector_name, chat_history=[], message_author=None, **kwargs):
+def vac(question: str, vector_name, chat_history=[], **kwargs):
     # Create a gemini-pro model instance
     # https://ai.google.dev/api/python/google/generativeai/GenerativeModel#streaming
     rag_model = create_model(vector_name)

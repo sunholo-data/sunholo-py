@@ -22,7 +22,6 @@ class VACRequest(BaseModel):
     chat_history: Optional[list] = None
     stream_wait_time: Optional[int] = 7
     stream_timeout: Optional[int] = 120
-    message_author: Optional[str] = None
     image_url: Optional[str] = None
 
 
@@ -43,8 +42,7 @@ def create_stream_qa_endpoint(stream_interpreter):
                                                             qna_func=stream_interpreter,
                                                             chat_history=paired_messages,
                                                             wait_time=request.stream_wait_time,
-                                                            timeout=request.stream_timeout,
-                                                            message_author=request.message_author):
+                                                            timeout=request.stream_timeout):
                 if isinstance(chunk, dict) and 'answer' in chunk:
                     archive_qa(chunk, vector_name)
                     yield f"###JSON_START###{json.dumps(chunk)}###JSON_END###"
@@ -68,9 +66,9 @@ def create_process_qna_endpoint(qna_interpreter):
         try:
 
             if asyncio.iscoroutinefunction(qna_interpreter):
-                bot_output = await qna_interpreter(user_input, vector_name, chat_history=paired_messages, message_author=request.message_author)
+                bot_output = await qna_interpreter(user_input, vector_name, chat_history=paired_messages)
             else:
-                bot_output = qna_interpreter(user_input, vector_name, chat_history=paired_messages, message_author=request.message_author)
+                bot_output = qna_interpreter(user_input, vector_name, chat_history=paired_messages)
 
             bot_output = parse_output(bot_output)
             archive_qa(bot_output, vector_name)
