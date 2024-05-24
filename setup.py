@@ -38,6 +38,7 @@ setup(
             "google-cloud-logging",
             "google-cloud-storage",
             "google-cloud-pubsub",
+            "gunicorn",
             "httpcore",
             "httpx",
             "lancedb",
@@ -76,11 +77,12 @@ setup(
             "langchain-anthropic",        
         ],
         'http': [
-            "langfuse",
             "fastapi",
             "flask",
+            "gunicorn",
             "httpcore",
             "httpx",
+            "langfuse",
             "python-socketio",
         ]
     },
