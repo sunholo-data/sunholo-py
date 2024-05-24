@@ -64,7 +64,11 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
             for chunk in start_streaming_chat(user_input=all_input["user_input"],
                                               vector_name=vector_name,
                                               qna_func=stream_interpreter,
-                                              **all_input
+                                              chat_history=all_input["chat_history"],
+                                              wait_time=all_input["stream_wait_time"],
+                                              timeout=all_input["stream_timeout"],
+                                              #kwargs
+                                              message_author=all_input["message_author"]
                                               ):
                 if isinstance(chunk, dict) and 'answer' in chunk:
                     # When we encounter the dictionary, we yield it as a JSON string
@@ -121,7 +125,12 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                     input = all_input,
                     model=vac_config.get("model") or vac_config.get("llm")
                 )
-            bot_output = vac_interpreter(**all_input)
+            bot_output = vac_interpreter(
+                user_input=all_input["all_input"],
+                vector_name=vector_name,
+                chat_history=all_input["chat_history"],
+                message_author=all_input["message_author"]
+            )
             if generation:
                 generation.end(output=bot_output)
             # {"answer": "The answer", "source_documents": [{"page_content": "The page content", "metadata": "The metadata"}]}
