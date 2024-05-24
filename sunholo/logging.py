@@ -214,9 +214,6 @@ def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
     if is_logging_setup(logger):
         return logger
     
-    if project_id is None:
-        project_id = get_gcp_project()
-
     if logger_name is None:
         logger_name = "sunholo"
 
@@ -227,6 +224,8 @@ def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
         print("Found GOOGLE_CLOUD_LOGGING=1 but no GCP Client available, install via `pip install sunholo[gcp]` and/or authenticate")
 
     if Client and os.environ.get('GOOGLE_CLOUD_LOGGING') == "1":
+        if project_id is None:
+            project_id = get_gcp_project()
         # Instantiate the GoogleCloudLogging class
         gc_logger = GoogleCloudLogging(project_id, log_level=log_level, logger_name=logger_name)
     else:

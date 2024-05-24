@@ -40,6 +40,7 @@ setup(
             "google-cloud-aiplatform",
             "google-api-python-client",
             "google-cloud-alloydb-connector[pg8000]",
+            "google-cloud-build",
             "google-cloud-logging",
             "google-cloud-storage",
             "google-cloud-pubsub",
@@ -67,6 +68,7 @@ setup(
         ],
         'gcp': [
             "google-cloud-aiplatform",
+            "google-cloud-build",
             "google-cloud-storage",
             "google-cloud-logging",
             "google-cloud-pubsub",
