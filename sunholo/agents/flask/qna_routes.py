@@ -71,7 +71,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                                               wait_time=all_input["stream_wait_time"],
                                               timeout=all_input["stream_timeout"],
                                               #kwargs
-                                              message_author=all_input["message_author"]
+                                              **all_input["kwargs"]
                                               ):
                 if isinstance(chunk, dict) and 'answer' in chunk:
                     # When we encounter the dictionary, we yield it as a JSON string
@@ -134,7 +134,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                 question=all_input["user_input"],
                 vector_name=vector_name,
                 chat_history=all_input["chat_history"],
-                message_author=all_input["message_author"]
+                **all_input["kwargs"]
             )
             if generation:
                 generation.end(output=bot_output)
@@ -201,18 +201,18 @@ def prep_vac(request, vector_name):
     if trace:
         trace.update(input=data, metadata=vac_config)
 
-    user_input = data['user_input'].strip()
-    message_author = data.get('message_author', None)
-    stream_wait_time = data.get('stream_wait_time', 7)
-    stream_timeout = data.get('stream_timeout', 120)
+    user_input = data.pop('user_input').strip()
+    stream_wait_time = data.pop('stream_wait_time', 7)
+    stream_timeout = data.pop('stream_timeout', 120)
+    chat_history = data.pop('chat_history', None)
+    paired_messages = extract_chat_history(chat_history)
 
-    paired_messages = extract_chat_history(data.get('chat_history', None))
     all_input = {'user_input': user_input, 
                  'vector_name': vector_name, 
                  'chat_history': paired_messages, 
-                 'message_author': message_author,
                  'stream_wait_time': stream_wait_time,
-                 'stream_timeout':stream_timeout}
+                 'stream_timeout':stream_timeout,
+                 'kwargs': data}
 
     if trace:
         span = trace.span(
