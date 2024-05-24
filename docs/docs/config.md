@@ -6,6 +6,26 @@ This allows you to set up new instances of GenAI apps quickly, and experiment wi
 
 There are various config files available that control different features such as VAC behaviour and user access.  This is very much still a work in progress so the format may change in the future.
 
+## Calling config files
+
+Use the config functions within [`sunholo.utils`](../sunholo/utils/config) to use the config files within your GenAI application.  The most often used config is `vacConfig` below, which is called like this:
+
+```python
+from sunholo.utils import load_config_key
+
+vector_name = 'pirate_speak'
+llm = load_config_key('llm', vector_name, type='vacConfig')
+# 'openai'
+agent = load_config_key('agent', vector_name, type='vacConfig')
+# 'langserve'
+
+vector_name = 'eduvac'
+llm = load_config_key('llm', vector_name, type='vacConfig')
+# 'anthropic'
+agent = load_config_key('agent', vector_name, type='vacConfig')
+# 'eduvac'
+```
+
 ## llm_config.yaml
 
 This is the main day to day configuration file that is used to set LLMs, databases and VAC tags.  An example is shown here:
@@ -22,6 +42,30 @@ vac:
         tags: ["free"] # for user access, matches users_config.yaml
         avatar_url: https://avatars.githubusercontent.com/u/126733545?s=48&v=4
         description: A Langserve demo using a demo [Langchain Template](https://templates.langchain.com/) that will repeat back what you say but in a pirate accent.  Ooh argh me hearties!  Langchain templates cover many different GenAI use cases and all can be streamed to Multivac clients.
+    eduvac:
+        llm: anthropic
+        model: claude-3-opus-20240229
+        agent: eduvac # needs to match multivac service name
+        agent_type: langserve # if you are using langserve instance for each VAC, you can specify its derived from langserve
+        display_name: Edu-VAC
+        tags: ["free"] # set to "eduvac" if you want to restrict usage to only users tagged "eduvac" in users_config.yaml
+        avatar_url: ../public/eduvac.png
+        description: Educate yourself in your own personal documents via guided learning from Eduvac, the ever patient teacher bot. Use search filters to examine available syllabus or upload your own documents to get started.
+        upload:   # to accept uploads of private documents to a bucket
+            mime_types: # pick which mime types got to which bucket
+            - all
+            buckets:
+                all: your-bucket
+        buckets: # pick which bucket takes default uploads
+            raw: your-bucket
+        docstore: # this needs to be valid to have document storage
+            - alloydb-docstore: # you can have multiple doc stores
+                type: alloydb
+        alloydb_config: # example if using alloydb as your doc or vectorstore
+            project_id: your-projectid
+            region: europe-west1
+            cluster: your-cluster
+            instance: primary-instance-1
     csv_agent:
         llm: openai
         agent: langserve
@@ -60,30 +104,6 @@ vac:
         tags: ["free"]
         avatar_url: https://avatars.githubusercontent.com/u/1342004?s=200&v=4
         description: A picture is worth a thousand words, so upload your picture and ask your question to the Gemini Pro Vision model.  Images are remembered for your conversation until you upload another.  This offers powerful applications, which you can get a feel for via the [Gemini Pro Vision docs](https://cloud.google.com/vertex-ai/docs/generative-ai/multimodal/design-multimodal-prompts) 
-    eduvac:
-        llm: anthropic
-        model: claude-3-opus-20240229
-        agent: eduvac # needs to match multivac service name
-        agent_type: langserve # if you are using langserve instance for each VAC, you can specify its derived from langserve
-        display_name: Edu-VAC
-        tags: ["free"] # set to "eduvac" if you want to restrict usage to only users tagged "eduvac" in users_config.yaml
-        avatar_url: ../public/eduvac.png
-        description: Educate yourself in your own personal documents via guided learning from Eduvac, the ever patient teacher bot. Use search filters to examine available syllabus or upload your own documents to get started.
-        upload:   # to accept uploads of private documents to a bucket
-            mime_types: # pick which mime types got to which bucket
-            - all
-            buckets:
-                all: your-bucket
-        buckets: # pick which bucket takes default uploads
-            raw: your-bucket
-        docstore: # this needs to be valid to have document storage
-            - alloydb-docstore: # you can have multiple doc stores
-                type: alloydb
-        alloydb_config: # example if using alloydb as your doc or vectorstore
-            project_id: your-projectid
-            region: europe-west1
-            cluster: your-cluster
-            instance: primary-instance-1
     sample_vector:
         llm: azure # using Azure OpenAI endpoints
         model: gpt-4-turbo-1106-preview
