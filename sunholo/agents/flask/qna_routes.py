@@ -41,6 +41,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
     @app.route('/vac/streaming/<vector_name>', methods=['POST'])
     def stream_qa(vector_name):
         prep = prep_vac(request, vector_name)
+        log.debug("Processing prep: {prep}")
         trace = prep["trace"]
         span = prep["span"]
         command_response = prep["command_response"]
@@ -50,7 +51,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
         if command_response:
             return jsonify(command_response)
 
-        log.info(f'Streaming data with stream_wait_time: {all_input["stream_wait_time"]} and stream_timeout: {all_input["stream_timeout"]}')
+        log.info(f'Streaming data with: {all_input}')
         def generate_response_content():
             if span:
                 generation = span.generation(
@@ -108,6 +109,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
     @app.route('/vac/<vector_name>', methods=['POST'])
     def process_qna(vector_name):
         prep = prep_vac(request, vector_name)
+        log.debug("Processing prep: {prep}")
         trace = prep["trace"]
         span = prep["span"]
         command_response = prep["command_response"]
