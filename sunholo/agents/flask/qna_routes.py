@@ -85,7 +85,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                     if chunk:
                         chunks += chunk
                         
-                        yield chunk
+                    yield chunk
             
             if trace:
                 generation.end(output=chunks)
