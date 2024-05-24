@@ -1,6 +1,6 @@
-# Creating a Flask VAC app.
+# Creating a Flask VAC app
 
-Aside frameworks such as Langserve and LlamaIndex, you can create your own Flask VAC applications to create your own GenAI application.  Using the boilerplate templates allows you to shortcut to GenAI features such as analytics and streaming, and hook into the supported UIs such as the webapp (https://multivac.sunholo.com/) or chat bots such as Discord, Teams and GChat.
+As well as using frameworks such as [Langserve](../integrations/langchain.md) to create HTTP versions of your GenAI applications, you can customise your own Flask VAC applications for production.  Using the below `sunholo` boilerplate templates allows you to shortcut to GenAI features such as analytics and streaming, and hook into Multivac supported UIs such as the webapp (https://multivac.sunholo.com/), APIs, or chat bots such as Discord, Teams and GChat.
 
 ## Creating your GenAI VAC
 
@@ -9,9 +9,7 @@ To start, create a Flask VAC application app.py
 ```python
 # app.py
 import os
-
 from sunholo.agents import register_qna_routes, create_app
-
 from vac_service import vac_stream, vac
 
 app = create_app(__name__)
@@ -23,7 +21,6 @@ register_qna_routes(app, vac_stream, vac)
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)), debug=True)
-
 ```
 
 This registers endpoints for your Flask app:
@@ -179,6 +176,8 @@ TBD
 
 ### Locally
 
+### Your own Cloud
+
 
 ## Testing
 
@@ -194,12 +193,16 @@ curl ${FLASK_URL}/vac/personal_llama \
 # {"answer":"MLOps stands for machine learning operations. It is a methodology for the engineering of machine learning systems that combines the machine learning element, ML, and the operations element, Ops. MLOps promotes the formalization of important parts of the machine learning system\u2019s construction, standardizing many steps along the way. Some of the key tasks that MLOps addresses include training models, processing data, deploying models, and monitoring models.","trace":"158cd3ba-fabd-4295-bdf3-6be335673ecb","trace_url":"https://langfuse-url.run.app/trace/158cd3ba-fabd-4295-bdf3-6be335673ecb"}
 ```
 
-> Note: If the VAC is setup for non-public access within the VPC, then use the following `gcloud` command to proxy the VAC service:
+### Private VACs
+
+If the VAC is setup for non-public access within the VPC, then use the following `gcloud` command to proxy the VAC service:
 
 ```sh
 # proxy the vertex-genai Cloud Run service if not public
 gcloud run services proxy vertex-genai --region=europe-west1
 ```
+
+## Creating new VAC instances
 
 If you want a new endpoint, add another entry to the `vacConfig` e.g. `personal_llama2` 
 
