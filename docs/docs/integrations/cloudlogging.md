@@ -1,0 +1,1 @@
+Set env var `GOOGLE_CLOUD_LOGGING=1` to activate Google Cloud Logging.

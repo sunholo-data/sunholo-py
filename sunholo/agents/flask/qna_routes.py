@@ -23,13 +23,6 @@ from ...streaming import start_streaming_chat
 from ...archive import archive_qa
 from ...logging import log
 from ...utils.config import load_config
-
-try:
-    from langfuse import Langfuse
-    langfuse = Langfuse()
-except ImportError as err:
-    print(f"No langfuse installed for agents.flask.register_qna_routes, install via `pip install sunholo[http]` - {str(err)}")
-    langfuse = None
  
 try:
     from flask import request, jsonify, Response
@@ -103,9 +96,6 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
             generation.end(output=response)
             span.end(output=response)
             trace.update(output=response)
-        
-        if langfuse:
-            langfuse.flush()  
 
         return response
 
@@ -153,9 +143,6 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
         if trace:
             span.end(output=jsonify(bot_output))
             trace.update(output=jsonify(bot_output)) 
-       
-        if langfuse:
-            langfuse.flush()
 
         return jsonify(bot_output)
 

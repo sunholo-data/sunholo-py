@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.56.0'
+version = '0.56.1'
 
 setup(
     name='sunholo',
@@ -16,6 +16,11 @@ setup(
     url = 'https://github.com/sunholo-data/sunholo-py',
     download_url=f'https://github.com/sunholo-data/sunholo-py/archive/refs/tags/v{version}.tar.gz',
     keywords=['llms', 'devops','google_cloud_platform'],
+    entry_points={
+        'console_scripts': [
+            'sunholo=sunholo.cli.cli:main', 
+        ],
+    },
     package_data={
         'sunholo.database': ['sql/sb/*.sql'],
         'sunholo.lookup': ['*.yaml']
