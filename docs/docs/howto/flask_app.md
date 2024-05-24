@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
 ```
 
-This registers endpoints for your Flask app, similar to Langserve.
+This registers endpoints for your Flask app:
 
 * `/vac/<vector_name>` - a dynamic endpoint that you can substitute the vector_names configured in your `vacConfig` file.
 * `/vac/streaming/<vector_name>` - a streaming endpoint
@@ -48,7 +48,8 @@ import vertexai
 # streams logs to Cloud Logging for analytics and debugging features
 log = setup_logging("vertex-genai")
 
-def vac_stream(question: str, vector_name: str, chat_history=[], callback=None):
+# used as within the streaming generator function
+def vac_stream(question: str, vector_name: str, chat_history=[], callback=None, **kwargs):
 
     rag_model = create_model(vector_name)
 
@@ -59,7 +60,8 @@ def vac_stream(question: str, vector_name: str, chat_history=[], callback=None):
     callback.on_llm_end(response="End stream")
 
 
-def vac(question: str, vector_name, chat_history=[], message_author=None):
+# used for batched responses
+def vac(question: str, vector_name, chat_history=[], message_author=None, **kwargs):
     # Create a gemini-pro model instance
     # https://ai.google.dev/api/python/google/generativeai/GenerativeModel#streaming
     rag_model = create_model(vector_name)
@@ -115,10 +117,11 @@ def create_model(vector_name):
 
 This will use the streaming functions and requires:
 
-* to have at least the arguments: `[question: str, vector_name: str, chat_history=[], callback=None]`
+* to have at least the arguments: `[question: str, vector_name: str, chat_history=[], callback=None, **kwargs]`
+* `**kwargs` may include functions from the clients such as userId or sessionId
 * to use `callback.on_llm_new_token()` for each new token created by the streaming function you are using.
 
-You can also optionally use `callback.on_llm_end()` for any cleanup applications
+You can also optionally use `callback.on_llm_end()` for any cleanup applications, and return a dictionary after all streaming is done with the `answer` key.  This will be streamed with the `###JSON_START###{"answer": "my genai output"}###JSON_END###` delimiters so the end clients can process it properly.
 
 
 ### vac()
@@ -127,7 +130,7 @@ This is a non-streaming variant, and needs to return a dictionary with at least 
 
 ## Config
 
-An example configuration file is shown below.
+An example configuration file is shown below.  Read more about [Configuration](../config.md)
 
 ```yaml
 kind: vacConfig
@@ -140,7 +143,7 @@ vac:
     display_name: LlamaIndex via Vertex AI
     memory:
       - llamaindex-native:
-          vectorstore: llamaindex
+          vectorstore: llamaindex # setup for indexing documents
     gcp_config:
       project_id: llamaindex_project
       location: europe-west1
