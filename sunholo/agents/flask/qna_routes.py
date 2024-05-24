@@ -126,7 +126,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                     model=vac_config.get("model") or vac_config.get("llm")
                 )
             bot_output = vac_interpreter(
-                user_input=all_input["all_input"],
+                user_input=all_input["user_input"],
                 vector_name=vector_name,
                 chat_history=all_input["chat_history"],
                 message_author=all_input["message_author"]
