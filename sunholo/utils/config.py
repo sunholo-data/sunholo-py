@@ -105,7 +105,9 @@ def load_all_configs():
     from ..logging import log
 
     config_folder = os.getenv("_CONFIG_FOLDER", os.getcwd())
-    log.debug(f"Loading all configs from folder: {config_folder}")
+    config_file = os.path.join(config_folder, "config")
+    
+    log.info(f"Loading all configs from folder: {config_folder}")
     current_time = datetime.now()
 
     configs_by_kind = defaultdict(dict)
@@ -117,7 +119,7 @@ def load_all_configs():
             if filename in config_cache:
                 cached_config, cache_time = config_cache[filename]
                 if (current_time - cache_time) < timedelta(minutes=5):
-                    log.debug(f"Returning cached config for {filename}")
+                    log.info(f"Returning cached config for {filename}")
                     config = cached_config
                 else:
                     config = reload_config_file(config_file, filename)
@@ -234,6 +236,8 @@ def load_config_key(key: str, vector_name: str, filename: str=None, kind: str=No
     assert isinstance(vector_name, str), f"vector_name must be a string, got a {type(vector_name)}"
     
     configs_by_kind = load_all_configs()
+    log.info(f"configs by kind: {configs_by_kind}")
+             
     if kind and configs_by_kind.get(kind):
         config = configs_by_kind[kind]
         filename = kind
