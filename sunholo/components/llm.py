@@ -106,9 +106,9 @@ def get_llm(vector_name, model=None):
         model = load_config_key("model", vector_name, kind="vacConfig")
 
     log.debug(f"Chose LLM: {llm_str}")
-    return llm_str_to_llm(llm_str, model=model, vector_name=vector_name, kind="vacConfig")
+    return llm_str_to_llm(llm_str, model=model, vector_name=vector_name)
 
-def get_llm_chat(vector_name, model=None, config_file="config/llm_config.yaml"):
+def get_llm_chat(vector_name, model=None):
     llm_str = load_config_key("llm", vector_name, kind="vacConfig")
     if not model:
         model = load_config_key("model", vector_name, kind="vacConfig")

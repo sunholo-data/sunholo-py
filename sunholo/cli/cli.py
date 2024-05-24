@@ -51,7 +51,7 @@ def setup_deploy_subparser(subparsers):
     deploy_parser.add_argument('--project_id', required=True, help='Google Cloud Project ID required for deployment.')
     deploy_parser.add_argument('--trigger_id', required=True, help='Google Cloud Build Trigger ID required for deployment.')
     deploy_parser.add_argument('--repo_name', required=True, help='Name of the linked repository in Google Cloud Source Repositories required for deployment.')
-    deploy_parser.add_argument('--branch_name', default='main', help='Branch name to trigger the build from, defaults to "main".')
+    deploy_parser.add_argument('--branch_name', default='dev', help='Branch name to trigger the build from, defaults to "dev".')
     deploy_parser.add_argument('--config_path', default='.', help='Path to the directory containing the cloudbuild.yaml file, defaults to current directory.')
     deploy_parser.set_defaults(func=trigger_build)
 
