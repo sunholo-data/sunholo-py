@@ -25,7 +25,7 @@ def extract_chat_history(chat_history=None):
     # Output: [("Hello, AI!", "Hello, Human! How can I help you today?")]
     ```
     """
-    if chat_history is None:
+    if not chat_history:
         log.info("No chat history found")
         return []
 

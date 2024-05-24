@@ -130,6 +130,7 @@ class BufferStreamingStdOutCallbackHandler(StreamingStdOutCallbackHandler):
         patterns are detected.
         """
         log.debug(f"on_llm_new_token: {token}")
+        
         self.buffer += token
 
         if '```' in token:

@@ -52,15 +52,17 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
             return jsonify(command_response)
 
         log.info(f'Streaming data with: {all_input}')
+        if span:
+            generation = span.generation(
+                name="start_streaming_chat",
+                metadata=vac_config,
+                input = all_input,
+                completion_start_time=datetime.datetime.now(),
+                model=vac_config.get("model") or vac_config.get("llm")
+            )
+
         def generate_response_content():
-            if span:
-                generation = span.generation(
-                    name="start_streaming_chat",
-                    metadata=vac_config,
-                    input = all_input,
-                    completion_start_time=datetime.datetime.now(),
-                    model=vac_config.get("model") or vac_config.get("llm")
-                )
+
             chunks = ""
             for chunk in start_streaming_chat(question=all_input["user_input"],
                                               vector_name=vector_name,
@@ -92,14 +94,14 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                         
                     yield chunk
             
-            if trace:
-                generation.end(output=chunks)
-                span.end(output=chunks)
-                trace.update(output=chunks)
-
         # Here, the generator function will handle streaming the content to the client.
         response = Response(generate_response_content(), content_type='text/plain; charset=utf-8')
         response.headers['Transfer-Encoding'] = 'chunked'  
+
+        if trace:
+            generation.end(output=response)
+            span.end(output=response)
+            trace.update(output=response)
         
         if langfuse:
             langfuse.flush()  
