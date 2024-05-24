@@ -119,3 +119,21 @@ def remove_whitespace(page_content: str):
     ```
     """
     return page_content.replace("\n", " ").replace("\r", " ").replace("\t", " ").replace("  ", " ")
+
+def check_kwargs_support(func):
+    """
+    Check if the function 'func' accepts arbitrary keyword arguments (**kwargs).
+
+    Args:
+    func (callable): The function to check.
+
+    Returns:
+    bool: True if **kwargs is accepted, False otherwise.
+    """
+    import inspect
+    
+    sig = inspect.signature(func)
+    for param in sig.parameters.values():
+        if param.kind == param.VAR_KEYWORD:
+            return True
+    return False

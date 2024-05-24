@@ -33,7 +33,7 @@ def retry_qna(qa_function, question, max_retries=1, initial_delay=5):
             except ReadTimeout:
                 if retry == max_retries - 1:
                     raise
-        except Exception as err:
+        except Exception:
             delay = initial_delay * (retry + 1)
             log.error(f"General error: {traceback.format_exc()}")
             time.sleep(delay)

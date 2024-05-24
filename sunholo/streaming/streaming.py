@@ -23,6 +23,7 @@ from ..qna.parsers import parse_output
 
 from ..logging import log
 from ..utils import load_config_key
+from ..utils.parsers import check_kwargs_support
 
 from .langserve import parse_langserve_token, parse_langserve_token_async
 
@@ -34,6 +35,9 @@ def start_streaming_chat(question,
                          wait_time=2,
                          timeout=120, # Timeout in seconds (2 minutes)
                          **kwargs): 
+    
+    if not check_kwargs_support(qna_func):
+        yield "No **kwargs in qna_func - please add it"
 
     # Immediately yield to indicate the process has started.
     yield "Thinking...\n"
@@ -49,7 +53,10 @@ def start_streaming_chat(question,
     def start_chat(stop_event, result_queue, exception_queue):
         # autogen_qna(user_input, vector_name, chat_history=None):
         try:
-            final_result = qna_func(question, vector_name, chat_history, callback=chat_callback_handler, **kwargs)
+            final_result = qna_func(question=question, 
+                                    vector_name=vector_name, 
+                                    chat_history=chat_history, 
+                                    callback=chat_callback_handler, **kwargs)
             result_queue.put(final_result)
         except Exception as e:
             exception_queue.put(e)
