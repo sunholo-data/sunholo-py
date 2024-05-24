@@ -21,7 +21,7 @@ Use the project_id, location and corpus_id within your config below.
 
 ## File Indexing
 
-Once your configuration is loaded within Mulitvac, embed and index them by adding files to your Google Cloud Storage bucket to have the files indexed, via [`llamaindex.import_files.py`](..sunholo/llamaindex.import_files).  This supports large amounts of files.
+Once your configuration is loaded within Mulitvac, embed and index them by adding files to your Google Cloud Storage bucket to have the files indexed, via [`llamaindex.import_files.py`](../sunholo/llamaindex.import_files).  This supports large amounts of files.
 
 ## Config
 
