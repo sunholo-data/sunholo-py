@@ -58,11 +58,11 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                     name="start_streaming_chat",
                     metadata=vac_config,
                     input = all_input,
-                    completion_start_time=datetime.datetime.now,
+                    completion_start_time=datetime.datetime.now(),
                     model=vac_config.get("model") or vac_config.get("llm")
                 )
             chunks = ""
-            for chunk in start_streaming_chat(user_input=all_input["user_input"],
+            for chunk in start_streaming_chat(question=all_input["user_input"],
                                               vector_name=vector_name,
                                               qna_func=stream_interpreter,
                                               chat_history=all_input["chat_history"],
@@ -128,7 +128,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                     model=vac_config.get("model") or vac_config.get("llm")
                 )
             bot_output = vac_interpreter(
-                user_input=all_input["user_input"],
+                question=all_input["user_input"],
                 vector_name=vector_name,
                 chat_history=all_input["chat_history"],
                 message_author=all_input["message_author"]
