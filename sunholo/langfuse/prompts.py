@@ -1,6 +1,5 @@
 from ..logging import log
 from ..utils import load_config_key
-import yaml
 
 # Load the YAML file
 def load_prompt_from_yaml(key, prefix="sunholo", file_path=None):
@@ -20,9 +19,6 @@ def load_prompt_from_yaml(key, prefix="sunholo", file_path=None):
         return langfuse_prompt.get_langchain_prompt()
     
     except Exception as err:
-        if not file_path:
-            log.error(f"Could not fine langfuse template {langfuse_template} and no file_path was provided {str(err)}")
-            raise
-        log.warning(f"Could not find langfuse template: {langfuse_template} - {str(err)} - attempting to load from {file_path}")
+        log.warning(f"Could not find langfuse template: {langfuse_template} - {str(err)} - attempting to load from promptConfig")
 
-    return load_config_key(key, vector_name=prefix, filename="config/prompt_config.yaml")
+    return load_config_key(key, vector_name=prefix, kind="promptConfig")

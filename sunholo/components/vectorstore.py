@@ -19,7 +19,8 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
         
     if vs_str == 'supabase':
         from supabase import Client, create_client
-        from langchain.vectorstores import SupabaseVectorStore
+        from langchain_community.vectorstores import SupabaseVectorStore
+
         from ..database.database import setup_supabase
 
         log.debug(f"Initiating Supabase store: {vector_name}")
