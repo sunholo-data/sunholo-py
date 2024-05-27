@@ -32,12 +32,13 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
     docstore_doc_id, documents = send_doc_to_docstore(documents, vector_name=vector_name)
 
     doc_summaries = summarise_docs(documents, vector_name=vector_name)
-    for doc in documents:
-        # Assuming each doc has a unique identifier in its metadata under 'objectId'
-        objectId = doc.metadata.get("objectId")
-        if objectId and objectId in doc_summaries:
-            # If the objectId is found in doc_summaries, add the summary location to the document's metadata
-            doc.metadata["summary_location"] = doc_summaries[objectId]
+    if doc_summaries:
+        for doc in documents:
+            # Assuming each doc has a unique identifier in its metadata under 'objectId'
+            objectId = doc.metadata.get("objectId")
+            if objectId and objectId in doc_summaries:
+                # If the objectId is found in doc_summaries, add the summary location to the document's metadata
+                doc.metadata["summary_location"] = doc_summaries[objectId]
 
     # Combine entire documents that are smaller than min_size
     combined_documents_content = ""
