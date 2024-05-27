@@ -39,8 +39,6 @@ def start_streaming_chat(question,
     if not check_kwargs_support(qna_func):
         yield "No **kwargs in qna_func - please add it"
 
-    # Immediately yield to indicate the process has started.
-    yield "Thinking...\n"
     log.info(f"Streaming chat with wait time {wait_time} seconds and timeout {timeout} seconds and kwargs {kwargs}")
     # Initialize the chat
     content_buffer = ContentBuffer()
@@ -82,12 +80,6 @@ def start_streaming_chat(question,
             yield content_to_send
             content_buffer.clear()
             start = time.time() # reset timeout
-        else:
-            if time.time() - first_start < wait_time:
-                # If the initial wait period hasn't passed yet, keep sending "..."
-                yield "..."
-            else:
-                log.info("No content to send")
 
         elapsed_time = time.time() - start
         if elapsed_time > timeout: # If the elapsed time exceeds the timeout
@@ -162,9 +154,10 @@ async def start_streaming_chat_async(question, vector_name, qna_func, chat_histo
     The `start_streaming_chat_async` function is used in a coroutine that prints messages as they are generated.
     """
     
-    yield "Thinking...\n"
     log.info(f"Streaming chat with wait time {wait_time} seconds and timeout {timeout} seconds and kwargs {kwargs}")
-
+    if not check_kwargs_support(qna_func):
+        yield "No **kwargs in qna_func - please add it"
+        
     content_buffer = ContentBuffer()
     chat_callback_handler = BufferStreamingStdOutCallbackHandler(content_buffer=content_buffer, tokens=".!?\n")
 

@@ -77,9 +77,9 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                         generation.end(output=json.dumps(chunk))
                         span.end(output=json.dumps(chunk))
                         trace.update(output=json.dumps(chunk))
-                    yield f"###JSON_START###{json.dumps(chunk)}###JSON_END###"
   
-                    return
+                    return json.dumps(chunk)
+                
                 else:
                     # Otherwise, we yield the plain text chunks as they come in.
                     if chunk:

@@ -1,8 +1,8 @@
 import argparse
 try:
-    from google.cloud import build_v1
+    from google.cloud.devtools import cloudbuild_v1
 except ImportError:
-    build_v1 = None
+    cloudbuild_v1 = None
 
 from ..logging import log
 
@@ -16,21 +16,21 @@ def trigger_build(args):
     Example:
         trigger_build(args) where args contains project_id, trigger_id, repo_name, and branch_name.
     """
-    if not build_v1:
+    if not cloudbuild_v1:
         log.warning("Can't deploy - google-cloud-build not installed, enable via `pip install sunholo[gcp]")
 
         return None
 
-    client = build_v1.services.cloud_build.CloudBuildClient()
+    client = cloudbuild_v1.CloudBuildClient()
     # Assuming the build source uses the path to the cloudbuild.yaml if specified.
-    source = build_v1.RepoSource(
+    source = cloudbuild_v1.RepoSource(
         project_id=args.project_id, 
         repo_name=args.repo_name, 
         branch_name=args.branch_name,
         substitutions=args.substitutions,
         dir=args.config_path  # Path to directory containing cloudbuild.yaml
     )
-    request = build_v1.RunBuildTriggerRequest(
+    request = cloudbuild_v1.RunBuildTriggerRequest(
         project_id=args.project_id, 
         trigger_id=args.trigger_id, 
         source=source
@@ -62,7 +62,7 @@ def main(args=None):
 
     Example commands:
     ```bash
-    sunholo deploy --project_id "my-gcp-project" --trigger_id "my-trigger-id" --repo_name "my-repo" --branch_name "dev" --config_path "app/vac/my_vac/"
+    sunholo deploy --vac edmonbrain --config=llm_config.yaml
     ```
     """
     parser = argparse.ArgumentParser(description="sunholo CLI tool for deploying applications using Google Cloud Build.")
