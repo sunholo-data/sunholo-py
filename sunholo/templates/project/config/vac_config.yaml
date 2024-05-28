@@ -1,0 +1,18 @@
+kind: vacConfig
+apiVersion: v1
+vac:
+  template_vac:
+    llm: vertex
+    model: gemini-1.5-pro-preview-0514
+    agent: vertex-genai
+    display_name: Template VAC
+    memory:
+      - llamaindex-native:
+          vectorstore: llamaindex
+    gcp_config:
+      project_id: llamaindex_project
+      location: europe-west1
+      rag_id: 1234544343434 # created via rag.create for now     
+    chunker:
+      chunk_size: 1000
+      overlap: 200

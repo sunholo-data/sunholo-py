@@ -1,13 +1,12 @@
 import os
 from subprocess import Popen
-from ..logging import log
 from ..utils.config import load_all_configs
 
 def deploy_vac(args):
     """
     Deploys the VAC by running a Flask app locally.
     """
-    log.info(f"Deploying VAC: {args.vac_name} locally")
+    print(f"Deploying VAC: {args.vac_name} locally")
 
     # Load the vacConfig
     configs_by_kind = load_all_configs()
@@ -21,11 +20,11 @@ def deploy_vac(args):
     if not os.path.exists(app_path):
         raise ValueError(f"app.py not found in {args.config_path}")
 
-    log.info(f"Running Flask app from {app_path}")
+    print(f"Running Flask app from {app_path}")
 
     # Run the Flask app
     command = ["python", app_path]
-    log.info(f"Running Flask app with command: {' '.join(command)}")
+    print(f"Running Flask app with command: {' '.join(command)}")
     process = Popen(command)
     process.communicate()
 

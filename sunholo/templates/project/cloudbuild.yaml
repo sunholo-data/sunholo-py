@@ -1,0 +1,72 @@
+substitutions:
+  _SERVICE_NAME: template
+  _BUILD_FOLDER: application/vac/template
+  _IMAGE_NAME: terraform_managed
+  _REGION: terraform_managed
+  _ARTIFACT_REGISTRY_REPO_URL: terraform_managed
+  _GCS_BUCKET: terraform_managed
+  _CONFIG_FOLDER: terraform_managed
+  _CONFIG_BUCKET: terraform_managed
+  _PROJECT_ID: terraform_managed
+  _LANCEDB_BUCKET: terraform_managed
+  _ALLOYDB_DB: terraform_managed
+
+tags: ['${_PROJECT_ID}', '${_SERVICE_NAME}']
+
+options:
+  logging: GCS_ONLY
+logsBucket: gs://multivac-deploy-logging-bucket
+
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    dir: ${_BUILD_FOLDER}
+    args:
+    - '-c'
+    - |
+      cat <<EOF >Dockerfile_cloudrun
+      FROM ${_ARTIFACT_REGISTRY_REPO_URL}/prebuild/${_IMAGE_NAME}:${BRANCH_NAME}
+
+      COPY . .
+
+      EXPOSE 8080
+
+      RUN uv pip install --upgrade -r requirements.txt
+
+      RUN pip list && python --version
+
+      ENV _CONFIG_FOLDER=/gcs_config 
+
+      CMD exec gunicorn --bind :\$$PORT --workers 4 --timeout 0 app:app
+      EOF
+
+  - name: 'gcr.io/cloud-builders/docker'
+    dir: ${_BUILD_FOLDER}
+    args: ['build', '-t', '${_ARTIFACT_REGISTRY_REPO_URL}/${_IMAGE_NAME}/${_SERVICE_NAME}:${BRANCH_NAME}', '-f', 'Dockerfile_cloudrun', '.', '--network=cloudbuild']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    dir: ${_BUILD_FOLDER}
+    args: ['push', '${_ARTIFACT_REGISTRY_REPO_URL}/${_IMAGE_NAME}/${_SERVICE_NAME}:${BRANCH_NAME}']
+
+  # Deploy the image to Cloud Run
+  - name: "gcr.io/cloud-builders/gcloud"
+    id: deploy cloud run
+    entrypoint: bash
+    dir: ${_BUILD_FOLDER}
+    args:
+      - "-c"
+      - |
+        gcloud beta run deploy ${_SERVICE_NAME} --image ${_ARTIFACT_REGISTRY_REPO_URL}/${_IMAGE_NAME}/${_SERVICE_NAME}:${BRANCH_NAME} \
+           --region ${_REGION} \
+           --project ${_PROJECT_ID} \
+           --platform managed \
+           --allow-unauthenticated \
+           --memory 2Gi \
+           --cpu 1 \
+           --max-instances 3 \
+           --update-secrets=LANGFUSE_HOST=LANGFUSE_URL:latest \
+           --update-secrets=LANGFUSE_SECRET_KEY=LANGFUSE_API_KEY:latest \
+           --update-secrets=LANGFUSE_PUBLIC_KEY=LANGFUSE_PUBLIC_KEY:latest \
+           --session-affinity \
+           --add-volume name=gcs_config,type=cloud-storage,bucket=${_CONFIG_BUCKET},readonly=true \
+           --add-volume-mount volume=gcs_config,mount-path=/gcs_config

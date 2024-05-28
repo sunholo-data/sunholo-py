@@ -1,6 +1,5 @@
 import os
 import shutil
-from ..logging import log
 from ..utils.config import get_module_filepath
 
 def init_project(args):
@@ -50,11 +49,11 @@ This will create a new directory named `my_genai_project` with the template file
     project_name = args.project_name
     project_dir = os.path.join(os.getcwd(), project_name)
 
-    log.info(f"Initializing project: {project_name} in directory: {project_dir}")
+    print(f"Initializing project: {project_name} in directory: {project_dir}")
 
     # Create project directory
     if os.path.exists(project_dir):
-        log.error(f"Directory {project_dir} already exists. Please choose a different project name.")
+        print(f"Directory {project_dir} already exists. Please choose a different project name.")
         return
 
     os.makedirs(project_dir)
@@ -69,8 +68,8 @@ This will create a new directory named `my_genai_project` with the template file
         elif os.path.isdir(src_path):
             shutil.copytree(src_path, dest_path)
 
-    log.info(f"Project {project_name} initialized successfully.")
-    log.info(f"Navigate to {project_dir} and customize the configuration files in the 'config' directory.")
+    print(f"Project {project_name} initialized successfully.")
+    print(f"Navigate to {project_dir} and customize the configuration files in the 'config' directory.")
 
 def setup_init_subparser(subparsers):
     """

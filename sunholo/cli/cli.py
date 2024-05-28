@@ -15,7 +15,11 @@ def main(args=None):
     ```
     """
     parser = argparse.ArgumentParser(description="sunholo CLI tool for deploying GenAI VACs")
-    subparsers = parser.add_subparsers(title='commands', description='Valid commands', help='Commands', dest='command', required=True)
+    subparsers = parser.add_subparsers(title='commands', 
+                                       description='Valid commands', 
+                                       help='Commands', 
+                                       dest='command', 
+                                       required=True)
 
     # Setup deploy command
     setup_deploy_subparser(subparsers)

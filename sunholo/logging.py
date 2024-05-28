@@ -249,4 +249,12 @@ def log_folder_location(folder_name):
     else:
         logging.warning(f"The folder '{folder_name}' does not exist in the current working directory: {current_working_directory}")
 
-log = setup_logging("sunholo")
+# lazy eval
+_logger = None
+def get_logger():
+    global _logger
+    if _logger is None:
+        _logger = setup_logging("sunholo")
+    return _logger
+
+log = get_logger()
