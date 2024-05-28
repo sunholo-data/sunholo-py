@@ -50,15 +50,14 @@ Now Cloud Run can mount Cloud Storage directly, you can connect directly to Lanc
 gcloud beta run deploy ${_SERVICE_NAME} --image ${_ARTIFACT_REGISTRY_REPO_URL}/${_IMAGE_NAME}/${_SERVICE_NAME}:${BRANCH_NAME} \
            --session-affinity \
            --add-volume name=gcs_config,type=cloud-storage,bucket=${_CONFIG_BUCKET},readonly=true \
-           --add-volume name=gcs_lancedb,type=cloud-storage,bucket=<lance-db-bucket>,readonly=true \
+           --add-volume name=gcs_lancedb,type=cloud-storage,bucket=<lance-db-bucket>,readonly=false \
            --add-volume-mount volume=gcs_config,mount-path=/gcs_config \
            --add-volume-mount volume=gcs_lancedb,mount-path=/lancedb
 ```
 
-The LanceDB database can then be configured to connect to `/lancedb`
+The LanceDB database can then be configured to connect to `/lancedb` to the correct vectorDB within each LanceDB table:
 
 ```dockerfile
-ENV LANCEDB_BUCKET=/lancedb
+ENV LANCEDB_BUCKET=/lancedb/edmonbrain
 ```
 
-And each table reached relative to `/lancedb` eg. `/lancedb/edmonbrain`

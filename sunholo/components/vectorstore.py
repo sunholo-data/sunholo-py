@@ -94,7 +94,11 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
             log.error(f"Could not locate LANCEDB_BUCKET environment variable for {vector_name}")
         log.info(f"LANCEDB_BUCKET environment variable found for {vector_name} - {LANCEDB_BUCKET}")
 
-        db = lancedb.connect(LANCEDB_BUCKET)
+        try:
+            log.info(f"Attempting LanceDB connection to {vector_name} for {LANCEDB_BUCKET}")
+            db = lancedb.connect(LANCEDB_BUCKET)
+        except Exception as err:
+            log.error(f"Could not connect to {LANCEDB_BUCKET} - {str(err)}")
 
         log.info(f"LanceDB Tables: {db.table_names()} using {LANCEDB_BUCKET}")
         log.info(f"Opening LanceDB table: {vector_name} using {LANCEDB_BUCKET}")
