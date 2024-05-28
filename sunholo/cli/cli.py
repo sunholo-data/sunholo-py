@@ -2,6 +2,7 @@ import argparse
 
 from .configs import setup_list_configs_subparser
 from .deploy import setup_deploy_subparser
+from .cli_init import setup_init_subparser
 
 def main(args=None):
     """
@@ -20,6 +21,8 @@ def main(args=None):
     setup_deploy_subparser(subparsers)
     # Setup list-configs command
     setup_list_configs_subparser(subparsers)
+    # init
+    setup_init_subparser(subparsers)
 
     args = parser.parse_args(args)
 
