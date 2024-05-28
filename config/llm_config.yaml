@@ -1,5 +1,8 @@
 kind: vacConfig
 apiVersion: v1
+gcp_config:
+  project_id: default-gcp-project
+  location: europe-west1
 vac:
   dng:
     llm: model_garden

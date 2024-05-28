@@ -61,7 +61,6 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                 model=vac_config.get("model") or vac_config.get("llm")
             )
 
-        @observe()
         def generate_response_content():
 
             for chunk in start_streaming_chat(question=all_input["user_input"],

@@ -26,6 +26,28 @@ agent = load_config_key('agent', vector_name, type='vacConfig')
 # 'eduvac'
 ```
 
+## sunholo CLI
+
+```bash
+sunholo list-configs
+#'## Config kind: promptConfig'
+#{'apiVersion': 'v1',
+# 'kind': 'promptConfig',
+# 'prompts': {'eduvac': {'chat_summary': 'Summarise the conversation below:\n'
+#                                        '# Chat History\n'
+#                                        '{chat_history}\n'
+#                                        '# End Chat History\n'
+#                                        'If in the chat history is a lesson '
+# ...                
+
+sunholo list-configs --kind 'vacConfig'
+## Config kind: vacConfig
+#{'apiVersion': 'v1',
+# 'kind': 'vacConfig',
+# 'vac': {'codey': {'agent': 'edmonbrain_rag',
+# ...
+```
+
 ## llm_config.yaml
 
 This is the main day to day configuration file that is used to set LLMs, databases and VAC tags.  An example is shown here:
