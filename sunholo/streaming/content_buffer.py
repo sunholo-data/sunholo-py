@@ -51,7 +51,6 @@ class ContentBuffer:
         Adds the given text to the existing content of the buffer.
         """
         self.content += text
-        log.debug(f"Written {text} to buffer")
     
     def read(self) -> str:
         """
@@ -61,8 +60,7 @@ class ContentBuffer:
             str: The content of the buffer.
 
         Provides the entire content stored in the buffer.
-        """
-        log.debug(f"Read content from buffer")    
+        """   
         return self.content
 
     def clear(self):
@@ -71,7 +69,6 @@ class ContentBuffer:
 
         Empties the buffer content, resetting it to an empty string.
         """
-        log.debug(f"Clearing content buffer")
         self.content = ""
 
     

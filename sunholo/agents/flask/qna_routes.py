@@ -29,9 +29,16 @@ try:
 except ImportError:
     print("No flask installed for agents.flask.register_qna_routes, install via `pip install sunholo[http]`")
 
+try:
+    from langfuse.decorators import langfuse_context, observe
+except ImportError as err:
+    print(f"No langfuse installed for agents.flask.register_qna_routes, install via `pip install sunholo[http]` - {str(err)}")
+    
+
 def register_qna_routes(app, stream_interpreter, vac_interpreter):
 
     @app.route('/vac/streaming/<vector_name>', methods=['POST'])
+    @observe()
     def stream_qa(vector_name):
         prep = prep_vac(request, vector_name)
         log.debug(f"Processing prep: {prep}")
@@ -54,6 +61,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                 model=vac_config.get("model") or vac_config.get("llm")
             )
 
+        @observe()
         def generate_response_content():
 
             chunks = ""
@@ -100,6 +108,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
         return response
 
     @app.route('/vac/<vector_name>', methods=['POST'])
+    @observe()
     def process_qna(vector_name):
         prep = prep_vac(request, vector_name)
         log.debug(f"Processing prep: {prep}")
@@ -177,7 +186,9 @@ def create_langfuse_trace(request, vector_name):
     )
 
 def prep_vac(request, vector_name):
-    trace = create_langfuse_trace(request, vector_name)
+    #trace = create_langfuse_trace(request, vector_name)
+    trace = None
+    span = None
     data = request.get_json()
     log.info(f"vac/{vector_name} got data: {data}")
     config, _ = load_config("config/llm_config.yaml")
