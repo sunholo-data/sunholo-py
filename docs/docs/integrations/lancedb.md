@@ -45,6 +45,23 @@ ENV LANCEDB_BUCKET=${_LANCEDB_BUCKET}
 
 Now Cloud Run can mount Cloud Storage directly, you can connect directly to LanceDB data to improve performance.
 
+Ensure the bucket has an existing LanceDB table and Cloud Run has read/write access to it.
+
+```sh
+gcloud beta run deploy <service-name> --image <docker-run-image> \
+           --add-volume name=gcs_lancedb,type=cloud-storage,bucket=<lance-db-bucket>,readonly=false \
+           --add-volume-mount volume=gcs_lancedb,mount-path=/lancedb
+```
+
+The LanceDB database can then be configured to connect to the mount path `/lancedb`
+
+```dockerfile
+ENV LANCEDB_BUCKET=/lancedb
+```
+
+Each table will be reached relative to `/lancedb` eg. `/lancedb/edmonbrain`
+
+You can mount two buckets at once via different mount points, such as the config and lancedb:
 
 ```sh
 gcloud beta run deploy ${_SERVICE_NAME} --image ${_ARTIFACT_REGISTRY_REPO_URL}/${_IMAGE_NAME}/${_SERVICE_NAME}:${BRANCH_NAME} \
@@ -54,11 +71,3 @@ gcloud beta run deploy ${_SERVICE_NAME} --image ${_ARTIFACT_REGISTRY_REPO_URL}/$
            --add-volume-mount volume=gcs_config,mount-path=/gcs_config \
            --add-volume-mount volume=gcs_lancedb,mount-path=/lancedb
 ```
-
-The LanceDB database can then be configured to connect to `/lancedb`
-
-```dockerfile
-ENV LANCEDB_BUCKET=/lancedb
-```
-
-And each table reached relative to `/lancedb` eg. `/lancedb/edmonbrain`
