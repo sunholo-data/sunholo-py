@@ -14,7 +14,7 @@ When you have the requisite details, then you need a username, password, ip of t
 PGVECTOR_CONNECTION_STRING=postgresql://user:password@1.2.3.4:5432/database
 ```
 
-To use within sunholo, you can use the [`pick_retriever()`](..sunholo/components/retriever) function to pull in the configuration dynamically according to the `vector_name` argument.
+To use within sunholo, you can use the [`pick_retriever()`](../sunholo/components/retriever) function to pull in the configuration dynamically according to the `vector_name` argument.
 
 A configuration can be set that will send embeddings after chunking to the database.  
 
