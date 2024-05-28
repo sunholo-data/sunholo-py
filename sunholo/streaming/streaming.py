@@ -306,8 +306,8 @@ async def generate_proxy_stream_async(stream_to_f, user_input, vector_name, chat
         ):
             print(output)  # Process each streaming output chunk
     """
-    agent = load_config_key("agent", vector_name=vector_name, filename="config/llm_config.yaml")
-    agent_type = load_config_key("agent_type", vector_name=vector_name, filename="config/llm_config.yaml")
+    agent = load_config_key("agent", vector_name=vector_name, type = "vacConfig")
+    agent_type = load_config_key("agent_type", vector_name=vector_name, type = "vacConfig")
 
     async def generate():
         json_buffer = ""

@@ -64,7 +64,6 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
         @observe()
         def generate_response_content():
 
-            chunks = ""
             for chunk in start_streaming_chat(question=all_input["user_input"],
                                               vector_name=vector_name,
                                               qna_func=stream_interpreter,
@@ -90,9 +89,6 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                 
                 else:
                     # Otherwise, we yield the plain text chunks as they come in.
-                    if chunk:
-                        chunks += chunk
-                        
                     yield chunk
             
         # Here, the generator function will handle streaming the content to the client.
