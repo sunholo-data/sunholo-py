@@ -27,7 +27,7 @@ class Question(BaseModel):
     source_filters_and_or: Optional[bool] = False
 ```
 
-The `sunholo` functions within [`sunholo/agents/langserve.py`](../sunholo/agents/langserve) query this input schema before sending it the payload to make sure it is in the correct format.
+The `sunholo` functions within [`sunholo/agents/langserve.py`](..sunholo/agents/langserve) query this input schema before sending it the payload to make sure it is in the correct format.
 
 ### A configurable model 
 
