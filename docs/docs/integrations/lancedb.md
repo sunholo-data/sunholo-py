@@ -55,9 +55,10 @@ gcloud beta run deploy ${_SERVICE_NAME} --image ${_ARTIFACT_REGISTRY_REPO_URL}/$
            --add-volume-mount volume=gcs_lancedb,mount-path=/lancedb
 ```
 
-The LanceDB database can then be configured to connect to `/lancedb` to the correct vectorDB within each LanceDB table:
+The LanceDB database can then be configured to connect to `/lancedb`
 
 ```dockerfile
-ENV LANCEDB_BUCKET=/lancedb/edmonbrain
+ENV LANCEDB_BUCKET=/lancedb
 ```
 
+And each table reached relative to `/lancedb` eg. `/lancedb/edmonbrain`
