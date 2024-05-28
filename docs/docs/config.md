@@ -8,7 +8,7 @@ There are various config files available that control different features such as
 
 ## Calling config files
 
-Use the config functions within [`sunholo.utils`](..sunholo/utils/config) to use the config files within your GenAI application.  The most often used config is `vacConfig` below, which is called like this:
+Use the config functions within [`sunholo.utils`](../sunholo/utils/config) to use the config files within your GenAI application.  The most often used config is `vacConfig` below, which is called like this:
 
 ```python
 from sunholo.utils import load_config_key
