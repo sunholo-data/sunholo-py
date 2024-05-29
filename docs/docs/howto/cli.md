@@ -69,3 +69,19 @@ sunholo list-configs --kind=vacConfig --vac=edmonbrain --validate
 #Validating vacConfig for edmonbrain
 #OK: Validated schema
 ```
+
+You can use the `--validate` flag in CI/CD to check the configuration each commit, for example in Cloud Build:
+
+```yaml
+...
+  - name: 'python:3.9'
+    id: validate config
+    entrypoint: 'bash'
+    waitFor: ["-"]
+    args:
+    - '-c'
+    - |
+      pip install --no-cache sunholo
+      sunholo list-configs --validate || exit 1
+      sunholo list-configs --kind=vacConfig --vac=${_SERVICE_NAME} --validate || exit 1
+```
