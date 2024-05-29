@@ -19,7 +19,7 @@ def create_alloydb_engine(vector_name):
     alloydb_config = load_config_key(
         'alloydb_config', 
         vector_name=vector_name, 
-        filename = "config/llm_config.yaml"
+        kind="vacConfig"
     )
 
     if alloydb_config is None:

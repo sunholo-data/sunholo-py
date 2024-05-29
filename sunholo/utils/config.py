@@ -167,14 +167,13 @@ def load_config(filename: str=None) -> tuple[dict, str]:
     
     return config, filename
 
-def load_config_key(key: str, vector_name: str, filename: str=None, kind: str=None):
+def load_config_key(key: str, vector_name: str, kind: str=None):
     """
     Load a specific key from a configuration file.
 
     Args:
         key (str): The key to fetch from the configuration.
         vector_name (str): The name of the vector in the configuration file.
-        filename (str, optional): The configuration file name. Defaults to the `_CONFIG_FILE` environment variable. Deprecated - use 'kind' instead
         kind: (str, optional): Specify the type of configuration to retrieve e.g. 'vacConfig' which will pick from files within `_CONFIG_FOLDER`
 
     Returns:
@@ -182,7 +181,7 @@ def load_config_key(key: str, vector_name: str, filename: str=None, kind: str=No
 
     Example:
     ```python
-    api_url = load_config_key('apiUrl', 'myVector', 'config.yaml')
+    api_url = load_config_key('apiUrl', 'myVector', kind="vacConfig")
     print(f'API URL: {api_url}')
     ```
     """
@@ -196,9 +195,6 @@ def load_config_key(key: str, vector_name: str, filename: str=None, kind: str=No
 
     if kind:
         log.info(f"Got kind: {kind} - applying to configs")
-    
-    if filename:
-        log.warning(f"Got filename argument: {filename} for config - deprecated - use `kind='vacConfig'` instead")
     
     if not configs_by_kind:
         log.warning("Did not load configs via folder")

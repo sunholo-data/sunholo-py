@@ -49,8 +49,8 @@ def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs
     # Add chat_history/vector_name to kwargs so langserve can use them too
     kwargs['chat_history'] = chat_history
 
-    agent = load_config_key("agent", vector_name=vector_name, filename="config/llm_config.yaml")
-    agent_type = load_config_key("agent_type", vector_name=vector_name, filename="config/llm_config.yaml")
+    agent = load_config_key("agent", vector_name=vector_name, kind="vacConfig")
+    agent_type = load_config_key("agent_type", vector_name=vector_name, kind="vacConfig")
 
     # {'stream': '', 'invoke': ''}
     endpoints = route_endpoint(vector_name)

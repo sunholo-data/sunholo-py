@@ -21,7 +21,7 @@ def send_doc_to_docstore(docs, vector_name):
 
     # docs all come from the same file but got split into a list of document objects
 
-    docstore_config = load_config_key("docstore", vector_name=vector_name, filename="config/llm_config.yaml")
+    docstore_config = load_config_key("docstore", vector_name=vector_name, kind="vacConfig")
     if docstore_config is None:
         log.info(f"No docstore config found for {vector_name} ")
         
@@ -110,7 +110,7 @@ def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_lim
     if not docs:
         return None
 
-    chunker_config = load_config_key("chunker", vector_name=vector_name, filename="config/llm_config.yaml")
+    chunker_config = load_config_key("chunker", vector_name=vector_name, kind="vacConfig")
     summarise_chunking_config = chunker_config.get("summarise") if chunker_config else None
     
     if not summarise_chunking_config:

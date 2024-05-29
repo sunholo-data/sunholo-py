@@ -114,7 +114,7 @@ def choose_splitter(extension: str, chunk_size: int=1024, chunk_overlap:int=200,
     if vector_name:
         # check if there is a chunking configuration
         from ..utils import load_config_key
-        chunk_config = load_config_key("chunker", vector_name=vector_name, filename="config/llm_config.yaml")
+        chunk_config = load_config_key("chunker", vector_name=vector_name, kind="vacConfig")
         if chunk_config:
             if chunk_config.get("type") == "semantic":
                 embedding_str = chunk_config.get("llm")

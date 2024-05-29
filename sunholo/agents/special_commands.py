@@ -41,14 +41,13 @@ def handle_special_commands(user_input,
                             vector_name, 
                             chat_history,
                             bucket=None,
-                            cmds=None,
-                            config_file="config/llm_config.yaml"):
+                            cmds=None):
     now = datetime.datetime.now()
     hourmin = now.strftime("%H%M%S")
     the_datetime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     if not cmds:
-        cmds = load_config_key("user_special_cmds", vector_name=vector_name, filename=config_file)
+        cmds = load_config_key("user_special_cmds", vector_name=vector_name, kind="vacConfig")
         if not cmds:
             return None
 

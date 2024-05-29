@@ -71,7 +71,7 @@ def vac(question: str, vector_name, chat_history=[], **kwargs):
 
 # this is common to both endpoints so has its own function
 def create_model(vector_name):
-    gcp_config = load_config_key("gcp_config", vector_name=vector_name, type="vacConfig")
+    gcp_config = load_config_key("gcp_config", vector_name=vector_name, kind="vacConfig")
     if not gcp_config:
         raise ValueError(f"Need config.{vector_name}.gcp_config to configure llamaindex on VertexAI")
 
@@ -98,7 +98,7 @@ def create_model(vector_name):
     )
 
     # load model type from vacConfig file.
-    model = load_config_key("model", vector_name=vector_name, type="vacConfig")
+    model = load_config_key("model", vector_name=vector_name, kind="vacConfig")
     
     # Create a gemini-pro model instance
     # https://ai.google.dev/api/python/google/generativeai/GenerativeModel

@@ -47,7 +47,7 @@ def vac(question: str, vector_name, chat_history=[], **kwargs):
 
 # TODO: common model setup to both batching and streaming
 def create_model(vector_name):
-    gcp_config = load_config_key("gcp_config", vector_name=vector_name, type="vacConfig")
+    gcp_config = load_config_key("gcp_config", vector_name=vector_name, kind="vacConfig")
     if not gcp_config:
         raise ValueError(f"Need config.{vector_name}.gcp_config to configure XXXX on VertexAI")
 
@@ -68,7 +68,7 @@ def create_model(vector_name):
         )
     )
 
-    model = load_config_key("model", vector_name=vector_name, filename = "config/llm_config.yaml")
+    model = load_config_key("model", vector_name=vector_name, kind="vacConfig")
     # Create a gemini-pro model instance
     # https://ai.google.dev/api/python/google/generativeai/GenerativeModel#streaming
     rag_model = GenerativeModel(

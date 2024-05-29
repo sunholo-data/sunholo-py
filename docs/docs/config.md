@@ -14,15 +14,15 @@ Use the config functions within [`sunholo.utils`](sunholo/utils/config) to use t
 from sunholo.utils import load_config_key
 
 vector_name = 'pirate_speak'
-llm = load_config_key('llm', vector_name, type='vacConfig')
+llm = load_config_key('llm', vector_name, kind='vacConfig')
 # 'openai'
-agent = load_config_key('agent', vector_name, type='vacConfig')
+agent = load_config_key('agent', vector_name, kind='vacConfig')
 # 'langserve'
 
 vector_name = 'eduvac'
-llm = load_config_key('llm', vector_name, type='vacConfig')
+llm = load_config_key('llm', vector_name, kind='vacConfig')
 # 'anthropic'
-agent = load_config_key('agent', vector_name, type='vacConfig')
+agent = load_config_key('agent', vector_name, kind='vacConfig')
 # 'eduvac'
 ```
 

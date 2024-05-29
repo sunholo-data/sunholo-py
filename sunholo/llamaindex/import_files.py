@@ -102,7 +102,7 @@ def do_llamaindex(message_data, metadata, vector_name):
     if not rag:
         raise ValueError("Need to install vertexai module via `pip install sunholo[gcp]`")
 
-    gcp_config = load_config_key("gcp_config", vector_name=vector_name, type="vacConfig")
+    gcp_config = load_config_key("gcp_config", vector_name=vector_name, kind="vacConfig")
     if not gcp_config:
         raise ValueError(f"Need config.{vector_name}.gcp_config to configure llamaindex on VertexAI")
 
@@ -120,7 +120,7 @@ def do_llamaindex(message_data, metadata, vector_name):
     log.info(f"Found llamaindex corpus: {corpus}")
 
     # native support for cloud storage and drive links
-    chunker_config = load_config_key("chunker", vector_name=vector_name, type="vacConfig")
+    chunker_config = load_config_key("chunker", vector_name=vector_name, kind="vacConfig")
 
     if message_data.startswith("gs://") or message_data.startswith("https://drive.google.com"):
         log.info(f"rag.import_files for {message_data}")
@@ -160,7 +160,7 @@ def do_llamaindex(message_data, metadata, vector_name):
         #)
 
 def check_llamaindex_in_memory(vector_name):
-    memories = load_config_key("memory", vector_name=vector_name, type="vacConfig")
+    memories = load_config_key("memory", vector_name=vector_name, kind="vacConfig")
     for memory in memories:  # Iterate over the list
         for key, value in memory.items():  # Now iterate over the dictionary
             log.info(f"Found memory {key}")
@@ -175,7 +175,7 @@ def check_llamaindex_in_memory(vector_name):
 
 def llamaindex_chunker_check(message_data, metadata, vector_name):
     # llamaindex handles its own chunking/embedding
-    memories = load_config_key("memory", vector_name=vector_name, type="vacConfig")
+    memories = load_config_key("memory", vector_name=vector_name, kind="vacConfig")
     total_memories = len(memories)
     llama = None
     if check_llamaindex_in_memory(vector_name):

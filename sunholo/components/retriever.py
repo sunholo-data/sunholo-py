@@ -27,7 +27,7 @@ from langchain.retrievers import ContextualCompressionRetriever
 
 
 def load_memories(vector_name):
-    memories = load_config_key("memory", vector_name, type="vacConfig")
+    memories = load_config_key("memory", vector_name, kind="vacConfig")
     log.info(f"Found memory settings for {vector_name}: {memories}")
     if len(memories) == 0:
         log.info(f"No memory settings found for {vector_name}")
@@ -70,7 +70,7 @@ def pick_retriever(vector_name, embeddings=None):
         log.info(f"No retrievers were created for {memories}")
         return None
     
-    k_override = load_config_key("memory_k", vector_name, type="vacConfig")
+    k_override = load_config_key("memory_k", vector_name, kind="vacConfig")
     if not k_override:
         k_override = 3
         

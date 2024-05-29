@@ -15,7 +15,7 @@ def get_run_url(vector_name=None):
     cloud_urls = route_qna(vector_name)
     
     cloud_urls, _ = load_config('config/cloud_run_urls.json')
-    agent = load_config_key("agent", vector_name=vector_name, filename="config/llm_config.yaml")
+    agent = load_config_key("agent", vector_name=vector_name, kind="vacConfig")
 
     try:
         log.info(f'Looking up URL for {agent}')

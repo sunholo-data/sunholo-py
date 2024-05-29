@@ -48,16 +48,16 @@ def lookup_connection_env(vs_str):
     raise ValueError("Could not find vectorstore for {vs_str}")
 
 
-def get_vector_size(vector_name: str, config_file:str="config/llm_config.yaml"):
+def get_vector_size(vector_name: str):
 
     llm_str = None
-    embed_dict = load_config_key("embedder", vector_name, filename=config_file)
+    embed_dict = load_config_key("embedder", vector_name, kind="vacConfig")
 
     if embed_dict:
         llm_str = embed_dict.get('llm')
 
     if llm_str is None:
-        llm_str = load_config_key("llm", vector_name, filename=config_file)
+        llm_str = load_config_key("llm", vector_name, kind="vacConfig")
 
     if not isinstance(llm_str, str):
         raise ValueError(f"get_vector_size() did not return a value string for {vector_name} - got {llm_str} instead")
