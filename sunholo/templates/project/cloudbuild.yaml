@@ -70,3 +70,14 @@ steps:
            --session-affinity \
            --add-volume name=gcs_config,type=cloud-storage,bucket=${_CONFIG_BUCKET},readonly=true \
            --add-volume-mount volume=gcs_config,mount-path=/gcs_config
+
+  - name: 'python:3.9'
+    id: validate config
+    entrypoint: 'bash'
+    waitFor: ["-"]
+    args:
+    - '-c'
+    - |
+      pip install --no-cache sunholo
+      sunholo list-configs --validate
+      sunholo list-configs --kind=vacConfig --vac=${_SERVICE_NAME} --validate
