@@ -1,4 +1,6 @@
 # this config file controls the behaviour of agent-types such as langserve, controlling what endpoints are used
+kind: agentConfig
+apiVersion: v1
 default:
   stream: "{stem}/vac/streaming/{vector_name}"
   invoke: "{stem}/vac/{vector_name}"

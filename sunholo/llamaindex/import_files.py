@@ -159,12 +159,8 @@ def do_llamaindex(message_data, metadata, vector_name):
         #    description=description,
         #)
 
-
-def llamaindex_chunker_check(message_data, metadata, vector_name):
-    # llamaindex handles its own chunking/embedding
+def check_llamaindex_in_memory(vector_name):
     memories = load_config_key("memory", vector_name=vector_name, type="vacConfig")
-    total_memories = len(memories)
-    llama = None
     for memory in memories:  # Iterate over the list
         for key, value in memory.items():  # Now iterate over the dictionary
             log.info(f"Found memory {key}")
@@ -172,10 +168,19 @@ def llamaindex_chunker_check(message_data, metadata, vector_name):
             if vectorstore:
                 log.info(f"Found vectorstore {vectorstore}")
                 if vectorstore == "llamaindex":
-                    # https://cloud.google.com/vertex-ai/generative-ai/docs/llamaindex-on-vertexai
-                    log.info(f"llamaindex on vertex indexing for {vector_name}")
-                    llama = do_llamaindex(message_data, metadata, vector_name)
-                    log.info(f"Processed llamaindex: {llama}")
+
+                    return True
+    
+    return False
+
+def llamaindex_chunker_check(message_data, metadata, vector_name):
+    # llamaindex handles its own chunking/embedding
+    memories = load_config_key("memory", vector_name=vector_name, type="vacConfig")
+    total_memories = len(memories)
+    llama = None
+    if check_llamaindex_in_memory(vector_name):
+        llama = do_llamaindex(message_data, metadata, vector_name)
+        log.info(f"Processed llamaindex: {llama}")
 
     # If llamaindex is the only entry, return
     if llama and total_memories == 1:

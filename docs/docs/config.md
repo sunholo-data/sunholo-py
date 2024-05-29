@@ -106,7 +106,8 @@ vac:
         memory: # you can have multiple destinations for your embedding pipelines
             - lancedb-vectorstore:
                 vectorstore: lancedb
-                provider: LanceDB 
+                provider: LanceDB
+                read_only: true # don't write embeddings to this vectorstore 
     finetuned_model:
         llm: model_garden # an example of a custom model such as Llama3 served by Vertex Model Garden
         agent: langserve
@@ -151,6 +152,8 @@ This configuration file sets up standard endpoints for each type of agent, corre
 
 ```yaml
 # this config file controls the behaviour of agent-types such as langserve, controlling what endpoints are used
+kind: agentConfig
+apiVersion: v1
 default:
   stream: "{stem}/vac/streaming/{vector_name}"
   invoke: "{stem}/vac/{vector_name}"
@@ -182,6 +185,8 @@ crewai:
 This lets you do user authentication by matching the tags within `llm_config.yaml` with user email domains
 
 ```yaml
+kind: userConfig
+apiVersion: v1
 user_groups:
   - name: "admin"
     domain: "sunholo.com"

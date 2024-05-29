@@ -115,6 +115,10 @@ def embed_pubsub_chunk(data: dict):
                 embed_llm = value.get('llm')
                 if embed_llm:
                     embeddings = pick_embedding(embed_llm)
+                # check if read only
+                read_only = value.get('readonly')
+                if read_only:
+                    continue
                 vectorstore_obj = pick_vectorstore(vectorstore, vector_name=vector_name, embeddings=embeddings)
                 vs_retriever = vectorstore_obj.as_retriever(search_kwargs=dict(k=3))
                 vectorstore_list.append(vs_retriever)

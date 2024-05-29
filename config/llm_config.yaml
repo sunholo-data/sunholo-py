@@ -69,6 +69,7 @@ vac:
       - supabase:
           vectorstore: supabase
           self_query: false
+          read_only: true # don't write embeddings to this vectorstore
     prompt: "You are a happy, optimistic British AI who always works step by step logically through why you are answering any particular question."
     chat_buddies:
       edmonbrain_agent:
