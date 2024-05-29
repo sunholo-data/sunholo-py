@@ -19,6 +19,7 @@ VAC_SUBCONFIG_SCHEMA = {
                         "model": {"type": "string"},
                         "threshold": {"type": "integer"},
                         "model_limit": {"type": "integer"}
+                    }
                     },
             },
             "additionalProperties": False
