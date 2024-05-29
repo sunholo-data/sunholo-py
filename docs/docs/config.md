@@ -106,7 +106,6 @@ vac:
         memory: # you can have multiple destinations for your embedding pipelines
             - lancedb-vectorstore:
                 vectorstore: lancedb
-                provider: LanceDB
                 read_only: true # don't write embeddings to this vectorstore 
     finetuned_model:
         llm: model_garden # an example of a custom model such as Llama3 served by Vertex Model Garden
@@ -137,7 +136,6 @@ vac:
         memory: # you can have multiple vectorstore destinations
             - lancedb-vectorstore:
                 vectorstore: lancedb
-                provider: LanceDB 
         embedder:
             llm: azure
         azure: # your azure details
@@ -155,13 +153,11 @@ vac:
       memory:
         - personal-vectorstore:
             vectorstore: lancedb
-            provider: LanceDB
             k: 10 #  how many candidate memory will be returned from this vectorstore
         - eduvac-vectorstore:
             vector_name: eduvac
-            read_only: true
+            read_only: true # can only read, not write embeddings
             vectorstore: lancedb
-            provider: LanceDB
             k: 3 #  how many candidate memory will be returned from this vectorstore
 ```
 

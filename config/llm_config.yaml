@@ -64,13 +64,12 @@ vac:
     memory:
       - personal-vectorstore:
           vectorstore: lancedb
-          provider: LanceDB
           k: 10 #  how many candidate memory will be returned from this vectorstore
       - eduvac-vectorstore:
           vector_name: eduvac
           read_only: true
-          vectorstore: lancedb
-          provider: LanceDB
+          vectorstore: alloydb
+          llm: openai
           k: 3 #  how many candidate memory will be returned from this vectorstore
   jesper:
     llm: openai

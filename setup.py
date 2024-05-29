@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.58.2'
+version = '0.58.3'
 
 setup(
     name='sunholo',
@@ -30,6 +30,7 @@ setup(
         "langchain",
         "langchain_experimental",
         "langchain-community",
+        "google-auth" # to check if on gcp
         # Add the minimal dependencies that your package requires here
     ],
     extras_require={
@@ -87,7 +88,6 @@ setup(
             "tabulate",
         ],
         'gcp': [
-            "google-auth",
             "google-auth-httplib2",
             "google-auth-oauthlib",
             "google-cloud-aiplatform",
