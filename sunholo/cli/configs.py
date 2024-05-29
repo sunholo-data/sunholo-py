@@ -1,5 +1,7 @@
+import sys
 from ..utils.config import load_all_configs
 from ..utils.config_schema import SCHEMAS, VAC_SUBCONFIG_SCHEMA
+
 from jsonschema import validate, ValidationError
 from pprint import pprint
 
@@ -77,18 +79,29 @@ def list_configs(args):
         pprint(config)
 
     if args.validate:
+        validation_failed = False
         for kind, config in filtered_configs.items():
             print(f"Validating configuration for kind: {kind}")
             if args.kind == "vacConfig" and args.vac:
                 print(f"Validating vacConfig for {args.vac}")
-                if not validate_config(config[args.vac], VAC_SUBCONFIG_SCHEMA):
-                    print(f"Validation failed for sub-kind: {args.vac}")
+                try:
+                    validate_config(config[args.vac], VAC_SUBCONFIG_SCHEMA)
+                except ValidationError as e:
+                    print(f"Validation failed for sub-kind: {args.vac} - {str(e)}")
+                    validation_failed = True
             elif kind in SCHEMAS:
-                if not validate_config(config, SCHEMAS[kind]):
-                    print(f"FAIL: Validation failed for kind: {kind}")
+                try:
+                    validate_config(config, SCHEMAS[kind])
+                except ValidationError as e:
+                    print(f"FAIL: Validation failed for kind: {kind} - - {str(e)}")
+                    validation_failed = True
             else:
                 print(f"No schema available to validate configuration for kind: {kind}")
 
+        if validation_failed:
+            print("Validation failed for one or more configurations")
+
+            sys.exit(1)
 
 
 def setup_list_configs_subparser(subparsers):
