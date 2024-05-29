@@ -65,6 +65,9 @@ def load_all_configs():
     configs_by_kind = defaultdict(dict)
     for filename in os.listdir(config_folder):
         log.info(f"config file: {filename}")
+        if filename in ["cloudbuild.yaml", "cloud_run_urls.json"]:
+            # skip these
+            continue
         if filename.endswith(('.yaml', '.yml', '.json')):
             config_file = os.path.join(config_folder, filename)
             
