@@ -6,7 +6,7 @@ def list_configs(args):
     """
     Lists configuration files, filtered by kind if specified.
     """
-    log.info("Listing configuration files")
+    print("Listing configuration files")
     configs = load_all_configs()
 
     if args.kind:

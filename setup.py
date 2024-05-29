@@ -37,13 +37,19 @@ setup(
         'all': [
             "asyncpg",
             "flask",
+            "google-auth",
+            "google-auth-httplib2",
+            "google-auth-oauthlib",
             "google-cloud-aiplatform",
             "google-api-python-client",
             "google-cloud-alloydb-connector[pg8000]",
+            "google-cloud-bigquery",
             "google-cloud-build",
             "google-cloud-logging",
             "google-cloud-storage",
             "google-cloud-pubsub",
+            "google-cloud-discoveryengine",
+            "google-generativeai",
             "gunicorn",
             "httpcore",
             "httpx",
@@ -57,21 +63,41 @@ setup(
             "langchain-anthropic",
             "langfuse",
             "pg8000",
+            "pgvector",
+            "psycopg2-binary",
+            "pypdf",
             "fastapi",
+            "supabase",
+            "tiktoken",
             "python-socketio"
         ],
         'database': [
             "asyncpg",
+            "supabase",
             "sqlalchemy",
             "pg8000",
+            "pgvector",
+            "psycopg2-binary",
             "lancedb",
         ],
+        'pipeline': [
+            "GitPython",
+            "lark",
+            "pypdf",
+            "tabulate",
+        ],
         'gcp': [
+            "google-auth",
+            "google-auth-httplib2",
+            "google-auth-oauthlib",
             "google-cloud-aiplatform",
+            "google-cloud-bigquery",
             "google-cloud-build",
             "google-cloud-storage",
             "google-cloud-logging",
             "google-cloud-pubsub",
+            "google-cloud-discoveryengine",
+            "google-generativeai",
             "langchain-google-genai",
             "langchain_google_alloydb_pg",
             "google-api-python-client",
@@ -79,6 +105,7 @@ setup(
         ],
         'openai': [
             "langchain-openai",
+            "tiktoken"
         ],
         'anthropic': [
             "langchain-anthropic",        
@@ -91,6 +118,7 @@ setup(
             "httpx",
             "langfuse",
             "python-socketio",
+            "requests"
         ]
     },
     classifiers=[
