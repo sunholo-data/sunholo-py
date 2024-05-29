@@ -2,12 +2,13 @@ import os
 from urllib.parse import quote
 from datetime import datetime, timedelta
 
-import google.auth # needs to be in minimal to check gcp
+# needs to be in minimal to check gcp
+import google.auth 
+from google.auth.transport import requests
+from google.auth.exceptions import RefreshError
 
 try:
-    from google.cloud import storage     
-    from google.auth.transport import requests
-    from google.auth.exceptions import RefreshError
+    from google.cloud import storage 
 except ImportError:
     storage = None
 
