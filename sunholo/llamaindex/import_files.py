@@ -1,53 +1,13 @@
-
 try:
     from vertexai.preview import rag
-    from vertexai.preview.generative_models import GenerativeModel, Tool
-    import vertexai
 except ImportError:
     rag = None
 
 from ..logging import log
 from ..utils.config import load_config_key
+from ..vertex import init_vertex
 
 # Create a RAG Corpus, Import Files
-
-def init_vertex(gcp_config):
-    """
-    Initializes the Vertex AI environment using the provided Google Cloud Platform configuration.
-
-    This function configures the Vertex AI API session with specified project and location details
-    from the gcp_config dictionary. It is essential to call this function at the beginning of a session
-    before performing any operations related to Vertex AI.
-
-    Parameters:
-        gcp_config (dict): A dictionary containing the Google Cloud Platform configuration with keys:
-            - 'project_id': The Google Cloud project ID to configure for Vertex AI.
-            - 'location': The Google Cloud region to configure for Vertex AI.
-
-    Raises:
-        KeyError: If the necessary keys ('project_id' or 'location') are missing in the gcp_config dictionary.
-        ModuleNotFoundError: If the Vertex AI module is not installed and needs to be installed via pip.
-
-    Example:
-    ```python
-    gcp_config = {
-         'project_id': 'your-project-id',
-         'location': 'us-central1'
-    }
-    init_vertex(gcp_config)
-    # This will initialize the Vertex AI session with the provided project ID and location.
-
-    Note:
-        Ensure that the 'vertexai' module is installed and correctly configured before calling this function.
-        The function assumes that the required 'vertexai' library is available and that the logging setup is already in place.
-    """
-    if not rag:
-        log.error("Need to install vertexai module via `pip install google-cloud-aiplatform`")
-    
-    # Initialize Vertex AI API once per session
-    project_id = gcp_config.get('project_id')
-    location = gcp_config.get('location')
-    vertexai.init(project=project_id, location=location)
 
 def get_corpus(gcp_config):
     """
@@ -86,6 +46,9 @@ def get_corpus(gcp_config):
         print("Error fetching corpus:", str(e))
     ```
     """
+    if not rag:
+        raise ValueError("Need to install vertexai module via `pip install sunholo[gcp]`")
+    
     project_id = gcp_config.get('project_id')
     location = gcp_config.get('location')
     rag_id = gcp_config.get('rag_id')
@@ -136,7 +99,10 @@ def do_llamaindex(message_data, metadata, vector_name):
     # Imported file to corpus: {'status': 'success'}
     ```
     """
-    gcp_config = load_config_key("gcp_config", vector_name=vector_name, filename = "config/llm_config.yaml")
+    if not rag:
+        raise ValueError("Need to install vertexai module via `pip install sunholo[gcp]`")
+
+    gcp_config = load_config_key("gcp_config", vector_name=vector_name, type="vacConfig")
     if not gcp_config:
         raise ValueError(f"Need config.{vector_name}.gcp_config to configure llamaindex on VertexAI")
 
@@ -154,7 +120,7 @@ def do_llamaindex(message_data, metadata, vector_name):
     log.info(f"Found llamaindex corpus: {corpus}")
 
     # native support for cloud storage and drive links
-    chunker_config = load_config_key("chunker", vector_name=vector_name, filename="config/llm_config.yaml")
+    chunker_config = load_config_key("chunker", vector_name=vector_name, type="vacConfig")
 
     if message_data.startswith("gs://") or message_data.startswith("https://drive.google.com"):
         log.info(f"rag.import_files for {message_data}")
@@ -196,7 +162,7 @@ def do_llamaindex(message_data, metadata, vector_name):
 
 def llamaindex_chunker_check(message_data, metadata, vector_name):
     # llamaindex handles its own chunking/embedding
-    memories = load_config_key("memory", vector_name=vector_name, filename = "config/llm_config.yaml")
+    memories = load_config_key("memory", vector_name=vector_name, type="vacConfig")
     total_memories = len(memories)
     llama = None
     for memory in memories:  # Iterate over the list

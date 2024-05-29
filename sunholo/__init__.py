@@ -16,6 +16,7 @@ from . import pubsub
 from . import qna
 from . import streaming
 from . import utils
+from . import vertex
 import logging
 
 __all__ = ['agents', 
