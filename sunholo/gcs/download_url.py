@@ -23,7 +23,8 @@ if is_running_on_gcp():
     # Perform a refresh request to get the access token of the current credentials (Else, it's None)
     gcs_credentials, project_id = google.auth.default()
     # Prepare global variables for client reuse
-    gcs_client = storage.Client()
+    if storage:
+        gcs_client = storage.Client()
 
 def refresh_credentials():
     if not is_running_on_gcp():
