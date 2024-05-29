@@ -12,8 +12,8 @@ def validate_config(config, schema):
         return True
     except ValidationError as err:
         error_path = " -> ".join(map(str, err.path))
-        #print(f"ERROR: Validation error at '{error_path}': {err.message}")
-        raise ValidationError(f"Validation error at '{error_path}': {err.message}")
+        print(f"ERROR: Validation error at '{error_path}': {err.message}")
+        return False
 
 def list_configs(args):
     """
@@ -84,16 +84,12 @@ def list_configs(args):
             print(f"Validating configuration for kind: {kind}")
             if args.kind == "vacConfig" and args.vac:
                 print(f"Validating vacConfig for {args.vac}")
-                try:
-                    validate_config(config[args.vac], VAC_SUBCONFIG_SCHEMA)
-                except ValidationError as e:
-                    print(f"Validation failed for sub-kind: {args.vac} - {str(e)}")
+                if not validate_config(config[args.vac], VAC_SUBCONFIG_SCHEMA):
+                    print(f"Validation failed for sub-kind: {args.vac}")
                     validation_failed = True
             elif kind in SCHEMAS:
-                try:
-                    validate_config(config, SCHEMAS[kind])
-                except ValidationError as e:
-                    print(f"FAIL: Validation failed for kind: {kind} - - {str(e)}")
+                if not validate_config(config, SCHEMAS[kind]):
+                    print(f"FAIL: Validation failed for kind: {kind}")
                     validation_failed = True
             else:
                 print(f"No schema available to validate configuration for kind: {kind}")
