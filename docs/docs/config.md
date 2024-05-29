@@ -144,6 +144,25 @@ vac:
             azure_openai_endpoint: https://openai-central-blah.openai.azure.com/
             openai_api_version: 2024-02-01
             embed_model: text-embedding-ada-002 # or text-embedding-3-large
+    edmonbrain:
+      llm: openai
+      agent: edmonbrain
+      display_name: Edmonbrain
+      avatar_url: https://avatars.githubusercontent.com/u/3155884?s=48&v=4
+      description: This is the original [Edmonbrain](https://code.markedmondson.me/running-llms-on-gcp/) implementation that uses RAG to answer questions based on data you send in via its `!help` commands and learns from previous chat history.  It dreams each night that can also be used in its memory.
+      model: gpt-4o
+      memory_k: 10 # how many memories will be returned in total after relevancy compression
+      memory:
+        - personal-vectorstore:
+            vectorstore: lancedb
+            provider: LanceDB
+            k: 10 #  how many candidate memory will be returned from this vectorstore
+        - eduvac-vectorstore:
+            vector_name: eduvac
+            read_only: true
+            vectorstore: lancedb
+            provider: LanceDB
+            k: 3 #  how many candidate memory will be returned from this vectorstore
 ```
 
 ## agent_config.yaml

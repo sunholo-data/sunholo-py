@@ -27,7 +27,7 @@ from langchain.retrievers import ContextualCompressionRetriever
 
 
 def load_memories(vector_name):
-    memories = load_config_key("memory", vector_name, filename="config/llm_config.yaml")
+    memories = load_config_key("memory", vector_name, type="vacConfig")
     log.info(f"Found memory settings for {vector_name}: {memories}")
     if len(memories) == 0:
         log.info(f"No memory settings found for {vector_name}")
@@ -49,7 +49,8 @@ def pick_retriever(vector_name, embeddings=None):
                 if embeddings is None:
                     embeddings = get_embeddings(vector_name)
                 vectorstore = pick_vectorstore(vectorstore, vector_name=vector_name, embeddings=embeddings)
-                vs_retriever = vectorstore.as_retriever(search_kwargs=dict(k=3))
+                k_override = value.get('k', 3)
+                vs_retriever = vectorstore.as_retriever(search_kwargs=dict(k=k_override))
                 retriever_list.append(vs_retriever)
             
             if value.get('provider') == "GoogleCloudEnterpriseSearchRetriever":
@@ -68,6 +69,10 @@ def pick_retriever(vector_name, embeddings=None):
     if len(retriever_list) == 0:
         log.info(f"No retrievers were created for {memories}")
         return None
+    
+    k_override = load_config_key("memory_k", vector_name, type="vacConfig")
+    if not k_override:
+        k_override = 3
         
     lotr = MergerRetriever(retrievers=retriever_list)
 
@@ -76,6 +81,6 @@ def pick_retriever(vector_name, embeddings=None):
     pipeline = DocumentCompressorPipeline(transformers=[filter])
     retriever = ContextualCompressionRetriever(
         base_compressor=pipeline, base_retriever=lotr, 
-        k=3)
+        k=k_override)
 
     return retriever

@@ -55,40 +55,23 @@ vac:
           self_query: false
   edmonbrain:
     llm: openai
-    model: gpt-4
     agent: edmonbrain
-    secrets:
-      - OPENAI_API_KEY
-      - TAVILY_API_KEY
+    display_name: Edmonbrain
+    avatar_url: https://avatars.githubusercontent.com/u/3155884?s=48&v=4
+    description: This is the original [Edmonbrain](https://code.markedmondson.me/running-llms-on-gcp/) implementation that uses RAG to answer questions based on data you send in via its `!help` commands and learns from previous chat history.  It dreams each night that can also be used in its memory.
+    model: gpt-4o
+    memory_k: 10 # how many memories will be returned in total after relevancy compression
     memory:
-      #- longterm-conversation-memory:
-      #    provider: GoogleCloudEnterpriseSearchRetriever
-      #    db_id: longterm-conversation-memo_1694023932257
-      #    type: structured
-      #    location: global
-      - supabase:
-          vectorstore: supabase
-          self_query: false
-          read_only: true # don't write embeddings to this vectorstore
-    prompt: "You are a happy, optimistic British AI who always works step by step logically through why you are answering any particular question."
-    chat_buddies:
-      edmonbrain_agent:
-        chat_buddy_id: "<@1114588633505206353>"
-        chat_buddy_description: "can run python programs, help with calendar inquiries for specific dates, look into your memories for more refined questions and perform basic mathematical operations"
-  edmonbrain_agent2:
-    llm: openai
-    agent: edmonbrain_agent
-    memory:
-      #- longterm-conversation-memo_1694023932257:
-      #    type: structured
-      #    location: global
-      #    provider: GoogleCloudEnterpriseSearchRetriever
-      - supabase-vectorstore:
-          shared_vectorstore: edmonbrain
-    chat_buddies:
-      edmonbrain:
-        chat_buddy: "<@1107554583192031232>"
-        chat_buddy_description: "called Electric Sheep and asks you questions."
+      - personal-vectorstore:
+          vectorstore: lancedb
+          provider: LanceDB
+          k: 10 #  how many candidate memory will be returned from this vectorstore
+      - eduvac-vectorstore:
+          vector_name: eduvac
+          read_only: true
+          vectorstore: lancedb
+          provider: LanceDB
+          k: 3 #  how many candidate memory will be returned from this vectorstore
   jesper:
     llm: openai
     agent: edmonbrain_rag

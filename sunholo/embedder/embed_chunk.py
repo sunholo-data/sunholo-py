@@ -119,6 +119,11 @@ def embed_pubsub_chunk(data: dict):
                 read_only = value.get('readonly')
                 if read_only:
                     continue
+                # read from a different vector_name
+                vector_name_other = value.get('vector_name')
+                if vector_name_other:
+                    log.warning(f"Using different vector_name for vectorstore: {vector_name_other} overriding {vector_name}")
+                    vector_name = vector_name_other
                 vectorstore_obj = pick_vectorstore(vectorstore, vector_name=vector_name, embeddings=embeddings)
                 vs_retriever = vectorstore_obj.as_retriever(search_kwargs=dict(k=3))
                 vectorstore_list.append(vs_retriever)
