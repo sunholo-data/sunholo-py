@@ -79,5 +79,5 @@ steps:
     - '-c'
     - |
       pip install --no-cache sunholo
-      sunholo list-configs --validate
-      sunholo list-configs --kind=vacConfig --vac=${_SERVICE_NAME} --validate
+      sunholo list-configs --validate || exit 1
+      sunholo list-configs --kind=vacConfig --vac=${_SERVICE_NAME} --validate || exit 1

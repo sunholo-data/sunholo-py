@@ -52,7 +52,8 @@ VAC_SUBCONFIG_SCHEMA = {
                 "cluster": {"type": "string"},
                 "instance": {"type": "string"},
                 "database": {"type": "string"}
-            }
+            },
+            "required": ["project_id", "region", "cluster", "instance", "database"]
         },
         "secrets": {
             "type": "array",
@@ -87,7 +88,7 @@ VAC_CONFIG_SCHEMA = {
             }
         }
     },
-    "required": ["kind", "apiVersion", "gcp_config", "vac"]
+    "required": ["kind", "apiVersion", "vac"]
 }
 
 PROMPT_CONFIG_SCHEMA = {
