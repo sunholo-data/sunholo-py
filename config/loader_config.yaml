@@ -1,16 +1,19 @@
-code:
-  extensions: 
-    - ".py"
-    - ".js"
-    - ".java"
-    - ".c"
-    - ".cpp"
-    - ".cs"
-    - ".rb"
-    - ".php"
-    - ".txt"
-    - ".md"
-    - ".yaml"
-    - ".sql"
-    - ".r"
-    - ".sh"
+kind: loaderConfig
+apiVersion: v1
+loader:
+  code:
+    extensions: 
+      - ".py"
+      - ".js"
+      - ".java"
+      - ".c"
+      - ".cpp"
+      - ".cs"
+      - ".rb"
+      - ".php"
+      - ".txt"
+      - ".md"
+      - ".yaml"
+      - ".sql"
+      - ".r"
+      - ".sh"

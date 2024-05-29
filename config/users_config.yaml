@@ -1,3 +1,5 @@
+kind: userConfig
+apiVersion: v1
 user_groups:
   - name: "admin"
     domain: "sunholo.com"

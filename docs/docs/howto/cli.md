@@ -44,4 +44,28 @@ sunholo list-configs --kind 'vacConfig'
 # 'kind': 'vacConfig',
 # 'vac': {'codey': {'agent': 'edmonbrain_rag',
 # ...
+
+sunholo list-configs --kind=vacConfig --vac=edmonbrain           
+## Config kind: vacConfig
+#{'edmonbrain': {'agent': 'edmonbrain',
+#                'avatar_url': 'https://avatars.githubusercontent.com/u/3155884?s=48&v=4',
+#                'description': 'This is the original '
+#                               '[Edmonbrain](https://code.markedmondson.me/running-llms-on-gcp/) '
+#                               'implementation that uses RAG to answer '
+#                               'questions based on data you send in via its '
+# ...
+
+# add the --validate flag to check the configuration against a schema
+sunholo list-configs --kind=vacConfig --vac=edmonbrain --validate           
+## Config kind: vacConfig
+#{'edmonbrain': {'agent': 'edmonbrain',
+#                'avatar_url': 'https://avatars.githubusercontent.com/u/3155884?s=48&v=4',
+#                'description': 'This is the original '
+#                               '[Edmonbrain](https://code.markedmondson.me/running-llms-on-gcp/) '
+#                               'implementation that uses RAG to answer '
+#                               'questions based on data you send in via its '
+# ...
+#Validating configuration for kind: vacConfig
+#Validating vacConfig for edmonbrain
+#OK: Validated schema
 ```

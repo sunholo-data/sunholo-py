@@ -1,27 +1,30 @@
-slack:
-  teams:
-    XXXXX:
-      bots:
-        XXXXX:
-          llm: edmonbrain
+kind: platformConfig
+apiVersion: v1
+platforms:
+  slack:
+    teams:
+      XXXXX:
+        bots:
+          XXXXX:
+            llm: edmonbrain
 
-discord:
-  users:
-    "Guild1":
-      id: "1234467"
-      llm: edmonbrain
-    "Guild2":
-      id: "123432424"
-      llm: fnd
-    "Guilde3":
-      id: "1107554583192031232"
-      llm: sanne
+  discord:
+    users:
+      "Guild1":
+        id: "1234467"
+        llm: edmonbrain
+      "Guild2":
+        id: "123432424"
+        llm: fnd
+      "Guilde3":
+        id: "1107554583192031232"
+        llm: sanne
 
-  bot_settings:
-    edmonbrain:
-      stream: true
-    fnd: {}
-    edmonbrain_agent:
-      agent: true
-    sanne: {}
-    jesper: {}
+    bot_settings:
+      edmonbrain:
+        stream: true
+      fnd: {}
+      edmonbrain_agent:
+        agent: true
+      sanne: {}
+      jesper: {}
