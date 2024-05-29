@@ -11,7 +11,15 @@ VAC_SUBCONFIG_SCHEMA = {
                 "type": {"type": "string"},
                 "llm": {"type": "string"},
                 "chunk_size": {"type": "integer"},
-                "overlap": {"type": "integer"}
+                "overlap": {"type": "integer"},
+                "summarise": {
+                    "type": "object",
+                    "properties": {
+                        "llm": {"type": "string"},
+                        "model": {"type": "string"},
+                        "threshold": {"type": "integer"},
+                        "model_limit": {"type": "integer"}
+                    },
             },
             "additionalProperties": False
         },
