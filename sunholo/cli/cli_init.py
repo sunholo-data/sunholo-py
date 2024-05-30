@@ -6,28 +6,9 @@ def init_project(args):
     """
     Initializes a new sunholo project with a basic configuration file and directory structure.
 
-**Explanation:**
-
-1. **Import Necessary Modules:**
-   - `os` for file system operations.
-   - `shutil` for copying files and directories.
-   - `log` from `sunholo.logging` for logging messages.
-   - `get_module_filepath` from `sunholo.utils.config` to get the absolute path of template files.
-
-2. **`init_project` Function:**
-   - Takes an `args` object from argparse, containing the `project_name`.
-   - Creates the project directory using `os.makedirs`.
-   - Copies template files from the `templates/project` directory to the new project directory using `shutil.copy` and `shutil.copytree`.
-   - Logs informative messages about the initialization process.
-
-3. **`setup_init_subparser` Function:**
-   - Sets up the `init` subcommand for the `sunholo` CLI.
-   - Adds an argument `project_name` to specify the name of the new project.
-   - Sets the `func` attribute to `init_project`, so the parser knows which function to call when the `init` command is used.
-
 **Template Files (`templates/project`):**
 
-You'll need to create a `templates/project` directory within your `sunholo` package and place the following template files in it:
+A `templates/project` directory is within the `sunholo` package with the following template files in it:
 
 * **`config/llm_config.yaml`:** A basic configuration file with placeholders for LLM settings, vector stores, etc.
 * **`config/cloud_run_urls.json`:** A template for Cloud Run URLs.
@@ -37,14 +18,13 @@ You'll need to create a `templates/project` directory within your `sunholo` pack
 
 **Usage:**
 
-After adding this code to your `cli.py` and creating the template files, users can initialize a new project using the following command:
+Users can initialize a new project using the following command:
 
 ```bash
 sunholo init my_genai_project
 ```
 
 This will create a new directory named `my_genai_project` with the template files, allowing users to start building their GenAI application.
-
     """
     project_name = args.project_name
     project_dir = os.path.join(os.getcwd(), project_name)
@@ -75,6 +55,6 @@ def setup_init_subparser(subparsers):
     """
     Sets up an argparse subparser for the 'init' command.
     """
-    init_parser = subparsers.add_parser('init', help='Initializes a new sunholo project.')
+    init_parser = subparsers.add_parser('init', help='Initializes a new Multivac project.')
     init_parser.add_argument('project_name', help='The name of the new project.')
     init_parser.set_defaults(func=init_project)
