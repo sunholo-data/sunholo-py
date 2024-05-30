@@ -228,11 +228,16 @@ def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
             project_id = get_gcp_project()
         # Instantiate the GoogleCloudLogging class
         gc_logger = GoogleCloudLogging(project_id, log_level=log_level, logger_name=logger_name)
+        # Setup logging and return the logger instance
+        return gc_logger.setup_logging()
     else:
-        return logger
+        if not logging.getLogger().hasHandlers():
+            logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        log = logging.getLogger(logger_name)
+
+        return log
     
-    # Setup logging and return the logger instance
-    return gc_logger.setup_logging()
+
 
 
 

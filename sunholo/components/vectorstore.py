@@ -14,7 +14,7 @@
 import os
 from ..logging import log
 
-def pick_vectorstore(vs_str, vector_name, embeddings):
+def pick_vectorstore(vs_str, vector_name, embeddings, read_only=None):
     log.debug('Picking vectorstore')
         
     if vs_str == 'supabase':
@@ -23,8 +23,9 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
 
         from ..database.database import setup_supabase
 
-        log.debug(f"Initiating Supabase store: {vector_name}")
-        setup_supabase(vector_name)
+        if not read_only:
+            log.debug(f"Initiating Supabase store: {vector_name}")
+            setup_supabase(vector_name)
 
         # init embedding and vector store
         supabase_url = os.getenv('SUPABASE_URL')
@@ -70,10 +71,14 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
     elif vs_str == 'alloydb':
         from langchain_google_alloydb_pg import AlloyDBVectorStore
         from ..database.alloydb import create_alloydb_table, create_alloydb_engine
+        from ..database.database import get_vector_size
 
+        vector_size = get_vector_size(vector_name)
         engine = create_alloydb_engine(vector_name)
 
-        table_name = create_alloydb_table(vector_name, engine)
+        table_name = f"{vector_name}_vectorstore_{vector_size}"
+        if not read_only:
+            table_name = create_alloydb_table(vector_name, engine)
 
         log.info(f"Chose AlloyDB with table name {table_name}")
         vectorstore = AlloyDBVectorStore.create_sync(
@@ -106,21 +111,24 @@ def pick_vectorstore(vs_str, vector_name, embeddings):
         try:
             table = db.open_table(vector_name)
         except FileNotFoundError as err:
-            log.info(f"{err} - Could not open table for {vector_name} - creating new table")
-            init = f"Creating new table for {vector_name}"
-            table = db.create_table(
-                        vector_name,
-                        data=[
-                            {
-                                "vector": embeddings.embed_query(init),
-                                "text": init,
-                                "id": "1",
-                            }
-                        ],
-                        mode="overwrite",
-                    )
+            if not read_only:
+                log.info(f"{err} - Could not open table for {vector_name} - creating new table")
+                init = f"Creating new table for {vector_name}"
+                table = db.create_table(
+                            vector_name,
+                            data=[
+                                {
+                                    "vector": embeddings.embed_query(init),
+                                    "text": init,
+                                    "id": "1",
+                                }
+                            ],
+                            mode="overwrite",
+                        )
+            else:
+                log.info(f"{err} - Could not create table for {vector_name} as read_only=True")
 
-        log.info(f"Inititaing LanceDB object for {vector_name} using {LANCEDB_BUCKET}")
+        log.info(f"Initiating LanceDB object for {vector_name} using {LANCEDB_BUCKET}")
         vectorstore = LanceDB(
             connection=table,
             embedding=embeddings,

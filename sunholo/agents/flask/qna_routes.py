@@ -37,6 +37,10 @@ except ImportError as err:
 
 def register_qna_routes(app, stream_interpreter, vac_interpreter):
 
+    @app.route("/")
+    def home():
+        return jsonify("OK")
+
     @app.route('/vac/streaming/<vector_name>', methods=['POST'])
     @observe()
     def stream_qa(vector_name):

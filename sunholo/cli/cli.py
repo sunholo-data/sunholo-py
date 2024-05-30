@@ -1,4 +1,5 @@
 import argparse
+import logging
 
 from .configs import setup_list_configs_subparser
 from .deploy import setup_deploy_subparser
@@ -7,6 +8,7 @@ from .merge_texts import setup_merge_text_subparser
 from .run_proxy import setup_proxy_subparser
 from .chat_vac import setup_vac_subparser
 
+from ..logging import log
 
 def main(args=None):
     """
@@ -19,6 +21,8 @@ def main(args=None):
     ```
     """
     parser = argparse.ArgumentParser(description="sunholo CLI tool for deploying GenAI VACs")
+    parser.add_argument('--debug', action='store_true', help='Enable debug output')
+
     subparsers = parser.add_subparsers(title='commands', 
                                        description='Valid commands', 
                                        help='Commands', 
@@ -39,6 +43,13 @@ def main(args=None):
     setup_vac_subparser(subparsers)
 
     args = parser.parse_args(args)
+
+    if args.debug:
+        log.setLevel(logging.INFO)
+        logging.getLogger().setLevel(logging.INFO)
+    else:
+        log.setLevel(logging.WARNING)
+        logging.getLogger().setLevel(logging.WARNING)
 
     if hasattr(args, 'func'):
         args.func(args)

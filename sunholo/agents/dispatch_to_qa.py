@@ -52,7 +52,7 @@ def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs
     agent = load_config_key("agent", vector_name=vector_name, kind="vacConfig")
     agent_type = load_config_key("agent_type", vector_name=vector_name, kind="vacConfig")
 
-    override_endpoint = kwargs.get("endpoint_url")
+    override_endpoint = kwargs.get("override_endpoint")
     if override_endpoint:
         log.info(f"Overriding endpoint with {override_endpoint}")
 

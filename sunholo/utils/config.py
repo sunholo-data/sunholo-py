@@ -191,7 +191,6 @@ def load_config_key(key: str, vector_name: str, kind: str=None):
     assert isinstance(vector_name, str), f"vector_name must be a string, got a {type(vector_name)}"
     
     configs_by_kind = load_all_configs()
-    log.info(f"configs by kind: {configs_by_kind}")
 
     if kind:
         log.info(f"Got kind: {kind} - applying to configs")

@@ -1,13 +1,13 @@
-from ..agents import send_to_qa_async
-from ..streaming import generate_proxy_stream_async, generate_proxy_stream
-from ..utils.user_ids import generate_uuid_from_gcloud_user
+from ..agents import send_to_qa
+from ..streaming import generate_proxy_stream
+from ..utils.user_ids import generate_user_id
 
-from .run_proxy import load_proxies, start_proxy
+from .run_proxy import clean_proxy_list, start_proxy
 
 import uuid
 
 def get_service_url(service_name):
-    proxies = load_proxies()
+    proxies = clean_proxy_list()
     if service_name in proxies:
         port = proxies[service_name]['port']
         return f"http://127.0.0.1:{port}"
@@ -15,10 +15,11 @@ def get_service_url(service_name):
         print(f"No proxy found running for service: {service_name} - attempting to connect")
         return start_proxy(service_name)
 
-async def stream_chat_session(service_name, chat_history):
+def stream_chat_session(service_name):
 
     service_url = get_service_url(service_name)
-    user_id = generate_uuid_from_gcloud_user()
+    user_id = generate_user_id()
+    chat_history = []
     while True:
         session_id = str(uuid.uuid4())
         user_input = input("You: ")
@@ -26,13 +27,11 @@ async def stream_chat_session(service_name, chat_history):
             print("Exiting chat session.")
             break
 
-        chat_history.append({"role": "user", "content": user_input})
+        chat_history.append({"role": "Human", "content": user_input})
 
-        
-
-        async def stream_response():
-            generate = await generate_proxy_stream_async(
-                send_to_qa_async,
+        def stream_response():
+            generate = generate_proxy_stream(
+                send_to_qa,
                 user_input,
                 vector_name=service_name,
                 chat_history=chat_history,
@@ -56,28 +55,35 @@ async def stream_chat_session(service_name, chat_history):
                 message_source="cli",
                 override_endpoint=service_url
             )
-            async for part in generate():
+            for part in generate():
                 yield part
 
-        print("Assistant: ", end='', flush=True)
-        async for token in stream_response():
+        response_started = False
+        vac_response = ""
+        for token in stream_response():
+            if not response_started:
+                print(f"VAC {service_name}: ", end='', flush=True)
+                response_started = True
+
             if isinstance(token, bytes):
                 token = token.decode('utf-8')
             print(token, end='', flush=True)
+            vac_response += token
 
-        chat_history.append({"role": "assistant", "content": token})
+        chat_history.append({"role": "AI", "content": vac_response})
+        response_started = False
         print()  # For new line after streaming ends
 
-async def headless_mode(service_name, user_input, chat_history=None):
+def headless_mode(service_name, user_input, chat_history=None):
     chat_history = chat_history or []
-    chat_history.append({"role": "user", "content": user_input})
+    chat_history.append({"role": "Human", "content": user_input})
     service_url = get_service_url(service_name)
-    user_id = generate_uuid_from_gcloud_user()
+    user_id = generate_user_id()
     session_id = str(uuid.uuid4())
 
-    async def stream_response():
-        generate = await generate_proxy_stream_async(
-                send_to_qa_async,
+    def stream_response():
+        generate = generate_proxy_stream(
+                send_to_qa,
                 user_input,
                 vector_name=service_name,
                 chat_history=chat_history,
@@ -101,30 +107,32 @@ async def headless_mode(service_name, user_input, chat_history=None):
                 message_source="cli",
                 override_endpoint=service_url
         )
-        async for part in generate():
+        for part in generate():
             yield part
 
-    print("Assistant: ", end='', flush=True)
-    async for token in stream_response():
+    print(f"VAC {service_name}: ", end='', flush=True)
+    for token in stream_response():
         if isinstance(token, bytes):
             token = token.decode('utf-8')
         print(token, end='', flush=True)
 
-    chat_history.append({"role": "assistant", "content": token})
+    chat_history.append({"role": "AI", "content": token})
     print()  # For new line after streaming ends
+
+    return chat_history
 
 
 def vac_command(args):
     try:
         service_url = get_service_url(args.service_name)
     except ValueError as e:
-        print(e)
+        print(f"ERROR: Could not start {args.service_name} proxy URL: {str(e)}")
         return
-
+    print(f"== Starting VAC chat session with {args.service_name} via proxy URL: {service_url}")
     if args.headless:
-        headless_mode(service_url, args.user_input, args.chat_history)
+        headless_mode(args.service_name, args.user_input, args.chat_history)
     else:
-        stream_chat_session(service_url)
+        stream_chat_session(args.service_name)
 
 def setup_vac_subparser(subparsers):
     """
@@ -133,9 +141,9 @@ def setup_vac_subparser(subparsers):
     Args:
         subparsers: The subparsers object from argparse.ArgumentParser().
     """
-    vac_parser = subparsers.add_parser('vac', help='Interact with the VAC service.')
+    vac_parser = subparsers.add_parser('vac', help='Interact with deployed VAC services.')
     vac_parser.add_argument('service_name', help='Name of the VAC service.')
-    vac_parser.add_argument('user_input', help='User input for the VAC service.', nargs='?', default=None)
+    vac_parser.add_argument('user_input', help='User input for the VAC service when in headless mode.', nargs='?', default=None)
     vac_parser.add_argument('--headless', action='store_true', help='Run in headless mode.')
     vac_parser.add_argument('--chat_history', help='Chat history for headless mode (as JSON string).', default=None)
     vac_parser.set_defaults(func=vac_command)

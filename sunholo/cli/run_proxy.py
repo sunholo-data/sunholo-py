@@ -63,11 +63,27 @@ def check_gcloud():
         print(f"ERROR: An unexpected error occurred: {e}")
         return False
 
+def is_process_running(pid):
+    try:
+        os.kill(pid, 0)
+        return True
+    except OSError:
+        print("WARNING: VAC Proxy lost connection")
+        return False
+
 def load_proxies():
     if os.path.exists(PROXY_TRACKER_FILE):
         with open(PROXY_TRACKER_FILE, 'r') as file:
             return json.load(file)
     return {}
+
+def clean_proxy_list():
+    proxies = load_proxies()
+    updated_proxies = {k: v for k, v in proxies.items() if is_process_running(v["pid"])}
+    if len(proxies) != len(updated_proxies):
+        save_proxies(updated_proxies)
+        
+    return updated_proxies
 
 def save_proxies(proxies):
     with open(PROXY_TRACKER_FILE, 'w') as file:
@@ -83,7 +99,7 @@ def start_proxy(service_name, region, project, port=None):
         project (str): GCP project of the Cloud Run service.
         port (int, optional): Port to run the proxy on. If not provided, auto-assigns the next available port.
     """
-    proxies = load_proxies()
+    proxies = clean_proxy_list()
 
     if service_name in proxies:
         print(f"Proxy for service {service_name} is already running on port {proxies[service_name]['port']}.")
@@ -109,7 +125,7 @@ def start_proxy(service_name, region, project, port=None):
     
     print(f"Proxy for {service_name} setup complete on port {port}")
     list_proxies()
-    
+
     return f"http://127.0.0.1:{port}"
 
 
@@ -120,7 +136,7 @@ def stop_proxy(service_name):
     Args:
         service_name (str): Name of the Cloud Run service.
     """
-    proxies = load_proxies()
+    proxies = clean_proxy_list()
 
     if service_name not in proxies:
         print(f"No proxy found for service: {service_name}")
@@ -143,7 +159,7 @@ def list_proxies():
     """
     Lists all running proxies.
     """
-    proxies = load_proxies()
+    proxies = clean_proxy_list()
     if not proxies:
         print("No proxies currently running.")
     else:

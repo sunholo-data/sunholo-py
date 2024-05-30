@@ -48,7 +48,8 @@ def pick_retriever(vector_name, embeddings=None):
                 log.info(f"Found vectorstore {vectorstore}")
                 if embeddings is None:
                     embeddings = get_embeddings(vector_name)
-                vectorstore = pick_vectorstore(vectorstore, vector_name=vector_name, embeddings=embeddings)
+                read_only = value.get('readonly')
+                vectorstore = pick_vectorstore(vectorstore, vector_name=vector_name, embeddings=embeddings, read_only=read_only)
                 k_override = value.get('k', 3)
                 vs_retriever = vectorstore.as_retriever(search_kwargs=dict(k=k_override))
                 retriever_list.append(vs_retriever)
