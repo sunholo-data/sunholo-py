@@ -1,4 +1,5 @@
 import os
+from fnmatch import fnmatch
 
 def has_text_extension(file_path):
     """
@@ -42,6 +43,7 @@ def load_gitignore_patterns(gitignore_path):
     """
     with open(gitignore_path, 'r') as f:
         patterns = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+    patterns.extend(["*.git/*", "*.terraform/*"])
     return patterns
 
 def should_ignore(file_path, patterns):
@@ -59,12 +61,14 @@ def should_ignore(file_path, patterns):
         >>> should_ignore("path/to/file.txt", ["*.txt", "node_modules/"])
         True
     """
-    from fnmatch import fnmatch
     rel_path = os.path.relpath(file_path)
+
     for pattern in patterns:
         if fnmatch(rel_path, pattern) or fnmatch(os.path.basename(rel_path), pattern):
             return True
+
     return False
+
 
 def build_file_tree(source_folder, patterns):
     """
@@ -112,6 +116,7 @@ def merge_text_files(source_folder, output_file, patterns):
     file_tree = build_file_tree(source_folder, patterns)
     with open(output_file, 'w', encoding='utf-8') as outfile:
         for root, dirs, files in os.walk(source_folder):
+            print(f"- merging {root}...")
             # Filter out ignored directories
             dirs[:] = [d for d in dirs if not should_ignore(os.path.join(root, d), patterns)]
             # Filter out ignored files
@@ -119,6 +124,8 @@ def merge_text_files(source_folder, output_file, patterns):
             
             for file_name in files:
                 file_path = os.path.join(root, file_name)
+                if file_path == output_file:
+                    continue
                 if has_text_extension(file_path):
                     try:
                         with open(file_path, 'r', encoding='utf-8') as infile:
@@ -129,6 +136,8 @@ def merge_text_files(source_folder, output_file, patterns):
                         print(f"Skipping file (cannot read as text): {file_path}")
         outfile.write("\n--- File Tree ---\n")
         outfile.write("\n".join(file_tree))
+    
+    return file_tree
 
 # Example usage
 if __name__ == "__main__":

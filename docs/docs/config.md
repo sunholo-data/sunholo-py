@@ -89,7 +89,6 @@ You can use the `--validate` flag in CI/CD to check the configuration each commi
     - |
       pip install --no-cache sunholo
       sunholo list-configs --validate || exit 1
-      sunholo list-configs --kind=vacConfig --vac=${_SERVICE_NAME} --validate || exit 1
 ```
 
 ## vacConfig

@@ -5,10 +5,7 @@ A CLI is installed when you install the library:
 ```bash
 pip install sunholo
 sunholo --help
-```
-
-```
-usage: sunholo [-h] {deploy,list-configs} ...
+usage: sunholo [-h] {deploy,list-configs,init,merge-text} ...
 
 sunholo CLI tool for deploying GenAI VACs
 
@@ -18,13 +15,28 @@ optional arguments:
 commands:
   Valid commands
 
-  {deploy,list-configs}
-                        `sunholo deploy --help`
+  {deploy,list-configs,init,merge-text}
+                        Commands
     deploy              Triggers a deployment of a VAC.
-    list-configs        Lists all configuration files and their details.
+    list-configs        Lists all configuration files and their details
+    init                Initializes a new sunholo project.
+    merge-text          Merge text files from a source folder into a single output file.
 ```
 
 ## Config
+
+```bash
+sunholo list-configs -h
+usage: sunholo list-configs [-h] [--kind KIND] [--vac VAC] [--validate]
+
+optional arguments:
+  -h, --help   show this help message and exit
+  --kind KIND  Filter configurations by kind e.g. `--kind=vacConfig`
+  --vac VAC    Filter configurations by VAC name e.g. `--vac=edmonbrain`
+  --validate   Validate the configuration files.
+```
+
+Examples:
 
 ```bash
 sunholo list-configs
@@ -84,4 +96,23 @@ You can use the `--validate` flag in CI/CD to check the configuration each commi
       pip install --no-cache sunholo
       sunholo list-configs --validate || exit 1
       sunholo list-configs --kind=vacConfig --vac=${_SERVICE_NAME} --validate || exit 1
+```
+
+## Merge Text
+
+Useful to turn a folder into one text file for large context windows.
+
+```bash
+sunholo merge-text -h 
+usage: sunholo merge-text [-h] [--gitignore GITIGNORE] [--output_tree] source_folder output_file
+
+positional arguments:
+  source_folder         Folder containing the text files.
+  output_file           Output file to write the merged text.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --gitignore GITIGNORE
+                        Path to .gitignore file to exclude patterns.
+  --output_tree         Set to output the file tree in the console after merging
 ```

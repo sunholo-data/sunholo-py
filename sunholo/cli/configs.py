@@ -113,7 +113,7 @@ def setup_list_configs_subparser(subparsers):
         subparsers = parser.add_subparsers()
         setup_list_configs_subparser(subparsers)
     """
-    list_configs_parser = subparsers.add_parser('list-configs', help='Lists all configuration files and their details e.g. `sunholo list-configs --kind=vacConfig --vac=edmonbrain`')
+    list_configs_parser = subparsers.add_parser('list-configs', help='Lists all configuration files and their details')
     list_configs_parser.add_argument('--kind', help='Filter configurations by kind e.g. `--kind=vacConfig`')
     list_configs_parser.add_argument('--vac', help='Filter configurations by VAC name e.g. `--vac=edmonbrain`')
     list_configs_parser.add_argument('--validate', action='store_true', help='Validate the configuration files.')

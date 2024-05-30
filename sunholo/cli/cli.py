@@ -3,6 +3,8 @@ import argparse
 from .configs import setup_list_configs_subparser
 from .deploy import setup_deploy_subparser
 from .cli_init import setup_init_subparser
+from .merge_texts import setup_merge_text_subparser
+
 
 def main(args=None):
     """
@@ -21,12 +23,14 @@ def main(args=None):
                                        dest='command', 
                                        required=True)
 
-    # Setup deploy command
+    # deploy command
     setup_deploy_subparser(subparsers)
     # Setup list-configs command
     setup_list_configs_subparser(subparsers)
-    # init
+    # init command
     setup_init_subparser(subparsers)
+    # merge-text command
+    setup_merge_text_subparser(subparsers)
 
     args = parser.parse_args(args)
 
