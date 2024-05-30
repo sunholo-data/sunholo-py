@@ -26,7 +26,11 @@ agent = load_config_key('agent', vector_name, kind='vacConfig')
 # 'eduvac'
 ```
 
+You can call your config files anything, just make sure they are in the `config/` folder relative to your working directory, or as configured via the `_CONFIG_FOLDER` environment variable.
+
 ## sunholo CLI
+
+A CLI command is included to more easily inspect and validate configurations.
 
 ```bash
 sunholo list-configs
@@ -46,9 +50,49 @@ sunholo list-configs --kind 'vacConfig'
 # 'kind': 'vacConfig',
 # 'vac': {'codey': {'agent': 'edmonbrain_rag',
 # ...
+
+sunholo list-configs --kind=vacConfig --vac=edmonbrain           
+## Config kind: vacConfig
+#{'edmonbrain': {'agent': 'edmonbrain',
+#                'avatar_url': 'https://avatars.githubusercontent.com/u/3155884?s=48&v=4',
+#                'description': 'This is the original '
+#                               '[Edmonbrain](https://code.markedmondson.me/running-llms-on-gcp/) '
+#                               'implementation that uses RAG to answer '
+#                               'questions based on data you send in via its '
+# ...
+
+# add the --validate flag to check the configuration against a schema
+sunholo list-configs --kind=vacConfig --vac=edmonbrain --validate           
+## Config kind: vacConfig
+#{'edmonbrain': {'agent': 'edmonbrain',
+#                'avatar_url': 'https://avatars.githubusercontent.com/u/3155884?s=48&v=4',
+#                'description': 'This is the original '
+#                               '[Edmonbrain](https://code.markedmondson.me/running-llms-on-gcp/) '
+#                               'implementation that uses RAG to answer '
+#                               'questions based on data you send in via its '
+# ...
+#Validating configuration for kind: vacConfig
+#Validating vacConfig for edmonbrain
+#OK: Validated schema
 ```
 
-## llm_config.yaml
+You can use the `--validate` flag in CI/CD to check the configuration each commit, for example in Cloud Build:
+
+```yaml
+...
+  - name: 'python:3.9'
+    id: validate config
+    entrypoint: 'bash'
+    waitFor: ["-"]
+    args:
+    - '-c'
+    - |
+      pip install --no-cache sunholo
+      sunholo list-configs --validate || exit 1
+      sunholo list-configs --kind=vacConfig --vac=${_SERVICE_NAME} --validate || exit 1
+```
+
+## vacConfig
 
 This is the main day to day configuration file that is used to set LLMs, databases and VAC tags.  An example is shown here:
 
@@ -161,7 +205,7 @@ vac:
             k: 3 #  how many candidate memory will be returned from this vectorstore
 ```
 
-## agent_config.yaml
+## agentConfig
 
 This configuration file sets up standard endpoints for each type of agent, corresponding to a VAC running.
 
@@ -195,7 +239,7 @@ crewai:
   invoke: "{stem}/vac/{vector_name}"
 ```
 
-## users_config.yaml
+## userConfig
 
 This lets you do user authentication by matching the tags within `llm_config.yaml` with user email domains
 
@@ -232,7 +276,7 @@ default_user:
 
 ```
 
-## prompt_config.yaml
+## promptConfig
 
 This file contains various prompts for a vector_name of a VAC.  It is preferred that the native [Langfuse prompt library](https://langfuse.sunholo.com) is used, but this yaml file is a backup if its not available via Langfuse.
 

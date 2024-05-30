@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.59.6'
+version = '0.59.7'
 
 setup(
     name='sunholo',
@@ -23,7 +23,8 @@ setup(
     },
     package_data={
         'sunholo.database': ['sql/sb/*.sql'],
-        'sunholo.lookup': ['*.yaml']
+        'sunholo.lookup': ['*.yaml'],
+        'sunholo.templates' : ['*.*']
     },
     install_requires=[
         # Base dependencies

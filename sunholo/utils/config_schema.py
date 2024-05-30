@@ -62,7 +62,7 @@ VAC_SUBCONFIG_SCHEMA = {
                 "instance": {"type": "string"},
                 "database": {"type": "string"}
             },
-            "required": ["project_id", "region", "cluster", "instance", "database"]
+            "required": ["project_id", "region", "cluster", "instance"]
         },
         "secrets": {
             "type": "array",
