@@ -4,6 +4,8 @@ from .configs import setup_list_configs_subparser
 from .deploy import setup_deploy_subparser
 from .cli_init import setup_init_subparser
 from .merge_texts import setup_merge_text_subparser
+from .run_proxy import setup_proxy_subparser
+from .chat_vac import setup_vac_subparser
 
 
 def main(args=None):
@@ -31,6 +33,10 @@ def main(args=None):
     setup_init_subparser(subparsers)
     # merge-text command
     setup_merge_text_subparser(subparsers)
+    # proxy command
+    setup_proxy_subparser(subparsers)
+    # vac command
+    setup_vac_subparser(subparsers)
 
     args = parser.parse_args(args)
 

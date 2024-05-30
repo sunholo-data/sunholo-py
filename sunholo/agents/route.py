@@ -35,13 +35,13 @@ def route_qna(vector_name):
     log.info(f'agent_url: {agent_url}')
     return agent_url
 
-def route_endpoint(vector_name):
+def route_endpoint(vector_name, override_endpoint=None):
 
     agent_type = load_config_key('agent_type', vector_name, kind="vacConfig")
     if not agent_type:
         agent_type = load_config_key('agent', vector_name, kind="vacConfig")
 
-    stem = route_qna(vector_name)
+    stem = route_qna(vector_name) if not override_endpoint else override_endpoint
 
     agent_config, _ = load_config('config/agent_config.yaml')
 
