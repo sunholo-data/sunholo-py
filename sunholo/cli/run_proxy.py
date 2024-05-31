@@ -2,6 +2,8 @@ import subprocess
 import os
 import signal
 import json
+from prettytable import PrettyTable
+
 
 PROXY_TRACKER_FILE = '.vac_proxy_tracker.json'
 DEFAULT_PORT = 8080
@@ -46,13 +48,13 @@ def check_gcloud():
     """
     try:
         # Check if gcloud is installed
-        result = subprocess.run(["gcloud", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = subprocess.run(["gcloud", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
         if result.returncode != 0:
             print("ERROR: gcloud is not installed or not found in PATH.")
             return False
 
         # Check if gcloud is authenticated
-        result = subprocess.run(["gcloud", "auth", "list"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = subprocess.run(["gcloud", "auth", "list"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
         if result.returncode != 0 or "ACTIVE" not in result.stdout.decode():
             print("ERROR: gcloud is not authenticated. Please run 'gcloud auth login'.")
             return False
@@ -88,6 +90,9 @@ def clean_proxy_list():
 def save_proxies(proxies):
     with open(PROXY_TRACKER_FILE, 'w') as file:
         json.dump(proxies, file, indent=4)
+
+
+
 
 def start_proxy(service_name, region, project, port=None):
     """
@@ -155,19 +160,87 @@ def stop_proxy(service_name):
     
     list_proxies()
 
+def stop_all_proxies():
+    """
+    Stops all running gcloud proxies.
+    """
+    proxies = clean_proxy_list()
+
+    for service_name, info in proxies.items():
+        pid = info["pid"]
+        try:
+            os.kill(pid, signal.SIGTERM)
+            print(f"Proxy for {service_name} stopped.")
+        except ProcessLookupError:
+            print(f"No process found with PID: {pid}")
+        except Exception as e:
+            print(f"Error stopping proxy for {service_name}: {e}")
+    
+    save_proxies({})
+
+    list_proxies()
+
+def list_cloud_run_services(project, region):
+    """
+    Lists all Cloud Run services the user has access to in a specific project and region.
+
+    Args:
+        project (str): The GCP project ID.
+        region (str): The region of the Cloud Run services.
+    """
+    print("Listing Cloud Run Services...")
+    try:
+        result = subprocess.run(
+            ["gcloud", "run", "services", "list", "--project", project, "--region", region, "--format=json"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30
+        )
+        if result.returncode != 0:
+            print(f"ERROR: Unable to list Cloud Run services: {result.stderr.decode()}")
+            return
+
+        services = json.loads(result.stdout.decode())
+        if not services:
+            print("No Cloud Run services found.")
+            return
+
+        proxies = clean_proxy_list()
+
+        table = PrettyTable()
+        table.field_names = ["Service Name", "Region", "URL", "Proxied", "Port"]
+        
+        for service in services:
+            service_name = service['metadata']['name']
+            service_url = service['status']['url']
+            if service_name in proxies:
+                proxied = "Yes"
+                proxy_port = proxies[service_name]['port']
+            else:
+                proxied = "No"
+                proxy_port = "-"
+            table.add_row([service_name, region, service_url, proxied, proxy_port])
+
+        print(table)
+    except Exception as e:
+        print(f"ERROR: An unexpected error occurred: {e}")
+
 def list_proxies():
     """
     Lists all running proxies.
     """
+    print("Listing Proxies...")
     proxies = clean_proxy_list()
     if not proxies:
         print("No proxies currently running.")
     else:
-        print("=== VAC Proxies Running ===")
+        table = PrettyTable()
+        table.field_names = ["VAC", "Port", "PID", "URL"]
+        
         for service_name, info in proxies.items():
             url = f"http://127.0.0.1:{info['port']}"
-            hyperlink = create_hyperlink(url, url)
-            print(f"- VAC: {service_name} Port: {info['port']} PID: {info['pid']} URL: {hyperlink}")
+            table.add_row([service_name, info['port'], info['pid'], url])
+        
+        print(table)
+
 
 
 def setup_proxy_subparser(subparsers):
@@ -177,13 +250,13 @@ def setup_proxy_subparser(subparsers):
     Args:
         subparsers: The subparsers object from argparse.ArgumentParser().
     """
+    
+    
     proxy_parser = subparsers.add_parser('proxy', help='Set up or stop a proxy to the Cloud Run service.')
     proxy_subparsers = proxy_parser.add_subparsers(dest='proxy_command', required=True)
 
     start_parser = proxy_subparsers.add_parser('start', help='Start the proxy to the Cloud Run service.')
     start_parser.add_argument('service_name', help='Name of the Cloud Run service.')
-    start_parser.add_argument('--region', default='europe-west1', help='Region of the Cloud Run service.')
-    start_parser.add_argument('--project', default='multivac-internal-dev', help='GCP project of the Cloud Run service.')
     start_parser.add_argument('--port', type=int, help='Port to run the proxy on. Auto-assigns if not provided.')
     start_parser.set_defaults(func=lambda args: start_proxy(args.service_name, args.region, args.project, args.port))
 
@@ -193,5 +266,11 @@ def setup_proxy_subparser(subparsers):
 
     list_parser = proxy_subparsers.add_parser('list', help='List all running proxies.')
     list_parser.set_defaults(func=lambda args: list_proxies())
+
+    stop_all_parser = proxy_subparsers.add_parser('stop-all', help='Stop all running proxies.')
+    stop_all_parser.set_defaults(func=lambda args: stop_all_proxies())
+
+    list_services_parser = proxy_subparsers.add_parser('list-services', help='List all Cloud Run services.')
+    list_services_parser.set_defaults(func=lambda args: list_cloud_run_services(args.project, args.region))
 
 

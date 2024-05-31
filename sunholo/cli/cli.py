@@ -7,22 +7,36 @@ from .cli_init import setup_init_subparser
 from .merge_texts import setup_merge_text_subparser
 from .run_proxy import setup_proxy_subparser
 from .chat_vac import setup_vac_subparser
+from ..utils.config import load_config_key
 
 from ..logging import log
 
+def load_default_gcp_config():
+    gcp_config = load_config_key('gcp_config', 'global', kind="vacConfig")
+    if gcp_config:
+        return gcp_config.get('project_id', ''), gcp_config.get('location', 'europe-west1')
+    else:
+        return '', 'europe-west1'
+
 def main(args=None):
+
+
     """
     Entry point for the sunholo console script. This function parses command line arguments
     and invokes the appropriate functionality based on the user input.
 
-    Example commands:
+    Get started:
     ```bash
-    sunholo deploy --config_path . --gcs_bucket your-gcs-bucket --lancedb_bucket your-lancedb-bucket
+    sunholo --help
     ```
     """
+    default_project, default_region = load_default_gcp_config()
+
     parser = argparse.ArgumentParser(description="sunholo CLI tool for deploying GenAI VACs")
     parser.add_argument('--debug', action='store_true', help='Enable debug output')
-
+    parser.add_argument('--project', default=default_project, help='GCP project to list Cloud Run services from.')
+    parser.add_argument('--region', default=default_region, help='Region to list Cloud Run services from.')
+    
     subparsers = parser.add_subparsers(title='commands', 
                                        description='Valid commands', 
                                        help='Commands', 

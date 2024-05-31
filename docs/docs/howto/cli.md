@@ -1,9 +1,10 @@
 # Sunholo CLI
 
-A CLI is installed when you install the library:
+A CLI is installed via `sunholo[cli]`
 
 ```bash
-pip install sunholo
+pip install sunholo[cli]
+
 sunholo --help
 usage: sunholo [-h] {deploy,list-configs,init,merge-text} ...
 

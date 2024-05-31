@@ -1,7 +1,7 @@
 kind: vacConfig
 apiVersion: v1
 gcp_config:
-  project_id: default-gcp-project
+  project_id: multivac-internal-dev
   location: europe-west1
 vac:
   dng:

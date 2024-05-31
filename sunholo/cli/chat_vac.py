@@ -6,18 +6,18 @@ from .run_proxy import clean_proxy_list, start_proxy
 
 import uuid
 
-def get_service_url(service_name):
+def get_service_url(service_name, project, region):
     proxies = clean_proxy_list()
     if service_name in proxies:
         port = proxies[service_name]['port']
         return f"http://127.0.0.1:{port}"
     else:
         print(f"No proxy found running for service: {service_name} - attempting to connect")
-        return start_proxy(service_name)
+        return start_proxy(service_name, region, project)
 
-def stream_chat_session(service_name):
+def stream_chat_session(service_name, project, region):
 
-    service_url = get_service_url(service_name)
+    service_url = get_service_url(service_name, project, region)
     user_id = generate_user_id()
     chat_history = []
     while True:
@@ -74,10 +74,10 @@ def stream_chat_session(service_name):
         response_started = False
         print()  # For new line after streaming ends
 
-def headless_mode(service_name, user_input, chat_history=None):
+def headless_mode(service_name, user_input, project, region, chat_history=None):
     chat_history = chat_history or []
     chat_history.append({"role": "Human", "content": user_input})
-    service_url = get_service_url(service_name)
+    service_url = get_service_url(project, region)
     user_id = generate_user_id()
     session_id = str(uuid.uuid4())
 
@@ -124,15 +124,15 @@ def headless_mode(service_name, user_input, chat_history=None):
 
 def vac_command(args):
     try:
-        service_url = get_service_url(args.service_name)
+        service_url = get_service_url(args.service_name, args.project, args.region)
     except ValueError as e:
         print(f"ERROR: Could not start {args.service_name} proxy URL: {str(e)}")
         return
     print(f"== Starting VAC chat session with {args.service_name} via proxy URL: {service_url}")
     if args.headless:
-        headless_mode(args.service_name, args.user_input, args.chat_history)
+        headless_mode(args.service_name, args.user_input, args.project, args.region, args.chat_history)
     else:
-        stream_chat_session(args.service_name)
+        stream_chat_session(args.service_name, args.project, args.region)
 
 def setup_vac_subparser(subparsers):
     """

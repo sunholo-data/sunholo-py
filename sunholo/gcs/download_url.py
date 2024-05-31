@@ -29,7 +29,7 @@ if is_running_on_gcp():
 
 def refresh_credentials():
     if not is_running_on_gcp():
-        log.info("Not running on Google Cloud so no credentials available for GCS.")
+        log.debug("Not running on Google Cloud so no credentials available for GCS.")
         return False
     if not gcs_credentials.token or gcs_credentials.expired or not gcs_credentials.valid:
         try:

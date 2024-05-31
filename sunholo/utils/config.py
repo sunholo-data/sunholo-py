@@ -59,12 +59,12 @@ def load_all_configs():
     config_folder = os.getenv("_CONFIG_FOLDER", os.getcwd())
     config_folder = os.path.join(config_folder, "config")
 
-    log.info(f"Loading all configs from folder: {config_folder}")
+    log.debug(f"Loading all configs from folder: {config_folder}")
     current_time = datetime.now()
 
     configs_by_kind = defaultdict(dict)
     for filename in os.listdir(config_folder):
-        log.info(f"config file: {filename}")
+        log.debug(f"config file: {filename}")
         if filename in ["cloudbuild.yaml", "cloud_run_urls.json"]:
             # skip these
             continue
@@ -193,7 +193,7 @@ def load_config_key(key: str, vector_name: str, kind: str=None):
     configs_by_kind = load_all_configs()
 
     if kind:
-        log.info(f"Got kind: {kind} - applying to configs")
+        log.debug(f"Got kind: {kind} - applying to configs")
     
     if not configs_by_kind:
         log.warning("Did not load configs via folder")
@@ -204,18 +204,23 @@ def load_config_key(key: str, vector_name: str, kind: str=None):
     else:
         config, filename = load_config(filename)
 
-    log.info(f"Fetching {key} for {vector_name}")
+    log.debug(f"Fetching '{key}' for '{vector_name}'")
     apiVersion = config.get('apiVersion')
     kind = config.get('kind')
     vac = config.get('vac')
 
     if not apiVersion or not kind:
-        log.warning("Deprecated config file, move to config with `apiVersion` and `kind` set")
-        vac_config = config.get(vector_name)
-    else:
-        log.info(f"Loaded config file {kind}/{apiVersion}")
+        raise ValueError("Deprecated config file, move to config with `apiVersion` and `kind` set")
+
+    log.debug(f"Loaded config file {kind}/{apiVersion}")
     
     if kind == 'vacConfig':
+        if vector_name == 'global':
+            key_value = config.get(key)
+            log.debug(f'vac_config global value for {key}: {key_value}')
+
+            return key_value
+        
         vac = config.get('vac')
         if not vac:
             raise ValueError("Deprecated config file, move to config with `vac:` at top level for `vector_name`")
@@ -223,7 +228,7 @@ def load_config_key(key: str, vector_name: str, kind: str=None):
         if not vac_config:
             raise ValueError(f"No config array was found for {vector_name} in {filename}")
         
-        log.info(f'vac_config: {vac_config} for {vector_name} - fetching "{key}"')
+        log.debug(f'vac_config: {vac_config} for {vector_name} - fetching "{key}"')
         key_value = vac_config.get(key)
         
         return key_value
@@ -236,7 +241,7 @@ def load_config_key(key: str, vector_name: str, kind: str=None):
         if not prompt_for_vector_name:
             raise ValueError(f"Could not find prompt for vector_name {vector_name}")
         
-        log.info(f'prompts: {prompt_for_vector_name} for {vector_name} - fetching "{key}"')
+        log.debug(f'prompts: {prompt_for_vector_name} for {vector_name} - fetching "{key}"')
         key_value = prompt_for_vector_name.get(key)
         
         return key_value

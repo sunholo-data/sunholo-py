@@ -37,7 +37,13 @@ All dependencies:
 pip install sunholo[all]
 ```
 
-Database functions:
+Sunholo [CLI](howto/cli):
+
+```sh
+pip install sunholo[cli]
+```
+
+[Databases](databases):
 
 ```sh
 pip install sunholo[database]

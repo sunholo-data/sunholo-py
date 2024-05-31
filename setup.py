@@ -28,17 +28,17 @@ setup(
     },
     install_requires=[
         # Base dependencies
-        "jsonschema",
+        "google-auth", # to check if on gcp
         "langchain",
         "langchain_experimental",
         "langchain-community",
-        "google-auth" # to check if on gcp
         # Add the minimal dependencies that your package requires here
     ],
     extras_require={
         # Define optional dependencies with feature names
         'all': [
             "asyncpg",
+            "fastapi",
             "flask",
             "google-auth",
             "google-auth-httplib2",
@@ -56,6 +56,7 @@ setup(
             "gunicorn",
             "httpcore",
             "httpx",
+            "jsonschema",
             "lancedb",
             "langchain",
             "langchain_experimental",
@@ -67,12 +68,19 @@ setup(
             "langfuse",
             "pg8000",
             "pgvector",
+            "prettytable",
             "psycopg2-binary",
             "pypdf",
-            "fastapi",
+            "python-socketio",
             "supabase",
             "tiktoken",
-            "python-socketio"
+            "tqdm",
+
+        ],
+        'cli': [
+            "jsonschema",
+            "prettytable",
+            "tqdm"
         ],
         'database': [
             "asyncpg",

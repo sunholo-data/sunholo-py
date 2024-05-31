@@ -19,6 +19,7 @@ from . import utils
 from . import vertex
 import logging
 
+
 __all__ = ['agents', 
            'archive', 
            'auth',
@@ -37,5 +38,7 @@ __all__ = ['agents',
            'qna', 
            'streaming', 
            'utils', 
+           'vertex',
            'logging']
+
 

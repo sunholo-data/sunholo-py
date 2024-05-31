@@ -217,9 +217,6 @@ def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
     if logger_name is None:
         logger_name = "sunholo"
 
-    if Client and os.environ.get('GOOGLE_CLOUD_LOGGING') != "1":
-        print("GOOGLE_CLOUD_LOGGING != 1 but authentication with Google Cloud Logging enabled - missing env var setting?")
-
     if not Client and os.environ.get('GOOGLE_CLOUD_LOGGING') == "1":
         print("Found GOOGLE_CLOUD_LOGGING=1 but no GCP Client available, install via `pip install sunholo[gcp]` and/or authenticate")
 

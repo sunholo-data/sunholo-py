@@ -98,6 +98,9 @@ This is the main day to day configuration file that is used to set LLMs, databas
 ```yaml
 kind: vacConfig
 apiVersion: v1
+gcp_config: # reached via vac='global'
+  project_id: default-gcp-project
+  location: europe-west1
 vac:
     pirate_speak:
         llm: openai
