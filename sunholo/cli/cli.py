@@ -61,8 +61,8 @@ def main(args=None):
     args = parser.parse_args(args)
 
     if args.debug:
-        log.setLevel(logging.INFO)
-        logging.getLogger().setLevel(logging.INFO)
+        log.setLevel(logging.DEBUG)
+        logging.getLogger().setLevel(logging.DEBUG)
     else:
         log.setLevel(logging.WARNING)
         logging.getLogger().setLevel(logging.WARNING)

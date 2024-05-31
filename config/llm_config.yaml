@@ -4,6 +4,45 @@ gcp_config:
   project_id: multivac-internal-dev
   location: europe-west1
 vac:
+  multivac_docs:
+    llm: vertex
+    model: gemini-1.0-pro
+    agent: langserve
+    display_name: Multivac
+    tags: ["free"]
+    avatar_url: https://avatars.githubusercontent.com/u/147247777?s=200&v=4
+    description: What is Multivac? Talk to us about our Electric Dreams and hopes for the future. Explain to me below in the chat box what your business use case is and I will try to help you. If you don't have a use case right now, you can start with "What is Sunholo Multivac? or select another VAC from the drop down."
+    memory:
+      - lancedb-vectorstore:
+          vectorstore: lancedb
+    alloydb_config:
+      project_id: multivac-alloydb
+      region: europe-west1
+      cluster: multivac-alloydb-cluster-20240401
+      instance: primary-instance-1
+  image_talk:
+    llm: vertex
+    model: gemini-1.0-pro-vision
+    agent: langserve
+    upload: 
+      mime_types:
+        - image
+      buckets:
+        image: multivac-internal-dev-dev-llmops-bucket
+        all: multivac-internal-dev-dev-llmops-bucket
+    display_name: Talk to Images
+    tags: ["free"]
+    avatar_url: https://avatars.githubusercontent.com/u/1342004?s=200&v=4
+    description: I don't make pictures!  I read pictures you upload.  A picture is worth a thousand words, so upload your picture and ask your question to the Gemini Pro Vision model.  Images are remembered for your conversation until you upload another.  This offers powerful applications, which you can get a feel for via the [Gemini Pro Vision docs](https://cloud.google.com/vertex-ai/docs/generative-ai/multimodal/design-multimodal-prompts) 
+  pirate_speak:
+    llm: openai
+    agent: langserve
+    display_name: Pirate Speak
+    tags: ["free"]
+    avatar_url: https://avatars.githubusercontent.com/u/126733545?s=48&v=4
+    description: A Langchain demo using a demo [Langchain Template](https://templates.langchain.com/) that will repeat back what you say but in a pirate accent.  Ooh argh me hearties!  Langchain templates cover many different GenAI use cases and all can be streamed to Multivac clients.
+    secrets:
+      - OPENAI_API_KEY
   dng:
     llm: model_garden
     agent: langserve
