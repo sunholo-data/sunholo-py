@@ -1,6 +1,7 @@
 from ..agents import send_to_qa
 from ..streaming import generate_proxy_stream
 from ..utils.user_ids import generate_user_id
+from ..utils.config import load_config_key
 
 from .run_proxy import clean_proxy_list, start_proxy
 
@@ -139,9 +140,18 @@ def vac_command(args):
     try:
         service_url = get_service_url(args.service_name, args.project, args.region)
     except ValueError as e:
-        print(f"ERROR: Could not start {args.service_name} proxy URL: {str(e)}")
+        console.print(f"[bold red]ERROR: Could not start {args.service_name} proxy URL: {str(e)}[/bold red]")
         return
-    print(f"== Starting VAC chat session with {args.service_name} via proxy URL: {service_url}")
+    
+    display_name = load_config_key("display_name", vector_name=args.service_name,  kind="vacConfig")
+    description = load_config_key("description", vector_name=args.service_name, kind="vacConfig")
+
+    print(
+        Panel(description or "Starting VAC chat session", 
+              title=display_name or args.service_name,
+              subtitle=service_url)
+              )
+    
     if args.headless:
         headless_mode(args.service_name, args.user_input, args.project, args.region, args.chat_history)
     else:
