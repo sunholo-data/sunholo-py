@@ -6,6 +6,14 @@ from .run_proxy import clean_proxy_list, start_proxy
 
 import uuid
 
+from rich import print
+from .sun_rich import console
+
+from rich.prompt import Prompt
+from rich.panel import Panel
+from rich.text import Text
+
+
 def get_service_url(service_name, project, region):
     proxies = clean_proxy_list()
     if service_name in proxies:
@@ -22,9 +30,9 @@ def stream_chat_session(service_name, project, region):
     chat_history = []
     while True:
         session_id = str(uuid.uuid4())
-        user_input = input("You: ")
+        user_input = Prompt.ask("[bold cyan]You[/bold cyan]")
         if user_input.lower() in ["exit", "quit"]:
-            print("Exiting chat session.")
+            console.print("[bold red]Exiting chat session.[/bold red]")
             break
 
         chat_history.append({"role": "Human", "content": user_input})
@@ -60,19 +68,24 @@ def stream_chat_session(service_name, project, region):
 
         response_started = False
         vac_response = ""
-        for token in stream_response():
-            if not response_started:
-                print(f"VAC {service_name}: ", end='', flush=True)
-                response_started = True
 
-            if isinstance(token, bytes):
-                token = token.decode('utf-8')
-            print(token, end='', flush=True)
-            vac_response += token
+        # point or star?
+        with console.status("[bold orange]Thinking...[/bold orange]", spinner="star") as status:
+            for token in stream_response():
+                if not response_started:
+                    status.stop()
+                    console.print(f"[bold yellow]{service_name}:[/bold yellow] ", end='')
+                    response_started = True
+
+                if isinstance(token, bytes):
+                    token = token.decode('utf-8')
+                console.print(token, end='')
+                vac_response += token
 
         chat_history.append({"role": "AI", "content": vac_response})
         response_started = False
-        print()  # For new line after streaming ends
+        console.print()
+        console.rule()
 
 def headless_mode(service_name, user_input, project, region, chat_history=None):
     chat_history = chat_history or []

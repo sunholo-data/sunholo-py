@@ -2,8 +2,10 @@ import subprocess
 import os
 import signal
 import json
-from prettytable import PrettyTable
 
+from .sun_rich import console
+from rich.table import Table
+from rich import print
 
 PROXY_TRACKER_FILE = '.vac_proxy_tracker.json'
 DEFAULT_PORT = 8080
@@ -188,40 +190,50 @@ def list_cloud_run_services(project, region):
         project (str): The GCP project ID.
         region (str): The region of the Cloud Run services.
     """
-    print("Listing Cloud Run Services...")
-    try:
-        result = subprocess.run(
-            ["gcloud", "run", "services", "list", "--project", project, "--region", region, "--format=json"],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30
-        )
-        if result.returncode != 0:
-            print(f"ERROR: Unable to list Cloud Run services: {result.stderr.decode()}")
-            return
 
-        services = json.loads(result.stdout.decode())
-        if not services:
-            print("No Cloud Run services found.")
-            return
+        # point or star?
+    with console.status("[bold orange]Listing Cloud Run Services[/bold orange]", spinner="star") as status:
+        try:
+            result = subprocess.run(
+                ["gcloud", "run", "services", "list", "--project", project, "--region", region, "--format=json"],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30
+            )
+            if result.returncode != 0:
+                status.stop()
+                console.print(f"[bold red]ERROR: Unable to list Cloud Run services: {result.stderr.decode()}[/bold red]")
+                return
 
-        proxies = clean_proxy_list()
+            services = json.loads(result.stdout.decode())
+            if not services:
+                status.stop()
+                console.print("[bold red]No Cloud Run services found.[/bold red]")
+                return
 
-        table = PrettyTable()
-        table.field_names = ["Service Name", "Region", "URL", "Proxied", "Port"]
-        
-        for service in services:
-            service_name = service['metadata']['name']
-            service_url = service['status']['url']
-            if service_name in proxies:
-                proxied = "Yes"
-                proxy_port = proxies[service_name]['port']
-            else:
-                proxied = "No"
-                proxy_port = "-"
-            table.add_row([service_name, region, service_url, proxied, proxy_port])
+            proxies = clean_proxy_list()
+            status.stop()
 
-        print(table)
-    except Exception as e:
-        print(f"ERROR: An unexpected error occurred: {e}")
+            table = Table(title="VAC Cloud Run Services")
+            table.add_column("Service Name")
+            table.add_column("Region")
+            table.add_column("URL")
+            table.add_column("Proxied")
+            table.add_column("Port")
+            
+            for service in services:
+                service_name = service['metadata']['name']
+                service_url = service['status']['url']
+                if service_name in proxies:
+                    proxied = "Yes"
+                    proxy_port = proxies[service_name]['port']
+                else:
+                    proxied = "No"
+                    proxy_port = "-"
+                table.add_row(service_name, region, service_url, proxied, str(proxy_port))
+
+            console.print(table)
+        except Exception as e:
+            status.stop()
+            console.print(f"[bold red]ERROR: An unexpected error occurred: {e}[/bold red]")
 
 def list_proxies():
     """
@@ -232,16 +244,17 @@ def list_proxies():
     if not proxies:
         print("No proxies currently running.")
     else:
-        table = PrettyTable()
-        table.field_names = ["VAC", "Port", "PID", "URL"]
+        table = Table(title="VAC Proxies")
+        table.add_column("VAC")
+        table.add_column("Port")
+        table.add_column("PID")
+        table.add_column("URL")
         
         for service_name, info in proxies.items():
             url = f"http://127.0.0.1:{info['port']}"
-            table.add_row([service_name, info['port'], info['pid'], url])
+            table.add_row(service_name, str(info['port']), str(info['pid']), url)
         
-        print(table)
-
-
+        console.print(table)
 
 def setup_proxy_subparser(subparsers):
     """
@@ -250,7 +263,6 @@ def setup_proxy_subparser(subparsers):
     Args:
         subparsers: The subparsers object from argparse.ArgumentParser().
     """
-    
     
     proxy_parser = subparsers.add_parser('proxy', help='Set up or stop a proxy to the Cloud Run service.')
     proxy_subparsers = proxy_parser.add_subparsers(dest='proxy_command', required=True)
@@ -270,7 +282,7 @@ def setup_proxy_subparser(subparsers):
     stop_all_parser = proxy_subparsers.add_parser('stop-all', help='Stop all running proxies.')
     stop_all_parser.set_defaults(func=lambda args: stop_all_proxies())
 
-    list_services_parser = proxy_subparsers.add_parser('list-services', help='List all Cloud Run services.')
+    list_services_parser = proxy_subparsers.add_parser('list-vacs', help='List all Cloud Run VAC services.')
     list_services_parser.set_defaults(func=lambda args: list_cloud_run_services(args.project, args.region))
 
 

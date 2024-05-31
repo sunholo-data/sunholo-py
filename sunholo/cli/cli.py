@@ -11,6 +11,14 @@ from ..utils.config import load_config_key
 
 from ..logging import log
 
+from rich import print
+from rich.console import Console
+from rich.prompt import Prompt
+from rich.spinner import Spinner
+from rich.panel import Panel
+from rich.text import Text
+console = Console()
+
 def load_default_gcp_config():
     gcp_config = load_config_key('gcp_config', 'global', kind="vacConfig")
     if gcp_config:

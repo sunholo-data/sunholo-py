@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.60.2'
+version = '0.60.3'
 
 setup(
     name='sunholo',
@@ -68,19 +68,17 @@ setup(
             "langfuse",
             "pg8000",
             "pgvector",
-            "prettytable",
             "psycopg2-binary",
             "pypdf",
             "python-socketio",
+            "rich",
             "supabase",
             "tiktoken",
-            "tqdm",
 
         ],
         'cli': [
             "jsonschema",
-            "prettytable",
-            "tqdm"
+            "rich"
         ],
         'database': [
             "asyncpg",
