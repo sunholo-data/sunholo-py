@@ -43,6 +43,15 @@ vac:
     description: A Langchain demo using a demo [Langchain Template](https://templates.langchain.com/) that will repeat back what you say but in a pirate accent.  Ooh argh me hearties!  Langchain templates cover many different GenAI use cases and all can be streamed to Multivac clients.
     secrets:
       - OPENAI_API_KEY
+  csv_agent:
+    llm: openai
+    agent: langserve
+    display_name: Titanic
+    tags: ["free"]
+    avatar_url: https://avatars.githubusercontent.com/u/126733545?s=48&v=4
+    description: Structured data such as in spreadsheets can provide challenging for traditional chat apps.  This Langchain app demonstrates how to use GenAI to generate data analysis python code, so that you can ask analyse a dataset with natural language. In this case, a local database contains statistics from the Titanic disaster passenger list.  Try asking "Did more people survive in first class than in other classes when the Titianic sank?".
+    secrets:
+      - OPENAI_API_KEY
   dng:
     llm: model_garden
     agent: langserve
