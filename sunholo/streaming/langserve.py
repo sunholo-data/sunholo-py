@@ -157,6 +157,7 @@ def parse_json_data(json_data: dict):
     """
     try:
         if isinstance(json_data, dict):
+            content = json_data.get('content', None)
             if content is not None:
                 #log.debug(f'Yield content: {content}')
                 yield content
