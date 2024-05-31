@@ -148,11 +148,17 @@ def vac_command(args):
     
     display_name = load_config_key("display_name", vector_name=args.vac_name,  kind="vacConfig")
     description = load_config_key("description", vector_name=args.vac_name, kind="vacConfig")
+    agent_name = load_config_key("agent", args.vac_name, kind="vacConfig")
+
+    if agent_name == "langserve":
+        subtitle = f"{service_url}/{args.vac_name}/playground/"
+    else:
+        subtitle = f"{agent_name} - {service_url}/vac/{args.vac_name}"
 
     print(
         Panel(description or "Starting VAC chat session", 
               title=display_name or args.vac_name,
-              subtitle=service_url)
+              subtitle=subtitle)
               )
     
     if args.headless:
