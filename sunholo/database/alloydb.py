@@ -171,6 +171,56 @@ class AlloyDBClient:
 
         return self.execute_sql(query)
 
+    def create_database(self, database_name):
+        self.execute_sql(f'CREATE DATABASE "{database_name}"')
+
+    def fetch_owners(self):
+        owners = self.execute_sql('SELECT table_schema, table_name, privilege_type FROM information_schema.table_privileges')
+        for row in owners:
+            print(f"Schema: {row[0]}, Table: {row[1]}, Privilege: {row[2]}")
+        return owners
+
+    def create_schema(self, schema_name="public"):
+        self.execute_sql(f'CREATE SCHEMA IF NOT EXISTS {schema_name};')
+
+    def grant_permissions(self, schema_name, users):
+        for user in users:
+            self.execute_sql(f'GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA {schema_name} TO "{user}";')
+            self.execute_sql(f'GRANT USAGE, CREATE ON SCHEMA {schema_name} TO "{user}";')
+            self.execute_sql(f'ALTER DEFAULT PRIVILEGES IN SCHEMA {schema_name} GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO "{user}";')
+            self.execute_sql(f'GRANT USAGE ON SCHEMA information_schema TO "{user}";')
+            self.execute_sql(f'GRANT SELECT ON information_schema.columns TO "{user}";')
+
+    def create_docstore_tables(self, vector_names, users):
+        for vector_name in vector_names:
+            table_name = f"{vector_name}_docstore"
+            sql = f'''
+            CREATE TABLE IF NOT EXISTS "{table_name}" 
+            (page_content TEXT, doc_id UUID, source TEXT, images_gsurls JSONB, chunk_metadata JSONB, langchain_metadata JSONB)
+            '''
+            self.execute_sql(sql)
+
+            for user in users:
+                self.execute_sql(f'GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "{table_name}" TO "{user}";')
+
+            vectorstore_id = f"{vector_name}_vectorstore_1536"
+            sql = f'''
+            CREATE TABLE IF NOT EXISTS "{vectorstore_id}" (
+            langchain_id UUID NOT NULL,
+            content TEXT NOT NULL,
+            embedding vector NOT NULL,
+            source TEXT,
+            langchain_metadata JSONB,
+            docstore_doc_id UUID,
+            eventTime TIMESTAMPTZ
+            );
+            '''
+            self.execute_sql(sql)
+
+            for user in users:
+                self.execute_sql(f'GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE {vectorstore_id} TO "{user}";')
+
+
 alloydb_table_cache = {}  # Our cache, initially empty  # noqa: F841
 def create_alloydb_table(vector_name, engine, type = "vectorstore", alloydb_config=None, username=None):
     global alloydb_table_cache

@@ -52,7 +52,7 @@ def check_gcloud():
         # Check if gcloud is installed
         result = subprocess.run(["gcloud", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
         if result.returncode != 0:
-            print("ERROR: gcloud is not installed or not found in PATH.")
+            print("[bold red]ERROR: gcloud is not installed or not found in PATH.[/bold red]")
             return False
 
         # Check if gcloud is authenticated
@@ -239,8 +239,9 @@ def list_proxies():
     """
     Lists all running proxies.
     """
-    print("Listing Proxies...")
-    proxies = clean_proxy_list()
+    with console.status("[bold orange]Listing Proxies[/bold orange]", spinner="star"):
+        proxies = clean_proxy_list()
+
     if not proxies:
         print("No proxies currently running.")
     else:
