@@ -362,3 +362,22 @@ $> cat response.txt
 Sunholo Multivac is a platform designed to simplify the deployment and use of GenAI applications within your... 
 ...
 ```
+
+### No Proxy
+
+When using with public endpoints such as the webapp, or within Multivac VPC, no proxy is needed.  This allows you to use within CI/CD to run integration tests of your VACs after deployment, such as within Cloud Build:
+
+```yaml
+...
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: 'bash'
+    dir: ${_BUILD_FOLDER}
+    id: check VAC working
+    args:
+    - '-c'
+    - |
+        apt-get update && apt-get install -y python3-pip
+        pip3 install --no-cache-dir sunholo[cli]
+        sunholo vac chat edmonbrain 'hello, testing from ci/cd' --no-proxy --headless || exit 1
+...
+```
