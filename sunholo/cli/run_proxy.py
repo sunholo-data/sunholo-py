@@ -265,10 +265,10 @@ def setup_proxy_subparser(subparsers):
         subparsers: The subparsers object from argparse.ArgumentParser().
     """
     
-    proxy_parser = subparsers.add_parser('proxy', help='Set up or stop a proxy to the Cloud Run service.')
+    proxy_parser = subparsers.add_parser('proxy', help='Set up or stop a proxy to the VAC Cloud Run services')
     proxy_subparsers = proxy_parser.add_subparsers(dest='proxy_command', required=True)
 
-    start_parser = proxy_subparsers.add_parser('start', help='Start the proxy to the Cloud Run service.')
+    start_parser = proxy_subparsers.add_parser('start', help='Start the proxy to the VAC Cloud Run service')
     start_parser.add_argument('service_name', help='Name of the Cloud Run service.')
     start_parser.add_argument('--port', type=int, help='Port to run the proxy on. Auto-assigns if not provided.')
     start_parser.set_defaults(func=lambda args: start_proxy(args.service_name, args.region, args.project, args.port))

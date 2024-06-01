@@ -3,7 +3,7 @@ from ..streaming import generate_proxy_stream
 from ..utils.user_ids import generate_user_id
 from ..utils.config import load_config_key
 
-from .run_proxy import clean_proxy_list, start_proxy
+from .run_proxy import clean_proxy_list, start_proxy, stop_proxy
 
 import uuid
 
@@ -38,8 +38,6 @@ def stream_chat_session(service_name, project, region):
         if user_input.lower() in ["exit", "quit"]:
             console.print("[bold red]Exiting chat session.[/bold red]")
             break
-
-        chat_history.append({"role": "Human", "content": user_input})
 
         def stream_response():
             generate = generate_proxy_stream(
@@ -86,15 +84,16 @@ def stream_chat_session(service_name, project, region):
                 console.print(token, end='')
                 vac_response += token
 
-        chat_history.append({"role": "AI", "content": vac_response})
+        chat_history.append({"name": "Human", "content": user_input})
+        chat_history.append({"name": "AI", "content": vac_response})
         response_started = False
         console.print()
         console.rule()
 
 def headless_mode(service_name, user_input, project, region, chat_history=None):
     chat_history = chat_history or []
-    chat_history.append({"role": "Human", "content": user_input})
-    service_url = get_service_url(project, region)
+
+    service_url = get_service_url(service_name, project, region)
     user_id = generate_user_id()
     session_id = str(uuid.uuid4())
 
@@ -127,13 +126,17 @@ def headless_mode(service_name, user_input, project, region, chat_history=None):
         for part in generate():
             yield part
 
-    print(f"VAC {service_name}: ", end='', flush=True)
+    vac_response = ""
+
     for token in stream_response():
         if isinstance(token, bytes):
             token = token.decode('utf-8')
         print(token, end='', flush=True)
+        vac_response += token
 
-    chat_history.append({"role": "AI", "content": token})
+    if vac_response:
+        chat_history.append({"name": "Human", "content": user_input})
+        chat_history.append({"name": "AI", "content": vac_response})
     print()  # For new line after streaming ends
 
     return chat_history
@@ -146,25 +149,29 @@ def vac_command(args):
         console.print(f"[bold red]ERROR: Could not start {args.vac_name} proxy URL: {str(e)}[/bold red]")
         return
     
-    display_name = load_config_key("display_name", vector_name=args.vac_name,  kind="vacConfig")
-    description = load_config_key("description", vector_name=args.vac_name, kind="vacConfig")
-    agent_name = load_config_key("agent", args.vac_name, kind="vacConfig")
+    agent_name   = load_config_key("agent", args.vac_name, kind="vacConfig")
 
-    if agent_name == "langserve":
-        subtitle = f"{service_url}/{args.vac_name}/playground/"
-    else:
-        subtitle = f"{agent_name} - {service_url}/vac/{args.vac_name}"
-
-    print(
-        Panel(description or "Starting VAC chat session", 
-              title=display_name or args.vac_name,
-              subtitle=subtitle)
-              )
-    
     if args.headless:
         headless_mode(args.vac_name, args.user_input, args.project, args.region, args.chat_history)
+        stop_proxy(agent_name)
     else:
+        display_name = load_config_key("display_name", vector_name=args.vac_name,  kind="vacConfig")
+        description  = load_config_key("description", vector_name=args.vac_name, kind="vacConfig")
+
+        if agent_name == "langserve":
+            subtitle = f"{service_url}/{args.vac_name}/playground/"
+        else:
+            subtitle = f"{agent_name} - {service_url}/vac/{args.vac_name}"
+
+        print(
+            Panel(description or "Starting VAC chat session", 
+                title=display_name or args.vac_name,
+                subtitle=subtitle)
+                )
+
         stream_chat_session(args.vac_name, args.project, args.region)
+        stop_proxy(agent_name)
+    
 
 def setup_vac_subparser(subparsers):
     """
