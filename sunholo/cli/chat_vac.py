@@ -6,6 +6,7 @@ from ..utils.config import load_config_key
 from .run_proxy import clean_proxy_list, start_proxy, stop_proxy
 
 import uuid
+import sys
 
 from rich import print
 from .sun_rich import console
@@ -147,7 +148,7 @@ def vac_command(args):
         service_url = get_service_url(args.vac_name, args.project, args.region)
     except ValueError as e:
         console.print(f"[bold red]ERROR: Could not start {args.vac_name} proxy URL: {str(e)}[/bold red]")
-        return
+        sys.exit(1)
     
     agent_name   = load_config_key("agent", args.vac_name, kind="vacConfig")
 
