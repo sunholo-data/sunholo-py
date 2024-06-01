@@ -37,7 +37,7 @@ All dependencies:
 pip install sunholo[all]
 ```
 
-Sunholo [CLI](howto/cli):
+Sunholo [CLI](cli):
 
 ```sh
 pip install sunholo[cli]
