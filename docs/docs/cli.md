@@ -154,7 +154,6 @@ positional arguments:
     stop                Stop the proxy to the Cloud Run service.
     list                List all running proxies.
     stop-all            Stop all running proxies.
-    list-vacs           List all Cloud Run VAC services.
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -162,39 +161,6 @@ optional arguments:
 
 ### Examples
 
-```bash
-$> sunholo proxy list-vacs
-
-                                       VAC Cloud Run Services                                        
-┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━┓
-┃ Service Name     ┃ Region       ┃ URL                                            ┃ Proxied ┃ Port ┃
-┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━┩
-│ chunker          │ europe-west1 │ https://chunker-xxxxxxxxxxxxx.a.run.app        │ No      │ -    │
-│ crewai           │ europe-west1 │ https://crewai-xxxxxxxxxxxxx.a.run.app         │ No      │ -    │
-│ discord-server   │ europe-west1 │ https://discord-server-xxxxxxxxxxxxx.a.run.app │ No      │ -    │
-│ dreamer          │ europe-west1 │ https://dreamer-xxxxxxxxxxxxx.a.run.app        │ No      │ -    │
-│ edmonbrain       │ europe-west1 │ https://edmonbrain-xxxxxxxxxxxxx.a.run.app     │ No      │ -    │
-│ edmonbrain-agent │ europe-west1 │ https://edmonbrain-agent-xxxxxxxxxxxxx.a.run.… │ No      │ -    │
-│ eduvac           │ europe-west1 │ https://eduvac-xxxxxxxxxxxxx.a.run.app         │ No      │ -    │
-│ embedder         │ europe-west1 │ https://embedder-xxxxxxxxxxxxx.a.run.app       │ No      │ -    │
-│ image-talk       │ europe-west1 │ https://image-talk-xxxxxxxxxxxxx.a.run.app     │ No      │ -    │
-│ langfuse         │ europe-west1 │ https://langfuse-xxxxxxxxxxxxx.a.run.app       │ No      │ -    │
-│ langserve        │ europe-west1 │ https://langserve-xxxxxxxxxxxxx.a.run.app      │ Yes     │ -    │
-│ litellm          │ europe-west1 │ https://litellm-xxxxxxxxxxxxx.a.run.app        │ No      │ -    │
-│ openinterpreter  │ europe-west1 │ https://openinterpreter-xxxxxxxxxxxxx.a.run.a… │ No      │ -    │
-│ our-new-energy   │ europe-west1 │ https://our-new-energy-xxxxxxxxxxxxx.a.run.app │ No      │ -    │
-│ promptfoo        │ europe-west1 │ https://promptfoo-xxxxxxxxxxxxx.a.run.app      │ No      │ -    │
-│ ragapp           │ europe-west1 │ https://ragapp-xxxxxxxxxxxxx.a.run.app         │ No      │ -    │
-│ rags             │ europe-west1 │ https://rags-xxxxxxxxxxxxx.a.run.app           │ No      │ -    │
-│ reactapp         │ europe-west1 │ https://reactapp-xxxxxxxxxxxxx.a.run.app       │ No      │ -    │
-│ slack            │ europe-west1 │ https://slack-xxxxxxxxxxxxx.a.run.app          │ No      │ -    │
-│ sunholo-website  │ europe-west1 │ https://sunholo-website-xxxxxxxxxxxxx.a.run.a… │ No      │ -    │
-│ unstructured     │ europe-west1 │ https://unstructured-xxxxxxxxxxxxx.a.run.app   │ No      │ -    │
-│ vertex-genai     │ europe-west1 │ https://vertex-genai-xxxxxxxxxxxxx.a.run.app   │ No      │ -    │
-│ webapp           │ europe-west1 │ https://webapp-xxxxxxxxxxxxx.a.run.app         │ No      │ -    │
-└──────────────────┴──────────────┴────────────────────────────────────────────────┴─────────┴──────┘
-
-```
 
 ```bash
 $> sunholo proxy list
@@ -262,7 +228,60 @@ vac:
 ```bash
 $> sunholo vac --help
 
-usage: sunholo vac [-h] [--headless] [--chat_history CHAT_HISTORY] vac_name [user_input]
+usage: sunholo vac [-h] {list,get-url,chat} ...
+
+positional arguments:
+  {list,get-url,chat}  VAC subcommands
+    list               List all VAC services.
+    get-url            Get the URL of a specific VAC service.
+    chat               Interact with a VAC service.
+
+optional arguments:
+  -h, --help           show this help message and exit
+```
+
+### Examples
+
+For interactive sessions, it will start a proxy for you.  Use `exit` to break the session.
+
+```bash
+
+```bash
+$> sunholo vac list
+                                       VAC Cloud Run Services                                        
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━┓
+┃ Service Name     ┃ Region       ┃ URL                                            ┃ Proxied ┃ Port ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━┩
+│ chunker          │ europe-west1 │ https://chunker-xxxxxxxxxxxxx.a.run.app        │ No      │ -    │
+│ crewai           │ europe-west1 │ https://crewai-xxxxxxxxxxxxx.a.run.app         │ No      │ -    │
+│ discord-server   │ europe-west1 │ https://discord-server-xxxxxxxxxxxxx.a.run.app │ No      │ -    │
+│ dreamer          │ europe-west1 │ https://dreamer-xxxxxxxxxxxxx.a.run.app        │ No      │ -    │
+│ edmonbrain       │ europe-west1 │ https://edmonbrain-xxxxxxxxxxxxx.a.run.app     │ No      │ -    │
+│ edmonbrain-agent │ europe-west1 │ https://edmonbrain-agent-xxxxxxxxxxxxx.a.run.… │ No      │ -    │
+│ eduvac           │ europe-west1 │ https://eduvac-xxxxxxxxxxxxx.a.run.app         │ No      │ -    │
+│ embedder         │ europe-west1 │ https://embedder-xxxxxxxxxxxxx.a.run.app       │ No      │ -    │
+│ image-talk       │ europe-west1 │ https://image-talk-xxxxxxxxxxxxx.a.run.app     │ No      │ -    │
+│ langfuse         │ europe-west1 │ https://langfuse-xxxxxxxxxxxxx.a.run.app       │ No      │ -    │
+│ langserve        │ europe-west1 │ https://langserve-xxxxxxxxxxxxx.a.run.app      │ Yes     │ -    │
+│ litellm          │ europe-west1 │ https://litellm-xxxxxxxxxxxxx.a.run.app        │ No      │ -    │
+│ openinterpreter  │ europe-west1 │ https://openinterpreter-xxxxxxxxxxxxx.a.run.a… │ No      │ -    │
+│ our-new-energy   │ europe-west1 │ https://our-new-energy-xxxxxxxxxxxxx.a.run.app │ No      │ -    │
+│ promptfoo        │ europe-west1 │ https://promptfoo-xxxxxxxxxxxxx.a.run.app      │ No      │ -    │
+│ ragapp           │ europe-west1 │ https://ragapp-xxxxxxxxxxxxx.a.run.app         │ No      │ -    │
+│ rags             │ europe-west1 │ https://rags-xxxxxxxxxxxxx.a.run.app           │ No      │ -    │
+│ reactapp         │ europe-west1 │ https://reactapp-xxxxxxxxxxxxx.a.run.app       │ No      │ -    │
+│ slack            │ europe-west1 │ https://slack-xxxxxxxxxxxxx.a.run.app          │ No      │ -    │
+│ sunholo-website  │ europe-west1 │ https://sunholo-website-xxxxxxxxxxxxx.a.run.a… │ No      │ -    │
+│ unstructured     │ europe-west1 │ https://unstructured-xxxxxxxxxxxxx.a.run.app   │ No      │ -    │
+│ vertex-genai     │ europe-west1 │ https://vertex-genai-xxxxxxxxxxxxx.a.run.app   │ No      │ -    │
+│ webapp           │ europe-west1 │ https://webapp-xxxxxxxxxxxxx.a.run.app         │ No      │ -    │
+└──────────────────┴──────────────┴────────────────────────────────────────────────┴─────────┴──────┘
+
+$> sunholo vac get-url edmonbrain
+https://edmonbrain-xxxxxxxx.a.run.app
+
+$> sunholo vac chat --help
+usage: sunholo vac chat [-h] [--headless] [--chat_history CHAT_HISTORY] [--no_proxy] vac_name [user_input]
 
 positional arguments:
   vac_name              Name of the VAC service.
@@ -273,14 +292,9 @@ optional arguments:
   --headless            Run in headless mode.
   --chat_history CHAT_HISTORY
                         Chat history for headless mode (as JSON string).
-```
+  --no_proxy            Do not use the proxy and connect directly to the VAC service.
 
-### Examples
-
-For interactive sessions, it will start a proxy for you.  Use `exit` to break the session.
-
-```bash
-$> sunholo vac multivac_docs
+$> sunholo vac chat multivac_docs
 No proxy found running for service: langserve required for multivac_docs - attempting to connect
 Proxy for langserve setup complete on port 8081
                      VAC Proxies                     
@@ -331,7 +345,7 @@ Exiting chat session.
 With headless mode, you just get the answer streamed to terminal.  Ask your question quoted in the next positional argument:
 
 ```sh
-$> sunholo vac multivac_docs "What is Sunholo Multivac?" --headless
+$> sunholo vac chat multivac_docs "What is Sunholo Multivac?" --headless
 ## What is Sunholo Multivac?
 
 Sunholo Multivac is a platform designed to simplify the deployment and use of GenAI applications within your... 

@@ -182,59 +182,6 @@ def stop_all_proxies():
 
     list_proxies()
 
-def list_cloud_run_services(project, region):
-    """
-    Lists all Cloud Run services the user has access to in a specific project and region.
-
-    Args:
-        project (str): The GCP project ID.
-        region (str): The region of the Cloud Run services.
-    """
-
-        # point or star?
-    with console.status("[bold orange]Listing Cloud Run Services[/bold orange]", spinner="star") as status:
-        try:
-            result = subprocess.run(
-                ["gcloud", "run", "services", "list", "--project", project, "--region", region, "--format=json"],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30
-            )
-            if result.returncode != 0:
-                status.stop()
-                console.print(f"[bold red]ERROR: Unable to list Cloud Run services: {result.stderr.decode()}[/bold red]")
-                return
-
-            services = json.loads(result.stdout.decode())
-            if not services:
-                status.stop()
-                console.print("[bold red]No Cloud Run services found.[/bold red]")
-                return
-
-            proxies = clean_proxy_list()
-            status.stop()
-
-            table = Table(title="VAC Cloud Run Services")
-            table.add_column("Service Name")
-            table.add_column("Region")
-            table.add_column("URL")
-            table.add_column("Proxied")
-            table.add_column("Port")
-            
-            for service in services:
-                service_name = service['metadata']['name']
-                service_url = service['status']['url']
-                if service_name in proxies:
-                    proxied = "Yes"
-                    proxy_port = proxies[service_name]['port']
-                else:
-                    proxied = "No"
-                    proxy_port = "-"
-                table.add_row(service_name, region, service_url, proxied, str(proxy_port))
-
-            console.print(table)
-        except Exception as e:
-            status.stop()
-            console.print(f"[bold red]ERROR: An unexpected error occurred: {e}[/bold red]")
-
 def list_proxies():
     """
     Lists all running proxies.
@@ -283,7 +230,5 @@ def setup_proxy_subparser(subparsers):
     stop_all_parser = proxy_subparsers.add_parser('stop-all', help='Stop all running proxies.')
     stop_all_parser.set_defaults(func=lambda args: stop_all_proxies())
 
-    list_services_parser = proxy_subparsers.add_parser('list-vacs', help='List all Cloud Run VAC services.')
-    list_services_parser.set_defaults(func=lambda args: list_cloud_run_services(args.project, args.region))
 
 
