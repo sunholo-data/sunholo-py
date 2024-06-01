@@ -31,9 +31,8 @@ def get_service_url(vac_name, project, region):
 
     return url
 
-def stream_chat_session(service_name, project, region):
+def stream_chat_session(service_url, service_name):
 
-    service_url = get_service_url(service_name, project, region)
     user_id = generate_user_id()
     chat_history = []
     while True:
@@ -94,10 +93,9 @@ def stream_chat_session(service_name, project, region):
         console.print()
         console.rule()
 
-def headless_mode(service_name, user_input, project, region, chat_history=None):
+def headless_mode(service_url, service_name, user_input, chat_history=None):
     chat_history = chat_history or []
 
-    service_url = get_service_url(service_name, project, region)
     user_id = generate_user_id()
     session_id = str(uuid.uuid4())
 
@@ -165,11 +163,12 @@ def vac_command(args):
                 sys.exit(1)
         else:
             service_url = get_cloud_run_service_url(args.project, args.region, args.vac_name)
+            console.print(f"Not using a proxy, connecting directly to {service_url}")
     
         agent_name   = load_config_key("agent", args.vac_name, kind="vacConfig")
 
         if args.headless:
-            headless_mode(args.vac_name, args.user_input, args.project, args.region, args.chat_history)
+            headless_mode(service_url, args.vac_name, args.user_input, args.chat_history)
         else:
             display_name = load_config_key("display_name", vector_name=args.vac_name,  kind="vacConfig")
             description  = load_config_key("description", vector_name=args.vac_name, kind="vacConfig")
@@ -185,7 +184,7 @@ def vac_command(args):
                     subtitle=subtitle)
                     )
 
-            stream_chat_session(args.vac_name, args.project, args.region)
+            stream_chat_session(service_url, args.vac_name)
         
         stop_proxy(agent_name)
 

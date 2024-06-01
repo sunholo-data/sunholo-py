@@ -109,7 +109,7 @@ def start_proxy(service_name, region, project, port=None):
     proxies = clean_proxy_list()
 
     if service_name in proxies:
-        print(f"Proxy for service {service_name} is already running on port {proxies[service_name]['port']}.")
+        console.print(f"Proxy for service [bold orange]'{service_name}'[/bold orange] is already running on port {proxies[service_name]['port']}.")
         return
 
     if not port:
@@ -130,7 +130,7 @@ def start_proxy(service_name, region, project, port=None):
     }
     save_proxies(proxies)
     
-    print(f"Proxy for {service_name} setup complete on port {port}")
+    console.print(f"Proxy for [bold orange]'{service_name}'[/bold orange] setup complete on port {port}")
     list_proxies()
 
     return f"http://127.0.0.1:{port}"
@@ -154,11 +154,11 @@ def stop_proxy(service_name):
         os.kill(pid, signal.SIGTERM)
         del proxies[service_name]
         save_proxies(proxies)
-        print(f"Proxy for {service_name} stopped.")
+        console.print(f"Proxy for [bold orange]'{service_name}'[bold orange] stopped.")
     except ProcessLookupError:
-        print(f"No process found with PID: {pid}")
+        console.print(f"No process found with PID: {pid}")
     except Exception as e:
-        print(f"Error stopping proxy for {service_name}: {e}")
+        console.print(f"[bold red]Error stopping proxy for {service_name}: {e}[/bold red]")
     
     list_proxies()
 
@@ -172,11 +172,11 @@ def stop_all_proxies():
         pid = info["pid"]
         try:
             os.kill(pid, signal.SIGTERM)
-            print(f"Proxy for {service_name} stopped.")
+            print(f"Proxy for [bold orange]'{service_name}'[/bold orange] stopped.")
         except ProcessLookupError:
             print(f"No process found with PID: {pid}")
         except Exception as e:
-            print(f"Error stopping proxy for {service_name}: {e}")
+            print(f"Error stopping proxy for [bold orange]'{service_name}'[/bold orange]: {e}")
     
     save_proxies({})
 
