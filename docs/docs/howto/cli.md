@@ -99,7 +99,7 @@ You can use the `--validate` flag in CI/CD to check the configuration each commi
     args:
     - '-c'
     - |
-      pip install --no-cache sunholo
+      pip install --no-cache sunholo[cli]
       sunholo list-configs --validate || exit 1
       sunholo list-configs --kind=vacConfig --vac=${_SERVICE_NAME} --validate || exit 1
 ```
@@ -165,53 +165,64 @@ optional arguments:
 ```bash
 $> sunholo proxy list-vacs
 
-                                        VAC Cloud Run Services                                         
-┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ Service Name     ┃ Region       ┃ URL                                              ┃ Proxied ┃ Port ┃
-┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│ chunker          │ europe-west1 │ https://chunker-xxxxxxxxxx-ew.a.run.app          │ No      │ -    │
-│ crewai           │ europe-west1 │ https://crewai-xxxxxxxxxx-ew.a.run.app           │ No      │ -    │
-│ discord-server   │ europe-west1 │ https://discord-server-xxxxxxxxxx-ew.a.run.app   │ No      │ -    │
-│ dreamer          │ europe-west1 │ https://dreamer-xxxxxxxxxx-ew.a.run.app          │ No      │ -    │
-│ edmonbrain       │ europe-west1 │ https://edmonbrain-xxxxxxxxxx-ew.a.run.app       │ No      │ -    │
-│ edmonbrain-agent │ europe-west1 │ https://edmonbrain-agent-xxxxxxxxxx-ew.a.run.app │ No      │ -    │
-│ eduvac           │ europe-west1 │ https://eduvac-xxxxxxxxxx-ew.a.run.app           │ No      │ -    │
-│ embedder         │ europe-west1 │ https://embedder-xxxxxxxxxx-ew.a.run.app         │ No      │ -    │
-│ image-talk       │ europe-west1 │ https://image-talk-xxxxxxxxxx-ew.a.run.app       │ No      │ -    │
-│ langfuse         │ europe-west1 │ https://langfuse-xxxxxxxxxx-ew.a.run.app         │ No      │ -    │
-│ langserve        │ europe-west1 │ https://langserve-xxxxxxxxxx-ew.a.run.app        │ Yes     │ 8080 │
-│ litellm          │ europe-west1 │ https://litellm-xxxxxxxxxx-ew.a.run.app          │ No      │ -    │
-...
+                                       VAC Cloud Run Services                                        
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━┓
+┃ Service Name     ┃ Region       ┃ URL                                            ┃ Proxied ┃ Port ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━┩
+│ chunker          │ europe-west1 │ https://chunker-xxxxxxxxxxxxx.a.run.app        │ No      │ -    │
+│ crewai           │ europe-west1 │ https://crewai-xxxxxxxxxxxxx.a.run.app         │ No      │ -    │
+│ discord-server   │ europe-west1 │ https://discord-server-xxxxxxxxxxxxx.a.run.app │ No      │ -    │
+│ dreamer          │ europe-west1 │ https://dreamer-xxxxxxxxxxxxx.a.run.app        │ No      │ -    │
+│ edmonbrain       │ europe-west1 │ https://edmonbrain-xxxxxxxxxxxxx.a.run.app     │ No      │ -    │
+│ edmonbrain-agent │ europe-west1 │ https://edmonbrain-agent-xxxxxxxxxxxxx.a.run.… │ No      │ -    │
+│ eduvac           │ europe-west1 │ https://eduvac-xxxxxxxxxxxxx.a.run.app         │ No      │ -    │
+│ embedder         │ europe-west1 │ https://embedder-xxxxxxxxxxxxx.a.run.app       │ No      │ -    │
+│ image-talk       │ europe-west1 │ https://image-talk-xxxxxxxxxxxxx.a.run.app     │ No      │ -    │
+│ langfuse         │ europe-west1 │ https://langfuse-xxxxxxxxxxxxx.a.run.app       │ No      │ -    │
+│ langserve        │ europe-west1 │ https://langserve-xxxxxxxxxxxxx.a.run.app      │ Yes     │ -    │
+│ litellm          │ europe-west1 │ https://litellm-xxxxxxxxxxxxx.a.run.app        │ No      │ -    │
+│ openinterpreter  │ europe-west1 │ https://openinterpreter-xxxxxxxxxxxxx.a.run.a… │ No      │ -    │
+│ our-new-energy   │ europe-west1 │ https://our-new-energy-xxxxxxxxxxxxx.a.run.app │ No      │ -    │
+│ promptfoo        │ europe-west1 │ https://promptfoo-xxxxxxxxxxxxx.a.run.app      │ No      │ -    │
+│ ragapp           │ europe-west1 │ https://ragapp-xxxxxxxxxxxxx.a.run.app         │ No      │ -    │
+│ rags             │ europe-west1 │ https://rags-xxxxxxxxxxxxx.a.run.app           │ No      │ -    │
+│ reactapp         │ europe-west1 │ https://reactapp-xxxxxxxxxxxxx.a.run.app       │ No      │ -    │
+│ slack            │ europe-west1 │ https://slack-xxxxxxxxxxxxx.a.run.app          │ No      │ -    │
+│ sunholo-website  │ europe-west1 │ https://sunholo-website-xxxxxxxxxxxxx.a.run.a… │ No      │ -    │
+│ unstructured     │ europe-west1 │ https://unstructured-xxxxxxxxxxxxx.a.run.app   │ No      │ -    │
+│ vertex-genai     │ europe-west1 │ https://vertex-genai-xxxxxxxxxxxxx.a.run.app   │ No      │ -    │
+│ webapp           │ europe-west1 │ https://webapp-xxxxxxxxxxxxx.a.run.app         │ No      │ -    │
+└──────────────────┴──────────────┴────────────────────────────────────────────────┴─────────┴──────┘
 
 ```
 
 ```bash
 $> sunholo proxy list
-                    VAC Proxies                    
-┏━━━━━━━━━━━┳━━━━━━┳━━━━━━┳━━━━┓
-┃ VAC       ┃ Port ┃ PID  ┃ URL                   ┃
-┡━━━━━━━━━━━╇━━━━━━╇━━━━━━╇━━━━┩
-│ langserve │ 8080 │ 3818 │ http://127.0.0.1:8080 │
-└───────────┴──────┴──────┴───────────────────────┘
+                    VAC Proxies                     
+┏━━━━━━━━━━━┳━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ VAC       ┃ Port ┃ PID   ┃ URL                   ┃
+┡━━━━━━━━━━━╇━━━━━━╇━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━┩
+│ langserve │ 8080 │ 28213 │ http://127.0.0.1:8080 │
+└───────────┴──────┴───────┴───────────────────────┘
 
 $> sunholo proxy start edmonbrain
 Proxy for edmonbrain setup complete on port 8081
-                    VAC Proxies                     
-┏━━━━━━━━━━━━┳━━━━━━┳━━━━━━┳━━━━┓
-┃ VAC        ┃ Port ┃ PID  ┃ URL                   ┃
-┡━━━━━━━━━━━━╇━━━━━━╇━━━━━━╇━━━━┩
-│ langserve  │ 8080 │ 3818 │ http://127.0.0.1:8080 │
-│ edmonbrain │ 8081 │ 8717 │ http://127.0.0.1:8081 │
-└────────────┴──────┴──────┴───────────────────────┘
+                     VAC Proxies                     
+┏━━━━━━━━━━━━┳━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ VAC        ┃ Port ┃ PID   ┃ URL                   ┃
+┡━━━━━━━━━━━━╇━━━━━━╇━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━┩
+│ langserve  │ 8080 │ 28213 │ http://127.0.0.1:8080 │
+│ edmonbrain │ 8081 │ 28353 │ http://127.0.0.1:8081 │
+└────────────┴──────┴───────┴───────────────────────┘
 
 $> sunholo proxy stop edmonbrain
 Proxy for edmonbrain stopped.
-                    VAC Proxies                    
-┏━━━━━━━━━━━┳━━━━━━┳━━━━━━┳━━━━━┓
-┃ VAC       ┃ Port ┃ PID  ┃ URL                   ┃
-┡━━━━━━━━━━━╇━━━━━━╇━━━━━━╇━━━━━┩
-│ langserve │ 8080 │ 3818 │ http://127.0.0.1:8080 │
-└───────────┴──────┴──────┴───────────────────────┘
+                    VAC Proxies                     
+┏━━━━━━━━━━━┳━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ VAC       ┃ Port ┃ PID   ┃ URL                   ┃
+┡━━━━━━━━━━━╇━━━━━━╇━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━┩
+│ langserve │ 8080 │ 28213 │ http://127.0.0.1:8080 │
+└───────────┴──────┴───────┴───────────────────────┘
 
 $> sunholo proxy stop-all
 Proxy for langserve stopped.
@@ -273,28 +284,31 @@ $> sunholo vac multivac_docs
 No proxy found running for service: langserve required for multivac_docs - attempting to connect
 Proxy for langserve setup complete on port 8081
                      VAC Proxies                     
-┏━━━━━━━━━━━━┳━━━━━━┳━━━━━━━┳━━━━┓
+┏━━━━━━━━━━━━┳━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ VAC        ┃ Port ┃ PID   ┃ URL                   ┃
-┡━━━━━━━━━━━━╇━━━━━━╇━━━━━━━╇━━━━┩
-│ edmonbrain │ 8080 │ 12339 │ http://127.0.0.1:8080 │
-│ langserve  │ 8081 │ 12620 │ http://127.0.0.1:8081 │
+┡━━━━━━━━━━━━╇━━━━━━╇━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━┩
+│ langserve  │ 8080 │ 28213 │ http://127.0.0.1:8080 │
+│ edmonbrain │ 8081 │ 28353 │ http://127.0.0.1:8081 │
 └────────────┴──────┴───────┴───────────────────────┘
-╭──────────────────────────────────────────────── Multivac ─────────────────────────────────────────────────╮
-│ What is Multivac? Talk to us about our Electric Dreams and hopes for the future. Explain to me below in   │
-│ the chat box what your business use case is and I will try to help you. If you don't have a use case      │
-│ right now, you can start with "What is Sunholo Multivac? or select another VAC from the drop down."       │
-╰───────────────────────────── http://127.0.0.1:8081/multivac_docs/playground/ ─────────────────────────────╯
+
+╭──────────────────────────────────────────── Multivac ─────────────────────────────────────────────╮
+│ What is Multivac? Talk to us about our Electric Dreams and hopes for the future. Explain to me    │
+│ below in the chat box what your business use case is and I will try to help you. If you don't     │
+│ have a use case right now, you can start with "What is Sunholo Multivac? or select another VAC    │
+│ from the drop down."                                                                              │
+╰───────────────────────── http://127.0.0.1:8080/multivac_docs/playground/ ─────────────────────────╯
 You: 
 ```
 
 Interact via the terminal.  This will call the VAC online via the proxy.  The proxy URL is also displayed to help debug via tools such as `curl`:
 
 ```bash
-╭──────────────────────────────────────────────── Multivac ─────────────────────────────────────────────────╮
-│ What is Multivac? Talk to us about our Electric Dreams and hopes for the future. Explain to me below in   │
-│ the chat box what your business use case is and I will try to help you. If you don't have a use case      │
-│ right now, you can start with "What is Sunholo Multivac? or select another VAC from the drop down."       │
-╰───────────────────────────── http://127.0.0.1:8081/multivac_docs/playground/ ─────────────────────────────╯
+╭──────────────────────────────────────────── Multivac ─────────────────────────────────────────────╮
+│ What is Multivac? Talk to us about our Electric Dreams and hopes for the future. Explain to me    │
+│ below in the chat box what your business use case is and I will try to help you. If you don't     │
+│ have a use case right now, you can start with "What is Sunholo Multivac? or select another VAC    │
+│ from the drop down."                                                                              │
+╰───────────────────────── http://127.0.0.1:8080/multivac_docs/playground/ ─────────────────────────╯
 You: what is sunholo multivac?
 ✹ Thinking...
 ```
