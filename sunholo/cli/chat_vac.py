@@ -296,6 +296,6 @@ def setup_vac_subparser(subparsers):
     chat_parser.add_argument('user_input', help='User input for the VAC service when in headless mode.', nargs='?', default=None)
     chat_parser.add_argument('--headless', action='store_true', help='Run in headless mode.')
     chat_parser.add_argument('--chat_history', help='Chat history for headless mode (as JSON string).', default=None)
-    chat_parser.add_argument('--no_proxy', action='store_true', help='Do not use the proxy and connect directly to the VAC service.')
+    chat_parser.add_argument('--no-proxy', action='store_true', help='Do not use the proxy and connect directly to the VAC service.')
 
     vac_parser.set_defaults(func=vac_command)
