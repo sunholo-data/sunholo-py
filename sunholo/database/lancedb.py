@@ -5,7 +5,7 @@ def create_lancedb_index(bucket, vector_name, num_partitions=256, num_sub_vector
         import lancedb
         #import tantivy
     except ImportError:
-        raise ValueError("Could not import lancedb module, install via `pip intall sunholo[database]`")
+        raise ValueError("Could not import lancedb module, install via `pip install sunholo[database]`")
         
     try:
         db = lancedb.connect(bucket) 
