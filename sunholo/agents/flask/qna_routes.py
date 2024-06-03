@@ -41,9 +41,14 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
     def home():
         return jsonify("OK")
 
+    @app.route("/health")
+    def health():
+        return jsonify({"status": "healthy"})
+
     @app.route('/vac/streaming/<vector_name>', methods=['POST'])
     @observe()
     def stream_qa(vector_name):
+        observed_stream_interpreter = observe()(stream_interpreter)
         prep = prep_vac(request, vector_name)
         log.debug(f"Processing prep: {prep}")
         trace = prep["trace"]
@@ -69,7 +74,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
 
             for chunk in start_streaming_chat(question=all_input["user_input"],
                                               vector_name=vector_name,
-                                              qna_func=stream_interpreter,
+                                              qna_func=observed_stream_interpreter,
                                               chat_history=all_input["chat_history"],
                                               wait_time=all_input["stream_wait_time"],
                                               timeout=all_input["stream_timeout"],

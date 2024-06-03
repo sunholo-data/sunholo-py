@@ -195,7 +195,24 @@ Proxy for langserve stopped.
 No proxies currently running.
 ```
 
-When using `sunholo vac` below, it will start a proxy for you if it is not running already.
+### Local testing
+
+If you have a local VAC running via a Flask or FastAPI app.py that will be deployed to Cloud Run or similar, then you can proxy that local VAC instead of the cloud version by using the `--local` flags and specifying the VAC local folder:
+
+```bash
+$> sunholo proxy start edmonbrain --local --app-type flask --app-folder . --log-file
+                         VAC Proxies - `sunholo proxy list`                          
+                              VAC Proxies - `sunholo proxy list`                               
+┏━━━━━━━━━━━━┳━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
+┃ VAC        ┃ Port ┃ PID   ┃ URL                   ┃ Local            ┃ Logs                 ┃
+┡━━━━━━━━━━━━╇━━━━━━╇━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━┩
+│ edmonbrain │ 8080 │ 99669 │ http://127.0.0.1:8080 │ ./app.py - flask │ ./edmonbrain_log.txt │
+└────────────┴──────┴───────┴───────────────────────┴──────────────────┴──────────────────────┘
+```
+
+This makes local testing easier before you deploy via Cloud Build or similar.
+
+When using `sunholo vac` below, it will start/stop a Cloud proxy for you if it is not running already.  It will not start/stop a locally running app.
 
 ## sunholo vac
 
@@ -355,7 +372,7 @@ Sunholo Multivac is a platform designed to simplify the deployment and use of Ge
 This output can be piped into other shell commands e.g. to write to a file:
 
 ```bash
-$> sunholo vac multivac_docs "What is Sunholo Multivac?" --headless > response.txt
+$> sunholo vac chat multivac_docs "What is Sunholo Multivac?" --headless > response.txt
 $> cat response.txt
 ## What is Sunholo Multivac?
 

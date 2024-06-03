@@ -186,7 +186,7 @@ def vac_command(args):
 
             stream_chat_session(service_url, args.vac_name)
         
-        stop_proxy(agent_name)
+        stop_proxy(agent_name, stop_local=False)
 
 
 def list_cloud_run_services(project, region):

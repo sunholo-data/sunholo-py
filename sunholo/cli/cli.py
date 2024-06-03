@@ -11,10 +11,17 @@ from ..utils.config import load_config_key
 
 from ..logging import log
 
+from .sun_rich import console
+import sys
 
 
 def load_default_gcp_config():
-    gcp_config = load_config_key('gcp_config', 'global', kind="vacConfig")
+    try:
+        gcp_config = load_config_key('gcp_config', 'global', kind="vacConfig")
+    except FileNotFoundError as e:
+        console.print(f"{e} - move config/ folder to working directory or set the _CONFIG_FOLDER environment variable to its location")
+        sys.exit(1)
+
     if gcp_config:
         return gcp_config.get('project_id', ''), gcp_config.get('location', 'europe-west1')
     else:
