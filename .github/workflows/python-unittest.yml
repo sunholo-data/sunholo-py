@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'sunholo/**'
+      - 'setup.py'
   pull_request:
     paths:
       - 'sunholo/**'
