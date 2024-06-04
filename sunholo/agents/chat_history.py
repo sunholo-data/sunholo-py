@@ -74,7 +74,7 @@ def embeds_to_json(message: dict):
     # Output: '[{"type": "image", "url": "https://example.com/image.png"}]'
     ```
     """
-    if 'embeds' in message and len(message['embeds'] > 0):
+    if 'embeds' in message and len(message['embeds']) > 0:
         return json.dumps(message.get("embeds"))
     else:
         return ""

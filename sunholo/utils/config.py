@@ -167,7 +167,7 @@ def load_config(filename: str=None) -> tuple[dict, str]:
     
     return config, filename
 
-def load_config_key(key: str, vector_name: str, kind: str=None):
+def load_config_key(key: str, vector_name: str, kind: str):
     """
     Load a specific key from a configuration file.
 
@@ -192,27 +192,16 @@ def load_config_key(key: str, vector_name: str, kind: str=None):
     
     configs_by_kind = load_all_configs()
 
-    if kind:
-        log.debug(f"Got kind: {kind} - applying to configs")
+    log.debug(f"Got kind: {kind} - applying to configs")
     
     if not configs_by_kind:
         log.warning("Did not load configs via folder")
              
-    if kind and configs_by_kind.get(kind):
-        config = configs_by_kind[kind]
-        filename = kind
-    else:
-        config, filename = load_config(filename)
+    config = configs_by_kind[kind]
 
-    log.debug(f"Fetching '{key}' for '{vector_name}'")
     apiVersion = config.get('apiVersion')
-    kind = config.get('kind')
-    vac = config.get('vac')
 
-    if not apiVersion or not kind:
-        raise ValueError("Deprecated config file, move to config with `apiVersion` and `kind` set")
-
-    log.debug(f"Loaded config file {kind}/{apiVersion}")
+    log.debug(f"Fetching '{key}' for '{vector_name}' from '{kind}/{apiVersion}'")
     
     if kind == 'vacConfig':
         if vector_name == 'global':
@@ -226,7 +215,7 @@ def load_config_key(key: str, vector_name: str, kind: str=None):
             raise ValueError("Deprecated config file, move to config with `vac:` at top level for `vector_name`")
         vac_config = vac.get(vector_name)
         if not vac_config:
-            raise ValueError(f"No config array was found for {vector_name} in {filename}")
+            raise ValueError(f"No config array was found for {vector_name} in {kind}")
         
         log.debug(f'vac_config: {vac_config} for {vector_name} - fetching "{key}"')
         key_value = vac_config.get(key)
