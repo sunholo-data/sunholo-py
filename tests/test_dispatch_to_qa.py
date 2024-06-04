@@ -3,7 +3,6 @@ from unittest.mock import patch, MagicMock
 from sunholo.agents import dispatch_to_qa
 import aiohttp
 
-
 def setup():
     user_input = 'mock_user_input'
     chat_history = 'mock_chat_history'
@@ -11,18 +10,16 @@ def setup():
     stream = 'mock_stream'
     return user_input, chat_history, vector_name, stream
 
-
-def test_prep_request_payload():
+@patch('sunholo.utils.config.load_config_key', return_value="mock_agent")
+def test_prep_request_payload(mock_load_config_key):
     user_input, chat_history, vector_name, stream = setup()
-    # Call 'prep_request_payload' with the mock data
     qna_endpoint, qna_data = dispatch_to_qa.prep_request_payload(user_input, chat_history, vector_name, stream)
-    # Check the returned 'qna_endpoint' and 'qna_data'
     assert qna_endpoint == 'expected_qna_endpoint'
     assert qna_data == 'expected_qna_data'
 
-
+@patch('sunholo.utils.config.load_config_key', return_value="mock_agent")
 @patch('sunholo.agents.dispatch_to_qa.requests.post')
-def test_send_to_qa(mock_post):
+def test_send_to_qa(mock_post, mock_load_config_key):
     user_input, chat_history, vector_name, stream = setup()
     mock_qna_endpoint = 'http://mock.qna.endpoint'
     mock_response = {'status': 'success'}
@@ -48,10 +45,10 @@ def test_send_to_qa(mock_post):
     response = dispatch_to_qa.send_to_qa(user_input, chat_history, vector_name, stream)
     assert 'Error' in response
 
-
 @pytest.mark.asyncio
+@patch('sunholo.utils.config.load_config_key', return_value="mock_agent")
 @patch('sunholo.agents.dispatch_to_qa.aiohttp.ClientSession.post')
-async def test_send_to_qa_async(mock_post):
+async def test_send_to_qa_async(mock_post, mock_load_config_key):
     user_input, chat_history, vector_name, stream = setup()
     mock_qna_endpoint = 'http://mock.qna.endpoint'
     mock_response = {'status': 'success'}
