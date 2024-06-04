@@ -9,6 +9,7 @@ import uuid
 import sys
 import subprocess
 import json
+import requests
 
 from rich import print
 from .sun_rich import console
@@ -143,27 +144,46 @@ def headless_mode(service_url, service_name, user_input, chat_history=None):
 
     return chat_history
 
+def resolve_service_url(args):
+
+    if args.url_override:
+
+        return args.url_override
+
+    if not args.no_proxy:
+        try:
+            service_url = get_service_url(args.vac_name, args.project, args.region)
+        except ValueError as e:
+            console.print(f"[bold red]ERROR: Could not start {args.vac_name} proxy URL: {str(e)}[/bold red]")
+            sys.exit(1)
+    else:
+        console.print(f"Not using a proxy, connecting directly to {service_url}")
+
+        agent_url = load_config_key("agent_url", args.vac_name, "vacConfig")
+        if agent_url:
+            console.print("Found agent_url within vacConfig: {agent_url}")
+        
+        service_url = agent_url or get_cloud_run_service_url(args.project, args.region, args.vac_name)
+    
+    return service_url
 
 def vac_command(args):
-    if args.action == 'list':
-        list_cloud_run_services(args.project, args.region)
-        return
-    elif args.action == 'get-url':
-        service_url = get_cloud_run_service_url(args.project, args.region, args.vac_name)
-        if service_url:
-            console.print(service_url)
-            return
-    elif args.action == 'chat':
 
-        if not args.no_proxy:
-            try:
-                service_url = get_service_url(args.vac_name, args.project, args.region)
-            except ValueError as e:
-                console.print(f"[bold red]ERROR: Could not start {args.vac_name} proxy URL: {str(e)}[/bold red]")
-                sys.exit(1)
-        else:
-            service_url = get_cloud_run_service_url(args.project, args.region, args.vac_name)
-            console.print(f"Not using a proxy, connecting directly to {service_url}")
+    service_url = resolve_service_url(args)
+
+    if args.action == 'list':
+
+        list_cloud_run_services(args.project, args.region)
+
+        return
+    
+    elif args.action == 'get-url':
+
+        console.print(service_url)
+
+        return
+    
+    elif args.action == 'chat':
     
         agent_name   = load_config_key("agent", args.vac_name, kind="vacConfig")
 
@@ -187,6 +207,24 @@ def vac_command(args):
             stream_chat_session(service_url, args.vac_name)
         
         stop_proxy(agent_name, stop_local=False)
+
+    elif args.action == 'invoke':
+        try:
+            json_data = json.loads(args.data)
+        except json.JSONDecodeError as err:
+            console.print(f"[bold red]ERROR: invalid JSON: {str(err)} [/bold red]")
+            sys.exit(1)
+
+        invoke_vac(service_url, json_data)
+
+def invoke_vac(service_url, data):
+    try:
+        headers = {"Content-Type": "application/json"}
+        response = requests.post(service_url, headers=headers, data=json.dumps(data))
+        response.raise_for_status()
+        print(response.json())
+    except requests.exceptions.RequestException as e:
+        console.print(f"[bold red]ERROR: Failed to invoke VAC: {e}[/bold red]")
 
 
 def list_cloud_run_services(project, region):
@@ -281,6 +319,8 @@ def setup_vac_subparser(subparsers):
         subparsers: The subparsers object from argparse.ArgumentParser().
     """
     vac_parser = subparsers.add_parser('vac', help='Interact with deployed VAC services.')
+    vac_parser.add_argument('--url_override', help='Override the VAC service URL.')
+    vac_parser.add_argument('--no-proxy', action='store_true', help='Do not use the proxy and connect directly to the VAC service.')
     vac_subparsers = vac_parser.add_subparsers(dest='action', help='VAC subcommands')
 
     # Subcommand for listing VAC services
@@ -296,6 +336,10 @@ def setup_vac_subparser(subparsers):
     chat_parser.add_argument('user_input', help='User input for the VAC service when in headless mode.', nargs='?', default=None)
     chat_parser.add_argument('--headless', action='store_true', help='Run in headless mode.')
     chat_parser.add_argument('--chat_history', help='Chat history for headless mode (as JSON string).', default=None)
-    chat_parser.add_argument('--no-proxy', action='store_true', help='Do not use the proxy and connect directly to the VAC service.')
+
+    # Subcommand for invoking a VAC service directly
+    invoke_parser = vac_subparsers.add_parser('invoke', help='Invoke a VAC service directly with custom data.')
+    invoke_parser.add_argument('vac_name', help='Name of the VAC service.')
+    invoke_parser.add_argument('data', help='Data to send to the VAC service (as JSON string).')
 
     vac_parser.set_defaults(func=vac_command)

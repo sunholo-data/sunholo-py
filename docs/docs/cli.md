@@ -245,16 +245,21 @@ vac:
 ```bash
 $> sunholo vac --help
 
-usage: sunholo vac [-h] {list,get-url,chat} ...
+usage: sunholo vac [-h] [--url_override URL_OVERRIDE] [--no-proxy] {list,get-url,chat,invoke} ...
 
 positional arguments:
-  {list,get-url,chat}  VAC subcommands
-    list               List all VAC services.
-    get-url            Get the URL of a specific VAC service.
-    chat               Interact with a VAC service.
+  {list,get-url,chat,invoke}
+                        VAC subcommands
+    list                List all VAC services.
+    get-url             Get the URL of a specific VAC service.
+    chat                Interact with a VAC service.
+    invoke              Invoke a VAC service directly with custom data.
 
 optional arguments:
-  -h, --help           show this help message and exit
+  -h, --help            show this help message and exit
+  --url_override URL_OVERRIDE
+                        Override the VAC service URL.
+  --no-proxy            Do not use the proxy and connect directly to the VAC service.
 ```
 
 ### Examples
@@ -397,4 +402,84 @@ When using with public endpoints such as the webapp, or within Multivac VPC, no 
         pip3 install --no-cache-dir sunholo[cli]
         sunholo vac chat edmonbrain 'hello, testing from ci/cd' --no-proxy --headless || exit 1
 ...
+```
+
+### sunholo vac invoke
+
+This command is equivalent to `curl` commands you may use otherwise, but helps resolve the URL of the VAC service.
+
+```bash
+$> sunholo vac invoke --help
+usage: sunholo vac invoke [-h] [--no-proxy] vac_name data
+
+positional arguments:
+  vac_name    Name of the VAC service.
+  data        Data to send to the VAC service (as JSON string).
+
+optional arguments:
+  -h, --help  show this help message and exit
+  --no-proxy  Do not use the proxy and connect directly to the VAC service.
+```
+
+For example, you may have a VAC service not on Google Cloud Platform, but upon Azure.  Deploying the Docker service to Azure container apps, you can still invoke the VAC service alongside the GCP proxy services by overriding the URL:
+
+```bash
+$> export FLASK_URL=https://chunker.your-azure-id.northeurope.azurecontainerapps.io/
+$> sunholo vac --url_override ${FLASK_URL}/pubsub_to_store invoke chunker '{
+          "message": {
+            "data": "aHR0cHM6Ly93d3cuYW1hc3MudGVjaC8=",
+            "attributes": {
+              "namespace": "sample_vector",
+              "return_chunks": true
+            }
+          }
+        }'
+
+{
+    'chunks': [
+        {
+            'metadata': {
+                'category': 'Title',
+                'category_depth': 0,
+                'chunk_number': 0,
+                'doc_id': '7a45e7ec-1f25-5d09-9372-b8439e6769dd',
+                'filetype': 'text/html',
+                'languages': ['eng'],
+                'link_start_indexes': [0],
+                'link_texts': ['Contact'],
+                'link_urls': ['./contact'],
+                'namespace': 'sample_vector',
+                'return_chunks': True,
+                'source': 'https://www.amass.tech/',
+                'type': 'url_load',
+                'url': 'https://www.amass.tech/',
+                'vector_name': 'sample_vector'
+            },
+            'page_content': 'Supercharge Your R&D Productivity\nSynthesize scientific research across millions of internal and external data sources\nLet me 
+try\nPDF\nThe Role of MacroH2A Histone Variants in Cancer\nJournal: Cancers\nDOI: 10.3390/cancers13123003\nDOI: 
+10.3390/cancers13123003\n2021\n2021\nhttps://pubmed.ncbi.nlm.nih.gov/34203934/\nPDF\nMCM ring hexamerization is a prerequisite for DNA-binding\nJournal: Nucleic 
+Acids Research\nDOI: 10.1093/nar/gkv914\nDOI: 10.1093/nar/gkv914\n2015\n2015\nhttps://pubmed.ncbi.nlm.nih.gov/26365238/\nProudly building in partnership 
+with\nTrusted by and developed with world-leading life-science research organizations\nIncrease Your R&D Productivity\nLet AI do the heavy lifting\nAutomate the 
+grind of literature, database, ELN searches, readings and writings with your own AI CoScientist, who synthesizes research for you. Our platform simplifies complex
+research topics and data by doing your ground work, so you can focus on research, instead\nDefine Your Own Scientific Data Playing Field\nIntegrate the data 
+sources that support your research workflows and needs.\nAdd data sources seamlessly blending internal and external data\nIntegrate own data for maximum effect as
+well, e.g. Zotero, Articles, Presentations, Contracts even, Excel, Sharepoints. Whatever you have, we will work to integrate.\nLearn more about the 
+product\nInternal data integrations\nOpen data sources\nDo All The Things You Should Be Doing, But Do Not Have Time To\nOur AI platform let’s you explore, 
+interact and work with hundreds of millions of data points, including research papers, patents, databases and more. In seconds.\nNo more searching for articles in
+your own archive or spending hours finding quality research\nSave hours every week of research and admin time\nLearn more about the product\n“It really feels like
+talking to PubMed”\nClarisse Chiche-lapierre,\nCEO, Idun Biologics\n© 2023 Amass Technologies ApS. All rights 
+reserved.\nHome\nProduct\nPricing\nAbout\nContact\nLog in\nSign up\nSupercharge Your R&D Productivity\nSynthesize scientific research across millions of internal 
+and external data sources\nLet me try\nProudly building in partnership with\nTrusted by and developed with world-leading life-science research 
+organizations\nIncrease R&D productivity\nUse AI and Machine Learning to aid the scientific process\nJoin world-leading scientists from the world’s top life 
+science companies, universities, and research institutions. We’re currently launching pilots, so reach out if you want to enquire and learn more.\nDefine your own
+data scientific playing field\nChoose which data sources you want to interact with to serve your research needs\nAdd data sources seamlessly blending internal and
+external data\nIntegrate own data for maximum effect as well, e.g. Zotero, Articles, Presentations, Contracts even, Excel, Sharepoints. Whatever you have, we will
+work to integrate.\nDo all the things you should be doing, but don’t have time to\nOur AI platform let’s you explore, interact and work with millions of data 
+points, including research papers, patents, databases and more. In seconds.\nNo more searching for articles in your own archive or spending hours finding quality 
+research\nSave hours every week of research and admin time\n“It really feels like talking to PubMed”\nClarisse Chiche-lapierre,\nCEO, Idun Biologics\n© 2023 Amass
+Technologies ApS. All rights reserved.\nHome\nProduct\nIndustries\nPricing\nAbout\nContact'
+        }
+    ],
+    'status': 'Success'
+}
 ```
