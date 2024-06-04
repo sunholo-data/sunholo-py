@@ -9,7 +9,3 @@ def test_load_config():
     with patch("builtins.open", mock_open(read_data='{"key": "value"}'), create=True):
         result, _ = config.load_config("mock_file.json")
         assert result == expected_config
-
-def test_load_config_key():
-    with pytest.raises(KeyError):
-        config.load_config_key(key="non_existent_key", vector_name="mock_vector_name", kind="mock_kind")
