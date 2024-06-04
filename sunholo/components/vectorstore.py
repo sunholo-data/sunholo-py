@@ -45,7 +45,7 @@ def pick_vectorstore(vs_str, vector_name, embeddings, read_only=None):
         return vectorstore
     
     elif vs_str == 'cloudsql' or vs_str == 'postgres':
-        from langchain.vectorstores.pgvector import PGVector
+        from langchain_community.vectorstores import PGVector
 
         log.debug("Inititaing CloudSQL/Postgres pgvector")
         #setup_cloudsql(vector_name) 

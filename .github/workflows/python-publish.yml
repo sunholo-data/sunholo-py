@@ -39,6 +39,8 @@ jobs:
         pip install dist/sunholo*.whl  # Install the built package
         python -c "import sunholo"  # Test that the package is importable
         deactivate
+    - name: Run unit tests
+      run: python -m unittest discover tests
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
       with:
