@@ -5,10 +5,12 @@ on:
     paths:
       - 'sunholo/**'
       - 'setup.py'
+      - 'tests/**'
   pull_request:
     paths:
       - 'sunholo/**'
       - 'setup.py'
+      - 'tests/**'
 
 permissions:
   contents: read
