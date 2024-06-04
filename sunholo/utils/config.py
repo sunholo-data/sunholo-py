@@ -75,7 +75,7 @@ def load_all_configs():
             if filename in config_cache:
                 cached_config, cache_time = config_cache[filename]
                 if (current_time - cache_time) < timedelta(minutes=5):
-                    log.info(f"Returning cached config for {filename}")
+                    log.debug(f"Returning cached config for {filename}")
                     config = cached_config
                 else:
                     config = reload_config_file(config_file, filename)
