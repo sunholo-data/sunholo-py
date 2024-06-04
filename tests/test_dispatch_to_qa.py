@@ -1,6 +1,7 @@
 import pytest
-import requests_mock
+from unittest.mock import patch, MagicMock
 from sunholo.agents import dispatch_to_qa
+import aiohttp
 
 
 def setup():
@@ -20,54 +21,63 @@ def test_prep_request_payload():
     assert qna_data == 'expected_qna_data'
 
 
-def test_send_to_qa():
+@patch('sunholo.agents.dispatch_to_qa.requests.post')
+def test_send_to_qa(mock_post):
     user_input, chat_history, vector_name, stream = setup()
     mock_qna_endpoint = 'http://mock.qna.endpoint'
     mock_response = {'status': 'success'}
-    with requests_mock.Mocker() as m:
-        m.post(mock_qna_endpoint, json=mock_response)
-        response = dispatch_to_qa.send_to_qa(user_input, chat_history, vector_name, stream)
-        assert response == mock_response
+
+    # Scenario where 'stream' is False
+    mock_post.return_value.json.return_value = mock_response
+    response = dispatch_to_qa.send_to_qa(user_input, chat_history, vector_name, stream)
+    assert response == mock_response
 
     # Scenario where 'stream' is True and the response is a generator that yields response content chunks
     mock_response_chunk = 'mock_response_chunk'
-    m.post(mock_qna_endpoint, text=mock_response_chunk)
+    mock_post.return_value.iter_content.return_value = iter([mock_response_chunk.encode()])
     response = dispatch_to_qa.send_to_qa(user_input, chat_history, vector_name, True)
-    assert next(response) == mock_response_chunk
+    assert next(response) == mock_response_chunk.encode()
 
     # Scenario where an HTTP error occurs
-    m.post(mock_qna_endpoint, status_code=500)
+    mock_post.side_effect = Exception('HTTP Error')
     response = dispatch_to_qa.send_to_qa(user_input, chat_history, vector_name, stream)
     assert 'Error' in response
 
     # Scenario where any other error occurs
-    m.post(mock_qna_endpoint, exc=requests_mock.exceptions.ReadTimeout)
+    mock_post.side_effect = Exception('ReadTimeout')
     response = dispatch_to_qa.send_to_qa(user_input, chat_history, vector_name, stream)
     assert 'Error' in response
 
 
-def test_send_to_qa_async():
+@pytest.mark.asyncio
+@patch('sunholo.agents.dispatch_to_qa.aiohttp.ClientSession.post')
+async def test_send_to_qa_async(mock_post):
     user_input, chat_history, vector_name, stream = setup()
     mock_qna_endpoint = 'http://mock.qna.endpoint'
     mock_response = {'status': 'success'}
-    import aiohttp
 
-    @pytest.mark.asyncio
-    async def test_send_to_qa_async():
-        user_input, chat_history, vector_name, stream = setup()
-        mock_qna_endpoint = 'http://mock.qna.endpoint'
-        mock_response = {'status': 'success'}
-        async with aiohttp.ClientSession() as session:
-            async with session.post(mock_qna_endpoint, json=mock_response) as resp:
-                response = await dispatch_to_qa.send_to_qa_async(user_input, chat_history, vector_name, stream)
-                assert response == mock_response
+    async def mock_coro(*args, **kwargs):
+        mock_resp = MagicMock()
+        mock_resp.json = MagicMock(return_value=mock_response)
+        return mock_resp
 
-        # Scenario where an HTTP error occurs
-        async with session.post(mock_qna_endpoint, status=500) as resp:
+    mock_post.side_effect = mock_coro
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(mock_qna_endpoint, json=mock_response) as resp:
             response = await dispatch_to_qa.send_to_qa_async(user_input, chat_history, vector_name, stream)
-            assert 'Error' in response
+            assert response == mock_response
 
-        # Scenario where any other error occurs
-        async with session.post(mock_qna_endpoint, raise_for_status=False) as resp:
-            response = await dispatch_to_qa.send_to_qa_async(user_input, chat_history, vector_name, stream)
-            assert 'Error' in response
+    # Scenario where an HTTP error occurs
+    mock_post.side_effect = aiohttp.ClientResponseError(
+        request_info=MagicMock(), history=MagicMock(), status=500, message="Internal Server Error"
+    )
+    response = await dispatch_to_qa.send_to_qa_async(user_input, chat_history, vector_name, stream)
+    assert 'Error' in response
+
+    # Scenario where any other error occurs
+    mock_post.side_effect = aiohttp.ClientResponseError(
+        request_info=MagicMock(), history=MagicMock(), status=400, message="Bad Request"
+    )
+    response = await dispatch_to_qa.send_to_qa_async(user_input, chat_history, vector_name, stream)
+    assert 'Error' in response
