@@ -490,7 +490,7 @@ Technologies ApS. All rights reserved.\nHome\nProduct\nIndustries\nPricing\nAbou
 
 This lets you submit content to a VAC's vector store from the command line, instead of say the bucket or pub/sub embedding pipeline.
 
-The VAC you are sending to requires to have its `memory` configuration setup for the vector store you are using eg. the example below has the `memory.lancedb-vectorstore` set up determining where chunks for that VAC are sent.  You can have multiple memory destinations, see [`config`](./config) for more details.
+The VAC you are sending to requires to have its `memory` configuration setup for the vector store you are using eg. the example below has the `memory.lancedb-vectorstore` set up determining where chunks for that VAC are sent.  You can have multiple memory destinations, see [`config`](../config) for more details.
 
 ```yaml
 kind: vacConfig
@@ -514,7 +514,7 @@ The `sunholo embed` command lets you use your deployed chunker and embedder VAC 
 
 The chunker has the same properties as the Multivac Embedder VAC (it is the same) so you can trigger file imports by supplying a Cloud Storage bucket `gs://` URI; or imports via Google drive / git or embed URLs via `http://` URIs.
 
-By default when using Multivac Cloud, it will send the content you want to embed to the chunker, then the embedder within the CLoud (via PubSub).  However, if you want to do this locally, use `--local-chunks` to return the chunks to your local session, and pass those chunks to the embedding endpoint.
+By default when using Multivac Cloud, it will send the content you want to embed to the chunker, then the embedder within the Cloud (via PubSub).  However, if you want to do this locally, use `--local-chunks` to return the chunks to your local session, and pass those chunks to the embedding endpoint.
 
 ```bash
 $> sunholo embed --help
