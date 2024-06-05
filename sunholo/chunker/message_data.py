@@ -186,7 +186,7 @@ def handle_json_content_message(message_data: str, metadata: dict, vector_name: 
 
     if the_content is None:
         log.info("No content found")
-        return {"metadata": "No content found"}
+        return {"metadata": "No content found in 'page_content' JSON field"}
     
     docs = [Document(page_content=the_content, metadata=metadata)]
 

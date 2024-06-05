@@ -7,6 +7,8 @@ from .cli_init import setup_init_subparser
 from .merge_texts import setup_merge_text_subparser
 from .run_proxy import setup_proxy_subparser
 from .chat_vac import setup_vac_subparser
+from .embedder import setup_embedder_subparser
+
 from ..utils.config import load_config_key
 
 from ..logging import log
@@ -64,6 +66,8 @@ def main(args=None):
     setup_proxy_subparser(subparsers)
     # vac command
     setup_vac_subparser(subparsers)
+    # embed command
+    setup_embedder_subparser(subparsers)
 
     args = parser.parse_args(args)
 

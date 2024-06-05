@@ -6,7 +6,8 @@ A CLI is installed via `sunholo[cli]`
 $> pip install sunholo[cli]
 
 $> sunholo --help
-usage: sunholo [-h] [--debug] [--project PROJECT] [--region REGION] {deploy,list-configs,init,merge-text,proxy,vac} ...
+usage: sunholo [-h] [--debug] [--project PROJECT] [--region REGION]
+               {deploy,list-configs,init,merge-text,proxy,vac,embed} ...
 
 sunholo CLI tool for deploying GenAI VACs
 
@@ -19,14 +20,15 @@ optional arguments:
 commands:
   Valid commands
 
-  {deploy,list-configs,init,merge-text,proxy,vac}
+  {deploy,list-configs,init,merge-text,proxy,vac,embed}
                         Commands
     deploy              Triggers a deployment of a VAC.
     list-configs        Lists all configuration files and their details
     init                Initializes a new Multivac project.
     merge-text          Merge text files from a source folder into a single output file.
-    proxy               Set up or stop a proxy to the Cloud Run service.
+    proxy               Set up or stop a proxy to the VAC Cloud Run services
     vac                 Interact with deployed VAC services.
+    embed               Send data for embedding to a VAC vector store
 ```
 
 ## sunholo list-configs
@@ -483,3 +485,113 @@ Technologies ApS. All rights reserved.\nHome\nProduct\nIndustries\nPricing\nAbou
     'status': 'Success'
 }
 ```
+
+## sunholo embed
+
+This lets you submit content to a VAC's vector store from the command line, instead of say the bucket or pub/sub embedding pipeline.
+
+The VAC you are sending to requires to have its `memory` configuration setup for the vector store you are using eg. the example below has the `memory.lancedb-vectorstore` set up determining where chunks for that VAC are sent.  You can have multiple memory destinations, see [`config`](./config) for more details.
+
+```yaml
+kind: vacConfig
+apiVersion: v1
+gcp_config:
+  project_id: multivac-internal-dev
+  location: europe-west1
+vac:
+  multivac_docs:
+    llm: vertex
+    model: gemini-1.0-pro
+    agent: langserve
+    memory:
+      - lancedb-vectorstore:
+          vectorstore: lancedb
+```
+
+### sunholo embed examples
+
+The `sunholo embed` command lets you use your deployed chunker and embedder VAC system services, or if you have deployed your own you can supply your own URLs via `--embed_override` and/or `--chunk_override`.  By default the VACs will be launched locally via the Proxy using your `gcloud` credentials, but if you are within the Multivac VPC then use `--no-proxy` to send them directly to the VACs.
+
+The chunker has the same properties as the Multivac Embedder VAC (it is the same) so you can trigger file imports by supplying a Cloud Storage bucket `gs://` URI; or imports via Google drive / git or embed URLs via `http://` URIs.
+
+By default when using Multivac Cloud, it will send the content you want to embed to the chunker, then the embedder within the CLoud (via PubSub).  However, if you want to do this locally, use `--local-chunks` to return the chunks to your local session, and pass those chunks to the embedding endpoint.
+
+```bash
+$> sunholo embed --help
+usage: sunholo embed [-h] [--embed_override EMBED_OVERRIDE] [--chunk_override CHUNK_OVERRIDE] [--no-proxy] [-m METADATA]
+                     [--local-chunks]
+                     vac_name data
+
+positional arguments:
+  vac_name              VAC service to embed the data for
+  data                  String content to send for embedding
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --embed_override EMBED_OVERRIDE
+                        Override the embed VAC service URL.
+  --chunk_override CHUNK_OVERRIDE
+                        Override the chunk VAC service URL.
+  --no-proxy            Do not use the proxy and connect directly to the VAC service.
+  -m METADATA, --metadata METADATA
+                        Metadata to send with the embedding (as JSON string).
+  --local-chunks        Whether to process chunks to embed locally, or via the cloud.
+```
+
+### Examples
+
+```bash
+# send a URL for parsing and embedding within the edmonbrain VAC vector store
+$> sunholo embed edmonbrain "https://www.amass.tech/"
+──────────────────────────────────────────────── Sending data for chunking ─────────────────────────────────────────────────
+{
+    'chunks': [
+        {
+            'metadata': {
+                'category': 'Title',
+                'category_depth': 0,
+                'chunk_number': 0,
+                'doc_id': '7a45e7ec-1f25-5d09-9372-b8439e6769dd',
+                'eventTime': '2024-06-05T10:52:42Z',
+                'filetype': 'text/html',
+                'languages': ['eng'],
+                'link_start_indexes': [0],
+                'link_texts': ['Contact'],
+                'link_urls': ['./contact'],
+                'namespace': 'edmonbrain',
+                'return_chunks': 'false',
+                'source': 'https://www.amass.tech/',
+                'type': 'url_load',
+                'url': 'https://www.amass.tech/',
+                'vector_name': 'edmonbrain'
+            },
+            'page_content': 'Supercharge Your R&D Productivity\nSynthesize scientific research across millions of internal 
+and external data sources\nLet me try\nPDF\nThe Role of ...etc...'
+        }
+    ],
+    'status': 'success'
+}
+─ Chunks sent for processing in cloud: {'chunks': [{'metadata': {'category':
+
+# send a URL for parsing and embedding within the edmonbrain VAC vector store
+$> sunholo embed edmonbrain "https://www.amass.tech/" --local-chunks
+..chunking as above with additional local processing of embedding..
+──────────────────────────────────────────────── Processing chunks locally ─────────────────────────────────────────────────
+Working on chunk {'category': 'Title', 'category_depth': 0, 'chunk_number': 0, 'doc_id': 
+'7a45e7ec-1f25-5d09-9372-b8439e6769dd', 'eventTime': '2024-06-05T10:54:21Z', 'filetype': 'text/html', 'languages': ['eng'], 
+'link_start_indexes': [0], 'link_texts': ['Contact'], 'link_urls': ['./contact'], 'namespace': 'edmonbrain', 
+'return_chunks': 'true', 'source': 'https://www.amass.tech/', 'type': 'url_load', 'url': 'https://www.amass.tech/', 
+'vector_name': 'edmonbrain'}
+Sending chunk length 3389 to embedder
+Embedding [1] chunks ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━   0% -:--:--
+...
+Embedding [1] chunks ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+─────────────────────────────────────────────── Embedding pipeline finished ────────────────────────────────────────────────
+
+# example using your own URLs from your own Multivac deployments
+$> export CHUNK_URL=https://chunker.your-chunker-url.com
+$> export EMBED_URL=https://embedder.your-embedder-url.com
+$> sunholo embed edmonbrain "https://www.amass.tech/" --local-chunks --embed-override=$EMBED_URL --chunk-override=$CHUNK_URL
+
+```
+

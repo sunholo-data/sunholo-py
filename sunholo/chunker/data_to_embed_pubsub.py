@@ -25,6 +25,10 @@ def data_to_embed_pubsub(data: dict):
 
     message_data, metadata, vector_name = process_pubsub_message(data)
 
+    return process_chunker_data(message_data, metadata, vector_name)
+
+def process_chunker_data(message_data, metadata, vector_name):
+
     if metadata:
         metadata["vector_name"] = vector_name
 

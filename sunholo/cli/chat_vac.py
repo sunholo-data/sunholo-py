@@ -20,14 +20,19 @@ from rich.text import Text
 from rich.table import Table
 
 
-def get_service_url(vac_name, project, region):
-    agent_name = load_config_key("agent", vac_name, kind="vacConfig")
+def get_service_url(vac_name, project, region, no_config=False):
+
+    if no_config:
+        agent_name = vac_name
+    else:
+        agent_name = load_config_key("agent", vac_name, kind="vacConfig")
+
     proxies = clean_proxy_list()
     if agent_name in proxies:
         port = proxies[agent_name]['port']
         url = f"http://127.0.0.1:{port}"
     else:
-        print(f"No proxy found running for service: {agent_name} required for {vac_name} - attempting to connect")
+        console.print(f"No proxy found running for service: [bold orange]'{agent_name}[/bold orange] required for [bold orange]{vac_name}[/bold orange] - attempting to connect")
         url = start_proxy(agent_name, region, project)
 
     return url
@@ -144,15 +149,17 @@ def headless_mode(service_url, service_name, user_input, chat_history=None):
 
     return chat_history
 
-def resolve_service_url(args):
-
+def resolve_service_url(args, no_config=False):
+    """
+    no_config: some VACs do not have an entry in the config file e.g. chunker, embedder etc.
+    """
     if args.url_override:
 
         return args.url_override
 
     if not args.no_proxy:
         try:
-            service_url = get_service_url(args.vac_name, args.project, args.region)
+            service_url = get_service_url(args.vac_name, args.project, args.region, no_config=no_config)
         except ValueError as e:
             console.print(f"[bold red]ERROR: Could not start {args.vac_name} proxy URL: {str(e)}[/bold red]")
             sys.exit(1)
@@ -169,8 +176,6 @@ def resolve_service_url(args):
 
 def vac_command(args):
 
-    service_url = resolve_service_url(args)
-
     if args.action == 'list':
 
         list_cloud_run_services(args.project, args.region)
@@ -178,13 +183,13 @@ def vac_command(args):
         return
     
     elif args.action == 'get-url':
-
+        service_url = resolve_service_url(args)
         console.print(service_url)
 
         return
     
     elif args.action == 'chat':
-    
+        service_url = resolve_service_url(args)
         agent_name   = load_config_key("agent", args.vac_name, kind="vacConfig")
 
         if args.headless:
@@ -209,6 +214,7 @@ def vac_command(args):
         stop_proxy(agent_name, stop_local=False)
 
     elif args.action == 'invoke':
+        service_url = resolve_service_url(args, no_config=True)
         try:
             json_data = json.loads(args.data)
         except json.JSONDecodeError as err:
@@ -222,7 +228,12 @@ def invoke_vac(service_url, data):
         headers = {"Content-Type": "application/json"}
         response = requests.post(service_url, headers=headers, data=json.dumps(data))
         response.raise_for_status()
-        print(response.json())
+
+        the_data = response.json()
+        console.print(the_data)
+
+        return the_data
+    
     except requests.exceptions.RequestException as e:
         console.print(f"[bold red]ERROR: Failed to invoke VAC: {e}[/bold red]")
 
