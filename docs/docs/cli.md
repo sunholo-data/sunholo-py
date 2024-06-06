@@ -490,7 +490,7 @@ Technologies ApS. All rights reserved.\nHome\nProduct\nIndustries\nPricing\nAbou
 
 This lets you submit content to a VAC's vector store from the command line, instead of say the bucket or pub/sub embedding pipeline.
 
-The VAC you are sending to requires to have its `memory` configuration setup for the vector store you are using eg. the example below has the `memory.lancedb-vectorstore` set up determining where chunks for that VAC are sent.  You can have multiple memory destinations, see [`config`](../config) for more details.
+The VAC you are sending to requires to have its `memory` configuration setup for the vector store you are using eg. the example below has the `memory.lancedb-vectorstore` set up determining where chunks for that VAC are sent.  You can have multiple memory destinations, see [`config`](config) for more details.
 
 ```yaml
 kind: vacConfig
@@ -572,8 +572,11 @@ and external data sources\nLet me try\nPDF\nThe Role of ...etc...'
     'status': 'success'
 }
 ─ Chunks sent for processing in cloud: {'chunks': [{'metadata': {'category':
+```
 
-# send a URL for parsing and embedding within the edmonbrain VAC vector store
+Send a URL for parsing and embedding within the edmonbrain VAC vector store
+
+```
 $> sunholo embed edmonbrain "https://www.amass.tech/" --local-chunks
 ..chunking as above with additional local processing of embedding..
 ──────────────────────────────────────────────── Processing chunks locally ─────────────────────────────────────────────────
@@ -587,8 +590,12 @@ Embedding [1] chunks ━━━━━━━━━━━━━━━━━━━�
 ...
 Embedding [1] chunks ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
 ─────────────────────────────────────────────── Embedding pipeline finished ────────────────────────────────────────────────
+```
 
-# example using your own URLs from your own Multivac deployments
+
+This example is using your own URLs from your own Multivac deployments
+
+```bash
 $> export CHUNK_URL=https://chunker.your-chunker-url.com
 $> export EMBED_URL=https://embedder.your-embedder-url.com
 $> sunholo embed edmonbrain "https://www.amass.tech/" --local-chunks --embed-override=$EMBED_URL --chunk-override=$CHUNK_URL

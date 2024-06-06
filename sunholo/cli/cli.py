@@ -15,6 +15,7 @@ from ..logging import log
 
 from .sun_rich import console
 import sys
+from rich.panel import Panel
 
 
 def load_default_gcp_config():
@@ -31,6 +32,12 @@ def load_default_gcp_config():
 
 def main(args=None):
 
+    console.print(
+        Panel("Welcome to Sunholo Command Line Interface, your assistant to deploy GenAI Virtual Agent Computers (VACs) to Multivac or your own Cloud.", 
+            title="Sunholo GenAIOps Assistant CLI",
+            subtitle="Documentation at https://dev.sunholo.com/")
+            )
+    console.rule()
 
     """
     Entry point for the sunholo console script. This function parses command line arguments

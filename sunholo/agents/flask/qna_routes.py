@@ -27,13 +27,12 @@ from ...utils.config import load_config
 try:
     from flask import request, jsonify, Response
 except ImportError:
-    print("No flask installed for agents.flask.register_qna_routes, install via `pip install sunholo[http]`")
+    pass
 
 try:
     from langfuse.decorators import langfuse_context, observe
-except ImportError as err:
-    print(f"No langfuse installed for agents.flask.register_qna_routes, install via `pip install sunholo[http]` - {str(err)}")
-    
+except ImportError:
+    pass    
 
 def register_qna_routes(app, stream_interpreter, vac_interpreter):
 
