@@ -11,11 +11,31 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+import pathlib
+
 from ..logging import log
 from ..pubsub import process_pubsub_message
 from .message_data import handle_gcs_message, handle_google_drive_message, handle_github_message, handle_http_message, handle_json_content_message
 from .publish import process_docs_chunks_vector_name
+from .splitter import chunk_doc_to_docs
+
 from ..llamaindex.import_files import llamaindex_chunker_check
+from . import loaders
+
+def direct_file_to_embed(file_name: pathlib.Path, metadata: dict, vector_name: str):
+        
+    log.info(f"Sending direct file upload {file_name} to loaders.read_file_to_documents {metadata}")
+    docs = loaders.read_file_to_documents(file_name, metadata=metadata)
+    if docs is None:
+        log.warning(f"loaders.read_file_to_documents docs2 failed to load file {metadata}")
+
+        return None
+
+    chunks = chunk_doc_to_docs(docs, file_name.suffix, vector_name=vector_name)
+    
+    return format_chunk_return(chunks, metadata, vector_name)
+
+
 
 def data_to_embed_pubsub(data: dict):
     """Triggered from a message on a Cloud Pub/Sub topic.
@@ -62,7 +82,11 @@ def process_chunker_data(message_data, metadata, vector_name):
 
     else: 
         chunks, metadata = handle_json_content_message(message_data, metadata, vector_name) 
+    
+    return format_chunk_return(chunks, metadata, vector_name)
 
+
+def format_chunk_return(chunks, metadata, vector_name):
     # to be really sure
     if metadata:
         metadata["vector_name"] = vector_name
