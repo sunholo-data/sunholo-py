@@ -1,6 +1,5 @@
 import subprocess
 import os
-import sys
 import signal
 import json
 
@@ -10,19 +9,6 @@ from rich import print
 
 PROXY_TRACKER_FILE = '.vac_proxy_tracker.json'
 DEFAULT_PORT = 8080
-
-def create_hyperlink(url, text):
-    """
-    Creates a hyperlink for the console.
-
-    Args:
-        url (str): The URL for the hyperlink.
-        text (str): The text to display for the hyperlink.
-
-    Returns:
-        str: The formatted hyperlink.
-    """
-    return f"\033]8;;{url}\033\\{text}\033]8;;\033\\"
 
 
 def get_next_available_port(proxies, default_port):
@@ -94,9 +80,6 @@ def save_proxies(proxies):
     with open(PROXY_TRACKER_FILE, 'w') as file:
         json.dump(proxies, file, indent=4)
 
-
-
-
 def start_proxy(service_name, region, project, port=None, local=False, app_type=None, app_folder=None, log_file=None):
     """
     Starts the gcloud proxy to the Cloud Run service and stores the PID.
@@ -116,8 +99,6 @@ def start_proxy(service_name, region, project, port=None, local=False, app_type=
     if not port:
         port = get_next_available_port(proxies, DEFAULT_PORT)
     
-
-
     if local:
         start_local(service_name, port, app_type, app_folder, log_file)
     else:
@@ -159,6 +140,9 @@ def stop_proxy(service_name, stop_local=True):
         stop_local (bool): Whether to stop locally running services or not. Defaults to True.
     """
     proxies = clean_proxy_list()
+
+    # ps aux | grep gcloud
+    # kill PID
 
     if service_name not in proxies:
         print(f"No proxy found for service: {service_name}")
@@ -248,7 +232,7 @@ def start_local(service_name, port, app_type, app_folder, log_file):
         return
 
     if app_type == 'flask':
-        command = [sys.executable, 'app.py']
+        command = ["gunicorn", "--bind", f"0.0.0.0:{port}", "--workers", "4", "app:app"]
     elif app_type == 'fastapi':
         command = ["uvicorn", "app:app", f"--port={port}"]
     else:
@@ -304,11 +288,11 @@ def setup_proxy_subparser(subparsers):
                                                             args.app_folder,
                                                             args.log_file))
     
-    stop_parser = proxy_subparsers.add_parser('stop', help='Stop the proxy to the Cloud Run service.')
+    stop_parser = proxy_subparsers.add_parser('stop', help='Stop the proxy to the Cloud Run service. Backup: `kill -9 PID`')
     stop_parser.add_argument('service_name', help='Name of the Cloud Run service.')
     stop_parser.set_defaults(func=lambda args: stop_proxy(args.service_name))
 
-    list_parser = proxy_subparsers.add_parser('list', help='List all running proxies.')
+    list_parser = proxy_subparsers.add_parser('list', help='List all running proxies. Examine port via `lsof-i :PORT`')
     list_parser.set_defaults(func=lambda args: list_proxies())
 
     stop_all_parser = proxy_subparsers.add_parser('stop-all', help='Stop all running proxies.')

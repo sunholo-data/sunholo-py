@@ -16,5 +16,6 @@ def create_app(name):
     # Initialize Flask app
     app = Flask(name)
     app.config['TRAP_HTTP_EXCEPTIONS'] = True
+    app.config['PROPAGATE_EXCEPTIONS'] = True
    
     return app
