@@ -157,20 +157,19 @@ def resolve_service_url(args, no_config=False):
 
         return args.url_override
 
-    if not args.no_proxy:
-        try:
-            service_url = get_service_url(args.vac_name, args.project, args.region, no_config=no_config)
-        except ValueError as e:
-            console.print(f"[bold red]ERROR: Could not start {args.vac_name} proxy URL: {str(e)}[/bold red]")
-            sys.exit(1)
-    else:
-        console.print(f"Not using a proxy, connecting directly to {service_url}")
-
+    if args.no_proxy:
         agent_url = load_config_key("agent_url", args.vac_name, "vacConfig")
         if agent_url:
             console.print("Found agent_url within vacConfig: {agent_url}")
         
         service_url = agent_url or get_cloud_run_service_url(args.project, args.region, args.vac_name)
+        console.print(f"No proxy, connecting directly to {service_url}")
+    else:
+        try:
+            service_url = get_service_url(args.vac_name, args.project, args.region, no_config=no_config)
+        except ValueError as e:
+            console.print(f"[bold red]ERROR: Could not start {args.vac_name} proxy URL: {str(e)}[/bold red]")
+            sys.exit(1)
     
     return service_url
 

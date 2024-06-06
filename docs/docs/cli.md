@@ -402,7 +402,7 @@ When using with public endpoints such as the webapp, or within Multivac VPC, no 
     - |
         apt-get update && apt-get install -y python3-pip
         pip3 install --no-cache-dir sunholo[cli]
-        sunholo vac chat edmonbrain 'hello, testing from ci/cd' --no-proxy --headless || exit 1
+        sunholo vac --no-proxy chat edmonbrain 'hello' --headless || exit 1
 ...
 ```
 
