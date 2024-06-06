@@ -30,14 +30,23 @@ def load_default_gcp_config():
     else:
         return '', 'europe-west1'
 
+class CustomHelpAction(argparse.Action):
+    def __init__(self, option_strings, dest, nargs=0, **kwargs):
+        super().__init__(option_strings, dest, nargs=nargs, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        console.print(
+            Panel("Welcome to Sunholo Command Line Interface, your assistant to deploy GenAI Virtual Agent Computers (VACs) to Multivac or your own Cloud.", 
+                    title="Sunholo GenAIOps Assistant CLI",
+                    subtitle="Documentation at https://dev.sunholo.com/")
+        )
+        console.rule()
+        parser.print_help()
+        parser.exit()
+
 def main(args=None):
 
-    console.print(
-        Panel("Welcome to Sunholo Command Line Interface, your assistant to deploy GenAI Virtual Agent Computers (VACs) to Multivac or your own Cloud.", 
-            title="Sunholo GenAIOps Assistant CLI",
-            subtitle="Documentation at https://dev.sunholo.com/")
-            )
-    console.rule()
+
 
     """
     Entry point for the sunholo console script. This function parses command line arguments
@@ -50,7 +59,8 @@ def main(args=None):
     """
     default_project, default_region = load_default_gcp_config()
 
-    parser = argparse.ArgumentParser(description="sunholo CLI tool for deploying GenAI VACs")
+    parser = argparse.ArgumentParser(description="sunholo CLI tool for deploying GenAI VACs", add_help=False)
+    parser.add_argument('-h', '--help', action=CustomHelpAction, help='Show this help message and exit')
     parser.add_argument('--debug', action='store_true', help='Enable debug output')
     parser.add_argument('--project', default=default_project, help='GCP project to list Cloud Run services from.')
     parser.add_argument('--region', default=default_region, help='Region to list Cloud Run services from.')

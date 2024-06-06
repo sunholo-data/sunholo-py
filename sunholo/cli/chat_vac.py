@@ -10,6 +10,7 @@ import sys
 import subprocess
 import json
 import requests
+from pathlib import Path
 
 from rich import print
 from .sun_rich import console
@@ -214,18 +215,36 @@ def vac_command(args):
 
     elif args.action == 'invoke':
         service_url = resolve_service_url(args, no_config=True)
-        try:
-            json_data = json.loads(args.data)
-        except json.JSONDecodeError as err:
-            console.print(f"[bold red]ERROR: invalid JSON: {str(err)} [/bold red]")
-            sys.exit(1)
 
-        invoke_vac(service_url, json_data)
+        invoke_vac(service_url, args.data, is_file=args.is_file)
 
-def invoke_vac(service_url, data):
+def invoke_vac(service_url, data, vector_name=None, metadata=None, is_file=False):
     try:
-        headers = {"Content-Type": "application/json"}
-        response = requests.post(service_url, headers=headers, data=json.dumps(data))
+        if is_file:
+            # Handle file upload
+            if not isinstance(data, Path) or not data.is_file():
+                raise ValueError("For file uploads, 'data' must be a Path object pointing to a valid file.")
+            
+            files = {
+                'file': (data.name, open(data, 'rb')),
+            }
+            form_data = {
+                'vector_name': vector_name,
+                'metadata': json.dumps(metadata) if metadata else '',
+            }
+
+            response = requests.post(service_url, files=files, data=form_data)
+        else:
+            try:
+                json_data = json.loads(data)
+            except json.JSONDecodeError as err:
+                console.print(f"[bold red]ERROR: invalid JSON: {str(err)} [/bold red]")
+                sys.exit(1)
+
+            # Handle JSON data
+            headers = {"Content-Type": "application/json"}
+            response = requests.post(service_url, headers=headers, data=json.dumps(json_data))
+
         response.raise_for_status()
 
         the_data = response.json()
@@ -235,6 +254,8 @@ def invoke_vac(service_url, data):
     
     except requests.exceptions.RequestException as e:
         console.print(f"[bold red]ERROR: Failed to invoke VAC: {e}[/bold red]")
+    except Exception as e:
+        console.print(f"[bold red]ERROR: An unexpected error occurred: {e}[/bold red]")
 
 
 def list_cloud_run_services(project, region):
@@ -351,5 +372,6 @@ def setup_vac_subparser(subparsers):
     invoke_parser = vac_subparsers.add_parser('invoke', help='Invoke a VAC service directly with custom data.')
     invoke_parser.add_argument('vac_name', help='Name of the VAC service.')
     invoke_parser.add_argument('data', help='Data to send to the VAC service (as JSON string).')
+    invoke_parser.add_argument('--is-file', action='store_true', help='Indicate if the data argument is a file path')
 
     vac_parser.set_defaults(func=vac_command)

@@ -6,13 +6,18 @@ A CLI is installed via `sunholo[cli]`
 $> pip install sunholo[cli]
 
 $> sunholo --help
+╭───────────────────────────────────────────── Sunholo GenAIOps Assistant CLI ─────────────────────────────────────────────╮
+│ Welcome to Sunholo Command Line Interface, your assistant to deploy GenAI Virtual Agent Computers (VACs) to Multivac or  │
+│ your own Cloud.                                                                                                          │
+╰─────────────────────────────────────── Documentation at https://dev.sunholo.com/ ────────────────────────────────────────╯
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 usage: sunholo [-h] [--debug] [--project PROJECT] [--region REGION]
                {deploy,list-configs,init,merge-text,proxy,vac,embed} ...
 
 sunholo CLI tool for deploying GenAI VACs
 
 optional arguments:
-  -h, --help            show this help message and exit
+  -h, --help            Show this help message and exit
   --debug               Enable debug output
   --project PROJECT     GCP project to list Cloud Run services from.
   --region REGION       Region to list Cloud Run services from.
@@ -32,6 +37,8 @@ commands:
 ```
 
 ## sunholo list-configs
+
+This helps examine and validate the YAML configuration files that are central to the sunholo library.
 
 ```bash
 $> sunholo list-configs -h
@@ -131,7 +138,7 @@ When you have Cloud Run VACs running in the cloud, you can proxy them to your lo
 
 You can set the project_id and region via the global `--project_id` and `--region` flags.  But it is recommended to also use the `vacConfig` file to set up the `gcp_config` section for easier use.
 
-The `sunholo proxy` command will let you proxy any Cloud Run service via [`gcloud run services proxy`](https://cloud.google.com/sdk/gcloud/reference/run/services/proxy) - you will need to authenticated with `gcloud` for the services you want to use.
+The `sunholo proxy` command will let you proxy any Cloud Run service via [`gcloud run services proxy`](https://cloud.google.com/sdk/gcloud/reference/run/services/proxy) - you will need to be authenticated with `gcloud` for the services you want to use.
 
 Example yaml:
 
@@ -246,7 +253,6 @@ vac:
 
 ```bash
 $> sunholo vac --help
-
 usage: sunholo vac [-h] [--url_override URL_OVERRIDE] [--no-proxy] {list,get-url,chat,invoke} ...
 
 positional arguments:
@@ -266,9 +272,7 @@ optional arguments:
 
 ### Examples
 
-For interactive sessions, it will start a proxy for you.  Use `exit` to break the session.
-
-```bash
+List all the VACs available to your account for the project defined.
 
 ```bash
 $> sunholo vac list
@@ -300,10 +304,18 @@ $> sunholo vac list
 │ vertex-genai     │ europe-west1 │ https://vertex-genai-xxxxxxxxxxxxx.a.run.app   │ No      │ -    │
 │ webapp           │ europe-west1 │ https://webapp-xxxxxxxxxxxxx.a.run.app         │ No      │ -    │
 └──────────────────┴──────────────┴────────────────────────────────────────────────┴─────────┴──────┘
+```
 
+Get the URL of a specific VAC
+
+```bash
 $> sunholo vac get-url edmonbrain
 https://edmonbrain-xxxxxxxx.a.run.app
+```
 
+Chat with a VAC from the command line.  To exit a chat, use `exit`
+
+```bash
 $> sunholo vac chat --help
 usage: sunholo vac chat [-h] [--headless] [--chat_history CHAT_HISTORY] [--no_proxy] vac_name [user_input]
 
@@ -412,7 +424,7 @@ This command is equivalent to `curl` commands you may use otherwise, but helps r
 
 ```bash
 $> sunholo vac invoke --help
-usage: sunholo vac invoke [-h] [--no-proxy] vac_name data
+usage: sunholo vac invoke [-h] [--is-file] vac_name data
 
 positional arguments:
   vac_name    Name of the VAC service.
@@ -420,7 +432,7 @@ positional arguments:
 
 optional arguments:
   -h, --help  show this help message and exit
-  --no-proxy  Do not use the proxy and connect directly to the VAC service.
+  --is-file   Indicate if the data argument is a file path
 ```
 
 For example, you may have a VAC service not on Google Cloud Platform, but upon Azure.  Deploying the Docker service to Azure container apps, you can still invoke the VAC service alongside the GCP proxy services by overriding the URL:
@@ -429,57 +441,22 @@ For example, you may have a VAC service not on Google Cloud Platform, but upon A
 $> export FLASK_URL=https://chunker.your-azure-id.northeurope.azurecontainerapps.io/
 $> sunholo vac --url_override ${FLASK_URL}/pubsub_to_store invoke chunker '{
           "message": {
-            "data": "aHR0cHM6Ly93d3cuYW1hc3MudGVjaC8=",
+            "data": "aHR0cHM6Ly93d3cuYW1hc3MudGVjaC8=", # https://amass.tech 
             "attributes": {
               "namespace": "sample_vector",
               "return_chunks": true
             }
           }
         }'
-
+```
+```json
 {
     'chunks': [
         {
             'metadata': {
-                'category': 'Title',
-                'category_depth': 0,
-                'chunk_number': 0,
-                'doc_id': '7a45e7ec-1f25-5d09-9372-b8439e6769dd',
-                'filetype': 'text/html',
-                'languages': ['eng'],
-                'link_start_indexes': [0],
-                'link_texts': ['Contact'],
-                'link_urls': ['./contact'],
-                'namespace': 'sample_vector',
-                'return_chunks': True,
-                'source': 'https://www.amass.tech/',
-                'type': 'url_load',
-                'url': 'https://www.amass.tech/',
-                'vector_name': 'sample_vector'
+                ...
             },
-            'page_content': 'Supercharge Your R&D Productivity\nSynthesize scientific research across millions of internal and external data sources\nLet me 
-try\nPDF\nThe Role of MacroH2A Histone Variants in Cancer\nJournal: Cancers\nDOI: 10.3390/cancers13123003\nDOI: 
-10.3390/cancers13123003\n2021\n2021\nhttps://pubmed.ncbi.nlm.nih.gov/34203934/\nPDF\nMCM ring hexamerization is a prerequisite for DNA-binding\nJournal: Nucleic 
-Acids Research\nDOI: 10.1093/nar/gkv914\nDOI: 10.1093/nar/gkv914\n2015\n2015\nhttps://pubmed.ncbi.nlm.nih.gov/26365238/\nProudly building in partnership 
-with\nTrusted by and developed with world-leading life-science research organizations\nIncrease Your R&D Productivity\nLet AI do the heavy lifting\nAutomate the 
-grind of literature, database, ELN searches, readings and writings with your own AI CoScientist, who synthesizes research for you. Our platform simplifies complex
-research topics and data by doing your ground work, so you can focus on research, instead\nDefine Your Own Scientific Data Playing Field\nIntegrate the data 
-sources that support your research workflows and needs.\nAdd data sources seamlessly blending internal and external data\nIntegrate own data for maximum effect as
-well, e.g. Zotero, Articles, Presentations, Contracts even, Excel, Sharepoints. Whatever you have, we will work to integrate.\nLearn more about the 
-product\nInternal data integrations\nOpen data sources\nDo All The Things You Should Be Doing, But Do Not Have Time To\nOur AI platform let’s you explore, 
-interact and work with hundreds of millions of data points, including research papers, patents, databases and more. In seconds.\nNo more searching for articles in
-your own archive or spending hours finding quality research\nSave hours every week of research and admin time\nLearn more about the product\n“It really feels like
-talking to PubMed”\nClarisse Chiche-lapierre,\nCEO, Idun Biologics\n© 2023 Amass Technologies ApS. All rights 
-reserved.\nHome\nProduct\nPricing\nAbout\nContact\nLog in\nSign up\nSupercharge Your R&D Productivity\nSynthesize scientific research across millions of internal 
-and external data sources\nLet me try\nProudly building in partnership with\nTrusted by and developed with world-leading life-science research 
-organizations\nIncrease R&D productivity\nUse AI and Machine Learning to aid the scientific process\nJoin world-leading scientists from the world’s top life 
-science companies, universities, and research institutions. We’re currently launching pilots, so reach out if you want to enquire and learn more.\nDefine your own
-data scientific playing field\nChoose which data sources you want to interact with to serve your research needs\nAdd data sources seamlessly blending internal and
-external data\nIntegrate own data for maximum effect as well, e.g. Zotero, Articles, Presentations, Contracts even, Excel, Sharepoints. Whatever you have, we will
-work to integrate.\nDo all the things you should be doing, but don’t have time to\nOur AI platform let’s you explore, interact and work with millions of data 
-points, including research papers, patents, databases and more. In seconds.\nNo more searching for articles in your own archive or spending hours finding quality 
-research\nSave hours every week of research and admin time\n“It really feels like talking to PubMed”\nClarisse Chiche-lapierre,\nCEO, Idun Biologics\n© 2023 Amass
-Technologies ApS. All rights reserved.\nHome\nProduct\nIndustries\nPricing\nAbout\nContact'
+            'page_content': 'Supercharge Your R&D Productivity\nSynthesize scientific research across millions of internal and external data sources...
         }
     ],
     'status': 'Success'
@@ -518,8 +495,8 @@ By default when using Multivac Cloud, it will send the content you want to embed
 
 ```bash
 $> sunholo embed --help
-usage: sunholo embed [-h] [--embed_override EMBED_OVERRIDE] [--chunk_override CHUNK_OVERRIDE] [--no-proxy] [-m METADATA]
-                     [--local-chunks]
+usage: sunholo embed [-h] [--embed-override EMBED_OVERRIDE] [--chunk-override CHUNK_OVERRIDE] [--no-proxy] [-m METADATA]
+                     [--local-chunks] [--is-file] [--only-chunk]
                      vac_name data
 
 positional arguments:
@@ -528,14 +505,16 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --embed_override EMBED_OVERRIDE
+  --embed-override EMBED_OVERRIDE
                         Override the embed VAC service URL.
-  --chunk_override CHUNK_OVERRIDE
+  --chunk-override CHUNK_OVERRIDE
                         Override the chunk VAC service URL.
   --no-proxy            Do not use the proxy and connect directly to the VAC service.
   -m METADATA, --metadata METADATA
                         Metadata to send with the embedding (as JSON string).
   --local-chunks        Whether to process chunks to embed locally, or via the cloud.
+  --is-file             Indicate if the data argument is a file path
+  --only-chunk          Whether to only parse the document and return the chunks locally, with no embedding
 ```
 
 ### Examples
@@ -548,22 +527,7 @@ $> sunholo embed edmonbrain "https://www.amass.tech/"
     'chunks': [
         {
             'metadata': {
-                'category': 'Title',
-                'category_depth': 0,
-                'chunk_number': 0,
-                'doc_id': '7a45e7ec-1f25-5d09-9372-b8439e6769dd',
-                'eventTime': '2024-06-05T10:52:42Z',
-                'filetype': 'text/html',
-                'languages': ['eng'],
-                'link_start_indexes': [0],
-                'link_texts': ['Contact'],
-                'link_urls': ['./contact'],
-                'namespace': 'edmonbrain',
-                'return_chunks': 'false',
-                'source': 'https://www.amass.tech/',
-                'type': 'url_load',
-                'url': 'https://www.amass.tech/',
-                'vector_name': 'edmonbrain'
+                ...
             },
             'page_content': 'Supercharge Your R&D Productivity\nSynthesize scientific research across millions of internal 
 and external data sources\nLet me try\nPDF\nThe Role of ...etc...'
@@ -599,6 +563,60 @@ This example is using your own URLs from your own Multivac deployments
 $> export CHUNK_URL=https://chunker.your-chunker-url.com
 $> export EMBED_URL=https://embedder.your-embedder-url.com
 $> sunholo embed edmonbrain "https://www.amass.tech/" --local-chunks --embed-override=$EMBED_URL --chunk-override=$CHUNK_URL
+
+```
+
+You can process local files for uploading by passing the `--is-file` flag and setting data to the file location
+
+```bash
+$> sunholo embed --local-chunks edmonbrain README.md --is-file
+──────────────────────────────────────────────── Sending data for chunking ─────────────────────────────────────────────────
+```
+```json
+{
+    'chunks': [
+        {
+            'metadata': {
+                'category': 'NarrativeText',
+                'chunk_number': 0,
+                'doc_chunk': 40,
+                'eventTime': '2024-06-06T12:32:14Z',
+                'filename': 'README.md',
+                'filetype': 'text/markdown',
+                'languages': ['eng'],
+                'parent_id': '5e6a0ba0e08fb994774adb94369c1621',
+                'parse_total_doc_chars': 2880,
+                'parse_total_doc_chunks': 41,
+                'return_chunks': True,
+                'source': 'sunholo-cli',
+                'vector_name': 'edmonbrain'
+            },
+            'page_content': 'Introduction\nThis is the Sunholo Python project, a comprehensive toolkit for working with 
+language models and vector stores on Google Cloud Platform.... ```'
+        }
+    ],
+    'status': 'success'
+}
+```
+```bash
+──────────────────────────────────────────────── Processing chunks locally ─────────────────────────────────────────────────
+Working on chunk {'category': 'NarrativeText', 'chunk_number': 0, 'doc_chunk': 40, 'eventTime': '2024-06-06T12:32:14Z', 
+'filename': 'README.md', 'filetype': 'text/markdown', 'languages': ['eng'], 'parent_id': '5e6a0ba0e08fb994774adb94369c1621',
+'parse_total_doc_chars': 2880, 'parse_total_doc_chunks': 41, 'return_chunks': True, 'source': 'sunholo-cli', 'vector_name': 
+'edmonbrain'}
+Sending chunk length 2905 to embedder
+...
+Embedding [1] chunks via http://127.0.0.1:8081 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
+─────────────────────────────────────────────── Embedding pipeline finished ────────────────────────────────────────────────
+```
+
+If you just would like the document parsed and chunked for you to embed yourself locally, you can use the `--only-chunk` flag, and direct them to a file for example via `> chunks.txt`
+
+```bash
+$> sunholo embed --local-chunks edmonbrain docs/docs/index.md --is-file --only-chunk > chunks.txt
+──────────────────────────────────────────────── Sending data for chunking ─────────────────────────────────────────────────
+✷ Sending docs/docs/index.md to chunk via http://127.0.0.1:8080
+...
 
 ```
 

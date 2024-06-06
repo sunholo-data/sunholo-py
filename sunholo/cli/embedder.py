@@ -3,14 +3,14 @@ import uuid
 import base64
 from datetime import datetime, timezone
 from argparse import Namespace
+from pathlib import Path
 
 from .sun_rich import console
 from rich.progress import Progress
 
 from .chat_vac import resolve_service_url, invoke_vac
 
-def encode_data(vac, content, metadata=None, local_chunks=False):
-    # Current time in UTC
+def create_metadata(vac, metadata):
     now_utc = datetime.now(timezone.utc)
     formatted_time = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -22,16 +22,25 @@ def encode_data(vac, content, metadata=None, local_chunks=False):
         if not isinstance(metadata, dict):
             metadata = json.loads(metadata)
     else:
-        metadata = {}
+        metadata = {}    
 
     # Update metadata with default values if not present
     metadata.update(default_metadata)
+
+    return metadata
+
+def encode_data(vac, content, metadata=None, local_chunks=False):
+
+    metadata = create_metadata(vac, metadata)
 
     # Encode the content (URL)
     if isinstance(content, str):
         message_data = base64.b64encode(content.encode('utf-8')).decode('utf-8')
     else:
         raise ValueError(f"Unsupported content type: {type(content)}")
+
+    now_utc = datetime.now(timezone.utc)
+    formatted_time = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
     # Construct the message dictionary
     messageId = str(uuid.uuid4())
@@ -62,6 +71,13 @@ def embed_command(args):
 
     console.rule("Sending data for chunking")
 
+    # Check if the data argument is a file path
+    if args.is_file:
+        file_path = Path(args.data)
+        if not file_path.is_file():
+            print(f"ERROR: The specified file does not exist: {file_path}")
+            return
+
     if args.chunk_override:
         chunk_args["url_override"] = args.chunk_override
     else:
@@ -70,15 +86,31 @@ def embed_command(args):
     chunk_args = Namespace(**chunk_args)
     chunk_url = resolve_service_url(chunk_args, no_config=True)
 
-    json_data = encode_data(args.vac_name, args.data, args.metadata, args.local_chunks)
-
     with console.status(f"[bold orange]Sending {args.data} to chunk via {chunk_url}[/bold orange]", spinner="star"):
-        chunk_res = invoke_vac(f"{chunk_url}/pubsub_to_store", json_data)
+        if args.is_file:
 
-    if not args.local_chunks:
-        console.rule(f"Chunks sent for processing in cloud: {chunk_res}")
+            metadata = create_metadata(args.vac_name, args.metadata)  
+            if args.local_chunks:
+                metadata["return_chunks"] = True
 
-        return
+            chunk_res = invoke_vac(f"{chunk_url}/direct_file_to_embed",
+                                   data=file_path,
+                                   vector_name=args.vac_name,
+                                   metadata=metadata,
+                                   is_file=True)
+        
+        else:
+            json_data = encode_data(args.vac_name, args.data, args.metadata, args.local_chunks)
+            chunk_res = invoke_vac(f"{chunk_url}/pubsub_to_store", json_data)
+        
+        if args.only_chunk:
+
+            return chunk_res
+
+        if not args.local_chunks:
+            console.rule(f"Chunks sent for processing in cloud: {chunk_res}")
+
+            return
     
     console.rule("Processing chunks locally")
 
@@ -91,7 +123,7 @@ def embed_command(args):
     embed_url = resolve_service_url(embed_args, no_config=True)
     
     if not chunk_res:
-        console.print(f"[bold red]ERROR: Did not get any chunks from {chunk_url} for {json_data}")
+        console.print(f"[bold red]ERROR: Did not get any chunks from {chunk_url} for {args.data}")
 
         return
 
@@ -144,5 +176,7 @@ def setup_embedder_subparser(subparsers):
     embed_parser.add_argument('--local-chunks',  action='store_true', help='Whether to process chunks to embed locally, or via the cloud.')
     embed_parser.add_argument('vac_name', help='VAC service to embed the data for')
     embed_parser.add_argument('data', help='String content to send for embedding')
+    embed_parser.add_argument('--is-file', action='store_true', help='Indicate if the data argument is a file path')
+    embed_parser.add_argument('--only-chunk', action='store_true', help='Whether to only parse the document and return the chunks locally, with no embedding')
 
     embed_parser.set_defaults(func=embed_command)
