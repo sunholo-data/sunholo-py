@@ -215,7 +215,9 @@ def load_config_key(key: str, vector_name: str, kind: str):
             raise ValueError("Deprecated config file, move to config with `vac:` at top level for `vector_name`")
         vac_config = vac.get(vector_name)
         if not vac_config:
-            raise ValueError(f"No config array was found for {vector_name} in {kind}")
+            log.warning(f"No config array was found for {vector_name} in {kind}")
+            
+            return None
         
         log.debug(f'vac_config: {vac_config} for {vector_name} - fetching "{key}"')
         key_value = vac_config.get(key)
