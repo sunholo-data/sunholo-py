@@ -23,7 +23,12 @@ from ..llamaindex.import_files import llamaindex_chunker_check
 from . import loaders
 
 def direct_file_to_embed(file_name: pathlib.Path, metadata: dict, vector_name: str):
-        
+    """
+    Send direct files to chunking embed pipeline
+
+    
+    
+    """
     log.info(f"Sending direct file upload {file_name} to loaders.read_file_to_documents {metadata}")
     docs = loaders.read_file_to_documents(file_name, metadata=metadata)
     if docs is None:
