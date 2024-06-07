@@ -7,7 +7,7 @@ except ImportError:
 from ..logging import log
 from ..utils.config import load_config_key
 from ..components import load_memories
-from ..llamaindex.import_files import fetch_corpus
+from ..llamaindex.get_files import fetch_corpus
 
 def get_vertex_memories(vector_name):
     """
