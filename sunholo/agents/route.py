@@ -42,15 +42,8 @@ def route_endpoint(vector_name, override_endpoint=None):
         agent_type = load_config_key('agent', vector_name, kind="vacConfig")
 
     stem = route_qna(vector_name) if not override_endpoint else override_endpoint
-
-    agent_config, _ = load_config('config/agent_config.yaml')
-
-    # Select the appropriate configuration based on agent_type
-    if agent_type in agent_config:
-        endpoints_config = agent_config[agent_type]
-    else:
-        log.warning('Using default endpoints configuration')
-        endpoints_config = agent_config['default']
+    
+    endpoints_config = load_config_key(agent_type, vector_name, kind="agentConfig")
     
     log.info(f"endpoints_config: {endpoints_config}")
 

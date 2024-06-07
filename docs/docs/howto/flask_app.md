@@ -150,22 +150,28 @@ vac:
       overlap: 200
 ```
 
-The app will use the default agent configuration within `agent_config.yaml`:
+The app will use the default agent configuration within `agentConfig`:
 
 ```yaml
 # agent_config.yaml
-default:
-  stream: "{stem}/vac/streaming/{vector_name}"
-  invoke: "{stem}/vac/{vector_name}"
+kind: agentConfig
+apiVersion: v1
+agents:
+  default:
+    stream: "{stem}/vac/streaming/{vector_name}"
+    invoke: "{stem}/vac/{vector_name}"
 ```
 
 However, if you add other endpoints or wish to specify it directly, use the VAC name and add those endpoints to the `agent_config.yaml` file
 
 ```yaml
 # agent_config.yaml
-vertex-genai:
-  stream: "{stem}/vac/streaming/{vector_name}"
-  invoke: "{stem}/vac/{vector_name}"
+kind: agentConfig
+apiVersion: v1
+agents:
+  vertex-genai:
+    stream: "{stem}/vac/streaming/{vector_name}"
+    invoke: "{stem}/vac/{vector_name}"
 ```
 
 ## Deploy

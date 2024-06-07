@@ -1,7 +1,8 @@
 from ..agents import send_to_qa
-from ..streaming import generate_proxy_stream
+from ..streaming import generate_proxy_stream, can_agent_stream
 from ..utils.user_ids import generate_user_id
 from ..utils.config import load_config_key
+from ..logging import log
 
 from .run_proxy import clean_proxy_list, start_proxy, stop_proxy
 
@@ -42,7 +43,7 @@ def get_service_url(vac_name, project, region, no_config=False):
 
     return url
 
-def stream_chat_session(service_url, service_name):
+def stream_chat_session(service_url, service_name, stream=True):
 
     user_id = generate_user_id()
     chat_history = []
@@ -52,16 +53,11 @@ def stream_chat_session(service_url, service_name):
         if user_input.lower() in ["exit", "quit"]:
             console.print("[bold red]Exiting chat session.[/bold red]")
             break
-
-        def stream_response():
-            generate = generate_proxy_stream(
-                send_to_qa,
-                user_input,
+        
+        if not stream:
+            vac_response = send_to_qa(user_input,
                 vector_name=service_name,
                 chat_history=chat_history,
-                generate_f_output=lambda x: x,  # Replace with actual processing function
-                stream_wait_time=0.5,
-                stream_timeout=120,
                 message_author=user_id,
                 #TODO: populate these
                 image_url=None,
@@ -77,34 +73,65 @@ def stream_chat_session(service_url, service_name):
                 user_id=user_id,
                 session_id=session_id, 
                 message_source="cli",
-                override_endpoint=service_url
-            )
-            for part in generate():
-                yield part
+                override_endpoint=service_url)
+            
+            console.print(f"[bold yellow]{service_name}:[/bold yellow] {vac_response}", end='\n')
+        else:
 
-        response_started = False
-        vac_response = ""
+            def stream_response():
+                generate = generate_proxy_stream(
+                    send_to_qa,
+                    user_input,
+                    vector_name=service_name,
+                    chat_history=chat_history,
+                    generate_f_output=lambda x: x,  # Replace with actual processing function
+                    stream_wait_time=0.5,
+                    stream_timeout=120,
+                    message_author=user_id,
+                    #TODO: populate these
+                    image_url=None,
+                    source_filters=None,
+                    search_kwargs=None,
+                    private_docs=None,
+                    whole_document=False,
+                    source_filters_and_or=False,
+                    # system kwargs
+                    configurable={
+                        "vector_name": service_name,
+                    },
+                    user_id=user_id,
+                    session_id=session_id, 
+                    message_source="cli",
+                    override_endpoint=service_url
+                )
+                for part in generate():
+                    yield part
 
-        # point or star?
-        with console.status("[bold orange]Thinking...[/bold orange]", spinner="star") as status:
-            for token in stream_response():
-                if not response_started:
-                    status.stop()
-                    console.print(f"[bold yellow]{service_name}:[/bold yellow] ", end='')
-                    response_started = True
+            response_started = False
+            vac_response = ""
 
-                if isinstance(token, bytes):
-                    token = token.decode('utf-8')
-                console.print(token, end='')
-                vac_response += token
+            # point or star?
+            with console.status("[bold orange]Thinking...[/bold orange]", spinner="star") as status:
+                for token in stream_response():
+                    if not response_started:
+                        status.stop()
+                        console.print(f"[bold yellow]{service_name}:[/bold yellow] ", end='')
+                        response_started = True
+
+                    if isinstance(token, bytes):
+                        token = token.decode('utf-8')
+                    console.print(token, end='')
+                    vac_response += token
+
+            response_started = False
 
         chat_history.append({"name": "Human", "content": user_input})
         chat_history.append({"name": "AI", "content": vac_response})
-        response_started = False
+        
         console.print()
         console.rule()
 
-def headless_mode(service_url, service_name, user_input, chat_history=None):
+def headless_mode(service_url, service_name, user_input, chat_history=None, stream=True):
     chat_history = chat_history or []
 
     user_id = generate_user_id()
@@ -196,16 +223,23 @@ def vac_command(args):
         service_url = resolve_service_url(args)
         agent_name   = load_config_key("agent", args.vac_name, kind="vacConfig")
 
+        streamer = can_agent_stream(agent_name)
+        log.warning(f"streamer: {streamer}")
+        if not streamer:
+            console.print(f"Non streaming agent: {args.vac_name}")
+
         if args.headless:
-            headless_mode(service_url, args.vac_name, args.user_input, args.chat_history)
+            headless_mode(service_url, args.vac_name, args.user_input, args.chat_history, stream=streamer)
         else:
             display_name = load_config_key("display_name", vector_name=args.vac_name,  kind="vacConfig")
             description  = load_config_key("description", vector_name=args.vac_name, kind="vacConfig")
+            endpoints_config = load_config_key(agent_name, "dummy_value", kind="agentConfig")
 
+            display_endpoints = ', '.join(f"{key}: {value}" for key, value in endpoints_config.items())
             if agent_name == "langserve":
                 subtitle = f"{service_url}/{args.vac_name}/playground/"
             else:
-                subtitle = f"{agent_name} - {service_url}/vac/{args.vac_name}"
+                subtitle = f"{agent_name} - {display_endpoints}"
 
             print(
                 Panel(description or "Starting VAC chat session", 
@@ -213,7 +247,7 @@ def vac_command(args):
                     subtitle=subtitle)
                     )
 
-            stream_chat_session(service_url, args.vac_name)
+            stream_chat_session(service_url, args.vac_name, stream=streamer)
         
         stop_proxy(agent_name, stop_local=False)
 

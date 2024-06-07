@@ -58,14 +58,14 @@ def load_all_configs():
     from ..logging import log
 
     if not os.getenv("_CONFIG_FOLDER", None):
-        log.warning("_CONFIG_FOLDER is not set, using os.getcwd() instead")
+        log.debug("_CONFIG_FOLDER is not set, using os.getcwd() instead")
     else:
-        log.warning(f"_CONFIG_FOLDER set to: {os.getenv('_CONFIG_FOLDER')}")
+        log.debug(f"_CONFIG_FOLDER set to: {os.getenv('_CONFIG_FOLDER')}")
 
     config_folder = os.getenv("_CONFIG_FOLDER", os.getcwd())
     config_folder = os.path.join(config_folder, "config")
 
-    log.info(f"Loading all configs from folder: {config_folder}")
+    log.debug(f"Loading all configs from folder: {config_folder}")
     current_time = datetime.now()
 
     configs_by_kind = defaultdict(dict)
@@ -82,7 +82,7 @@ def load_all_configs():
                 cached_config, cache_time = config_cache[filename]
                 time_to_recache = (current_time - cache_time)
                 if time_to_recache < timedelta(minutes=5):
-                    log.info(f"Returning cached config for {filename} - recache in {format_timedelta(time_to_recache)}")
+                    log.debug(f"Returning cached config for {filename} - recache in {format_timedelta(timedelta(minutes=5) - time_to_recache)}")
                     config = cached_config
                 else:
                     config = reload_config_file(config_file, filename)
@@ -109,7 +109,7 @@ def reload_config_file(config_file, filename):
             config = yaml.safe_load(file)
     
     config_cache[filename] = (config, datetime.now())
-    log.info(f"Loaded and cached {filename}")
+    log.debug(f"Loaded and cached {config_file}")
     return config
 
 
@@ -194,7 +194,9 @@ def load_config_key(key: str, vector_name: str, kind: str):
     """
     from ..logging import log
     
-    assert isinstance(key, str), f"key must be a string got a {type(key)}"
+    if kind != 'agentConfig':
+        assert isinstance(key, str), f"key must be a string got a {type(key)}"
+
     assert isinstance(vector_name, str), f"vector_name must be a string, got a {type(vector_name)}"
     
     configs_by_kind = load_all_configs()
@@ -243,3 +245,12 @@ def load_config_key(key: str, vector_name: str, kind: str):
         key_value = prompt_for_vector_name.get(key)
         
         return key_value
+    elif kind == 'agentConfig':
+        agents = config.get('agents')
+
+        if key in agents:
+            return agents[key]
+        else:
+            log.warning("Returning default agent endpoints")
+            return agents["default"]
+        
