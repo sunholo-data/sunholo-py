@@ -33,8 +33,12 @@ def get_service_url(vac_name, project, region, no_config=False):
         port = proxies[agent_name]['port']
         url = f"http://127.0.0.1:{port}"
     else:
-        console.print(f"No proxy found running for service: [bold orange]'{agent_name}[/bold orange] required for [bold orange]{vac_name}[/bold orange] - attempting to connect")
-        url = start_proxy(agent_name, region, project)
+        if agent_name:
+            console.print(f"No proxy found running for service: [bold orange]'{agent_name}'[/bold orange] required for [bold orange]{vac_name}[/bold orange] - attempting to connect")
+            url = start_proxy(agent_name, region, project)
+        else:
+            console.print(f"No config for [bold orange]'{vac_name}'[/bold orange] - can't start proxy")
+            sys.exit(1)
 
     return url
 

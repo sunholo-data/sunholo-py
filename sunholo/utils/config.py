@@ -17,6 +17,7 @@ import json
 import yaml
 from datetime import datetime, timedelta
 from collections import defaultdict
+from .timedelta import format_timedelta
 
 
 def get_module_filepath(filepath: str):
@@ -79,8 +80,9 @@ def load_all_configs():
             # Check cache first
             if filename in config_cache:
                 cached_config, cache_time = config_cache[filename]
-                if (current_time - cache_time) < timedelta(minutes=5):
-                    log.debug(f"Returning cached config for {filename}")
+                time_to_recache = (current_time - cache_time)
+                if time_to_recache < timedelta(minutes=5):
+                    log.info(f"Returning cached config for {filename} - recache in {format_timedelta(time_to_recache)}")
                     config = cached_config
                 else:
                     config = reload_config_file(config_file, filename)
