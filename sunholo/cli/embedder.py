@@ -9,6 +9,7 @@ from .sun_rich import console
 from rich.progress import Progress
 
 from .chat_vac import resolve_service_url, invoke_vac
+from .run_proxy import stop_proxy
 
 def create_metadata(vac, metadata):
     now_utc = datetime.now(timezone.utc)
@@ -103,8 +104,8 @@ def embed_command(args):
             json_data = encode_data(args.vac_name, args.data, args.metadata, args.local_chunks)
             chunk_res = invoke_vac(f"{chunk_url}/pubsub_to_store", json_data)
         
+        stop_proxy("chunker")
         if args.only_chunk:
-
             return chunk_res
 
         if not args.local_chunks:
@@ -124,13 +125,13 @@ def embed_command(args):
     
     if not chunk_res:
         console.print(f"[bold red]ERROR: Did not get any chunks from {chunk_url} for {args.data}")
-
+        stop_proxy("embedder")
         return
 
     chunks = chunk_res.get('chunks')
     if not chunks:
         console.print(f"[bold red]ERROR: No chunks found within json data: {str(chunk_res)} [/bold red]")
-
+        stop_proxy("embedder")
         return
     
     embeds = []
@@ -156,6 +157,7 @@ def embed_command(args):
             embeds.append(embed_res)
             progress.advance(task)
 
+    stop_proxy("embedder")
     console.rule("Embedding pipeline finished")
     
     return embed_res
