@@ -6,10 +6,11 @@ except ImportError:
 from ..logging import log
 from ..utils.config import load_config_key
 from ..vertex import init_vertex
+from ..components import load_memories
 
 # Create a RAG Corpus, Import Files
 
-def get_corpus(gcp_config):
+def get_corpus(vector_name):
     """
     Retrieves a LlamaIndex corpus from Vertex AI based on the provided Google Cloud configuration.
     
@@ -17,13 +18,10 @@ def get_corpus(gcp_config):
     to fetch the corresponding corpus. If the corpus cannot be retrieved, it raises an error.
     
     Parameters:
-    - gcp_config (dict): Configuration dictionary that must include:
-        - project_id (str): Google Cloud project identifier.
-        - location (str): Google Cloud location.
-        - rag_id (str): Identifier for the RAG (Retrieval-Augmented Generation) corpus.
+    - vector_name: The name of the of VAC
     
     Returns:
-    - The corpus object fetched from Vertex AI.
+    - List of corpus objects fetched from Vertex AI.
     
     Raises:
     - ValueError: If any of the required configurations (project_id, location, or rag_id) are missing,
@@ -31,32 +29,54 @@ def get_corpus(gcp_config):
 
     Example:
     ```python
-    # Example configuration dictionary
-    gcp_config = {
-        'project_id': 'your-project-id',
-        'location': 'your-location',
-        'rag_id': 'your-rag-id'
-    }
 
     # Fetch the corpus
     try:
-        corpus = get_corpus(gcp_config)
+        corpus = get_corpus("edmonbrain")
         print("Corpus fetched successfully:", corpus)
     except ValueError as e:
         print("Error fetching corpus:", str(e))
     ```
     """
+    gcp_config = load_config_key("gcp_config", vector_name=vector_name, type="vacConfig")
+
     if not rag:
         raise ValueError("Need to install vertexai module via `pip install sunholo[gcp]`")
     
-    project_id = gcp_config.get('project_id')
-    location = gcp_config.get('location')
-    rag_id = gcp_config.get('rag_id')
-    if not project_id:
-        raise ValueError("Need config.gcp.project_id to configure llamaindex on VertexAI")
-    if not rag_id:
-        raise ValueError("Need config.gcp.rag_id to configure llamaindex on VertexAI.  Create via `rag.create_corpus(display_name=vector_name, description=description)`")
+    global_project_id = gcp_config.get('project_id')
+    global_location = gcp_config.get('location')
+    global_rag_id = gcp_config.get('rag_id')
 
+    memories = load_memories(vector_name)
+    corpii = []
+    for memory in memories:
+        for key, value in memory.items():  # Now iterate over the dictionary
+            log.info(f"Found memory {key}")
+            vectorstore = value.get('vectorstore')
+            if vectorstore == "llamaindex":
+                log.info(f"Found vectorstore {vectorstore}")
+                rag_id = value.get('rag_id')
+                project_id = gcp_config.get('project_id')
+                location = gcp_config.get('location')
+                corpus = fetch_corpus(
+                    project_id=project_id or global_project_id,
+                    location=location or global_location,
+                    rag_id=rag_id or global_rag_id
+                )
+                corpii.append(corpus)
+                
+    if not project_id or not global_project_id:
+        raise ValueError("Need config.gcp.project_id or config.memory.llamaindex.project_id to configure llamaindex on VertexAI")
+    if not rag_id or not global_project_id:
+        raise ValueError("Need config.gcp.rag_id or config.memory.llamaindex.rag_id to configure llamaindex on VertexAI.  Create via `rag.create_corpus(display_name=vector_name, description=description)`")
+    
+    if not corpii:
+        raise ValueError("No llamaindex Vertex corpus configurations could be found")
+    
+    return corpii
+
+
+def fetch_corpus(project_id, location, rag_id):
     corpus_name = f"projects/{project_id}/locations/{location}/ragCorpora/{rag_id}"  
 
     try:
