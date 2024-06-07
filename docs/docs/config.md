@@ -102,6 +102,26 @@ gcp_config: # reached via vac='global'
   project_id: default-gcp-project
   location: europe-west1
 vac:
+  personal_llama:
+    llm: vertex  # using google vertex
+    model: gemini-1.5-pro-preview-0514 # models within google vertex
+    agent: vertex-genai # using VAC created for Vertex
+    display_name: LlamaIndex via Vertex AI # for UI to the end user
+    grounding: # vertex only - add grounding
+      google_search: true
+    memory: # multiple memory allowed
+      - llamaindex-native:
+          vectorstore: llamaindex # only on vertex
+          rag_id: 4611686018427387904 # generated via vertex RAG
+      - agent_data_store:
+          vectorstore: vertexai_agent_builder # only on vertex
+          data_store_id: 1231231231231  # generated via vertex
+    gcp_config:
+      project_id: multivac-internal-dev # default project
+      location: us-central1   # default location
+    chunker: # control chunking behaviour when sending data to llamaindex
+      chunk_size: 1000
+      overlap: 200
     pirate_speak:
         llm: openai
         agent: langserve

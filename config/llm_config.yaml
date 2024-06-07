@@ -149,13 +149,18 @@ vac:
     model: gemini-1.5-pro-preview-0514
     agent: vertex-genai
     display_name: LlamaIndex via Vertex AI
+    grounding:
+      google_search: true
     memory:
       - llamaindex-native:
           vectorstore: llamaindex
+          rag_id: 4611686018427387904 
+      - agent_data_store:
+          vectorstore: vertexai_agent_builder
+          data_store_id: 1231231231231
     gcp_config:
-      project_id: llamaindex_project
-      location: europe-west1
-      rag_id: 4611686018427387904 # created via rag.create for now     
+      project_id: multivac-internal-dev
+      location: us-central1  
     chunker:
       chunk_size: 1000
       overlap: 200
