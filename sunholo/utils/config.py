@@ -56,10 +56,15 @@ def load_all_configs():
     """
     from ..logging import log
 
+    if not os.getenv("_CONFIG_FOLDER", None):
+        log.warning("_CONFIG_FOLDER is not set, using os.getcwd() instead")
+    else:
+        log.warning(f"_CONFIG_FOLDER set to: {os.getenv('_CONFIG_FOLDER')}")
+
     config_folder = os.getenv("_CONFIG_FOLDER", os.getcwd())
     config_folder = os.path.join(config_folder, "config")
 
-    log.debug(f"Loading all configs from folder: {config_folder}")
+    log.info(f"Loading all configs from folder: {config_folder}")
     current_time = datetime.now()
 
     configs_by_kind = defaultdict(dict)
@@ -102,7 +107,7 @@ def reload_config_file(config_file, filename):
             config = yaml.safe_load(file)
     
     config_cache[filename] = (config, datetime.now())
-    log.debug(f"Loaded and cached {filename}")
+    log.info(f"Loaded and cached {filename}")
     return config
 
 
