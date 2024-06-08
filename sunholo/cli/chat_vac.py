@@ -3,6 +3,7 @@ from ..streaming import generate_proxy_stream, can_agent_stream
 from ..utils.user_ids import generate_user_id
 from ..utils.config import load_config_key
 from ..logging import log
+from ..qna.parsers import parse_output
 
 from .run_proxy import clean_proxy_list, start_proxy, stop_proxy
 
@@ -75,7 +76,10 @@ def stream_chat_session(service_url, service_name, stream=True):
                 message_source="cli",
                 override_endpoint=service_url)
             
-            console.print(f"[bold yellow]{service_name}:[/bold yellow] {vac_response}", end='\n')
+            # ensures {'answer': answer}
+            answer = parse_output(vac_response)
+            
+            console.print(f"[bold yellow]{service_name}:[/bold yellow] {answer.get('answer')}", end='\n')
         else:
 
             def stream_response():
@@ -236,6 +240,8 @@ def vac_command(args):
             endpoints_config = load_config_key(agent_name, "dummy_value", kind="agentConfig")
 
             display_endpoints = ', '.join(f"{key}: {value}" for key, value in endpoints_config.items())
+            display_endpoints = display_endpoints.replace("{stem}", service_url)
+            
             if agent_name == "langserve":
                 subtitle = f"{service_url}/{args.vac_name}/playground/"
             else:
