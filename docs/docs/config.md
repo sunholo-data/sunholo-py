@@ -215,6 +215,9 @@ vac:
       avatar_url: https://avatars.githubusercontent.com/u/3155884?s=48&v=4
       description: This is the original [Edmonbrain](https://code.markedmondson.me/running-llms-on-gcp/) implementation that uses RAG to answer questions based on data you send in via its `!help` commands and learns from previous chat history.  It dreams each night that can also be used in its memory.
       model: gpt-4o
+      user_special_cmds: # allows commands that execute before a call to the model for user interaction
+        - "!saveurl"
+        - "!savethread"
       memory_k: 10 # how many memories will be returned in total after relevancy compression
       memory:
         - personal-vectorstore:
@@ -235,30 +238,31 @@ This configuration file sets up standard endpoints for each type of agent, corre
 # this config file controls the behaviour of agent-types such as langserve, controlling what endpoints are used
 kind: agentConfig
 apiVersion: v1
-default:
-  stream: "{stem}/vac/streaming/{vector_name}"
-  invoke: "{stem}/vac/{vector_name}"
+agents:
+  default:
+    stream: "{stem}/vac/streaming/{vector_name}"
+    invoke: "{stem}/vac/{vector_name}"
 
-langserve:
-  stream: "{stem}/{vector_name}/stream"
-  invoke: "{stem}/{vector_name}/invoke"
-  input_schema: "{stem}/{vector_name}/input_schema"
-  output_schema: "{stem}/{vector_name}/output_schema"
-  config_schema: "{stem}/{vector_name}/config_schema"
-  batch: "{stem}/{vector_name}/batch"
-  stream_log: "{stem}/{vector_name}/stream_log"
+  langserve:
+    stream: "{stem}/{vector_name}/stream"
+    invoke: "{stem}/{vector_name}/invoke"
+    input_schema: "{stem}/{vector_name}/input_schema"
+    output_schema: "{stem}/{vector_name}/output_schema"
+    config_schema: "{stem}/{vector_name}/config_schema"
+    batch: "{stem}/{vector_name}/batch"
+    stream_log: "{stem}/{vector_name}/stream_log"
 
-edmonbrain:
-  stream: "{stem}/vac/streaming/{vector_name}"
-  invoke: "{stem}/vac/{vector_name}"
+  edmonbrain:
+    stream: "{stem}/vac/streaming/{vector_name}"
+    invoke: "{stem}/vac/{vector_name}"
 
-openinterpreter:
-  stream: "{stem}/vac/streaming/{vector_name}"
-  invoke: "{stem}/vac/{vector_name}"
+  openinterpreter:
+    stream: "{stem}/vac/streaming/{vector_name}"
+    invoke: "{stem}/vac/{vector_name}"
 
-crewai:
-  stream: "{stem}/vac/streaming/{vector_name}"
-  invoke: "{stem}/vac/{vector_name}"
+  crewai:
+    stream: "{stem}/vac/streaming/{vector_name}"
+    invoke: "{stem}/vac/{vector_name}"
 ```
 
 ## userConfig

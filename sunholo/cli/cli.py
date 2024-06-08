@@ -45,9 +45,6 @@ class CustomHelpAction(argparse.Action):
         parser.exit()
 
 def main(args=None):
-
-
-
     """
     Entry point for the sunholo console script. This function parses command line arguments
     and invokes the appropriate functionality based on the user input.

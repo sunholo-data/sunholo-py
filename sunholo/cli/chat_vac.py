@@ -1,10 +1,9 @@
-from ..agents import send_to_qa
+from ..agents import send_to_qa, handle_special_commands
 from ..streaming import generate_proxy_stream, can_agent_stream
 from ..utils.user_ids import generate_user_id
 from ..utils.config import load_config_key
 from ..logging import log
 from ..qna.parsers import parse_output
-
 from .run_proxy import clean_proxy_list, start_proxy, stop_proxy
 
 import uuid
@@ -54,6 +53,15 @@ def stream_chat_session(service_url, service_name, stream=True):
         if user_input.lower() in ["exit", "quit"]:
             console.print("[bold red]Exiting chat session.[/bold red]")
             break
+
+        special_reply = handle_special_commands(
+            user_input, 
+            vector_name=service_name,
+            chat_history=chat_history)
+
+        if special_reply:
+             console.print(f"[bold yellow]{service_name}:[/bold yellow] {special_reply}", end='\n')
+             continue     
         
         if not stream:
             vac_response = send_to_qa(user_input,
@@ -241,7 +249,7 @@ def vac_command(args):
 
             display_endpoints = ', '.join(f"{key}: {value}" for key, value in endpoints_config.items())
             display_endpoints = display_endpoints.replace("{stem}", service_url)
-            
+
             if agent_name == "langserve":
                 subtitle = f"{service_url}/{args.vac_name}/playground/"
             else:
