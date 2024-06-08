@@ -236,7 +236,7 @@ def vac_command(args):
         agent_name   = load_config_key("agent", args.vac_name, kind="vacConfig")
 
         streamer = can_agent_stream(agent_name)
-        log.warning(f"streamer: {streamer}")
+        log.debug(f"streamer: {streamer}")
         if not streamer:
             console.print(f"Non streaming agent: {args.vac_name}")
 
@@ -247,13 +247,13 @@ def vac_command(args):
             description  = load_config_key("description", vector_name=args.vac_name, kind="vacConfig")
             endpoints_config = load_config_key(agent_name, "dummy_value", kind="agentConfig")
 
-            display_endpoints = ', '.join(f"{key}: {value}" for key, value in endpoints_config.items())
-            display_endpoints = display_endpoints.replace("{stem}", service_url)
+            display_endpoints = ' '.join(f"{key}: {value}" for key, value in endpoints_config.items())
+            display_endpoints = display_endpoints.replace("{stem}", service_url).replace("{vector_name}", args.vac_name)
 
             if agent_name == "langserve":
                 subtitle = f"{service_url}/{args.vac_name}/playground/"
             else:
-                subtitle = f"{agent_name} - {display_endpoints}"
+                subtitle = display_endpoints
 
             print(
                 Panel(description or "Starting VAC chat session", 

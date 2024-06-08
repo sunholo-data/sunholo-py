@@ -17,6 +17,8 @@ import socket
 # can't install due to circular import sunholo.logging
 import logging
 
+from .config import load_config_key
+
 def is_running_on_cloudrun():
     """
     Check if the current environment is a Google Cloud Run instance.
@@ -127,9 +129,11 @@ def get_gcp_project():
     Returns:
         str or None: The project ID if found, None otherwise.
     """
-    if not is_running_on_gcp():
-        return None
-    
+    gcp_config = load_config_key("gcp_config", "global", "vacConfig")
+    if gcp_config:
+        if gcp_config.get('project_id'):
+            return gcp_config.get('project_id')
+
     project_id = get_env_project_id()
     if project_id:
         return project_id
@@ -137,6 +141,10 @@ def get_gcp_project():
     project_id = get_metadata('project/project-id')
     if project_id:
         os.environ["GCP_PROJECT"] = project_id 
+        return project_id
+
+    if not is_running_on_gcp():
+        return None
 
     logging.warning("GCP Project ID not found. Ensure you are running on GCP or have the GCP_PROJECT environment variable set.")
     return None

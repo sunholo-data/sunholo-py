@@ -46,6 +46,8 @@ def handle_special_commands(user_input,
     hourmin = now.strftime("%H%M%S")
     the_datetime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
+    user_input = user_input.strip()
+
     if not cmds:
         cmds = load_config_key("user_special_cmds", vector_name=vector_name, kind="vacConfig")
         if not cmds:
