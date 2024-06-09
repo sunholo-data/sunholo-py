@@ -1,7 +1,7 @@
 from ..logging import log
 from ..pubsub import PubSubManager
 from ..utils.parsers import contains_url, extract_urls
-from ..utils.gcp import get_gcp_project
+from ..utils.gcp_project import get_gcp_project
 
 from langchain.schema import Document
 

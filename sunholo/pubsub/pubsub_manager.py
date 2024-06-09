@@ -21,7 +21,7 @@ except ImportError:
 
 import json
 from ..logging import log
-from ..utils.gcp import get_gcp_project
+from ..utils.gcp_project import get_gcp_project
 
 
 

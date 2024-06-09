@@ -15,7 +15,7 @@ from ..logging import log
 from .vectorstore import pick_vectorstore
 from ..utils import load_config_key
 from .llm import get_embeddings
-from ..utils.gcp import get_gcp_project
+from ..utils.gcp_project import get_gcp_project
 
 from langchain.retrievers import MergerRetriever
 from langchain_community.retrievers import GoogleCloudEnterpriseSearchRetriever

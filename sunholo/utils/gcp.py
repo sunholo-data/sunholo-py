@@ -17,7 +17,6 @@ import socket
 # can't install due to circular import sunholo.logging
 import logging
 
-from .config import load_config_key
 
 def is_running_on_cloudrun():
     """
@@ -66,15 +65,6 @@ def is_gcp_logged_in():
     except DefaultCredentialsError:
         return False
 
-def get_env_project_id():
-    """
-    Attempts to retrieve the project ID from environment variables.
-
-    Returns:
-        str or None: The project ID if found in environment variables, None otherwise.
-    """
-    return os.environ.get('GCP_PROJECT') or os.environ.get('GOOGLE_CLOUD_PROJECT')
-
 is_gcp_cached = None  # Global variable for caching the result
 def is_running_on_gcp():
     """
@@ -122,32 +112,6 @@ def get_service_account_email():
     os.environ['GCP_DEFAULT_SERVICE_EMAIL'] = service_email
     return service_email
 
-def get_gcp_project():
-    """
-    Retrieve the GCP project ID from environment variables or the GCP metadata server.
-
-    Returns:
-        str or None: The project ID if found, None otherwise.
-    """
-    gcp_config = load_config_key("gcp_config", "global", "vacConfig")
-    if gcp_config:
-        if gcp_config.get('project_id'):
-            return gcp_config.get('project_id')
-
-    project_id = get_env_project_id()
-    if project_id:
-        return project_id
-    
-    project_id = get_metadata('project/project-id')
-    if project_id:
-        os.environ["GCP_PROJECT"] = project_id 
-        return project_id
-
-    if not is_running_on_gcp():
-        return None
-
-    logging.warning("GCP Project ID not found. Ensure you are running on GCP or have the GCP_PROJECT environment variable set.")
-    return None
 
 
 def get_region():

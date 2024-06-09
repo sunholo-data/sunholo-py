@@ -18,7 +18,8 @@ try:
 except ImportError:
     Client = None
 
-from .utils.gcp import get_gcp_project, is_running_on_gcp, is_gcp_logged_in
+from .utils.gcp_project import get_gcp_project
+from .utils.gcp import is_running_on_gcp, is_gcp_logged_in
 import logging
 import inspect
 import os
