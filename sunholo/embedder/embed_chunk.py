@@ -116,7 +116,7 @@ def embed_pubsub_chunk(data: dict):
                 if embed_llm:
                     embeddings = pick_embedding(embed_llm)
                 # check if read only
-                read_only = value.get('readonly')
+                read_only = value.get('read_only')
                 if read_only:
                     continue
                 # read from a different vector_name
