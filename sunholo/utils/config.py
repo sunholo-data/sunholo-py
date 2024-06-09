@@ -252,6 +252,6 @@ def load_config_key(key: str, vector_name: str, kind: str):
         if key in agents:
             return agents[key]
         else:
-            log.warning("Returning default agent endpoints")
+            log.info("Returning default agent endpoints")
             return agents["default"]
         
