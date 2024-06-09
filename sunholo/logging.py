@@ -18,16 +18,15 @@ try:
 except ImportError:
     Client = None
 
-from .utils.gcp_project import get_gcp_project
-from .utils.gcp import is_running_on_gcp, is_gcp_logged_in
 import logging
 import inspect
 import os
 
-
 class GoogleCloudLogging:
     
     _instances = {}  # Dictionary to hold instances keyed by a tuple of (project_id, logger_name)
+
+    
 
     def __new__(cls, project_id=None, log_level=logging.INFO, logger_name=None):
         key = (project_id, logger_name)
@@ -37,6 +36,8 @@ class GoogleCloudLogging:
 
     def __init__(self, project_id=None, log_level=logging.INFO, logger_name=None):
         if not hasattr(self, 'initialized'):  # Avoid re-initialization
+            from .utils.gcp_project import get_gcp_project # circular import if outside
+
             self.project_id = project_id or get_gcp_project()
             self.client = Client(project=self.project_id) if is_gcp_logged_in() else None
             self.logger_name = logger_name
@@ -53,6 +54,7 @@ class GoogleCloudLogging:
 
         try:
             caller_info = self._get_caller_info()
+            from .utils.gcp import is_running_on_gcp, is_gcp_logged_in
             if not is_running_on_gcp() and not is_gcp_logged_in():
                 import logging
                 logging.basicConfig(level=self.log_level, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -99,6 +101,7 @@ class GoogleCloudLogging:
         if not logger_name and not self.logger_name:
             raise ValueError("Must provide a logger name e.g. 'run.googleapis.com%2Fstderr'")
         
+        from .utils.gcp import is_running_on_gcp, is_gcp_logged_in
         if not is_running_on_gcp() and not is_gcp_logged_in():
             log.basicConfig(level=log.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
             if log_text:
@@ -223,6 +226,7 @@ def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
 
     if Client and os.environ.get('GOOGLE_CLOUD_LOGGING') == "1":
         if project_id is None:
+            from .utils.gcp_project import get_gcp_project
             project_id = get_gcp_project()
         # Instantiate the GoogleCloudLogging class
         gc_logger = GoogleCloudLogging(project_id, log_level=log_level, logger_name=logger_name)

@@ -192,8 +192,8 @@ def load_config_key(key: str, vector_name: str, kind: str):
     print(f'API URL: {api_url}')
     ```
     """
-    import logging # can't use sunholo.logging due to circular import
-    log = logging.getLogger("sunholo")
+    # can't use sunholo.logging due to circular import
+    from ..logging import log
 
     if kind != 'agentConfig':
         assert isinstance(key, str), f"key must be a string got a {type(key)}"
