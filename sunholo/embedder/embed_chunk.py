@@ -66,7 +66,7 @@ def embed_pubsub_chunk(data: dict):
     log.info(f"Embedding: {vector_name} page_content: {page_content[:30]}...[{len(page_content)}] - {metadata}")
 
     if 'eventTime' not in metadata:
-        metadata['eventTime'] = datetime.datetime.now(datetime.UTC).isoformat(timespec='microseconds') + "Z"
+        metadata['eventTime'] = datetime.datetime.now().isoformat(timespec='microseconds') + "Z"
     metadata['eventtime'] = metadata['eventTime']
 
     if 'source' not in metadata:
