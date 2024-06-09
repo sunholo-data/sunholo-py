@@ -37,6 +37,7 @@ class GoogleCloudLogging:
     def __init__(self, project_id=None, log_level=logging.INFO, logger_name=None):
         if not hasattr(self, 'initialized'):  # Avoid re-initialization
             from .utils.gcp_project import get_gcp_project # circular import if outside
+            from .utils.gcp import is_gcp_logged_in
 
             self.project_id = project_id or get_gcp_project()
             self.client = Client(project=self.project_id) if is_gcp_logged_in() else None

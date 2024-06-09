@@ -12,17 +12,19 @@ def get_env_project_id():
     """
     return os.environ.get('GCP_PROJECT') or os.environ.get('GOOGLE_CLOUD_PROJECT')
 
-def get_gcp_project():
+
+def get_gcp_project(include_config=False):
     """
     Retrieve the GCP project ID from environment variables or the GCP metadata server.
 
     Returns:
         str or None: The project ID if found, None otherwise.
     """
-    gcp_config = load_config_key("gcp_config", "global", "vacConfig")
-    if gcp_config:
-        if gcp_config.get('project_id'):
-            return gcp_config.get('project_id')
+    if include_config: # to avoid circular imports, must be specified
+        gcp_config = load_config_key("gcp_config", "global", "vacConfig")
+        if gcp_config:
+            if gcp_config.get('project_id'):
+                return gcp_config.get('project_id')
 
     project_id = get_env_project_id()
     if project_id:

@@ -43,7 +43,7 @@ class PubSubManager:
         # Get the project ID from the default Google Cloud settings or the environment variable
         if self.project_id is None:
             _, project_id = default()
-            self.project_id = project_id or get_gcp_project()
+            self.project_id = project_id or get_gcp_project(include_config=True)
 
         if self.project_id:
             log.info(f"Pubsub Project ID: {self.project_id}")
