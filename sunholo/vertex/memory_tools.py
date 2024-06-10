@@ -1,6 +1,6 @@
 try:
     from vertexai.preview import rag
-    from vertexai.preview.generative_models import Tool, grounding
+    from vertexai.preview.generative_models import Tool, grounding, GenerationResponse
 except ImportError:
     rag = None
 
@@ -89,3 +89,53 @@ def get_vertex_memories(vector_name):
         log.warning("No llamaindex Vertex corpus configurations could be found")
     
     return tools
+
+def print_grounding_response(response):
+    """Prints Gemini response with grounding citations."""
+    grounding_metadata = response.candidates[0].grounding_metadata
+
+    # Citation indices are in byte units
+    ENCODING = "utf-8"
+    text_bytes = response.text.encode(ENCODING)
+
+    prev_index = 0
+    markdown_text = ""
+
+    sources: dict[str, str] = {}
+    footnote = 1
+    for attribution in grounding_metadata.grounding_attributions:
+        context = attribution.web or attribution.retrieved_context
+        if not context:
+            log.info(f"Skipping Grounding Attribution {attribution}")
+            continue
+
+        title = context.title
+        uri = context.uri
+        end_index = int(attribution.segment.end_index)
+
+        if uri not in sources:
+            sources[uri] = {"title": title, "footnote": footnote}
+            footnote += 1
+
+        text_segment = text_bytes[prev_index:end_index].decode(ENCODING)
+        markdown_text += f"{text_segment} [[{sources[uri]['footnote']}]]({uri})"
+        prev_index = end_index
+
+    if prev_index < len(text_bytes):
+        markdown_text += str(text_bytes[prev_index:], encoding=ENCODING)
+
+    markdown_text += "\n## Grounding Sources\n"
+
+    if grounding_metadata.web_search_queries:
+        markdown_text += (
+            f"\n**Web Search Queries:** {grounding_metadata.web_search_queries}\n"
+        )
+    elif grounding_metadata.retrieval_queries:
+        markdown_text += (
+            f"\n**Retrieval Queries:** {grounding_metadata.retrieval_queries}\n"
+        )
+
+    for uri, source in sources.items():
+        markdown_text += f"{source['footnote']}. [{source['title']}]({uri})\n"
+    
+    log.info(markdown_text)

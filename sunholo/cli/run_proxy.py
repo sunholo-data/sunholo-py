@@ -277,7 +277,7 @@ def setup_proxy_subparser(subparsers):
     start_parser.add_argument('--port', type=int, help='Port to run the proxy on. Auto-assigns if not provided.')
     start_parser.add_argument('--local', action='store_true', help='Run the service locally instead of proxying to Cloud Run.')
     start_parser.add_argument('--app-type', choices=['flask', 'fastapi'], help='If local, type of the local app (flask or fastapi).')
-    start_parser.add_argument('--app-folder', help='If local, folder containing the local app.py')
+    start_parser.add_argument('--app-folder', default=".", help='If local, folder containing the local app.py')
     start_parser.add_argument('--log-file', action='store_true', help='Whether to create a file containing proxy logs.')
     start_parser.set_defaults(func=lambda args: start_proxy(args.service_name, 
                                                             args.region, 
