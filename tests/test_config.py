@@ -26,8 +26,9 @@ def test_load_config_key(mock_load_all_configs):
     # Test existing key
     assert config.load_config_key("key1", "test_vector", "vacConfig") == "value1"
     # Test non-existing key
-    with pytest.raises(KeyError):
-        config.load_config_key("non_existing_key", "test_vector", "vacConfig")
+    result = config.load_config_key("non_existing_key", "test_vector", "vacConfig")
+    assert result is None
+
     # Test invalid configuration
-    with pytest.raises(ValueError):
-        config.load_config_key("key1", "test_vector", "invalidConfig")
+    result2 = config.load_config_key("key1", "test_vector", "invalidConfig")
+    assert result2 is None
