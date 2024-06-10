@@ -30,5 +30,5 @@ def test_load_config_key(mock_load_all_configs):
     assert result is None
 
     # Test invalid configuration
-    result2 = config.load_config_key("key1", "test_vector", "invalidConfig")
-    assert result2 is None
+    with pytest.raises(KeyError):
+        config.load_config_key("key1", "test_vector", "invalidConfig")
