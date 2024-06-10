@@ -1,6 +1,8 @@
-# LlamaIndex on VertexAI
+# VertexAI Grounding with LlamaIndex and Google Search
 
-LlamaIndex is available within the VertexAI platform via a serverless integration - see here: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/rag-api
+LlamaIndex is available within the [VertexAI platform via a serverless integration](https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/rag-api)
+
+Grounding is also available using a [Google Search](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/ground-gemini#ground-gemini-web-python_vertex_ai_sdk)
 
 `sunholo` integrates with this application by providing HTTP endpoints for the indexing or new documents placed within Google Cloud Storage and via streaming or static VAC endpoints.  Whilst only some embedding features are implemented at the moment, the LlamaIndex on VertexAI integration takes care of a lot of aspects such as chunking and embedding, with no server to set up.  This makes it a good choice for quick and low-maintenance RAG applications.
 
