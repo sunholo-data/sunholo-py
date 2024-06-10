@@ -79,6 +79,16 @@ Chunking and embedding pipeline
 pip install sunholo[pipeline]
 ```
 
+## Tests via pytest
+
+If loading from GitHub, run tests:
+
+```bash
+pip install pytest
+pip install . --use-feature=in-tree-build
+pytest tests
+```
+
 ## Legacy
 
 Sunholo is derived from the Edmonbrain project, the original blog post you can read here: https://code.markedmondson.me/running-llms-on-gcp/ and owes a lot to Langchain ( https://github.com/langchain-ai/langchain )
