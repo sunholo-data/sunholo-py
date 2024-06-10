@@ -206,6 +206,8 @@ def prep_vac(request, vector_name):
     stream_wait_time = data.pop('stream_wait_time', 7)
     stream_timeout = data.pop('stream_timeout', 120)
     chat_history = data.pop('chat_history', None)
+    vector_name = data.pop('vector_name', vector_name)
+
     paired_messages = extract_chat_history(chat_history)
 
     all_input = {'user_input': user_input, 
