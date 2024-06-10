@@ -37,7 +37,7 @@ def get_vertex_memories(vector_name):
         print("Error fetching corpus:", str(e))
     ```
     """
-    gcp_config = load_config_key("gcp_config", vector_name=vector_name, type="vacConfig")
+    gcp_config = load_config_key("gcp_config", vector_name=vector_name, kind="vacConfig")
 
     if not rag:
         raise ValueError("Need to install vertexai module via `pip install sunholo[gcp]`")
