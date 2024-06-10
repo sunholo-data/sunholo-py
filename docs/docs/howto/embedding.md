@@ -39,16 +39,40 @@ Three system VACs are used within most embedding pipelines:
 
 Taking advantage of the micro-service architecture means the pipeline can scale from 0 to many GBs per second of embedding.
 
-`vacConfig` can set the attributes of the embedding chunks per VAC:
+`vacConfig` can set the attributes of the embedding chunks per VAC, for instance picking the embedding model.
 
 ```yaml
-# chunk size and overlap
-...
+    embedder:
+      llm: openai # if different from llm is what embedding model uses
+```
+
+Some LLM providers don't have embedding (e.g. Anthropic) so you can pick which embedding model can be used.
+
+### Chunker size
+
+```yaml
     chunker:
       chunk_size: 1000
       overlap: 200
-...
 ```
+
+This lets you determine how big the chunks will be and what overlap they shall have with each other.  This can vary depending on your use case.
+
+### Chunker type: semantic
+
+```yaml
+    chunker:
+      type: semantic
+      llm: openai
+      summarise:
+        llm: openai
+        model: gpt-3.5-turbo
+        threshold: 3000
+        model_limit: 30000
+```
+
+Instead of picking a chunk size you can use the experimental [Langchain technique of semantic chunking](https://python.langchain.com/v0.2/docs/how_to/semantic-chunker/), which will vary the chunk size and cut them off according to similarity scores of each sentence's embedding score.
+
 
 ## Add documents for embedding
 
