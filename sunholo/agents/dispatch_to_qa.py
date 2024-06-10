@@ -74,7 +74,7 @@ def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs
         # Update qna_data with optional values from kwargs
         qna_data.update(kwargs)
 
-        if not 'vector_name' not in qna_data:
+        if 'vector_name' not in qna_data:
             qna_data['vector_name'] = vector_name
 
     return qna_endpoint, qna_data
