@@ -49,6 +49,10 @@ def get_vertex_memories(vector_name):
 
     memories = load_memories(vector_name)
     tools = []
+
+    if not memories:
+        return tools
+    
     for memory in memories:
         for key, value in memory.items():  # Now iterate over the dictionary
             log.info(f"Found memory {key}")
@@ -139,3 +143,4 @@ def print_grounding_response(response):
         markdown_text += f"{source['footnote']}. [{source['title']}]({uri})\n"
     
     log.info(markdown_text)
+    return markdown_text

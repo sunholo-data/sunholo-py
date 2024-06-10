@@ -45,7 +45,6 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
         return jsonify({"status": "healthy"})
 
     @app.route('/vac/streaming/<vector_name>', methods=['POST'])
-    @observe()
     def stream_qa(vector_name):
         observed_stream_interpreter = observe()(stream_interpreter)
         prep = prep_vac(request, vector_name)
@@ -111,8 +110,8 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
         return response
 
     @app.route('/vac/<vector_name>', methods=['POST'])
-    @observe()
     def process_qna(vector_name):
+        observed_vac_interpreter = observe()(vac_interpreter)
         prep = prep_vac(request, vector_name)
         log.debug(f"Processing prep: {prep}")
         trace = prep["trace"]
@@ -132,13 +131,13 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                     input = all_input,
                     model=vac_config.get("model") or vac_config.get("llm")
                 )
-            bot_output = vac_interpreter(
+            bot_output = observed_vac_interpreter(
                 question=all_input["user_input"],
                 vector_name=vector_name,
                 chat_history=all_input["chat_history"],
                 **all_input["kwargs"]
             )
-            if generation:
+            if span:
                 generation.end(output=bot_output)
             # {"answer": "The answer", "source_documents": [{"page_content": "The page content", "metadata": "The metadata"}]}
             bot_output = parse_output(bot_output)

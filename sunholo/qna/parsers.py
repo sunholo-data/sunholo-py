@@ -36,7 +36,7 @@ def parse_output(bot_output):
 
         return bot_output
     
-    elif isinstance(bot_output, dict) and 'metadata' in bot_output and isinstance(bot_output.get('metadata')) and 'source_documents' in bot_output.get('metadata'):
+    elif isinstance(bot_output, dict) and 'metadata' in bot_output and isinstance(bot_output.get('metadata'), dict) and 'source_documents' in bot_output.get('metadata'):
         metadata = bot_output.get('metadata')
         bot_output['source_documents'] = [document_to_dict(doc) for doc in metadata['source_documents']]
         if not bot_output.get("answer") or bot_output.get("answer") == "":
