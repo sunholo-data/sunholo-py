@@ -39,6 +39,8 @@ pip install sunholo[gcp,http,cli]
 
 Once your configuration is loaded within Multivac, embed and index them by adding files to your Google Cloud Storage bucket to have the files indexed, via [`llamaindex.import_files.py`](../sunholo/llamaindex/import_files).  This supports large amounts of files.
 
+For more details on how to set up indexing, see the [embedding pipeline documentation](../howto/embedding).
+
 ## Config
 
 To use LlamaIndex on VertexAI, set up a memory store to send data to:
