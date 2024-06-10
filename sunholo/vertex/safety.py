@@ -1,9 +1,10 @@
-from vertexai.generative_models import (
-    GenerationConfig,
-    GenerativeModel,
-    HarmCategory,
-    HarmBlockThreshold,
-)
+try:
+    from vertexai.generative_models import (
+        HarmCategory,
+        HarmBlockThreshold,
+    )
+except ImportError:
+    pass
 
 def vertex_safety(threshold: str = "BLOCK_ONLY_HIGH"):
     """
@@ -23,7 +24,6 @@ def vertex_safety(threshold: str = "BLOCK_ONLY_HIGH"):
         thresh = HarmBlockThreshold.BLOCK_NONE
     else:
         raise ValueError("Invalid threshold")
-
 
     safety_settings = {
         HarmCategory.HARM_CATEGORY_HARASSMENT: thresh,
