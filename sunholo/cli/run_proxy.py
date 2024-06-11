@@ -8,7 +8,7 @@ from .sun_rich import console
 from rich.table import Table
 from rich import print
 
-PROXY_TRACKER_FILE = '.vac_proxy_tracker.json'
+PROXY_TRACKER_FILE = os.path.join(os.path.expanduser("~"), '.proxy_tracker.json')
 DEFAULT_PORT = 8080
 
 
