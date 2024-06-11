@@ -8,7 +8,7 @@ But to get the documents embedded in the first place is also controlled by the c
 kind: vacConfig
 apiVersion: v1
   vac:
-    edmonbrain:
+    edmonbrain: # the vector_name of this VAC
       llm: openai
       agent: edmonbrain
       display_name: Edmonbrain
@@ -21,7 +21,7 @@ apiVersion: v1
             vectorstore: lancedb
             k: 10 #  how many candidate memory will be returned from this vectorstore
         - eduvac-vectorstore:
-            vector_name: eduvac
+            vector_name: eduvac # define a different vector_name of another VAC to read from
             read_only: true # can only read, not write embeddings
             vectorstore: lancedb
             k: 3 #  how many candidate memory will be returned from this vectorstore
