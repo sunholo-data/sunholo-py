@@ -273,6 +273,7 @@ def vac_command(args):
 def invoke_vac(service_url, data, vector_name=None, metadata=None, is_file=False):
     try:
         if is_file:
+            console.print("Uploading file to chunker...")
             # Handle file upload
             if not isinstance(data, Path) or not data.is_file():
                 raise ValueError("For file uploads, 'data' must be a Path object pointing to a valid file.")
@@ -287,12 +288,20 @@ def invoke_vac(service_url, data, vector_name=None, metadata=None, is_file=False
 
             response = requests.post(service_url, files=files, data=form_data)
         else:
+            console.print("Uploading JSON to chunker...")
             try:
-                json_data = json.loads(data)
+                if isinstance(data, dict):
+                    json_data = data
+                else:
+                    json_data = json.loads(data)
             except json.JSONDecodeError as err:
                 console.print(f"[bold red]ERROR: invalid JSON: {str(err)} [/bold red]")
                 sys.exit(1)
+            except Exception as err:
+                console.print(f"[bold red]ERROR: could not parse JSON: {str(err)} [/bold red]")
+                sys.exit(1)
 
+            log.debug(f"Sending data: {data} or json_data: {json.dumps(json_data)}")
             # Handle JSON data
             headers = {"Content-Type": "application/json"}
             response = requests.post(service_url, headers=headers, data=json.dumps(json_data))

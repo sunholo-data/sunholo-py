@@ -18,12 +18,15 @@ def create_metadata(vac, metadata):
     # Default metadata if none provided
     default_metadata = {"vector_name": vac, "source": "sunholo-cli", "eventTime": formatted_time}
 
-    # Merge default metadata with provided metadata
-    if metadata:
-        if not isinstance(metadata, dict):
-            metadata = json.loads(metadata)
-    else:
-        metadata = {}    
+    try:
+        # Merge default metadata with provided metadata
+        if metadata:
+            if not isinstance(metadata, dict):
+                metadata = json.loads(metadata)
+        else:
+            metadata = {}    
+    except Exception as err:
+        console.print(f"[bold red]ERROR: metadata not parsed: {err} for {metadata}")
 
     # Update metadata with default values if not present
     metadata.update(default_metadata)
@@ -87,7 +90,7 @@ def embed_command(args):
     chunk_args = Namespace(**chunk_args)
     chunk_url = resolve_service_url(chunk_args, no_config=True)
 
-    with console.status(f"[bold orange]Sending {args.data} to chunk via {chunk_url}[/bold orange]", spinner="star"):
+    with console.status(f"[bold orange]Sending '{args.data}' to chunk via {chunk_url}[/bold orange]", spinner="star"):
         if args.is_file:
 
             metadata = create_metadata(args.vac_name, args.metadata)  
@@ -102,6 +105,7 @@ def embed_command(args):
         
         else:
             json_data = encode_data(args.vac_name, args.data, args.metadata, args.local_chunks)
+            console.print(f"Chunk JSON data: {json_data}")
             chunk_res = invoke_vac(f"{chunk_url}/pubsub_to_store", json_data)
         
         stop_proxy("chunker")
@@ -112,6 +116,11 @@ def embed_command(args):
             console.rule(f"Chunks sent for processing in cloud: {chunk_res}")
 
             return
+    
+    if not chunk_res:
+        console.rule(f"[bold orange]No chunks were found for processing of {args.data}[/bold orange]")
+
+        return
     
     console.rule("Processing chunks locally")
 
