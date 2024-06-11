@@ -27,3 +27,16 @@ memory:
         rag_id: 4611686018427387904 
 ```
 
+## Vertex Model Garden
+
+To use GenAI model's deployed to Vertex Model Garden, you can set your 'llm' config and supply an `endpoint_id`
+
+```yaml
+vac_model_garden:
+    llm: model_garden
+    gcp_config:
+        project_id: model_garden_project
+        endpoint_id: 12345678
+        location: europe-west1
+```
+

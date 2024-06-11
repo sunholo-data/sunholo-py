@@ -86,6 +86,12 @@ Often for batch pipelines a feeder bucket is used then an hourly Cloud Storage T
 
 The folder of the embedding bucket determines the `VAC` the documents are sent to, so for instance all files that land within `edmonbrain/` are sent to the `edmonbrain` vector stores.
 
+### Adding documents via the UIs
+
+Several of the Multivac clients such as the chat bot, web app or CLI support uploading files directly to the vector store.  Behind the scenes this is uploading the file to the embedding bucket for processing via the bucket pipeline above, or making a direct Pub/Sub call.
+
+Several VACs support special commands to help with this, such as `!saveurl` that will embed a URL after parsing, or `!savethread` to store the current conversation thread as a text file.
+
 ### Using locally via `sunholo embed`
 
 Since the services are available via API, `curl` can also be used to send files to the embedding pipeline, however for convenience its easier to use the `sunholo` cli installed via `pip install sunholo[cli]`.
