@@ -2,6 +2,7 @@ import subprocess
 import os
 import signal
 import json
+import socket
 
 from .sun_rich import console
 from rich.table import Table
@@ -10,6 +11,11 @@ from rich import print
 PROXY_TRACKER_FILE = '.vac_proxy_tracker.json'
 DEFAULT_PORT = 8080
 
+
+def is_port_in_use(port):
+    """Check if a given port is in use on the localhost."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('localhost', port)) == 0
 
 def get_next_available_port(proxies, default_port):
     """
@@ -24,7 +30,7 @@ def get_next_available_port(proxies, default_port):
     """
     used_ports = {info["port"] for info in proxies.values()}
     port = default_port
-    while port in used_ports:
+    while port in used_ports or is_port_in_use(port):
         port += 1
     return port
 

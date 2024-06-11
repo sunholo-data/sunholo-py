@@ -109,6 +109,24 @@ The URL contents are then available within ~1min for all clients using that VAC,
 
 ![](img/livekit-question.png)
 
+...or CLI version:
+
+```bash
+────────────────────────────────────── Edmonbrain ──────────────────────────────────────╮
+│ This is the original [Edmonbrain](https://code.markedmondson.me/running-llms-on-gcp/)  │
+│ implementation that uses RAG to answer questions based on data you send in via its     │
+│ `!help` commands and learns from previous chat history.  It dreams each night that can │
+│ also be used in its memory.                                                            │
+╰─ stream: http://127.0.0.1:8080/vac/streaming/edmonbrain invoke: http://127.0.0.1:8080/─╯
+You: What can you tell me about LiveKit?
+edmonbrain: LiveKit is a realtime communication platform designed to help developers integrate video, 
+voice, and data capabilities into their applications. 
+It leverages WebRTC technology and offers a range of features to simplify the development
+of scalable and complex communication systems. Here are some key points about LiveKit:
+...
+```
+
+
 ### Using locally via `sunholo embed`
 
 Since the services are available via API, `curl` can also be used to send files to the embedding pipeline, however for convenience its easier to use the `sunholo` cli installed via `pip install sunholo[cli]`.
