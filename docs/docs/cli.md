@@ -136,6 +136,8 @@ optional arguments:
 
 When you have Cloud Run VACs running in the cloud, you can proxy them to your local session to help with debugging and local applications.  Since by default most VACs are behind a VPC, they usually can not be called via public URLs, aside if they are web apps or chat bot clients.
 
+> `sunholo proxy` keeps track of which proxies are running via the file : `os.path.join(os.path.expanduser("~"), '.sunholo_proxy_tracker.json')` e.g. your home directory.
+
 You can set the project_id and region via the global `--project_id` and `--region` flags.  But it is recommended to also use the `vacConfig` file to set up the `gcp_config` section for easier use.
 
 The `sunholo proxy` command will let you proxy any Cloud Run service via [`gcloud run services proxy`](https://cloud.google.com/sdk/gcloud/reference/run/services/proxy) - you will need to be authenticated with `gcloud` for the services you want to use.
