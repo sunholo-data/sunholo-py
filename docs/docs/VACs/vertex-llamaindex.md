@@ -6,6 +6,8 @@ Grounding is also available using a [Google Search](https://cloud.google.com/ver
 
 `sunholo` integrates with this application by providing HTTP endpoints for the indexing or new documents placed within Google Cloud Storage and via streaming or static VAC endpoints.  Whilst only some embedding features are implemented at the moment, the LlamaIndex on VertexAI integration takes care of a lot of aspects such as chunking and embedding, with no server to set up.  This makes it a good choice for quick and low-maintenance RAG applications.
 
+The code for this VAC is available at the [Public VAC GitHub repository](https://github.com/sunholo-data/vacs-public/tree/dev/vertex-genai).
+
 ## Setup
 
 You need a corpus ID created when you make one (only available via API at the moment):

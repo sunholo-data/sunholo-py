@@ -270,6 +270,14 @@ optional arguments:
   --no-proxy            Do not use the proxy and connect directly to the VAC service.
 ```
 
+### Authentication via `roles/run.invoker`
+
+Your local `gcloud` user needs to have IAM access of `roles/run.invoker` to the VAC service to be able to call it, else you will get the error:
+
+> There was an error processing your request. Please try again later. 500 Server Error: 
+> Internal Server Error for url: http://127.0.0.1:8080/vac/streaming/edmonbrain`
+
+
 ### Examples
 
 List all the VACs available to your account for the project defined.
