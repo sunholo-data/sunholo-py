@@ -88,9 +88,26 @@ The folder of the embedding bucket determines the `VAC` the documents are sent t
 
 ### Adding documents via the UIs
 
-Several of the Multivac clients such as the chat bot, web app or CLI support uploading files directly to the vector store.  Behind the scenes this is uploading the file to the embedding bucket for processing via the bucket pipeline above, or making a direct Pub/Sub call.
+Several of the Multivac clients such as the chat bots, web app or CLI support uploading files directly to the vector store.  Behind the scenes this is uploading the file to the embedding bucket for processing via the bucket pipeline above, or making a direct Pub/Sub call.
 
-Several VACs support special commands to help with this, such as `!saveurl` that will embed a URL after parsing, or `!savethread` to store the current conversation thread as a text file.
+Several VACs support special commands to help with this, such as `!saveurl` that will embed a URL after parsing, or `!savethread` to store the current conversation thread as a text file.  For example via the `sunholo CLI`:
+
+```sh
+sunholo vac chat edmonbrain
+╭────────────────────────────────────── Edmonbrain ──────────────────────────────────────╮
+│ This is the original [Edmonbrain](https://code.markedmondson.me/running-llms-on-gcp/)  │
+│ implementation that uses RAG to answer questions based on data you send in via its     │
+│ `!help` commands and learns from previous chat history.  It dreams each night that can │
+│ also be used in its memory.                                                            │
+╰─ stream: http://127.0.0.1:8081/vac/streaming/edmonbrain invoke: http://127.0.0.1:8081/─╯
+You: !saveurl https://docs.livekit.io/home/get-started/intro-to-livekit/
+edmonbrain: URLs sent for processing: 
+['https://docs.livekit.io/home/get-started/intro-to-livekit/'] to edmonbrain.
+```
+
+The URL contents are then available within ~1min for all clients using that VAC, such as the webapp:
+
+![](img/livekit-question.png)
 
 ### Using locally via `sunholo embed`
 

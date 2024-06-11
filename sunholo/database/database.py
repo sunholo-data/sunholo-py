@@ -80,7 +80,8 @@ def setup_database(type, vector_name:str, verbose:bool=False):
     execute_sql_from_file("database/sql/sb/create_table.sql", params, verbose=verbose, connection_env=connection_env)
     execute_sql_from_file("database/sql/sb/create_function.sql", params, verbose=verbose, connection_env=connection_env)
 
-    if verbose: print("Ran all setup SQL statements")
+    if verbose: 
+        print("Ran all setup SQL statements")
     
     return True
 

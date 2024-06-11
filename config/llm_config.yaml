@@ -99,7 +99,6 @@ vac:
     memory:
       - alloydb-vectorstore:
           vectorstore: alloydb
-          provider: PostgreSQL
           self_query: false
   edmonbrain:
     llm: openai
@@ -126,7 +125,6 @@ vac:
     memory:
       - supabase-vectorstore:
           vectorstore: supabase
-          self_query: false
   sample_vector:
     llm: azure
     model: gpt-4-turbo-1106-preview

@@ -83,6 +83,8 @@ def main(args=None):
     # embed command
     setup_embedder_subparser(subparsers)
 
+    #TODO: add database setup commands: alloydb and supabase
+
     args = parser.parse_args(args)
 
     if args.debug:
