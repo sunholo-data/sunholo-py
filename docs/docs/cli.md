@@ -1,47 +1,22 @@
 # Sunholo CLI
 
-A CLI is installed via `sunholo[cli]`
+A CLI is installed via `sunholo"[cli]"`
+
+![](img/install.gif)
 
 ```bash
-$> pip install sunholo[cli]
-
-$> sunholo --help
-╭───────────────────────────────────────────── Sunholo GenAIOps Assistant CLI ─────────────────────────────────────────────╮
-│ Welcome to Sunholo Command Line Interface, your assistant to deploy GenAI Virtual Agent Computers (VACs) to Multivac or  │
-│ your own Cloud.                                                                                                          │
-╰─────────────────────────────────────── Documentation at https://dev.sunholo.com/ ────────────────────────────────────────╯
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-usage: sunholo [-h] [--debug] [--project PROJECT] [--region REGION]
-               {deploy,list-configs,init,merge-text,proxy,vac,embed} ...
-
-sunholo CLI tool for deploying GenAI VACs
-
-optional arguments:
-  -h, --help            Show this help message and exit
-  --debug               Enable debug output
-  --project PROJECT     GCP project to list Cloud Run services from.
-  --region REGION       Region to list Cloud Run services from.
-
-commands:
-  Valid commands
-
-  {deploy,list-configs,init,merge-text,proxy,vac,embed}
-                        Commands
-    deploy              Triggers a deployment of a VAC.
-    list-configs        Lists all configuration files and their details
-    init                Initializes a new Multivac project.
-    merge-text          Merge text files from a source folder into a single output file.
-    proxy               Set up or stop a proxy to the VAC Cloud Run services
-    vac                 Interact with deployed VAC services.
-    embed               Send data for embedding to a VAC vector store
+pip install sunholo"[cli]"
+sunholo --help
 ```
 
 ## sunholo list-configs
 
 This helps examine and validate the YAML configuration files that are central to the sunholo library.
 
+![](img/config-list.gif)
+
 ```bash
-$> sunholo list-configs -h
+sunholo list-configs -h
 usage: sunholo list-configs [-h] [--kind KIND] [--vac VAC] [--validate]
 
 optional arguments:
@@ -54,47 +29,10 @@ optional arguments:
 ### Examples
 
 ```bash
-$> sunholo list-configs
-#'## Config kind: promptConfig'
-#{'apiVersion': 'v1',
-# 'kind': 'promptConfig',
-# 'prompts': {'eduvac': {'chat_summary': 'Summarise the conversation below:\n'
-#                                        '# Chat History\n'
-#                                        '{chat_history}\n'
-#                                        '# End Chat History\n'
-#                                        'If in the chat history is a lesson '
-# ...                
-
-$> sunholo list-configs --kind 'vacConfig'
-## Config kind: vacConfig
-#{'apiVersion': 'v1',
-# 'kind': 'vacConfig',
-# 'vac': {'codey': {'agent': 'edmonbrain_rag',
-# ...
-
-$> sunholo list-configs --kind=vacConfig --vac=edmonbrain           
-## Config kind: vacConfig
-#{'edmonbrain': {'agent': 'edmonbrain',
-#                'avatar_url': 'https://avatars.githubusercontent.com/u/3155884?s=48&v=4',
-#                'description': 'This is the original '
-#                               '[Edmonbrain](https://code.markedmondson.me/running-llms-on-gcp/) '
-#                               'implementation that uses RAG to answer '
-#                               'questions based on data you send in via its '
-# ...
-
-# add the --validate flag to check the configuration against a schema
-$> sunholo list-configs --kind=vacConfig --vac=edmonbrain --validate           
-## Config kind: vacConfig
-#{'edmonbrain': {'agent': 'edmonbrain',
-#                'avatar_url': 'https://avatars.githubusercontent.com/u/3155884?s=48&v=4',
-#                'description': 'This is the original '
-#                               '[Edmonbrain](https://code.markedmondson.me/running-llms-on-gcp/) '
-#                               'implementation that uses RAG to answer '
-#                               'questions based on data you send in via its '
-# ...
-#Validating configuration for kind: vacConfig
-#Validating vacConfig for edmonbrain
-#OK: Validated schema
+sunholo list-configs               
+sunholo list-configs --kind 'vacConfig'
+sunholo list-configs --kind=vacConfig --vac=edmonbrain           
+sunholo list-configs --kind=vacConfig --vac=edmonbrain --validate           
 ```
 
 You can use the `--validate` flag in CI/CD to check the configuration each commit, for example in Cloud Build:
