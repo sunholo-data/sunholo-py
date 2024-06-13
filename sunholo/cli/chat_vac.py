@@ -149,46 +149,72 @@ def headless_mode(service_url, service_name, user_input, chat_history=None, stre
     user_id = generate_user_id()
     session_id = str(uuid.uuid4())
 
-    def stream_response():
-        generate = generate_proxy_stream(
-                send_to_qa,
-                user_input,
-                vector_name=service_name,
-                chat_history=chat_history,
-                generate_f_output=lambda x: x,  # Replace with actual processing function
-                stream_wait_time=0.5,
-                stream_timeout=120,
-                message_author=user_id,
-                #TODO: populate these
-                image_url=None,
-                source_filters=None,
-                search_kwargs=None,
-                private_docs=None,
-                whole_document=False,
-                source_filters_and_or=False,
-                # system kwargs
-                configurable={
-                    "vector_name": service_name,
-                },
-                user_id=user_id,
-                session_id=session_id, 
-                message_source="cli",
-                override_endpoint=service_url
-        )
-        for part in generate():
-            yield part
+    if not stream:
+        vac_response = send_to_qa(user_input,
+            vector_name=service_name,
+            chat_history=chat_history,
+            message_author=user_id,
+            #TODO: populate these
+            image_url=None,
+            source_filters=None,
+            search_kwargs=None,
+            private_docs=None,
+            whole_document=False,
+            source_filters_and_or=False,
+            # system kwargs
+            configurable={
+                "vector_name": service_name,
+            },
+            user_id=user_id,
+            session_id=session_id, 
+            message_source="cli",
+            override_endpoint=service_url)
+        
+        # ensures {'answer': answer}
+        answer = parse_output(vac_response)
+        
+        console.print(answer.get('answer'))
+    else:
+        def stream_response():
+            generate = generate_proxy_stream(
+                    send_to_qa,
+                    user_input,
+                    vector_name=service_name,
+                    chat_history=chat_history,
+                    generate_f_output=lambda x: x,  # Replace with actual processing function
+                    stream_wait_time=0.5,
+                    stream_timeout=120,
+                    message_author=user_id,
+                    #TODO: populate these
+                    image_url=None,
+                    source_filters=None,
+                    search_kwargs=None,
+                    private_docs=None,
+                    whole_document=False,
+                    source_filters_and_or=False,
+                    # system kwargs
+                    configurable={
+                        "vector_name": service_name,
+                    },
+                    user_id=user_id,
+                    session_id=session_id, 
+                    message_source="cli",
+                    override_endpoint=service_url
+            )
+            for part in generate():
+                yield part
 
-    vac_response = ""
+        answer = ""
 
-    for token in stream_response():
-        if isinstance(token, bytes):
-            token = token.decode('utf-8')
-        print(token, end='', flush=True)
-        vac_response += token
+        for token in stream_response():
+            if isinstance(token, bytes):
+                token = token.decode('utf-8')
+            print(token, end='', flush=True)
+            answer += token
 
-    if vac_response:
+    if answer:
         chat_history.append({"name": "Human", "content": user_input})
-        chat_history.append({"name": "AI", "content": vac_response})
+        chat_history.append({"name": "AI", "content": answer})
     print()  # For new line after streaming ends
 
     return chat_history

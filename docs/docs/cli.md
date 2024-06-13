@@ -167,6 +167,8 @@ When using `sunholo vac` below, it will start/stop a Cloud proxy for you if it i
 
 This allows you to interact with the Multivac cloud VACs with an interactive or headless client in your terminal, rather than the Web App or Chat bots.  It allows for quick debugging and opens up use cases for GenAI scripts calling VACs.
 
+![](img/sunholo-vac-chat.gif)
+
 It requires a `vacConfig` setup with details of the VACs you are calling e.g.
 
 ```yaml
@@ -327,6 +329,8 @@ Exiting chat session.
 ### Headless mode
 
 With headless mode, you just get the answer streamed to terminal.  Ask your question quoted in the next positional argument:
+
+![](img/sunholo-vac-chat-headless.gif)
 
 ```sh
 $> sunholo vac chat multivac_docs "What is Sunholo Multivac?" --headless
