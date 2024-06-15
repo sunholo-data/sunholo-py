@@ -53,26 +53,23 @@ def get_header(vector_name) -> Optional[dict]:
     else:
         run_url = "http://127.0.0.1:8080"
 
-    if "http://" in run_url:
-        return None
-    else:
-        # Append ID Token to make authenticated requests to Cloud Run services
-        frame = inspect.currentframe()
-        caller_frame = frame.f_back if frame is not None else None  # One level up in the stack
+    # Append ID Token to make authenticated requests to Cloud Run services
+    frame = inspect.currentframe()
+    caller_frame = frame.f_back if frame is not None else None  # One level up in the stack
+    deets = {
+        'message': 'Authenticating for run_url',
+        'run_url': run_url
+    }
+    if caller_frame:
         deets = {
-            'message': 'Authenticating for run_url',
-            'run_url': run_url
-        }
-        if caller_frame:
-            deets = {
-                    'message': 'Authenticating for run_url',
-                    'file': caller_frame.f_code.co_filename,
-                    'line': str(caller_frame.f_lineno),  
-                    'function': caller_frame.f_code.co_name,
-                    'run_url': run_url
-                }
-        log.info(f"Authenticating for run_url {run_url} from {caller_frame.f_code.co_name}")
-        id_token = get_id_token(run_url)
-        headers = {"Authorization": f"Bearer {id_token}"}
-        #log.info(f"id_token {id_token}")
-        return headers
+                'message': 'Authenticating for run_url',
+                'file': caller_frame.f_code.co_filename,
+                'line': str(caller_frame.f_lineno),  
+                'function': caller_frame.f_code.co_name,
+                'run_url': run_url
+            }
+    log.info(f"Authenticating for run_url {run_url} from {caller_frame.f_code.co_name}")
+    id_token = get_id_token(run_url)
+    headers = {"Authorization": f"Bearer {id_token}"}
+    #log.info(f"id_token {id_token}")
+    return headers
