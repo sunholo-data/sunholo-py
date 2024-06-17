@@ -29,6 +29,7 @@ setup(
     install_requires=[
         # Base dependencies
         "google-auth", # to check if on gcp
+        "tenacity==8.3.0",
         "langchain",
         "langchain_experimental",
         "langchain-community",
