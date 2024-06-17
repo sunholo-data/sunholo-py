@@ -155,6 +155,10 @@ This is useful for using tools such as [Jan.ai](https://jan.ai/) as a UI for Mul
 
 ![alt text](jan-config.png)
 
+Below is an example of calling Gemini using VAC [`personal_llama`](../VACs/vertex-llamaindex) with Google Search.
+
+![alt text](jan-gemini-openai-1.png)
+
 ## Config
 
 An example configuration file is shown below.  Read more about [Configuration](../config.md)
