@@ -168,19 +168,17 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
     @app.route('/openai/v1/chat/completions/<vector_name>', methods=['POST'])
     def openai_compatible_endpoint(vector_name=None):
         data = request.get_json()
-        log.info(f'openai_compatible_endpoint got data: {data}')
+        log.info(f'openai_compatible_endpoint got data: {data} for vector: {vector_name}')
 
         vector_name = vector_name or data.pop('model', None)
         messages = data.pop('messages', None)
         chat_history = data.pop('chat_history', None)
         stream = data.pop('stream', False)
 
-        log.info(f'openai_compatible_endpoint got data: {data} for vector: {vector_name}')
-
         if not messages:
             return jsonify({"error": "No messages provided"}), 400
 
-        user_message = next((msg['content'] for msg in messages if msg['role'] == 'user'), None)
+        user_message = next((msg['content'] for msg in reversed(messages) if msg['role'] == 'user'), None)
         if not user_message:
             return jsonify({"error": "No user message provided"}), 400
 
@@ -191,7 +189,6 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
         }
 
         observed_stream_interpreter = observe()(stream_interpreter)
-
 
         response_id = str(uuid.uuid4())
         
@@ -238,16 +235,20 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
             yield json.dumps(final_chunk) + "\n"
 
         if stream:
+            log.info("Streaming openai chunks")
             return Response(generate_response_content(), content_type='text/plain; charset=utf-8')
 
         try:
-            bot_output = observed_stream_interpreter(
+            observed_vac_interpreter = observe()(vac_interpreter)
+            bot_output = observed_vac_interpreter(
                 question=user_message,
                 vector_name=vector_name,
                 chat_history=all_input["chat_history"],
                 **all_input["kwargs"]
             )
             bot_output = parse_output(bot_output)
+
+            log.info(f"Bot output: {bot_output}")
 
             openai_response = {
                 "id": response_id,
@@ -275,6 +276,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
             return jsonify(openai_response)
 
         except Exception as err:
+            log.error(f"OpenAI response error: {err}")
             return jsonify({'error': f'QNA_ERROR: An error occurred: {str(err)} traceback: {traceback.format_exc()}'}), 500
 
 
