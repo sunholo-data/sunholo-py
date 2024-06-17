@@ -7,6 +7,8 @@ try:
 except ImportError:
     CallbackHandler = None
 
+from ..utils.version import sunholo_version
+
 def create_langfuse_callback(**kwargs):
 
     if not CallbackHandler:
@@ -40,10 +42,7 @@ def add_langfuse_tracing(
     session_id = request.headers.get("X-Session-ID")
     message_source = request.headers.get("X-Message-Source")
 
-    # can't import tags yet via CallbackHandler
-    from importlib.metadata import version
-    package_version = version('sunholo')
-    tags = [f"sunholo-v{package_version}"]
+    tags = [sunholo_version()]
     if message_source:
         tags.append(message_source)
 

@@ -25,6 +25,8 @@ from ...archive import archive_qa
 from ...logging import log
 from ...utils.config import load_config
 from ...utils.version import sunholo_version
+import os
+from ...gcs.add_file import add_file_to_gcs
 
 
 try:
@@ -281,10 +283,8 @@ def create_langfuse_trace(request, vector_name):
     session_id = request.headers.get("X-Session-ID")
     message_source = request.headers.get("X-Message-Source")
 
-    # can't import tags yet via CallbackHandler
-    from importlib.metadata import version
-    package_version = version('sunholo')
-    tags = [f"sunholo-v{package_version}"]
+    package_version = sunholo_version()
+    tags = [package_version]
     if message_source:
         tags.append(message_source)
 
@@ -300,8 +300,28 @@ def prep_vac(request, vector_name):
     #trace = create_langfuse_trace(request, vector_name)
     trace = None
     span = None
+
     data = request.get_json()
     log.info(f"vac/{vector_name} got data: {data}")
+
+    image_uri = None
+    mime_type = None
+    if 'file' in request.files:
+        file = request.files['file']
+        if file.filename != '':
+            log.info(f"Found file: {file.filename} to upload to GCS")
+            try:
+                image_uri, mime_type = handle_file_upload(file, vector_name)
+            except Exception as e:
+                return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
+        else:
+            return jsonify({"error": "No file selected"}), 400
+
+    if image_uri:
+        log.info(f"Uploaded file of {mime_type} now available at {image_uri}")
+        data["image_uri"] = image_uri
+        data["mime"] = mime_type
+ 
     config, _ = load_config("config/llm_config.yaml")
     vac_configs = config.get("vac")
     if vac_configs:
@@ -343,3 +363,13 @@ def prep_vac(request, vector_name):
         "all_input": all_input,
         "vac_config": vac_config
     }
+
+
+def handle_file_upload(file, vector_name):
+    try:
+        file.save(file.filename)
+        image_uri = add_file_to_gcs(file.filename, vector_name)
+        os.remove(file.filename)  # Clean up the saved file
+        return image_uri, file.mimetype
+    except Exception as e:
+        raise Exception(f'File upload failed: {str(e)}')
