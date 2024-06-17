@@ -27,7 +27,7 @@ When proxying or using online, you can use this as the OpenAI endpoint configura
 
 Below is an example of calling Gemini using VAC [`personal_llama`](../VACs/vertex-llamaindex) with Google Search.
 
-![calling a VAC via an OpenAI endpoint](jan-gemini-openai-1.png)
+![calling a VAC via an OpenAI endpoint](../img/jan-gemini-openai.png)
 
 ### Image models
 
