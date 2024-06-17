@@ -16,6 +16,7 @@
 import json
 import traceback
 import datetime
+import uuid
 
 from ...agents import extract_chat_history, handle_special_commands
 from ...qna.parsers import parse_output
@@ -23,7 +24,9 @@ from ...streaming import start_streaming_chat
 from ...archive import archive_qa
 from ...logging import log
 from ...utils.config import load_config
- 
+from ...utils.version import sunholo_version
+
+
 try:
     from flask import request, jsonify, Response
 except ImportError:
@@ -33,6 +36,7 @@ try:
     from langfuse.decorators import langfuse_context, observe
 except ImportError:
     pass    
+
 
 def register_qna_routes(app, stream_interpreter, vac_interpreter):
 
@@ -155,9 +159,114 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
             span.end(output=jsonify(bot_output))
             trace.update(output=jsonify(bot_output)) 
 
+        # {'answer': 'output'}
         return jsonify(bot_output)
 
-    # Any other QNA related routes can be added here
+    @app.route('/openai/v1/chat/completions', methods=['POST'])
+    def openai_compatible_endpoint():
+        data = request.get_json()
+        model = data.pop('model', None)
+        messages = data.pop('messages', None)
+        chat_history = data.pop('chat_history', None)
+        stream = data.pop('stream', False)
+
+        if not messages:
+            return jsonify({"error": "No messages provided"}), 400
+
+        user_message = next((msg['content'] for msg in messages if msg['role'] == 'user'), None)
+        if not user_message:
+            return jsonify({"error": "No user message provided"}), 400
+
+        all_input = {
+            "user_input": user_message,
+            "chat_history": chat_history,
+            "kwargs": data
+        }
+
+        observed_stream_interpreter = observe()(stream_interpreter)
+
+
+        response_id = str(uuid.uuid4())
+        
+        def generate_response_content():
+            for chunk in start_streaming_chat(question=user_message,
+                                            vector_name=model,
+                                            qna_func=observed_stream_interpreter,
+                                            chat_history=all_input["chat_history"],
+                                            wait_time=all_input.get("stream_wait_time", 1),
+                                            timeout=all_input.get("stream_timeout", 60),
+                                            **all_input["kwargs"]
+                                            ):
+                if isinstance(chunk, dict) and 'content' in chunk:
+                    openai_chunk = {
+                        "id": response_id,
+                        "object": "chat.completion.chunk",
+                        "created": int(datetime.time()),
+                        "model": model,
+                        "system_fingerprint": sunholo_version(),
+                        "choices": [{
+                            "index": 0,
+                            "delta": {"content": chunk['content']},
+                            "logprobs": None,
+                            "finish_reason": None
+                        }]
+                    }
+                    yield json.dumps(openai_chunk) + "\n"
+
+            final_chunk = {
+                "id": response_id,
+                "object": "chat.completion.chunk",
+                "created": int(datetime.time()),
+                "model": model,
+                "system_fingerprint": sunholo_version(),
+                "choices": [{
+                    "index": 0,
+                    "delta": {},
+                    "logprobs": None,
+                    "finish_reason": "stop"
+                }]
+            }
+            yield json.dumps(final_chunk) + "\n"
+
+        if stream:
+            return Response(generate_response_content(), content_type='text/plain; charset=utf-8')
+
+        try:
+            bot_output = observed_stream_interpreter(
+                question=user_message,
+                vector_name=model,
+                chat_history=all_input["chat_history"],
+                **all_input["kwargs"]
+            )
+            bot_output = parse_output(bot_output)
+
+            openai_response = {
+                "id": response_id,
+                "object": "chat.completion",
+                "created": int(datetime.time()),
+                "model": model,
+                "system_fingerprint": sunholo_version(),
+                "choices": [{
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": bot_output.get('answer', ''),
+                    },
+                    "logprobs": None,
+                    "finish_reason": "stop"
+                }],
+                "usage": {
+                    "prompt_tokens": len(user_message.split()),
+                    "completion_tokens": len(bot_output.get('answer', '').split()),
+                    "total_tokens": len(user_message.split()) + len(bot_output.get('answer', '').split())
+                }
+            }
+
+            return jsonify(openai_response)
+
+        except Exception as err:
+            return jsonify({'error': f'QNA_ERROR: An error occurred: {str(err)} traceback: {traceback.format_exc()}'}), 500
+
 
 def create_langfuse_trace(request, vector_name):
     try:
