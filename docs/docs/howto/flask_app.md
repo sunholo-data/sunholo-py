@@ -142,7 +142,7 @@ curl $FLASK_URL/vac/personal_llama \
 ```
 
 
-## /openai/v1/chat/completions/<vector_name>
+## /openai/v1/chat/completions
 
 If you leave the `<vector_name>` blank, then the proxy will attempt to look in the config for the "model" name
 
