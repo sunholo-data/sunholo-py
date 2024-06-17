@@ -26,7 +26,7 @@ from ...logging import log
 from ...utils.config import load_config
 from ...utils.version import sunholo_version
 import os
-from ...gcs.add_file import add_file_to_gcs
+from ...gcs.add_file import add_file_to_gcs, handle_base64_image
 
 
 try:
@@ -178,9 +178,29 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
         if not messages:
             return jsonify({"error": "No messages provided"}), 400
 
-        user_message = next((msg['content'] for msg in reversed(messages) if msg['role'] == 'user'), None)
+        user_message = None
+        image_uri = None
+        mime_type = None
+
+        for msg in reversed(messages):
+            if msg['role'] == 'user':
+                if isinstance(msg['content'], list):
+                    for content_item in msg['content']:
+                        if content_item['type'] == 'text':
+                            user_message = content_item['text']
+                        elif content_item['type'] == 'image_url':
+                            base64_data = content_item['image_url']['url']
+                            image_uri, mime_type = handle_base64_image(base64_data, vector_name)
+                else:
+                    user_message = msg['content']
+                break
+
         if not user_message:
             return jsonify({"error": "No user message provided"}), 400
+        
+        if image_uri:
+            data["image_uri"] = image_uri
+            data["mime"] = mime_type
 
         all_input = {
             "user_input": user_message,

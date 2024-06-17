@@ -13,6 +13,8 @@
 #   limitations under the License.
 import datetime
 import os
+import base64
+import uuid
 
 try:
     from google.cloud import storage
@@ -21,6 +23,22 @@ except ImportError:
 
 from ..logging import log
 from ..utils.config import load_config_key
+
+
+def handle_base64_image(base64_data, vector_name):
+    try:
+        header, encoded = base64_data.split(",", 1)
+        data = base64.b64decode(encoded)
+
+        filename = f"{uuid.uuid4()}.jpg"
+        with open(filename, "wb") as f:
+            f.write(data)
+
+        image_uri = add_file_to_gcs(filename, vector_name)
+        os.remove(filename)  # Clean up the saved file
+        return image_uri, "image/jpeg"
+    except Exception as e:
+        raise Exception(f'Base64 image upload failed: {str(e)}')
 
 def add_file_to_gcs(filename: str, vector_name:str, bucket_name: str=None, metadata:dict=None, bucket_filepath:str=None):
 
