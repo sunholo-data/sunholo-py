@@ -41,7 +41,32 @@ except ImportError:
 
 
 def register_qna_routes(app, stream_interpreter, vac_interpreter):
+    """
+    Register Q&A routes for a Flask application.
 
+    This function sets up multiple routes for handling Q&A operations,
+    including streaming responses and processing static responses.
+
+    Args:
+        app (Flask): The Flask application instance.
+        stream_interpreter (function): Function to handle streaming Q&A responses.
+        vac_interpreter (function): Function to handle static Q&A responses.
+
+    Returns:
+        None
+
+    Example:
+        from flask import Flask
+        app = Flask(__name__)
+
+        def dummy_stream_interpreter(...):
+            ...
+
+        def dummy_vac_interpreter(...):
+            ...
+
+        register_qna_routes(app, dummy_stream_interpreter, dummy_vac_interpreter)
+    """
     @app.route("/")
     def home():
         return jsonify("OK")
@@ -52,6 +77,21 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
 
     @app.route('/vac/streaming/<vector_name>', methods=['POST'])
     def stream_qa(vector_name):
+        """
+        Handle streaming Q&A responses.
+
+        This function sets up a route to handle streaming Q&A responses based on
+        the provided vector name.
+
+        Args:
+            vector_name (str): The name of the vector for the request.
+
+        Returns:
+            Response: A Flask response object streaming the Q&A response content.
+
+        Example:
+            response = stream_qa("example_vector")
+        """
         observed_stream_interpreter = observe()(stream_interpreter)
         prep = prep_vac(request, vector_name)
         log.debug(f"Processing prep: {prep}")
@@ -117,6 +157,21 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
 
     @app.route('/vac/<vector_name>', methods=['POST'])
     def process_qna(vector_name):
+        """
+        Handle static Q&A responses.
+
+        This function sets up a route to handle static Q&A responses based on
+        the provided vector name.
+
+        Args:
+            vector_name (str): The name of the vector for the request.
+
+        Returns:
+            Response: A Flask response object with the Q&A response content.
+
+        Example:
+            response = process_qna("example_vector")
+        """
         observed_vac_interpreter = observe()(vac_interpreter)
         prep = prep_vac(request, vector_name)
         log.debug(f"Processing prep: {prep}")
@@ -167,6 +222,21 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
     @app.route('/openai/v1/chat/completions', methods=['POST'])
     @app.route('/openai/v1/chat/completions/<vector_name>', methods=['POST'])
     def openai_compatible_endpoint(vector_name=None):
+        """
+        Handle OpenAI-compatible chat completions.
+
+        This function sets up routes to handle OpenAI-compatible chat completion requests,
+        both with and without a specified vector name.
+
+        Args:
+            vector_name (str, optional): The name of the vector for the request. Defaults to None.
+
+        Returns:
+            Response: A Flask response object with the chat completion content.
+
+        Example:
+            response = openai_compatible_endpoint("example_vector")
+        """
         data = request.get_json()
         log.info(f'openai_compatible_endpoint got data: {data} for vector: {vector_name}')
 
@@ -301,6 +371,22 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
 
 
 def create_langfuse_trace(request, vector_name):
+    """
+    Create a Langfuse trace for tracking requests.
+
+    This function initializes a Langfuse trace object based on the request headers
+    and vector name.
+
+    Args:
+        request (Request): The Flask request object.
+        vector_name (str): The name of the vector for the request.
+
+    Returns:
+        Langfuse.Trace: The Langfuse trace object.
+
+    Example:
+        trace = create_langfuse_trace(request, "example_vector")
+    """
     try:
         from langfuse import Langfuse
         langfuse = Langfuse()
@@ -327,6 +413,22 @@ def create_langfuse_trace(request, vector_name):
     )
 
 def prep_vac(request, vector_name):
+    """
+    Prepare the input data for a VAC request.
+
+    This function processes the incoming request data, extracts relevant
+    information, and prepares the data for VAC processing.
+
+    Args:
+        request (Request): The Flask request object.
+        vector_name (str): The name of the vector for the request.
+
+    Returns:
+        dict: A dictionary containing prepared input data and metadata.
+
+    Example:
+        prep_data = prep_vac(request, "example_vector")
+    """
     #trace = create_langfuse_trace(request, vector_name)
     trace = None
     span = None
@@ -396,6 +498,25 @@ def prep_vac(request, vector_name):
 
 
 def handle_file_upload(file, vector_name):
+    """
+    Handle file upload and store the file in Google Cloud Storage.
+
+    This function saves the uploaded file locally, uploads it to Google Cloud Storage,
+    and then removes the local copy.
+
+    Args:
+        file (FileStorage): The uploaded file.
+        vector_name (str): The name of the vector for the request.
+
+    Returns:
+        tuple: A tuple containing the URI of the uploaded file and its MIME type.
+
+    Raises:
+        Exception: If the file upload fails.
+
+    Example:
+        uri, mime_type = handle_file_upload(file, "example_vector")
+    """
     try:
         file.save(file.filename)
         image_uri = add_file_to_gcs(file.filename, vector_name)
