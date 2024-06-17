@@ -301,27 +301,27 @@ def prep_vac(request, vector_name):
     trace = None
     span = None
 
-    data = request.get_json()
+    if request.content_type.startswith('application/json'):
+        data = request.get_json()
+    elif request.content_type.startswith('multipart/form-data'):
+        data = request.form.to_dict()
+        if 'file' in request.files:
+            file = request.files['file']
+            if file.filename != '':
+                log.info(f"Found file: {file.filename} to upload to GCS")
+                try:
+                    image_uri, mime_type = handle_file_upload(file, vector_name)
+                    data["image_uri"] = image_uri
+                    data["mime"] = mime_type
+                except Exception as e:
+                    return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
+            else:
+                return jsonify({"error": "No file selected"}), 400
+    else:
+        return jsonify({"error": "Unsupported content type"}), 400
+
     log.info(f"vac/{vector_name} got data: {data}")
 
-    image_uri = None
-    mime_type = None
-    if 'file' in request.files:
-        file = request.files['file']
-        if file.filename != '':
-            log.info(f"Found file: {file.filename} to upload to GCS")
-            try:
-                image_uri, mime_type = handle_file_upload(file, vector_name)
-            except Exception as e:
-                return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
-        else:
-            return jsonify({"error": "No file selected"}), 400
-
-    if image_uri:
-        log.info(f"Uploaded file of {mime_type} now available at {image_uri}")
-        data["image_uri"] = image_uri
-        data["mime"] = mime_type
- 
     config, _ = load_config("config/llm_config.yaml")
     vac_configs = config.get("vac")
     if vac_configs:
@@ -342,7 +342,7 @@ def prep_vac(request, vector_name):
                  'vector_name': vector_name, 
                  'chat_history': paired_messages, 
                  'stream_wait_time': stream_wait_time,
-                 'stream_timeout':stream_timeout,
+                 'stream_timeout': stream_timeout,
                  'kwargs': data}
 
     if trace:
