@@ -28,7 +28,9 @@ This registers endpoints for your Flask app:
 * `/vac/<vector_name>` - a dynamic endpoint that you can substitute the vector_names configured in your `vacConfig` file.
 * `/vac/streaming/<vector_name>` - a streaming endpoint
 * `/` - an 'OK' for you to check its running
-* 
+* `/openai/v1/chat/completions` - an OpenAI compatible API endpoint so you can use Multivac with systems that support it.
+
+> The OpenAI compatible endpoint means you can proxy requests to other model providers e.g. Gemini from applications that support OpenAI endpoints.  It calls the underlying VAC just the same as via the other endpoints.
 
 The unique logic for your app will lie within the `vac_service.py` file within the same folder.  An example is shown below for the LlamaIndex VertexAI integration.
 
