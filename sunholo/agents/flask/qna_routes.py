@@ -165,12 +165,17 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
         return jsonify(bot_output)
 
     @app.route('/openai/v1/chat/completions', methods=['POST'])
-    def openai_compatible_endpoint():
+    @app.route('/openai/v1/chat/completions/<vector_name>', methods=['POST'])
+    def openai_compatible_endpoint(vector_name=None):
         data = request.get_json()
-        model = data.pop('model', None)
+        log.info(f'openai_compatible_endpoint got data: {data}')
+
+        vector_name = vector_name or data.pop('model', None)
         messages = data.pop('messages', None)
         chat_history = data.pop('chat_history', None)
         stream = data.pop('stream', False)
+
+        log.info(f'openai_compatible_endpoint got data: {data} for vector: {vector_name}')
 
         if not messages:
             return jsonify({"error": "No messages provided"}), 400
@@ -192,34 +197,36 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
         
         def generate_response_content():
             for chunk in start_streaming_chat(question=user_message,
-                                            vector_name=model,
+                                            vector_name=vector_name,
                                             qna_func=observed_stream_interpreter,
                                             chat_history=all_input["chat_history"],
                                             wait_time=all_input.get("stream_wait_time", 1),
                                             timeout=all_input.get("stream_timeout", 60),
                                             **all_input["kwargs"]
                                             ):
-                if isinstance(chunk, dict) and 'content' in chunk:
+                if isinstance(chunk, dict) and 'answer' in chunk:
                     openai_chunk = {
                         "id": response_id,
                         "object": "chat.completion.chunk",
-                        "created": int(datetime.time()),
-                        "model": model,
+                        "created": str(datetime.time()),
+                        "model": vector_name,
                         "system_fingerprint": sunholo_version(),
                         "choices": [{
                             "index": 0,
-                            "delta": {"content": chunk['content']},
+                            "delta": {"content": chunk['answer']},
                             "logprobs": None,
                             "finish_reason": None
                         }]
                     }
                     yield json.dumps(openai_chunk) + "\n"
+                else:
+                    log.info(f"Unknown chunk: {chunk}")
 
             final_chunk = {
                 "id": response_id,
                 "object": "chat.completion.chunk",
-                "created": int(datetime.time()),
-                "model": model,
+                "created": str(datetime.time()),
+                "model": vector_name,
                 "system_fingerprint": sunholo_version(),
                 "choices": [{
                     "index": 0,
@@ -236,7 +243,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
         try:
             bot_output = observed_stream_interpreter(
                 question=user_message,
-                vector_name=model,
+                vector_name=vector_name,
                 chat_history=all_input["chat_history"],
                 **all_input["kwargs"]
             )
@@ -245,8 +252,8 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
             openai_response = {
                 "id": response_id,
                 "object": "chat.completion",
-                "created": int(datetime.time()),
-                "model": model,
+                "created": str(datetime.time()),
+                "model": vector_name,
                 "system_fingerprint": sunholo_version(),
                 "choices": [{
                     "index": 0,
@@ -264,6 +271,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                 }
             }
 
+            log.info(f"OpenAI response: {openai_response}")
             return jsonify(openai_response)
 
         except Exception as err:

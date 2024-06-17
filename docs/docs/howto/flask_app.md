@@ -28,7 +28,7 @@ This registers endpoints for your Flask app:
 * `/vac/<vector_name>` - a dynamic endpoint that you can substitute the vector_names configured in your `vacConfig` file.
 * `/vac/streaming/<vector_name>` - a streaming endpoint
 * `/` - an 'OK' for you to check its running
-* `/openai/v1/chat/completions` - an OpenAI compatible API endpoint so you can use Multivac with systems that support it.
+* `/openai/v1/chat/completions/<vector_name>` - an OpenAI compatible API endpoint so you can use Multivac with systems that support it.
 
 > The OpenAI compatible endpoint means you can proxy requests to other model providers e.g. Gemini from applications that support OpenAI endpoints.  It calls the underlying VAC just the same as via the other endpoints.
 
@@ -141,6 +141,19 @@ curl $FLASK_URL/vac/personal_llama \
   -F "user_input=Can you describe this image?"
 ```
 
+
+## /openai/v1/chat/completions/<vector_name>
+
+If you leave the `<vector_name>` blank, then the proxy will attempt to look in the config for the "model" name
+
+e.g. if calling `/openai/v1/chat/completions/` then in the config you will need a VAC called "gpt-4o"
+
+Otherwise you can use `/openai/v1/chat/completions/<vector_name>` to tailor the request to the VAC eg.
+
+
+This is useful for using tools such as [Jan.ai](https://jan.ai/) as a UI for Multivac:
+
+![alt text](jan-config.png)
 
 ## Config
 
