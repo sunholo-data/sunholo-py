@@ -2,7 +2,7 @@
 
 [Jan.ai](https://jan.ai/) is a desktop application that is similar to the OpenAI desktop application but you can use it with any local or online model.
 
-## /openai/v1/chat/completions/<vector_name>
+## /openai/v1/chat/completions
 
 If you leave the `<vector_name>` blank, then the proxy will attempt to look in the config for the "model" name
 
