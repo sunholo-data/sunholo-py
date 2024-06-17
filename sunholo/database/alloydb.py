@@ -234,6 +234,10 @@ def create_alloydb_table(vector_name, engine, type = "vectorstore", alloydb_conf
                 log.info(f"AlloyDB Table '{table_name}' exists in cache, skipping creation.")
 
                 return table_name
+            
+            alloydb_table_cache[table_name] = True 
+            return table_name
+            
             log.info(f"# Creating AlloyDB table {table_name}")
             try:
                 engine.init_vectorstore_table(
