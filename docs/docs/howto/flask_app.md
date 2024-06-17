@@ -153,11 +153,9 @@ Otherwise you can use `/openai/v1/chat/completions/<vector_name>` to tailor the 
 
 This is useful for using tools such as [Jan.ai](https://jan.ai/) as a UI for Multivac:
 
-![alt text](jan-config.png)
+![alt text](../img/jan-config.png)
 
-Below is an example of calling Gemini using VAC [`personal_llama`](../VACs/vertex-llamaindex) with Google Search.
-
-![alt text](jan-gemini-openai-1.png)
+See the [Jan.ai integration documentation](../integrations/jan) for more information.
 
 ## Config
 
