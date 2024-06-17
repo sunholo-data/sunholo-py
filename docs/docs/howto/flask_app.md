@@ -27,6 +27,8 @@ This registers endpoints for your Flask app:
 
 * `/vac/<vector_name>` - a dynamic endpoint that you can substitute the vector_names configured in your `vacConfig` file.
 * `/vac/streaming/<vector_name>` - a streaming endpoint
+* `/` - an 'OK' for you to check its running
+* 
 
 The unique logic for your app will lie within the `vac_service.py` file within the same folder.  An example is shown below for the LlamaIndex VertexAI integration.
 
@@ -124,6 +126,19 @@ You can also optionally use `callback.on_llm_end()` for any cleanup applications
 ### vac()
 
 This is a non-streaming variant, and needs to return a dictionary with at least the `answer` key e.g. `{"answer": "my genai output"}`
+
+## Attach images
+
+Most GenAI models like a storage location for input, not the actual image.  If you want to upload an image with your request, use form data pointing to your file: it will be pre-processed before sending to the model by uploading it to the upload bucket (if available)
+
+
+```shell
+export FLASK_URL=https://your-deployed-url.run.app/
+curl $FLASK_URL/vac/personal_llama \
+  -F "file=@application/webapp/public/eduvac.png" \
+  -F "user_input=Can you describe this image?"
+```
+
 
 ## Config
 
