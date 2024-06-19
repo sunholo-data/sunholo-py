@@ -18,6 +18,7 @@ try:
 except ImportError:
     Client = None
 
+from utils.version import sunholo_version
 import logging
 import inspect
 import os
@@ -44,6 +45,7 @@ class GoogleCloudLogging:
             self.logger_name = logger_name
             self.log_level = log_level
             self.initialized = True  # Mark as initialized
+            self.version = sunholo_version()
         print(f"Initialized logging object for logger_name: {logger_name}")
 
 
@@ -106,9 +108,9 @@ class GoogleCloudLogging:
         if not is_running_on_gcp() and not is_gcp_logged_in():
             log.basicConfig(level=log.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
             if log_text:
-                log.info(f"[{severity}][{logger_name or self.logger_name}] - {log_text}")
+                log.info(f"[{severity}][{logger_name or self.logger_name}][{self.version}] - {log_text}")
             elif log_struct:
-                log.info(f"[{severity}][{logger_name or self.logger_name}] - {str(log_struct)}")
+                log.info(f"[{severity}][{logger_name or self.logger_name}][{self.version}] - {str(log_struct)}")
 
         logger = self.client.logger(logger_name or self.logger_name)
 
