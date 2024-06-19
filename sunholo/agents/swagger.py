@@ -1,6 +1,7 @@
 import yaml
+import copy
 
-from ..utils.config import load_all_configs, load_config_key
+from ..utils.config import load_all_configs
 from .route import route_vac
 from ..logging import log
 
@@ -27,15 +28,19 @@ def config_to_swagger():
     configs = load_all_configs()
 
     vac_config = configs.get('vacConfig')
+    agent_config = configs.get('agentConfig')
 
     if not vac_config:
         raise ValueError("Need valid 'vacConfig' loaded")
     
-    swag = generate_swagger(vac_config)
+    if not agent_config:
+        raise ValueError("Need valid 'agentConfig' loaded")
+    
+    swag = generate_swagger(vac_config, agent_config)
 
     return swag
 
-def generate_swagger(vac_config):
+def generate_swagger(vac_config, agent_config):
     """
     Generate a Swagger specification based on the provided configurations.
 
@@ -128,50 +133,76 @@ def generate_swagger(vac_config):
     
     vac_services = vac_config['vac']
     
-    for service, config in vac_services.items():
+    for vector_name, config in vac_services.items():
         agent_type = config['agent']
-        agent_config_paths = load_config_key(service, "dummy", kind="agentConfig")
-        log.info(f'Configuring swagger for agent_type: {agent_type} for service: {service}')
+        agent_config_paths = agent_config['agents'].get(agent_type, {})
+        log.info(f'Configuring swagger for agent_type: {agent_type} for vector_name: {vector_name}')
         try:
-            stem = route_vac(service)
+            stem = route_vac(vector_name)
         except ValueError:
             stem = f"${{{agent_type.upper()}_BACKEND_URL}}"
-            log.warning(f"Failed to find URL stem for {service}/{agent_type} - using {stem} instead")
+            log.warning(f"Failed to find URL stem for {vector_name}/{agent_type} - using {stem} instead")
         
-        path = f"/{service}"
-        swagger_template['paths'][path] = {
-            'get': {
-                'summary': f"Get {service}",
-                'operationId': f"get_{service}",
-                'x-google-backend': {
-                    'address': stem,
-                    'protocol': 'h2'
-                },
-                'responses': agent_config_paths.get('response', {}).get('get', {
-                    '200': {
-                        'description': 'Default - A successful response',
-                        'schema': {
-                            'type': 'string'
+        for method, endpoints in agent_config_paths.items():
+            if method not in ['get', 'post']:
+                log.warning(f"Skipping {endpoints}")
+                continue
+            for endpoint_key, endpoint_template in endpoints.items():
+                endpoint_path = endpoint_template.replace("{stem}", f"/{agent_type}").replace("{vector_name}", vector_name)
+                if endpoint_path not in swagger_template['paths']:
+                    swagger_template['paths'][endpoint_path] = {}
+                swagger_template['paths'][endpoint_path][method] = {
+                    'summary': f"{method.capitalize()} {vector_name}",
+                    'operationId': f"{method}_{agent_type}_{endpoint_key}",
+                    'x-google-backend': {
+                        'address': endpoint_template.replace("{stem}", stem).replace("{vector_name}", vector_name),
+                        'protocol': 'h2'
+                    },
+                    'responses': copy.deepcopy(agent_config_paths.get('response', {}).get(endpoint_key, {
+                        '200': {
+                            'description': 'Default - A successful response',
+                            'schema': {
+                                'type': 'string'
+                            }
                         }
-                    }
-                })
-            },
-            'post': {
-                'summary': f"Post {service}",
-                'operationId': f"post_{service}",
-                'x-google-backend': {
-                    'address': stem,
-                    'protocol': 'h2'
-                },
-                'responses': agent_config_paths.get('response', {}).get('post', {
-                    '200': {
-                        'description': 'Default - Successful response',
-                        'schema': {
-                            'type': 'string'
+                    }))
+                }
+    # Handle default agent configuration for agent types without specific entries
+    default_agent_config = agent_config['agents'].get('default', {})
+    
+    for vector_name, config in vac_services.items():
+        agent_type = config['agent']
+        if agent_type in agent_config['agents']:
+            continue
+        log.info(f'Applying default configuration for agent_type: {agent_type} for vector_name: {vector_name}')
+        try:
+            stem = route_vac(vector_name)
+        except ValueError:
+            stem = f"${{{agent_type.upper()}_BACKEND_URL}}"
+            log.warning(f"Failed to find URL stem for {vector_name}/{agent_type} - using {stem} instead")
+        
+        for method, endpoints in default_agent_config.items():
+            if method not in ['get', 'post']:
+                continue
+            for endpoint_key, endpoint_template in endpoints.items():
+                endpoint_path = endpoint_template.replace("{stem}", f"/{agent_type}").replace("{vector_name}", vector_name)
+                if endpoint_path not in swagger_template['paths']:
+                    swagger_template['paths'][endpoint_path] = {}
+                swagger_template['paths'][endpoint_path][method] = {
+                    'summary': f"{method.capitalize()} {agent_type}",
+                    'operationId': f"{method}_{agent_type}_{endpoint_key}",
+                    'x-google-backend': {
+                        'address': endpoint_template.replace("{stem}", stem).replace("{vector_name}", vector_name),
+                        'protocol': 'h2'
+                    },
+                    'responses': copy.deepcopy(default_agent_config.get('response', {}).get(endpoint_key, {
+                        '200': {
+                            'description': 'Default - A successful response',
+                            'schema': {
+                                'type': 'string'
+                            }
                         }
-                    }
-                })
-            }
-        }
+                    }))
+                }
     
     return yaml.dump(swagger_template, default_flow_style=False)

@@ -1,17 +1,21 @@
 from ..agents.swagger import generate_swagger
 from ..utils.config import load_all_configs, load_config
 from .sun_rich import console
+from ..logging import log
 
 def cli_swagger(args):
-    if not args.config_path:
-        configs = load_all_configs()
-        vac_config = configs.get('vacConfig')
-        console.rule("Creating Swagger file from _CONFIG_FOLDER")
-    else:
-        vac_config = load_config(args.config_path)
-        console.rule("Creating Swagger file from {args.config_path}")
+
+    configs = load_all_configs()
+
+    vac_config = args.vac_config_path or configs.get('vacConfig')
+    agent_config = args.agent_config_path or configs.get('agentConfig')
+    if not agent_config:
+        raise ValueError('Need an agentConfig path')
+
+    if not vac_config:
+        raise ValueError('Need a vacConfig path')
     
-    swag = generate_swagger(vac_config)
+    swag = generate_swagger(vac_config, agent_config)
 
     console.print(swag)
 
@@ -29,5 +33,6 @@ def setup_swagger_subparser(subparsers):
     ```
     """
     deploy_parser = subparsers.add_parser('swagger', help='Create a swagger specification based off a "vacConfig" configuration')
-    deploy_parser.add_argument('--config_path', help='Path to the directory containing the config folder `config/`.  Set _CONFIG_FOLDER env var to change config location.')
+    deploy_parser.add_argument('--vac_config_path', help='Path to the vacConfig file.  Set _CONFIG_FOLDER env var and place file in there to change default config location.')
+    deploy_parser.add_argument('--agent_config_path', help='Path to agentConfig file. Set _CONFIG_FOLDER env var and place file in there to change default config location.')
     deploy_parser.set_defaults(func=cli_swagger)

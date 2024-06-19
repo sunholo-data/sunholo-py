@@ -572,3 +572,65 @@ $> sunholo embed --local-chunks edmonbrain docs/docs/index.md --is-file --only-c
 
 ```
 
+
+## sunholo swagger
+
+This creates a swagger file from the `agentConfig` and `vacConfig` files for use with the agent APIs.  It was initially generated for the Multivac [Cloud Endpoints](https://cloud.google.com/endpoints) integration and is useful for setting up micro-services and API gateways.
+
+```bash
+sunholo swagger -h
+usage: sunholo swagger [-h] [--vac_config_path VAC_CONFIG_PATH] [--agent_config_path AGENT_CONFIG_PATH]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --vac_config_path VAC_CONFIG_PATH
+                        Path to the vacConfig file. Set _CONFIG_FOLDER env var and place file in there to change default config location.
+  --agent_config_path AGENT_CONFIG_PATH
+                        Path to agentConfig file. Set _CONFIG_FOLDER env var and place file in there to change default config location.
+```
+
+### Example
+
+Most often used to create a swagger.yaml file for us in deployments:
+
+```sh
+# most often used to pipe to a file
+sunholo swagger > swagger.yaml 
+```
+
+Can also print to console:
+
+```sh
+sunholo swagger
+host: ${_ENDPOINTS_HOST}
+info:
+  description: Multivac - Cloud Endpoints with a Cloud Run backend
+  title: Multivac - Cloud Endpoints + Cloud Run
+  version: 0.1.0
+paths:
+  /autogen/api/generate:
+    post:
+      operationId: post_autogen_invoke
+      responses:
+        '200':
+          description: Default - A successful response
+          schema:
+            type: string
+      summary: Post autogen_demo
+      x-google-backend:
+        address: https://autogen-blqtqfexwa-ew.a.run.app/api/generate
+        protocol: h2
+  /crewai/invoke_crewai:
+    post:
+      operationId: post_crewai_invoke
+      responses:
+        '200':
+          description: Default - A successful response
+          schema:
+            type: string
+      summary: Post trip_planner
+...
+```
+
+
+
