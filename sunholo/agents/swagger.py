@@ -4,6 +4,7 @@ import copy
 from ..utils.config import load_all_configs
 from .route import route_vac
 from ..logging import log
+from ..utils.parsers import format_long_yaml
 
 def config_to_swagger():
     """
@@ -160,7 +161,7 @@ def generate_swagger(vac_config, agent_config):
                     'summary': f"{method.capitalize()} {vector_name}",
                     'operationId': f"{method}_{agent_type}_{endpoint_key}",
                     'x-google-backend': {
-                        'address': endpoint_address,
+                        'address': format_long_yaml(endpoint_address),
                         'protocol': 'h2'
                     },
                     'responses': copy.deepcopy(agent_config_paths.get('response', {}).get(endpoint_key, {
@@ -202,7 +203,7 @@ def generate_swagger(vac_config, agent_config):
                     'summary': f"{method.capitalize()} {agent_type}",
                     'operationId': f"{method}_{agent_type}_{endpoint_key}",
                     'x-google-backend': {
-                        'address': endpoint_address,
+                        'address': format_long_yaml(endpoint_address),
                         'protocol': 'h2'
                     },
                     'responses': copy.deepcopy(default_agent_config.get('response', {}).get(endpoint_key, {
