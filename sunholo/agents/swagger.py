@@ -4,6 +4,8 @@ from .route import route_vac
 from ..logging import log
 from ruamel.yaml import YAML
 from io import StringIO
+# check it here:
+# https://editor.swagger.io/
 
 def config_to_swagger():
     """
@@ -156,9 +158,12 @@ def generate_swagger(vac_config, agent_config):
                 log.debug(f"endpoint_path: {endpoint_path}")
                 if endpoint_path not in swagger_template['paths']:
                     swagger_template['paths'][endpoint_path] = {}
+
+                operation_id = f"{method}_{agent_type}_{endpoint_key}_{vector_name}"
+
                 swagger_template['paths'][endpoint_path][method] = {
                     'summary': f"{method.capitalize()} {vector_name}",
-                    'operationId': f"{method}_{agent_type}_{endpoint_key}",
+                    'operationId': operation_id,
                     'x-google-backend': {
                         'address': endpoint_address,
                         'protocol': 'h2'
@@ -198,9 +203,12 @@ def generate_swagger(vac_config, agent_config):
                 log.debug(f"default endpoint_path: {endpoint_path}")
                 if endpoint_path not in swagger_template['paths']:
                     swagger_template['paths'][endpoint_path] = {}
+                
+                operation_id = f"{method}_{agent_type}_{endpoint_key}_{vector_name}"
+
                 swagger_template['paths'][endpoint_path][method] = {
                     'summary': f"{method.capitalize()} {agent_type}",
-                    'operationId': f"{method}_{agent_type}_{endpoint_key}",
+                    'operationId': operation_id,
                     'x-google-backend': {
                         'address': endpoint_address,
                         'protocol': 'h2'
