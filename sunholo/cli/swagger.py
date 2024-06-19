@@ -1,7 +1,6 @@
 from ..agents.swagger import generate_swagger
-from ..utils.config import load_all_configs, load_config
+from ..utils.config import load_all_configs
 from .sun_rich import console
-from ..logging import log
 
 def cli_swagger(args):
 
@@ -36,3 +35,4 @@ def setup_swagger_subparser(subparsers):
     deploy_parser.add_argument('--vac_config_path', help='Path to the vacConfig file.  Set _CONFIG_FOLDER env var and place file in there to change default config location.')
     deploy_parser.add_argument('--agent_config_path', help='Path to agentConfig file. Set _CONFIG_FOLDER env var and place file in there to change default config location.')
     deploy_parser.set_defaults(func=cli_swagger)
+    
