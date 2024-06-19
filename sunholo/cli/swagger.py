@@ -1,6 +1,7 @@
 from ..agents.swagger import generate_swagger
 from ..utils.config import load_all_configs
-from .sun_rich import console
+from ruamel.yaml import YAML
+import sys
 
 def cli_swagger(args):
 
@@ -16,7 +17,11 @@ def cli_swagger(args):
     
     swag = generate_swagger(vac_config, agent_config)
 
-    console.print(swag, width=8000)
+    yaml = YAML()
+    yaml.width = 4096 # to avoid breaking urls
+    yaml.indent(mapping=2, sequence=4, offset=2)  # Set indentation levels
+
+    yaml.dump(yaml.load(swag), sys.stdout) 
 
     return swag
 
