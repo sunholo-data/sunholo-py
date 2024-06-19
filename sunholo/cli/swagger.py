@@ -16,7 +16,7 @@ def cli_swagger(args):
     
     swag = generate_swagger(vac_config, agent_config)
 
-    console.print(swag)
+    console.print(swag, width=8000)
 
     return swag
 
@@ -35,4 +35,3 @@ def setup_swagger_subparser(subparsers):
     deploy_parser.add_argument('--vac_config_path', help='Path to the vacConfig file.  Set _CONFIG_FOLDER env var and place file in there to change default config location.')
     deploy_parser.add_argument('--agent_config_path', help='Path to agentConfig file. Set _CONFIG_FOLDER env var and place file in there to change default config location.')
     deploy_parser.set_defaults(func=cli_swagger)
-    
