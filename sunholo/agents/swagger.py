@@ -3,10 +3,7 @@ from ..utils.config import load_all_configs
 from .route import route_vac
 from ..logging import log
 from ruamel.yaml import YAML
-import sys
-
-yaml = YAML()
-yaml.width = 4096  # Prevent unwanted line wrapping
+from io import StringIO
 
 def config_to_swagger():
     """
@@ -217,5 +214,14 @@ def generate_swagger(vac_config, agent_config):
                         }
                     }))
                 }
+
+    yaml = YAML()
+    yaml.width = 4096 # to avoid breaking urls
+
+    # Capture YAML output in a string buffer
+    string_stream = StringIO()
+    yaml.dump(swagger_template, string_stream)
+    yaml_string = string_stream.getvalue()
+
+    return yaml_string
     
-    return yaml.dump(swagger_template, sys.stdout)
