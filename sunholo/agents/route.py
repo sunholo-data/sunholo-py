@@ -14,8 +14,10 @@
 from ..logging import log
 from ..utils import load_config_key, load_config
 
-def route_vac(vector_name):
-
+def route_vac(vector_name: str) -> str :
+    """
+    Considers what VAC this vector_name belongs to
+    """
     agent_url = load_config_key('agent_url', vector_name=vector_name, kind="vacConfig")
     if agent_url:
         log.info('agent_url found in llm_config.yaml')

@@ -161,3 +161,4 @@ cython_debug/
 .DS_Store
 bigfile.txt
 .vac_proxy_tracker.json
+swagger.yaml

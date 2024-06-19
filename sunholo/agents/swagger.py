@@ -138,7 +138,7 @@ def generate_swagger(vac_config, agent_config):
         agent_config_paths = agent_config['agents'].get(agent_type, {})
         log.info(f'Configuring swagger for agent_type: {agent_type} for vector_name: {vector_name}')
         try:
-            stem = route_vac(vector_name)
+            stem = route_vac(vector_name).strip()
         except ValueError:
             stem = f"${{{agent_type.upper()}_BACKEND_URL}}"
             log.warning(f"Failed to find URL stem for {vector_name}/{agent_type} - using {stem} instead")
@@ -148,14 +148,19 @@ def generate_swagger(vac_config, agent_config):
                 log.warning(f"Skipping {endpoints}")
                 continue
             for endpoint_key, endpoint_template in endpoints.items():
-                endpoint_path = endpoint_template.replace("{stem}", f"/{agent_type}").replace("{vector_name}", vector_name)
+                endpoint_template = endpoint_template.strip()
+                endpoint_address = endpoint_template.replace("{stem}", stem).replace("{vector_name}", vector_name).strip()
+                endpoint_path = endpoint_template.replace("{stem}", f"/{agent_type}").replace("{vector_name}", vector_name).strip()
+                log.debug(f"Endpoint_template: {endpoint_template}")
+                log.debug(f"endpoint address: {endpoint_address}")
+                log.debug(f"endpoint_path: {endpoint_path}")
                 if endpoint_path not in swagger_template['paths']:
                     swagger_template['paths'][endpoint_path] = {}
                 swagger_template['paths'][endpoint_path][method] = {
                     'summary': f"{method.capitalize()} {vector_name}",
                     'operationId': f"{method}_{agent_type}_{endpoint_key}",
                     'x-google-backend': {
-                        'address': endpoint_template.replace("{stem}", stem).replace("{vector_name}", vector_name).strip(),
+                        'address': endpoint_address,
                         'protocol': 'h2'
                     },
                     'responses': copy.deepcopy(agent_config_paths.get('response', {}).get(endpoint_key, {
@@ -176,7 +181,7 @@ def generate_swagger(vac_config, agent_config):
             continue
         log.info(f'Applying default configuration for agent_type: {agent_type} for vector_name: {vector_name}')
         try:
-            stem = route_vac(vector_name)
+            stem = route_vac(vector_name).strip()
         except ValueError:
             stem = f"${{{agent_type.upper()}_BACKEND_URL}}"
             log.warning(f"Failed to find URL stem for {vector_name}/{agent_type} - using {stem} instead")
@@ -185,14 +190,19 @@ def generate_swagger(vac_config, agent_config):
             if method not in ['get', 'post']:
                 continue
             for endpoint_key, endpoint_template in endpoints.items():
-                endpoint_path = endpoint_template.replace("{stem}", f"/{agent_type}").replace("{vector_name}", vector_name)
+                endpoint_template = endpoint_template.strip()
+                endpoint_address = endpoint_template.replace("{stem}", stem).replace("{vector_name}", vector_name).strip()
+                endpoint_path = endpoint_template.replace("{stem}", f"/{agent_type}").replace("{vector_name}", vector_name).strip()
+                log.debug(f"default Endpoint_template: {endpoint_template}")
+                log.debug(f"default endpoint address: {endpoint_address}")
+                log.debug(f"default endpoint_path: {endpoint_path}")
                 if endpoint_path not in swagger_template['paths']:
                     swagger_template['paths'][endpoint_path] = {}
                 swagger_template['paths'][endpoint_path][method] = {
                     'summary': f"{method.capitalize()} {agent_type}",
                     'operationId': f"{method}_{agent_type}_{endpoint_key}",
                     'x-google-backend': {
-                        'address': endpoint_template.replace("{stem}", stem).replace("{vector_name}", vector_name).strip(),
+                        'address': endpoint_path,
                         'protocol': 'h2'
                     },
                     'responses': copy.deepcopy(default_agent_config.get('response', {}).get(endpoint_key, {

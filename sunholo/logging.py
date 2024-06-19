@@ -18,7 +18,7 @@ try:
 except ImportError:
     Client = None
 
-from utils.version import sunholo_version
+from .utils.version import sunholo_version
 import logging
 import inspect
 import os
