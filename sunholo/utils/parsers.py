@@ -13,29 +13,6 @@
 #   limitations under the License.
 import re
 import hashlib
-import textwrap  # For wrapping text
-
-def format_long_yaml(x, max_width=70):
-    """Formats the endpoint address, adding >- and line breaks if necessary.
-# Example usage:
-endpoint_template = "https://edmonbrain-blqtqfexwa-ew.a.run.app/openai/v1/chat/completions/{stem}/{vector_name}"
-
-formatted_address = format_long_yaml(x)
-print(formatted_address)
-    
-    """
-    if len(x) < max_width: 
-        return x
-    
-    # Wrap the URL if it's too long
-    wrapped_x = textwrap.wrap(x, width=max_width)
-    output = ">-\n  " + "\n  ".join(wrapped_x)
-
-    return output
-
-
-
-
 
 def contains_url(message_data):
     """

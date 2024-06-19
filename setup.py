@@ -30,6 +30,7 @@ setup(
         # Base dependencies
         "google-auth", # to check if on gcp
         "tenacity==8.3.0",
+        "ruamel.yaml",
         "langchain",
         "langchain_experimental",
         "langchain-community",
