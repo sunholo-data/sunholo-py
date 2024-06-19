@@ -272,8 +272,9 @@ def vac_command(args):
             display_name = load_config_key("display_name", vector_name=args.vac_name,  kind="vacConfig")
             description  = load_config_key("description", vector_name=args.vac_name, kind="vacConfig")
             endpoints_config = load_config_key(agent_name, "dummy_value", kind="agentConfig")
+            post_endpoints = endpoints_config['post']
 
-            display_endpoints = ' '.join(f"{key}: {value}" for key, value in endpoints_config.items())
+            display_endpoints = ' '.join(f"{key}: {value}" for key, value in post_endpoints.items())
             display_endpoints = display_endpoints.replace("{stem}", service_url).replace("{vector_name}", args.vac_name)
 
             if agent_name == "langserve":

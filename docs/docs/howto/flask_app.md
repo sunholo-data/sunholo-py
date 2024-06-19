@@ -182,16 +182,150 @@ vac:
       overlap: 200
 ```
 
-The app will use the default agent configuration within `agentConfig`:
+The app will use the default agent configuration within `agentConfig`, which includes an OpenAI compatible endpoint, a VAC unique streaming endpoint, a batch endpoint and some health check endpoints.
 
 ```yaml
 # agent_config.yaml
 kind: agentConfig
-apiVersion: v1
+apiVersion: v2
 agents:
   default:
-    stream: "{stem}/vac/streaming/{vector_name}"
-    invoke: "{stem}/vac/{vector_name}"
+    post:
+      stream: "{stem}/vac/streaming/{vector_name}"
+      invoke: "{stem}/vac/{vector_name}"
+      openai: "{stem}/openai/v1/chat/completions"
+      openai-vac: "{stem}/openai/v1/chat/completions/{vector_name}"
+    get:
+      home: "{stem}/"
+      health: "{stem}/health"
+    response:
+      invoke:
+        '200':
+          description: Successful invocation response
+          schema:
+            type: object
+            properties:
+              answer:
+                type: string
+              source_documents:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    page_content:
+                      type: string
+                    metadata:
+                      type: string
+      stream:
+        '200':
+          description: Successful stream response
+          schema:
+            type: string
+      openai:
+        '200':
+          description: Successful OpenAI response
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+              object:
+                type: string
+              created:
+                type: string
+              model:
+                type: string
+              system_fingerprint:
+                type: string
+              choices:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    index:
+                      type: integer
+                    delta:
+                      type: object
+                      properties:
+                        content:
+                          type: string
+                    logprobs:
+                      type: string
+                      nullable: true
+                    finish_reason:
+                      type: string
+                      nullable: true
+              usage:
+                type: object
+                properties:
+                  prompt_tokens:
+                    type: integer
+                  completion_tokens:
+                    type: integer
+                  total_tokens:
+                    type: integer
+      openai-vac:
+        '200':
+          description: Successful OpenAI VAC response
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+              object:
+                type: string
+              created:
+                type: string
+              model:
+                type: string
+              system_fingerprint:
+                type: string
+              choices:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    index:
+                      type: integer
+                    message:
+                      type: object
+                      properties:
+                        role:
+                          type: string
+                        content:
+                          type: string
+                    logprobs:
+                      type: string
+                      nullable: true
+                    finish_reason:
+                      type: string
+                      nullable: true
+              usage:
+                type: object
+                properties:
+                  prompt_tokens:
+                    type: integer
+                  completion_tokens:
+                    type: integer
+                  total_tokens:
+                    type: integer
+      home:
+        '200':
+          description: OK
+          schema:
+            type: string
+      health:
+        '200':
+          description: A healthy response
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+        '500':
+          description: Unhealthy response
+          schema:
+            type: string
 ```
 
 However, if you add other endpoints or wish to specify it directly, use the VAC name and add those endpoints to the `agent_config.yaml` file
@@ -202,8 +336,18 @@ kind: agentConfig
 apiVersion: v1
 agents:
   vertex-genai:
-    stream: "{stem}/vac/streaming/{vector_name}"
-    invoke: "{stem}/vac/{vector_name}"
+    post:
+      stream: "{stem}/vac/streaming/{vector_name}"
+      invoke: "{stem}/vac/{vector_name}"
+    get:
+      home: "{stem}"
+    response:
+      stream:
+        '200':
+          description: An OK stream
+          schema:
+            type: string
+    ...
 ```
 
 ## Deploy

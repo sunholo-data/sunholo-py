@@ -5,14 +5,14 @@ from typing import Dict, Optional
 from ..utils.config import load_config_key, load_config
 from ..utils.gcp import is_running_on_cloudrun
 from ..logging import log
-from ..agents.route import route_qna
+from ..agents.route import route_vac
 
 def get_run_url(vector_name=None):
 
     if not vector_name:
         raise ValueError('Vector name was not specified')
     
-    cloud_urls = route_qna(vector_name)
+    cloud_urls = route_vac(vector_name)
     
     cloud_urls, _ = load_config('config/cloud_run_urls.json')
     agent = load_config_key("agent", vector_name=vector_name, kind="vacConfig")

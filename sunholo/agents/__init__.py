@@ -4,3 +4,4 @@ from .pubsub import process_pubsub
 from .special_commands import handle_special_commands, app_to_store, handle_files
 from .flask import register_qna_routes, create_app
 from .fastapi import register_qna_fastapi_routes, create_fastapi_app
+from .swagger import config_to_swagger

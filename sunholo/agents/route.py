@@ -14,7 +14,7 @@
 from ..logging import log
 from ..utils import load_config_key, load_config
 
-def route_qna(vector_name):
+def route_vac(vector_name):
 
     agent_url = load_config_key('agent_url', vector_name=vector_name, kind="vacConfig")
     if agent_url:
@@ -35,17 +35,22 @@ def route_qna(vector_name):
     log.info(f'agent_url: {agent_url}')
     return agent_url
 
-def route_endpoint(vector_name, override_endpoint=None):
+def route_endpoint(vector_name, method = 'post', override_endpoint=None):
 
     agent_type = load_config_key('agent_type', vector_name, kind="vacConfig")
     if not agent_type:
         agent_type = load_config_key('agent', vector_name, kind="vacConfig")
 
-    stem = route_qna(vector_name) if not override_endpoint else override_endpoint
+    stem = route_vac(vector_name) if not override_endpoint else override_endpoint
     
-    endpoints_config = load_config_key(agent_type, vector_name, kind="agentConfig")
+    agents_config = load_config_key(agent_type, vector_name, kind="agentConfig")
     
-    log.info(f"endpoints_config: {endpoints_config}")
+    log.info(f"endpoints_config: {agents_config}")
+    if method not in agents_config:
+        raise ValueError(f"Invalid method '{method}' for agent configuration.")
+
+    # 'post' or 'get'
+    endpoints_config = agents_config[method]
 
     # Replace placeholders in the config
     endpoints = {}
