@@ -155,7 +155,7 @@ def generate_swagger(vac_config, agent_config):
                     'summary': f"{method.capitalize()} {vector_name}",
                     'operationId': f"{method}_{agent_type}_{endpoint_key}",
                     'x-google-backend': {
-                        'address': endpoint_template.replace("{stem}", stem).replace("{vector_name}", vector_name),
+                        'address': endpoint_template.replace("{stem}", stem).replace("{vector_name}", vector_name).strip(),
                         'protocol': 'h2'
                     },
                     'responses': copy.deepcopy(agent_config_paths.get('response', {}).get(endpoint_key, {
@@ -192,7 +192,7 @@ def generate_swagger(vac_config, agent_config):
                     'summary': f"{method.capitalize()} {agent_type}",
                     'operationId': f"{method}_{agent_type}_{endpoint_key}",
                     'x-google-backend': {
-                        'address': endpoint_template.replace("{stem}", stem).replace("{vector_name}", vector_name),
+                        'address': endpoint_template.replace("{stem}", stem).replace("{vector_name}", vector_name).strip(),
                         'protocol': 'h2'
                     },
                     'responses': copy.deepcopy(default_agent_config.get('response', {}).get(endpoint_key, {
