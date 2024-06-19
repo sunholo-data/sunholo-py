@@ -215,4 +215,4 @@ def generate_swagger(vac_config, agent_config):
                     }))
                 }
     
-    return yaml.dump(swagger_template, default_flow_style=False, width=float("inf"))
+    return yaml.dump(swagger_template, default_flow_style=False, width=999999)
