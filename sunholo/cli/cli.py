@@ -8,6 +8,7 @@ from .merge_texts import setup_merge_text_subparser
 from .run_proxy import setup_proxy_subparser
 from .chat_vac import setup_vac_subparser
 from .embedder import setup_embedder_subparser
+from .swagger import setup_swagger_subparser
 
 from ..utils.config import load_config_key
 
@@ -16,7 +17,6 @@ from ..logging import log
 from .sun_rich import console
 import sys
 from rich.panel import Panel
-
 
 def load_default_gcp_config():
     try:
@@ -82,6 +82,8 @@ def main(args=None):
     setup_vac_subparser(subparsers)
     # embed command
     setup_embedder_subparser(subparsers)
+    # swagger generation
+    setup_swagger_subparser(subparsers)
 
     #TODO: add database setup commands: alloydb and supabase
 
