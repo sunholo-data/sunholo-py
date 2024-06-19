@@ -202,7 +202,7 @@ def generate_swagger(vac_config, agent_config):
                     'summary': f"{method.capitalize()} {agent_type}",
                     'operationId': f"{method}_{agent_type}_{endpoint_key}",
                     'x-google-backend': {
-                        'address': endpoint_path,
+                        'address': endpoint_address,
                         'protocol': 'h2'
                     },
                     'responses': copy.deepcopy(default_agent_config.get('response', {}).get(endpoint_key, {
@@ -215,4 +215,4 @@ def generate_swagger(vac_config, agent_config):
                     }))
                 }
     
-    return yaml.dump(swagger_template, default_flow_style=False)
+    return yaml.dump(swagger_template, default_flow_style=False, width=float("inf"))

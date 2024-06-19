@@ -70,7 +70,7 @@ def load_all_configs():
 
     configs_by_kind = defaultdict(dict)
     for filename in os.listdir(config_folder):
-        log.debug(f"config file: {filename}")
+        #log.debug(f"config file: {filename}")
         if filename in ["cloudbuild.yaml", "cloud_run_urls.json"]:
             # skip these
             continue
