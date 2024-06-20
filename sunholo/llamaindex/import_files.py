@@ -58,7 +58,7 @@ def do_llamaindex(message_data, metadata, vector_name):
     if not memories:
         return tools
     
-    corpuses = None
+    corpuses = []
     for memory in memories:
         for key, value in memory.items():  # Now iterate over the dictionary
             log.info(f"Found memory {key}")
