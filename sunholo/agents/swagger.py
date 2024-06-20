@@ -195,7 +195,8 @@ def generate_swagger(vac_config, agent_config):
                     'operationId': operation_id,
                     'x-google-backend': {
                         'address': endpoint_address,
-                        'protocol': 'h2'
+                        'protocol': 'h2',
+                        'deadline': 1800 # 30mins timeout
                     },
                     'security': security,
                     'responses': copy.deepcopy(agent_config_paths.get('response', {}).get(endpoint_key, {
@@ -252,7 +253,7 @@ def generate_swagger(vac_config, agent_config):
                     swagger_template['paths'][endpoint_path] = {}
                 
                 operation_id = f"{method}_{agent_type}_{endpoint_key}_{vector_name}"
-                
+
                 security = [{'ApiKeyAuth': []}] if do_auth else [{'None': []}]
 
                 swagger_template['paths'][endpoint_path][method] = {
@@ -260,7 +261,8 @@ def generate_swagger(vac_config, agent_config):
                     'operationId': operation_id,
                     'x-google-backend': {
                         'address': endpoint_address,
-                        'protocol': 'h2'
+                        'protocol': 'h2',
+                        'deadline': 1800 # 30mins timeout
                     },
                     'security': security,
                     'responses': copy.deepcopy(default_agent_config.get('response', {}).get(endpoint_key, {
