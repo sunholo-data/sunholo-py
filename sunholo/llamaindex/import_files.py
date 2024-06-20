@@ -7,6 +7,7 @@ from ..logging import log
 from ..utils.config import load_config_key
 from ..vertex import init_vertex
 from .get_files import fetch_corpus
+from ..components import load_memories
     
 
 def do_llamaindex(message_data, metadata, vector_name):
@@ -45,30 +46,60 @@ def do_llamaindex(message_data, metadata, vector_name):
         raise ValueError(f"Need config.{vector_name}.gcp_config to configure llamaindex on VertexAI")
 
     init_vertex(gcp_config)
-    corpus = fetch_corpus(gcp_config)
-    #display_name = load_config_key("display_name", vector_name=vector_name, filename="config/llm_config.yaml")
-    #description = load_config_key("description", vector_name=vector_name, filename="config/llm_config.yaml")
 
+    global_project_id = gcp_config.get('project_id')
+    global_location = gcp_config.get('location')
+    global_rag_id = gcp_config.get('rag_id')
+    #global_data_store_id = gcp_config.get('data_store_id')
+
+    memories = load_memories(vector_name)
+    tools = []
+
+    if not memories:
+        return tools
+    
+    corpuses = None
+    for memory in memories:
+        for key, value in memory.items():  # Now iterate over the dictionary
+            log.info(f"Found memory {key}")
+            vectorstore = value.get('vectorstore')
+            if vectorstore == "llamaindex":
+                log.info(f"Found vectorstore {vectorstore}")
+                rag_id = value.get('rag_id')
+                project_id = gcp_config.get('project_id')
+                location = gcp_config.get('location')
+                corpus = fetch_corpus(
+                    project_id=project_id or global_project_id,
+                    location=location or global_location,
+                    rag_id=rag_id or global_rag_id
+                )
+                corpuses.append(corpus)
+    if not corpuses:
+        log.error("Could not find a RAG corpus to import data to")
+        return None
+    
     try:
         corpura = rag.list_corpora()
-        log.info(f"Corpora: {corpura} - {type(corpura)}")
+        log.info(f"All Corpora: {corpura} - {type(corpura)}")
     except Exception as err:
         log.warning(f"Could not list any corpora - {str(err)}")
 
-    log.info(f"Found llamaindex corpus: {corpus}")
+    log.info(f"Found llamaindex corpus: {corpuses}")
 
     # native support for cloud storage and drive links
     chunker_config = load_config_key("chunker", vector_name=vector_name, kind="vacConfig")
 
+    
     if message_data.startswith("gs://") or message_data.startswith("https://drive.google.com"):
         log.info(f"rag.import_files for {message_data}")
-        response = rag.import_files(
-            corpus_name=corpus.name,
-            paths=[message_data],
-            chunk_size=chunker_config.get("chunk_size"),  # Optional
-            chunk_overlap=chunker_config.get("overlap"),  # Optional
-        )
-        log.info(f"Imported file to corpus: {response} with metadata: {metadata}")
+        for corp in corpuses:
+            response = rag.import_files(
+                corpus_name=corp.name,
+                paths=[message_data],
+                chunk_size=chunker_config.get("chunk_size"),  # Optional
+                chunk_overlap=chunker_config.get("overlap"),  # Optional
+            )
+            log.info(f"Imported file to corpus: {response} with metadata: {metadata}")
 
         metadata["source"] = message_data
         return metadata
