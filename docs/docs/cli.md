@@ -591,7 +591,7 @@ optional arguments:
 
 ### Example
 
-Most often used to create a swagger.yaml file for us in deployments:
+Most often used to create a swagger.yaml file for use within deployments:
 
 ```sh
 sunholo swagger > swagger.yaml 

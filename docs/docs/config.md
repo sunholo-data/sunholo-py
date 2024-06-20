@@ -240,13 +240,17 @@ kind: agentConfig
 apiVersion: v2
 agents:
   default:
+    #post-noauth:
+      # add post endpoints that do not need authentication
+    #get-auth:
+      # add get endpoints that do need authentication
     post:
       stream: "{stem}/vac/streaming/{vector_name}"
       invoke: "{stem}/vac/{vector_name}"
       openai: "{stem}/openai/v1/chat/completions"
       openai-vac: "{stem}/openai/v1/chat/completions/{vector_name}"
     get:
-      home: "{stem}/"
+      home: "{stem}"
       health: "{stem}/health"
     response:
       invoke:
@@ -301,10 +305,8 @@ agents:
                           type: string
                     logprobs:
                       type: string
-                      nullable: true
                     finish_reason:
                       type: string
-                      nullable: true
               usage:
                 type: object
                 properties:
@@ -346,10 +348,8 @@ agents:
                           type: string
                     logprobs:
                       type: string
-                      nullable: true
                     finish_reason:
                       type: string
-                      nullable: true
               usage:
                 type: object
                 properties:
@@ -377,22 +377,11 @@ agents:
           schema:
             type: string
 
-  autogen:
-    #stream: "{stem}/vac/streaming/{vector_name}"
-    post:
-      invoke: "{stem}/api/generate"
-
-  our-new-energy: # needs to match cloud run service name
-    post:
-      stream: "{stem}/{vector_name}/stream"
-      invoke: "{stem}/{vector_name}/invoke"
-      input_schema: "{stem}/{vector_name}/input_schema"
-      output_schema: "{stem}/{vector_name}/output_schema"
-      config_schema: "{stem}/{vector_name}/config_schema"
-      batch: "{stem}/{vector_name}/batch"
-      stream_log: "{stem}/{vector_name}/stream_log"
-
   eduvac:
+    get:
+      docs: "{stem}/docs"
+    get-auth:
+      playground: "{stem}/{vector_name}/playground"
     post:
       stream: "{stem}/{vector_name}/stream"
       invoke: "{stem}/{vector_name}/invoke"
@@ -403,11 +392,18 @@ agents:
       stream_log: "{stem}/{vector_name}/stream_log"
 
   langserve:
+    get:
+      docs: "{stem}/docs"
+      playground: "{stem}/{vector_name}/playground"
+    get-auth:
+      playground: "{stem}/{vector_name}/playground"    
+    post-noauth:
+      # add post endpoints that do not need authentication
+      output_schema: "{stem}/{vector_name}/output_schema"
     post:
       stream: "{stem}/{vector_name}/stream"
       invoke: "{stem}/{vector_name}/invoke"
       input_schema: "{stem}/{vector_name}/input_schema"
-      output_schema: "{stem}/{vector_name}/output_schema"
       config_schema: "{stem}/{vector_name}/config_schema"
       batch: "{stem}/{vector_name}/batch"
       stream_log: "{stem}/{vector_name}/stream_log"
