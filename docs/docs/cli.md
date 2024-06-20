@@ -631,5 +631,29 @@ paths:
 ...
 ```
 
-By default `GET` requests are public, `POST` requests need an API key to access
+By default `GET` requests are public, `POST` requests need an API key to access.  If you want to change that, list the endpoints under `get-auth` and `post-noauth` in your `agentConfig` eg:
+
+```yaml
+kind: agentConfig
+apiVersion: v2
+agents:
+  langserve:
+    get:
+      docs: "{stem}/docs"
+      playground: "{stem}/{vector_name}/playground"
+    get-auth:
+      playground: "{stem}/{vector_name}/playground"    
+    post-noauth:
+      # add post endpoints that do not need authentication
+      output_schema: "{stem}/{vector_name}/output_schema"
+    post:
+      stream: "{stem}/{vector_name}/stream"
+      invoke: "{stem}/{vector_name}/invoke"
+      input_schema: "{stem}/{vector_name}/input_schema"
+      config_schema: "{stem}/{vector_name}/config_schema"
+      batch: "{stem}/{vector_name}/batch"
+      stream_log: "{stem}/{vector_name}/stream_log"
+
+
+```
 

@@ -158,9 +158,24 @@ def generate_swagger(vac_config, agent_config):
             log.warning(f"Failed to find URL stem for {vector_name}/{agent_type} - using {stem} instead")
         
         for method, endpoints in agent_config_paths.items():
-            if method not in ['get', 'post']:
-                log.warning(f"Skipping {endpoints}")
+            # controls if get requests are protected or not
+            do_auth = True
+
+            # default get: noauth, post: auth
+            if method not in ['get', 'post', 'get-auth', 'post-noauth']:
                 continue
+
+            if method == 'get-auth':
+                do_auth = True
+                method = 'get'
+            elif method == 'post-noauth':
+                do_auth = False
+                method = 'post'
+            elif method == 'get':
+                do_auth = False
+            elif method == 'post':
+                do_auth = True # not needed but to be clear whats happening
+
             for endpoint_key, endpoint_template in endpoints.items():
                 endpoint_template = endpoint_template.strip()
                 endpoint_address = endpoint_template.replace("{stem}", stem).replace("{vector_name}", vector_name).strip()
@@ -173,6 +188,8 @@ def generate_swagger(vac_config, agent_config):
 
                 operation_id = f"{method}_{agent_type}_{endpoint_key}_{vector_name}"
 
+                security = [{'ApiKeyAuth': []}] if do_auth else [{'None': []}]
+
                 swagger_template['paths'][endpoint_path][method] = {
                     'summary': f"{method.capitalize()} {vector_name}",
                     'operationId': operation_id,
@@ -180,7 +197,7 @@ def generate_swagger(vac_config, agent_config):
                         'address': endpoint_address,
                         'protocol': 'h2'
                     },
-                    'security': [{'ApiKeyAuth': []}] if method == 'post' else [{'None': []}],
+                    'security': security,
                     'responses': copy.deepcopy(agent_config_paths.get('response', {}).get(endpoint_key, {
                         '200': {
                             'description': 'Default - A successful response',
@@ -204,9 +221,26 @@ def generate_swagger(vac_config, agent_config):
             stem = f"${{{agent_type.upper()}_BACKEND_URL}}"
             log.warning(f"Failed to find URL stem for {vector_name}/{agent_type} - using {stem} instead")
         
+
         for method, endpoints in default_agent_config.items():
-            if method not in ['get', 'post']:
+            # controls if get requests are protected or not
+            do_auth = True
+
+            # default get: noauth, post: auth
+            if method not in ['get', 'post', 'get-auth', 'post-noauth']:
                 continue
+
+            if method == 'get-auth':
+                do_auth = True
+                method = 'get'
+            elif method == 'post-noauth':
+                do_auth = False
+                method = 'post'
+            elif method == 'get':
+                do_auth = False
+            elif method == 'post':
+                do_auth = True # not needed but to be clear whats happening
+
             for endpoint_key, endpoint_template in endpoints.items():
                 endpoint_template = endpoint_template.strip()
                 endpoint_address = endpoint_template.replace("{stem}", stem).replace("{vector_name}", vector_name).strip()
@@ -218,6 +252,8 @@ def generate_swagger(vac_config, agent_config):
                     swagger_template['paths'][endpoint_path] = {}
                 
                 operation_id = f"{method}_{agent_type}_{endpoint_key}_{vector_name}"
+                
+                security = [{'ApiKeyAuth': []}] if do_auth else [{'None': []}]
 
                 swagger_template['paths'][endpoint_path][method] = {
                     'summary': f"{method.capitalize()} {agent_type}",
@@ -226,7 +262,7 @@ def generate_swagger(vac_config, agent_config):
                         'address': endpoint_address,
                         'protocol': 'h2'
                     },
-                    'security': [{'ApiKeyAuth': []}] if method == 'post' else [{'None': []}],
+                    'security': security,
                     'responses': copy.deepcopy(default_agent_config.get('response', {}).get(endpoint_key, {
                         '200': {
                             'description': 'Default - A successful response',
