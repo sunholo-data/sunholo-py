@@ -130,7 +130,19 @@ def generate_swagger(vac_config, agent_config):
         'host': '${_ENDPOINTS_HOST}',
         'schemes': ['https'],
         'produces': ['application/json'],
-        'paths': {}
+        'paths': {},
+        'securityDefinitions': { 
+            'ApiKeyAuth': {        # For private VAC endpoint
+                'type': 'apiKey',
+                'name': 'x-api-key', # Custom header name for API key
+                'in': 'header'
+            },
+            'None': {              # For public documentation
+                'type': 'apiKey',
+                'name': 'allow',    # Dummy parameter for public access
+                'in': 'query'       # Use query parameter to avoid interfering with other headers
+            }
+        }
     }
     
     vac_services = vac_config['vac']
@@ -168,6 +180,7 @@ def generate_swagger(vac_config, agent_config):
                         'address': endpoint_address,
                         'protocol': 'h2'
                     },
+                    'security': [{'ApiKeyAuth': []}] if method == 'post' else [{'None': []}],
                     'responses': copy.deepcopy(agent_config_paths.get('response', {}).get(endpoint_key, {
                         '200': {
                             'description': 'Default - A successful response',
@@ -213,6 +226,7 @@ def generate_swagger(vac_config, agent_config):
                         'address': endpoint_address,
                         'protocol': 'h2'
                     },
+                    'security': [{'ApiKeyAuth': []}] if method == 'post' else [{'None': []}],
                     'responses': copy.deepcopy(default_agent_config.get('response', {}).get(endpoint_key, {
                         '200': {
                             'description': 'Default - A successful response',

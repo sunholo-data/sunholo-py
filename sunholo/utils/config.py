@@ -82,7 +82,6 @@ def load_all_configs():
                 cached_config, cache_time = config_cache[filename]
                 time_to_recache = (current_time - cache_time)
                 if time_to_recache < timedelta(minutes=5):
-                    log.debug(f"Returning cached config for {filename} - recache in {format_timedelta(timedelta(minutes=5) - time_to_recache)}")
                     config = cached_config
                 else:
                     config = reload_config_file(config_file, filename)
@@ -94,6 +93,8 @@ def load_all_configs():
                 configs_by_kind[kind] = config
             else:
                 log.warning(f"No 'kind' found in {filename}")
+    
+    #log.debug(f"Config recache in {format_timedelta(timedelta(minutes=5) - time_to_recache)}")
 
     return configs_by_kind
 

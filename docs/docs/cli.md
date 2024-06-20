@@ -631,5 +631,5 @@ paths:
 ...
 ```
 
-
+By default `GET` requests are public, `POST` requests need an API key to access
 
