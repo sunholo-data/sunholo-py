@@ -196,7 +196,7 @@ def generate_swagger(vac_config, agent_config):
                     'x-google-backend': {
                         'address': endpoint_address,
                         'protocol': 'h2',
-                        'deadline': 1800 # 30mins timeout
+                        'deadline':  180000  # Timeout of 3 minutes (1,800,00 milliseconds)
                     },
                     'security': security,
                     'responses': copy.deepcopy(agent_config_paths.get('response', {}).get(endpoint_key, {
@@ -262,7 +262,7 @@ def generate_swagger(vac_config, agent_config):
                     'x-google-backend': {
                         'address': endpoint_address,
                         'protocol': 'h2',
-                        'deadline': 1800 # 30mins timeout
+                        'deadline': 180000  # Timeout of 3 minutes (1,800,00 milliseconds)
                     },
                     'security': security,
                     'responses': copy.deepcopy(default_agent_config.get('response', {}).get(endpoint_key, {
