@@ -177,11 +177,11 @@ Multivac features serverless architecture, robust security within a Virtual Priv
 Generate API keys (MULTIVAC_API_KEY) to enable access to private services.
 Partners can deploy all services within their own cloud for complete ownership.
 See more at https://dev.sunholo.com/
-            """, 
-            'basePath': 'v1',
+            """,
             'version': '0.1.0'
         },
         'host': '${_ENDPOINTS_HOST}',
+        'basePath': '/v1',
         'schemes': ['https'],
         'produces': ['application/json'],
         'paths': {},
