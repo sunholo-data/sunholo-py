@@ -35,6 +35,7 @@ def _validate_api_key_cached(api_key: str, service_name: str) -> bool:
     request = servicecontrol_v1.CheckRequest(
         service_name=service_name,
         operation=servicecontrol_v1.Operation(
+            operation_name=service_name.upper(),
             operation_id=str(uuid.uuid4()),
             consumer_id=f'api_key:{api_key}',
             start_time=start_time,
