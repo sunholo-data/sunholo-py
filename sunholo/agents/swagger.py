@@ -169,8 +169,15 @@ def generate_swagger(vac_config, agent_config):
     swagger_template = {
         'swagger': '2.0',
         'info': {
-            'title': 'Multivac ${_BRANCH_NAME} - Cloud Endpoints + Cloud Run',
-            'description': 'Multivac Endpoints - see documentation at https://dev.sunholo.com/',
+            'title': 'Sunholo Multivac API - ${_BRANCH_NAME}',
+            'description': """
+Multivac (Multi-VAC) Cloud abstracts the interaction between the Cloud and GenAI applications via Virtual Agent Computers (VAC), allowing standardization of input and output to accelerate deployments. 
+VACs support frameworks like Langchain, LlamaIndex, VertexAI, OpenAI, or custom libraries, operating within Docker containers.
+Multivac features serverless architecture, robust security within a Virtual Private Cloud (VPC), and flexible user interfaces. 
+Generate API keys (MULTIVAC_API_KEY) to enable access to private services.
+Partners can deploy all services within their own cloud for complete ownership.
+See more at https://dev.sunholo.com/
+            """, 
             'basePath': 'v1',
             'version': '0.1.0'
         },
