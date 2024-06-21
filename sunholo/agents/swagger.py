@@ -11,6 +11,7 @@ import uuid
 
 try:
     from google.cloud import servicecontrol_v1
+    from google.protobuf.timestamp_pb2 import Timestamp
 except ImportError:
     servicecontrol_v1 = None
 
@@ -27,11 +28,16 @@ def validate_api_key(api_key: str, service_name: str) -> bool:
 @lru_cache(maxsize=1024)
 def _validate_api_key_cached(api_key: str, service_name: str) -> bool:
     client = servicecontrol_v1.ServiceControllerClient()
+    # Create a timestamp for the current time
+    start_time = Timestamp()
+    start_time.GetCurrentTime()
+
     request = servicecontrol_v1.CheckRequest(
         service_name=service_name,
         operation=servicecontrol_v1.Operation(
             operation_id=str(uuid.uuid4()),
             consumer_id=f'api_key:{api_key}',
+            start_time=start_time,
         )
     )
     response = client.check(request=request)
