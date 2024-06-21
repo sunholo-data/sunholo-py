@@ -7,28 +7,34 @@ from io import StringIO
 # check it here:
 # https://editor.swagger.io/
 from functools import lru_cache
+import uuid
 
 try:
-    from google.cloud import endpoints_v1
+    from google.cloud import servicecontrol_v1
 except ImportError:
-    endpoints_v1 = None
+    servicecontrol_v1 = None
 
 def validate_api_key(api_key: str, service_name: str) -> bool:
     """
     Validate an API key against the service name e.g. 'endpoints-xxxx.a.run.app'
     """
-    if not endpoints_v1:
-        raise ImportError("Cloud Endpoints API key validation is required, install via `pip install google-cloud-endpoints`")
+    if not servicecontrol_v1:
+        raise ImportError("Cloud Endpoints API key validation is required, install via `pip install sunholo[gcp]`")
 
     return _validate_api_key_cached(api_key, service_name)
 
+
 @lru_cache(maxsize=1024)
 def _validate_api_key_cached(api_key: str, service_name: str) -> bool:
-    client = endpoints_v1.ServiceControlServiceClient()
-    response = client.check(
+    client = servicecontrol_v1.ServiceControllerClient()
+    request = servicecontrol_v1.CheckRequest(
         service_name=service_name,
-        operation={'consumer_id': f'api_key:{api_key}'}
+        operation=servicecontrol_v1.Operation(
+            operation_id=str(uuid.uuid4()),
+            consumer_id=f'api_key:{api_key}',
+        )
     )
+    response = client.check(request=request)
 
     return response.check_errors is None
 
