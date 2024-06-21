@@ -51,10 +51,11 @@ def add_file_to_gcs(filename: str, vector_name:str, bucket_name: str=None, metad
         log.error(f"Error creating storage client: {str(err)}")
         return None
     
-    bucket_config = load_config_key("upload", vector_name, "vacConfig")
-    if bucket_config:
-        if bucket_config.get("buckets"):
-            bucket_name = bucket_config.get("buckets").get("all")
+    if bucket_name is None:
+        bucket_config = load_config_key("upload", vector_name, "vacConfig")
+        if bucket_config:
+            if bucket_config.get("buckets"):
+                bucket_name = bucket_config.get("buckets").get("all")
 
     bucket_name = bucket_name if bucket_name else os.getenv('GCS_BUCKET', None)
     if bucket_name is None:
