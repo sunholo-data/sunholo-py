@@ -156,7 +156,7 @@ This is useful for using tools such as [Jan.ai](https://jan.ai/) as a UI for Mul
 
 See the [Jan.ai integration documentation](../integrations/jan) for more information.
 
-If authentication is being used in your requests, you will be adding a "Authorization Bearer <API_KEY>" header.
+If authentication is being used in your requests, you will be adding a "Authorization Bearer `API_KEY`" header.
 
 When using Multivac Cloud it expects usually an `x-api-key` for authentication, so to handle authentication the endpoints service needs to be available to check the Authentication token is the `MULTIVAC_API_KEY`:
 
