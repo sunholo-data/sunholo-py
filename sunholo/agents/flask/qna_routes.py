@@ -44,7 +44,7 @@ except ImportError:
 api_key_cache = {}
 cache_duration = timedelta(minutes=5)  # Cache duration
 
-def make_openai_response(user_message, vector_name, bot_output):
+def make_openai_response(user_message, vector_name, answer):
     response_id = str(uuid.uuid4())
     openai_response = {
         "id": response_id,
@@ -56,15 +56,15 @@ def make_openai_response(user_message, vector_name, bot_output):
             "index": 0,
             "message": {
                 "role": "assistant",
-                "content": bot_output.get('answer', ''),
+                "content": answer,
             },
             "logprobs": None,
             "finish_reason": "stop"
         }],
         "usage": {
             "prompt_tokens": len(user_message.split()),
-            "completion_tokens": len(bot_output.get('answer', '').split()),
-            "total_tokens": len(user_message.split()) + len(bot_output.get('answer', '').split())
+            "completion_tokens": len(answer.split()),
+            "total_tokens": len(user_message.split()) + len(answer.split())
         }
     }
 
@@ -344,7 +344,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
         command_response = handle_special_commands(user_message, vector_name, paired_messages)
 
         if command_response is not None:
-            
+
             return make_openai_response(user_message, vector_name, command_response)
         
         if image_uri:
@@ -419,7 +419,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
 
             log.info(f"Bot output: {bot_output}")
 
-            return make_openai_response(user_message, vector_name, bot_output)
+            return make_openai_response(user_message, vector_name, bot_output.get('answer', ''))
 
 
         except Exception as err:
