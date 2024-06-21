@@ -2,9 +2,9 @@
 
 The `sunholo` library takes care of code within the Virtual Agent Computer (VAC) applications.  
 
-The [VAC](vacs) is an abstraction that offers a standard way to interact with GenAI applications.  The advantage of this is that the input and output of those systems can be standardised and can help speed up deployments.  Within a VAC you can use frameworks such as Langchain, LlamaIndex, VertexAI, OpenAI, or your own custom libraries, in any language so long as it can be used within a Docker container.
+The [VAC](../VACs) is an abstraction that offers a standard way to interact with GenAI applications.  The advantage of this is that the input and output of those systems can be standardised and can help speed up deployments.  Within a VAC you can use frameworks such as Langchain, LlamaIndex, VertexAI, OpenAI, or your own custom libraries, in any language so long as it can be used within a Docker container.
 
-Multivac (Multi-VAC) Cloud is an implementation of this abstraction.  It consists of Infrastructure-as-Code (IAC) to provision Cloud services that the VACs can plug into.  The [YAML configuration files](config) is the link between what is internal to a VAC and what is external within the cloud environment.
+Multivac (Multi-VAC) Cloud is an implementation of this abstraction.  It consists of Infrastructure-as-Code (IAC) to provision Cloud services that the VACs can plug into.  The [YAML configuration files](../config) is the link between what is internal to a VAC and what is external within the cloud environment.
 
 ## Multivac features
 
@@ -48,7 +48,7 @@ Get in touch if you would like to see other ways to interact with GenAI!
 
 ## Data Integrations
 
-The tools above are for data outputs, but for inputting data so that you can tailor your model responses (such as for Reterival Augment Generation or RAG) there are extensive pipelines available.  See the [embedding](howto/embedding) section for more details.  
+The tools above are for data outputs, but for inputting data so that you can tailor your model responses (such as for Reterival Augment Generation or RAG) there are extensive pipelines available.  See the [embedding](../howto/embedding) section for more details.  
 
 * Google Cloud Storage buckets can store data such as documents, videos and audio.
 * PostgreSQL databases can store embeddings via `pgvector` and other useful GenAI features such as logging and chat history.
