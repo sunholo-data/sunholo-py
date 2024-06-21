@@ -225,7 +225,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
 
     @app.before_request
     def check_authentication_header():
-        if request.path.startswith('/openai/') or request.path.startswith('/vac/'):
+        if request.path.startswith('/openai/'):
             log.debug(f'Request headers: {request.headers}')
             # the header forwarded
             auth_header = request.headers.get('X-Forwarded-Authorization')
@@ -310,6 +310,8 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
 
         if not user_message:
             return jsonify({"error": "No user message provided"}), 400
+        else:
+            log.info(f"User message: {user_message}")
         
         if image_uri:
             data["image_uri"] = image_uri
@@ -338,7 +340,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                     openai_chunk = {
                         "id": response_id,
                         "object": "chat.completion.chunk",
-                        "created": str(datetime.time()),
+                        "created": str(int(datetime.now().timestamp())),
                         "model": vector_name,
                         "system_fingerprint": sunholo_version(),
                         "choices": [{
@@ -355,7 +357,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
             final_chunk = {
                 "id": response_id,
                 "object": "chat.completion.chunk",
-                "created": str(datetime.time()),
+                "created": str(int(datetime.now().timestamp())),
                 "model": vector_name,
                 "system_fingerprint": sunholo_version(),
                 "choices": [{
@@ -386,7 +388,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
             openai_response = {
                 "id": response_id,
                 "object": "chat.completion",
-                "created": str(datetime.time()),
+                "created": str(int(datetime.now().timestamp())),
                 "model": vector_name,
                 "system_fingerprint": sunholo_version(),
                 "choices": [{

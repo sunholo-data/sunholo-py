@@ -50,7 +50,7 @@ def _validate_api_key_cached(api_key: str, service_name: str) -> bool:
         log.debug(f"API_KEY validation failed with errors: {response.check_errors}")
         return False
 
-    log.debug("API_KEY validation succeeded - {response}")
+    log.debug(f"API_KEY validation succeeded - {response}")
     return True
 
 def config_to_swagger():
