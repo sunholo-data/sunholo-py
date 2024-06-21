@@ -257,7 +257,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                 return jsonify({'error': 'Missing Authorization header'}), 401
 
     @app.route('/openai/health', methods=['GET', 'POST'])
-    def your_endpoint():
+    def openai_health_endpoint():
         return jsonify({'message': 'Success'})
 
     @app.route('/openai/v1/chat/completions', methods=['POST'])
