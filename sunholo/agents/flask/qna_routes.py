@@ -46,6 +46,7 @@ cache_duration = timedelta(minutes=5)  # Cache duration
 
 def make_openai_response(user_message, vector_name, answer):
     response_id = str(uuid.uuid4())
+    log.info("openai response: Q: {user_message} to VECTOR_NAME: {vector_name} - A: {answer}")
     openai_response = {
         "id": response_id,
         "object": "chat.completion",
@@ -418,9 +419,10 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
             bot_output = parse_output(bot_output)
 
             log.info(f"Bot output: {bot_output}")
-
-            return make_openai_response(user_message, vector_name, bot_output.get('answer', ''))
-
+            if bot_output:
+                return make_openai_response(user_message, vector_name, bot_output.get('answer', ''))
+            else:
+                return make_openai_response(user_message, vector_name, 'ERROR: could not find an answer')
 
         except Exception as err:
             log.error(f"OpenAI response error: {err}")
