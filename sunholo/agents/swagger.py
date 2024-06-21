@@ -6,6 +6,31 @@ from ruamel.yaml import YAML
 from io import StringIO
 # check it here:
 # https://editor.swagger.io/
+from functools import lru_cache
+
+try:
+    from google.cloud import endpoints_v1
+except ImportError:
+    endpoints_v1 = None
+
+def validate_api_key(api_key: str, service_name: str) -> bool:
+    """
+    Validate an API key against the service name e.g. 'endpoints-xxxx.a.run.app'
+    """
+    if not endpoints_v1:
+        raise ImportError("Cloud Endpoints API key validation is required, install via `pip install google-cloud-endpoints`")
+
+    return _validate_api_key_cached(api_key, service_name)
+
+@lru_cache(maxsize=1024)
+def _validate_api_key_cached(api_key: str, service_name: str) -> bool:
+    client = endpoints_v1.ServiceControlServiceClient()
+    response = client.check(
+        service_name=service_name,
+        operation={'consumer_id': f'api_key:{api_key}'}
+    )
+
+    return response.check_errors is None
 
 def config_to_swagger():
     """
@@ -123,8 +148,8 @@ def generate_swagger(vac_config, agent_config):
     swagger_template = {
         'swagger': '2.0',
         'info': {
-            'title': 'Multivac - Cloud Endpoints + Cloud Run',
-            'description': 'Multivac - Cloud Endpoints with a Cloud Run backend',
+            'title': 'Multivac ${_BRANCH_NAME} - Cloud Endpoints + Cloud Run',
+            'description': 'Multivac Endpoints - see documentation at https://dev.sunholo.com/',
             'version': '0.1.0'
         },
         'host': '${_ENDPOINTS_HOST}',

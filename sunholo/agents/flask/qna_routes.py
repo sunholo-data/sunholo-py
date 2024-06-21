@@ -27,7 +27,8 @@ from ...utils.config import load_config
 from ...utils.version import sunholo_version
 import os
 from ...gcs.add_file import add_file_to_gcs, handle_base64_image
-
+from ..swagger import validate_api_key
+from datetime import datetime, timedelta
 
 try:
     from flask import request, jsonify, Response
@@ -39,6 +40,9 @@ try:
 except ImportError:
     pass    
 
+# Cache dictionary to store validated API keys
+api_key_cache = {}
+cache_duration = timedelta(minutes=5)  # Cache duration
 
 def register_qna_routes(app, stream_interpreter, vac_interpreter):
     """
@@ -218,6 +222,43 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
 
         # {'answer': 'output'}
         return jsonify(bot_output)
+
+    @app.before_request
+    def check_authentication_header():
+        if request.path.startswith('/openai/'):
+            auth_header = request.headers.get('Authorization')
+            if auth_header:
+                api_key = auth_header.split(' ')[1]  # Assuming "Bearer <api_key>"
+                endpoints_host = os.getenv('_ENDPOINTS_HOST')
+                if not endpoints_host:
+                    return jsonify({'error': '_ENDPOINTS_HOST environment variable not found'}), 401
+                
+                # Check cache first
+                current_time = datetime.now()
+                if api_key in api_key_cache:
+                    cached_result, cache_time = api_key_cache[api_key]
+                    if current_time - cache_time < cache_duration:
+                        if not cached_result:
+                            return jsonify({'error': 'Invalid cached API key'}), 401
+                        else:
+                            return  # Valid API key, continue to the endpoint
+                    else:
+                        # Cache expired, remove from cache
+                        del api_key_cache[api_key]
+                
+                # Validate API key
+                is_valid = validate_api_key(api_key, endpoints_host)
+                # Update cache
+                api_key_cache[api_key] = (is_valid, current_time)
+                
+                if not is_valid:
+                    return jsonify({'error': 'Invalid API key'}), 401
+            else:
+                return jsonify({'error': 'Missing Authorization header'}), 401
+
+    @app.route('/openai/health', methods=['GET', 'POST'])
+    def your_endpoint():
+        return jsonify({'message': 'Success'})
 
     @app.route('/openai/v1/chat/completions', methods=['POST'])
     @app.route('/openai/v1/chat/completions/<vector_name>', methods=['POST'])

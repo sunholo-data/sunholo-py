@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.66.3'
+version = '0.66.4'
 
 setup(
     name='sunholo',
@@ -29,7 +29,7 @@ setup(
     install_requires=[
         # Base dependencies
         "google-auth", # to check if on gcp
-        "tenacity==8.3.0",
+        "tenacity==8.3.0", #TODO: remove soon
         "ruamel.yaml",
         "langchain",
         "langchain_experimental",
@@ -50,6 +50,7 @@ setup(
             "google-cloud-alloydb-connector[pg8000]",
             "google-cloud-bigquery",
             "google-cloud-build",
+            "google-cloud-endpoints",
             "google-cloud-logging",
             "google-cloud-storage",
             "google-cloud-pubsub",
@@ -103,6 +104,7 @@ setup(
             "google-cloud-aiplatform",
             "google-cloud-bigquery",
             "google-cloud-build",
+            "google-cloud-endpoints",
             "google-cloud-storage",
             "google-cloud-logging",
             "google-cloud-pubsub",
