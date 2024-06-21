@@ -225,8 +225,10 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
 
     @app.before_request
     def check_authentication_header():
-        if request.path.startswith('/openai/'):
-            auth_header = request.headers.get('Authorization')
+        if request.path.startswith('/openai/') or request.path.startswith('/vac/'):
+            log.debug(f'Request headers: {request.headers}')
+            # the header forwarded
+            auth_header = request.headers.get('X-Forwarded-Authorization')
             if auth_header:
                 api_key = auth_header.split(' ')[1]  # Assuming "Bearer <api_key>"
                 endpoints_host = os.getenv('_ENDPOINTS_HOST')
