@@ -44,6 +44,33 @@ except ImportError:
 api_key_cache = {}
 cache_duration = timedelta(minutes=5)  # Cache duration
 
+def make_openai_response(user_message, vector_name, bot_output):
+    response_id = str(uuid.uuid4())
+    openai_response = {
+        "id": response_id,
+        "object": "chat.completion",
+        "created": str(int(datetime.now().timestamp())),
+        "model": vector_name,
+        "system_fingerprint": sunholo_version(),
+        "choices": [{
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": bot_output.get('answer', ''),
+            },
+            "logprobs": None,
+            "finish_reason": "stop"
+        }],
+        "usage": {
+            "prompt_tokens": len(user_message.split()),
+            "completion_tokens": len(bot_output.get('answer', '').split()),
+            "total_tokens": len(user_message.split()) + len(bot_output.get('answer', '').split())
+        }
+    }
+
+    log.info(f"OpenAI response: {openai_response}")
+    return jsonify(openai_response)
+
 def register_qna_routes(app, stream_interpreter, vac_interpreter):
     """
     Register Q&A routes for a Flask application.
@@ -313,6 +340,13 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
         else:
             log.info(f"User message: {user_message}")
         
+        paired_messages = extract_chat_history(chat_history)
+        command_response = handle_special_commands(user_message, vector_name, paired_messages)
+
+        if command_response is not None:
+            
+            return make_openai_response(user_message, vector_name, command_response)
+        
         if image_uri:
             data["image_uri"] = image_uri
             data["mime"] = mime_type
@@ -385,30 +419,8 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
 
             log.info(f"Bot output: {bot_output}")
 
-            openai_response = {
-                "id": response_id,
-                "object": "chat.completion",
-                "created": str(int(datetime.now().timestamp())),
-                "model": vector_name,
-                "system_fingerprint": sunholo_version(),
-                "choices": [{
-                    "index": 0,
-                    "message": {
-                        "role": "assistant",
-                        "content": bot_output.get('answer', ''),
-                    },
-                    "logprobs": None,
-                    "finish_reason": "stop"
-                }],
-                "usage": {
-                    "prompt_tokens": len(user_message.split()),
-                    "completion_tokens": len(bot_output.get('answer', '').split()),
-                    "total_tokens": len(user_message.split()) + len(bot_output.get('answer', '').split())
-                }
-            }
+            return make_openai_response(user_message, vector_name, bot_output)
 
-            log.info(f"OpenAI response: {openai_response}")
-            return jsonify(openai_response)
 
         except Exception as err:
             log.error(f"OpenAI response error: {err}")
