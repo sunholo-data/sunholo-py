@@ -30,6 +30,7 @@ Keeping those principles in mind, the current implementation uses Google Cloud P
 * Secret Manager - secure storage of all API secrets 
 * AlloyDB - flexible and fast PostgreSQL compatible solution for embeddings, chat history, analytics
 * BigQuery - data lake and structured logging support
+* Cloud Logging and GenAI analytics and eval tools for application iterations.
 
 ## User Interfaces
 

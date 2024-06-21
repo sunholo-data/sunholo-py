@@ -171,6 +171,7 @@ def generate_swagger(vac_config, agent_config):
         'info': {
             'title': 'Multivac ${_BRANCH_NAME} - Cloud Endpoints + Cloud Run',
             'description': 'Multivac Endpoints - see documentation at https://dev.sunholo.com/',
+            'basePath': 'v1',
             'version': '0.1.0'
         },
         'host': '${_ENDPOINTS_HOST}',
