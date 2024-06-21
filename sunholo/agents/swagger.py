@@ -41,9 +41,11 @@ def _validate_api_key_cached(api_key: str, service_name: str) -> bool:
             start_time=start_time,
         )
     )
+    log.debug("API_KEY checkRequest {request}")
+
     response = client.check(request=request)
 
-    log.debug("API_KEY checkRequest {response}")
+    log.debug("API_KEY checkRequest response: {response}")
 
     return response.check_errors is None
 
