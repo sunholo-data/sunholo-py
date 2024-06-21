@@ -43,6 +43,8 @@ def _validate_api_key_cached(api_key: str, service_name: str) -> bool:
     )
     response = client.check(request=request)
 
+    log.debug("API_KEY checkRequest {response}")
+
     return response.check_errors is None
 
 def config_to_swagger():
