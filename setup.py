@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.66.4'
+version = '0.66.5'
 
 setup(
     name='sunholo',
@@ -50,7 +50,7 @@ setup(
             "google-cloud-alloydb-connector[pg8000]",
             "google-cloud-bigquery",
             "google-cloud-build",
-            "google-cloud-endpoints",
+            "google-endpoints",
             "google-cloud-logging",
             "google-cloud-storage",
             "google-cloud-pubsub",
@@ -104,7 +104,7 @@ setup(
             "google-cloud-aiplatform",
             "google-cloud-bigquery",
             "google-cloud-build",
-            "google-cloud-endpoints",
+            "google-endpoints",
             "google-cloud-storage",
             "google-cloud-logging",
             "google-cloud-pubsub",

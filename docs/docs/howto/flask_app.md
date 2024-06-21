@@ -150,12 +150,19 @@ e.g. if calling `/openai/v1/chat/completions/` then in the config you will need 
 
 Otherwise you can use `/openai/v1/chat/completions/<vector_name>` to tailor the request to the VAC eg.
 
-
 This is useful for using tools such as [Jan.ai](https://jan.ai/) as a UI for Multivac:
 
 ![alt text](../img/jan-config.png)
 
 See the [Jan.ai integration documentation](../integrations/jan) for more information.
+
+If authentication is being used in your requests, you will be adding a "Authorization Bearer <API_KEY>" header.
+
+When using Multivac Cloud it expects usually an `x-api-key` for authentication, so to handle authentication the endpoints service needs to be available to check the Authentication token is the `MULTIVAC_API_KEY`:
+
+```bash
+ENV _ENDPOINTS_HOST=yourendpointshost.app.com
+```
 
 ## Config
 
