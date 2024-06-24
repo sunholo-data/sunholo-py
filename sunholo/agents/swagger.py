@@ -273,9 +273,8 @@ See more at https://dev.sunholo.com/
         try:
             stem = route_vac(vector_name).strip()
         except ValueError:
-            stem = f"${{{agent_type.upper()}_BACKEND_URL}}"
-            log.warning(f"Failed to find URL stem for {vector_name}/{agent_type} - using {stem} instead")
-        
+            log.warning(f"Failed to find URL stem for {vector_name}/{agent_type} - skipping")
+            continue
 
         for method, endpoints in default_agent_config.items():
             # controls if get requests are protected or not
