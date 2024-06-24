@@ -13,8 +13,7 @@
 #   limitations under the License.
 try:
     from google.cloud import pubsub_v1
-    from google.api_core.exceptions import NotFound
-    from google.api_core.exceptions import AlreadyExists
+    from google.api_core.exceptions import AlreadyExists, PermissionDenied, NotFound
     from google.auth import default
 except ImportError:
     pubsub_v1 = None
@@ -67,6 +66,13 @@ class PubSubManager:
             log.info(f"Created Pub/Sub topic: {self.pubsub_topic}")
             if self.verbose:
                 print(f"Created Pub/Sub topic: {self.pubsub_topic}")
+        except PermissionDenied:
+                    # Obtain the current credentials being used
+            credentials, project_id = default()
+            log.error(f"Permission denied to get/create Pub/Sub topic {self.pubsub_topic} - project: {self.project_id} - credentials: {credentials}")
+        except Exception as e:
+            # Catch any other exceptions and log them
+            log.error(f"An unexpected error occurred while accessing Pub/Sub topic {self.pubsub_topic}: {e}")
     
     def subscription_exists(self, subscription_name:str):
 
