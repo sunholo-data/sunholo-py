@@ -110,6 +110,9 @@ vac:
     model: gpt-4o
     memory_k: 10 # how many memories will be returned in total after relevancy compression
     memory:
+      - per_user_id:
+          vectorstore: lancedb
+          from_metadata_id: user_id # look up this value in the metadata - if present, put in vectorstore of that name
       - personal-vectorstore:
           vectorstore: lancedb
           k: 10 #  how many candidate memory will be returned from this vectorstore

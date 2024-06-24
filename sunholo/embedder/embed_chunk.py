@@ -124,6 +124,23 @@ def embed_pubsub_chunk(data: dict):
                 if vector_name_other:
                     log.warning(f"Using different vector_name for vectorstore: {vector_name_other} overriding {vector_name}")
                     vector_name = vector_name_other
+                
+                # dynamic vectorstore names (for per user_id stores)
+                if value.get('from_metadata_id'):
+                    the_id = value.get('from_metadata_id')
+                    log.info(f"Lookup vectorstore vector_name from id: {the_id}")
+
+                    if the_id not in metadata:
+                        log.warning("Could not find vectorstore from_metadata_id {the_id} in metadata - skipping")
+                        continue
+                    else:
+                        match_id = metadata.get(the_id)
+                        if match_id:
+                            vector_name = match_id
+                        else:
+                            log.warning("Could not find any value for vectorstore from_metadata_id: {the_id} - skipping")
+                            continue
+
                 vectorstore_obj = pick_vectorstore(vectorstore, vector_name=vector_name, embeddings=embeddings)
                 vs_retriever = vectorstore_obj.as_retriever(search_kwargs=dict(k=3))
                 vectorstore_list.append(vs_retriever)
