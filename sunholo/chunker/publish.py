@@ -27,9 +27,14 @@ def publish_chunks(chunks: list[Document], vector_name: str):
     
     log.info("Publishing chunks to embed_chunk")
     
-    pubsub_manager = PubSubManager(vector_name, 
-                                   pubsub_topic="chunk-to-pubsub-embed", 
-                                   project_id=project)
+    try:
+        pubsub_manager = PubSubManager(vector_name, 
+                                    pubsub_topic="chunk-to-pubsub-embed", 
+                                    project_id=project)
+    except Exception as err:
+        log.error(f"PubSubManager init error: Could not publish chunks to {project} {vector_name} pubsub_topic chunk-to-pubsub-embed - {str(err)}")
+        
+        return None
         
     for chunk in chunks:
         # Convert chunk to string, as Pub/Sub messages must be strings or bytes

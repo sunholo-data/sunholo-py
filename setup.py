@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.67.1'
+version = '0.67.2'
 
 setup(
     name='sunholo',
@@ -32,7 +32,7 @@ setup(
         #"tenacity==8.3.0", #TODO: remove soon
         "ruamel.yaml",
         "langchain>=0.2.5",
-        "langchain_experimental",
+        "langchain_experimental>0.0.60",
         "langchain-community",
         # Add the minimal dependencies that your package requires here
     ],
@@ -67,7 +67,7 @@ setup(
             "langchain-openai",
             "langchain-google-genai",
             "langchain_google_alloydb_pg",
-            "langchain-anthropic",
+            "langchain-anthropic>=0.1.13",
             "langfuse",
             "pg8000",
             "pgvector",
@@ -80,7 +80,7 @@ setup(
 
         ],
         'cli': [
-            "jsonschema",
+            "jsonschema>=4.21.1",
             "rich"
         ],
         'database': [
@@ -109,9 +109,9 @@ setup(
             "google-cloud-logging",
             "google-cloud-pubsub",
             "google-cloud-discoveryengine",
-            "google-generativeai",
-            "langchain-google-genai",
-            "langchain_google_alloydb_pg",
+            "google-generativeai>=0.4.1",
+            "langchain-google-genai>=1.0.5",
+            "langchain_google_alloydb_pg>=0.2.2",
             "google-api-python-client",
             "google-cloud-alloydb-connector[pg8000]",
         ],
@@ -120,7 +120,7 @@ setup(
             "tiktoken"
         ],
         'anthropic': [
-            "langchain-anthropic",        
+            "langchain-anthropic>=0.1.13",        
         ],
         'http': [
             "fastapi",
