@@ -101,6 +101,7 @@ apiVersion: v1
 gcp_config: # reached via vac='global'
   project_id: default-gcp-project
   location: europe-west1
+  endpoints_base_url: https://endpoints-xxxxx.a.run.app # if using Cloud Endpoints
 vac:
   personal_llama:
     llm: vertex  # using google vertex

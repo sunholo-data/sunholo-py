@@ -11,6 +11,7 @@ import sys
 import subprocess
 import json
 import requests
+import os
 from pathlib import Path
 
 from rich import print
@@ -226,15 +227,30 @@ def resolve_service_url(args, no_config=False):
     if args.url_override:
 
         return args.url_override
+    
+    agent_name = load_config_key("agent", args.vac_name, kind="vacConfig")
+    agent_url = load_config_key("agent_url", args.vac_name, "vacConfig")
+    if agent_url:
+        console.print("Found agent_url within vacConfig: {agent_url}")
+    
+    # via public cloud endpoints - assumes no gcloud auth
+    if os.getenv("MULTIVAC_API_KEY"):
+        console.rule("Found MULTIVAC_API_KEY")
+        gcp_config = load_config_key("gcp_config", "global", "vacConfig")
+        endpoints_base_url = gcp_config.get("endpoints_base_url")
+        if not endpoints_base_url:
+            console.print("[bold red]MULTIVAC_API_KEY env var is set but no config.gcp_config.endpoints_base_url can be found[/bold red]")
+            sys.exit(1)
 
-    if args.no_proxy:
-        agent_url = load_config_key("agent_url", args.vac_name, "vacConfig")
-        if agent_url:
-            console.print("Found agent_url within vacConfig: {agent_url}")
+        service_url = f"{endpoints_base_url}/v1/{agent_name}"
+
+    # via direct access to agent url - requires gcloud auth access
+    elif args.no_proxy:
         
-        service_url = agent_url or get_cloud_run_service_url(args.project, args.region, args.vac_name)
+        service_url = agent_url or get_cloud_run_service_url(args.project, args.region, agent_name)
         console.print(f"No proxy, connecting directly to {service_url}")
     else:
+        # via gcloud proxy - requires gcloud auth access
         try:
             service_url = get_service_url(args.vac_name, args.project, args.region, no_config=no_config)
         except ValueError as e:

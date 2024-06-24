@@ -3,6 +3,7 @@ apiVersion: v1
 gcp_config:
   project_id: multivac-internal-dev
   location: europe-west1
+  endpoints_base_url: https://endpoints-xxxxx.a.run.app
 vac:
   multivac_docs:
     llm: vertex
