@@ -151,7 +151,6 @@ def stop_proxy(service_name, stop_local=True):
     # kill PID
 
     if service_name not in proxies:
-        print(f"No proxy found for service: {service_name}")
         return
 
     if not stop_local:

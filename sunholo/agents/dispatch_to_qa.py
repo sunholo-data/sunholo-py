@@ -121,7 +121,7 @@ def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
 
     except requests.exceptions.HTTPError as err:
         log.error(f"HTTP error occurred: {err}")
-        error_message = f"There was an error processing your request. Please try again later. {str(err)}"
+        error_message = f"There was an error processing your request. {str(err)}"
         if stream:
             return iter([error_message])
         else:
@@ -129,7 +129,7 @@ def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
 
     except Exception as err:
         log.error(f"Other error occurred: {str(err)}")
-        error_message = f"Something went wrong. Please try again later. {str(err)}"
+        error_message = f"Something went wrong. {str(err)}"
         if stream:
             return iter([error_message])
         else:

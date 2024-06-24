@@ -2,6 +2,7 @@ from ..agents import send_to_qa, handle_special_commands
 from ..streaming import generate_proxy_stream, can_agent_stream
 from ..utils.user_ids import generate_user_id
 from ..utils.config import load_config_key
+from ..utils.api_key import has_multivac_api_key
 from ..logging import log
 from ..qna.parsers import parse_output
 from .run_proxy import clean_proxy_list, start_proxy, stop_proxy
@@ -234,21 +235,24 @@ def resolve_service_url(args, no_config=False):
         console.print("Found agent_url within vacConfig: {agent_url}")
     
     # via public cloud endpoints - assumes no gcloud auth
-    if os.getenv("MULTIVAC_API_KEY"):
-        console.rule("Found MULTIVAC_API_KEY")
+    if has_multivac_api_key():
+        log.debug("Found MULTIVAC_API_KEY")
         gcp_config = load_config_key("gcp_config", "global", "vacConfig")
         endpoints_base_url = gcp_config.get("endpoints_base_url")
         if not endpoints_base_url:
             console.print("[bold red]MULTIVAC_API_KEY env var is set but no config.gcp_config.endpoints_base_url can be found[/bold red]")
             sys.exit(1)
 
-        service_url = f"{endpoints_base_url}/v1/{agent_name}"
+        return f"{endpoints_base_url}/v1/{agent_name}"
 
     # via direct access to agent url - requires gcloud auth access
     elif args.no_proxy:
         
         service_url = agent_url or get_cloud_run_service_url(args.project, args.region, agent_name)
         console.print(f"No proxy, connecting directly to {service_url}")
+
+        return service_url
+    
     else:
         # via gcloud proxy - requires gcloud auth access
         try:
@@ -257,7 +261,7 @@ def resolve_service_url(args, no_config=False):
             console.print(f"[bold red]ERROR: Could not start {args.vac_name} proxy URL: {str(e)}[/bold red]")
             sys.exit(1)
     
-    return service_url
+        return service_url
 
 def vac_command(args):
 

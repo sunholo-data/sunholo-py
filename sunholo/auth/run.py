@@ -4,6 +4,7 @@ import inspect
 from typing import Dict, Optional
 from ..utils.config import load_config_key, load_config
 from ..utils.gcp import is_running_on_cloudrun
+from ..utils.api_key import has_multivac_api_key, get_multivac_api_key
 from ..logging import log
 from ..agents.route import route_vac
 
@@ -48,6 +49,10 @@ def get_id_token(url: str) -> str:
         )
 
 def get_header(vector_name) -> Optional[dict]:
+    if has_multivac_api_key():
+        
+        return {"x-api-key": get_multivac_api_key()}
+
     if is_running_on_cloudrun():
         run_url = get_run_url(vector_name)
     else:
