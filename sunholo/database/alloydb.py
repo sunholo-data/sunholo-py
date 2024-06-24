@@ -8,6 +8,7 @@ try:
     from langchain_google_alloydb_pg import AlloyDBEngine, Column, AlloyDBLoader, AlloyDBDocumentSaver
     from google.cloud.alloydb.connector import IPTypes
 except ImportError:
+    AlloyDBEngine = None
     pass
 
 from .database import get_vector_size
@@ -15,6 +16,10 @@ from ..logging import log
 from ..utils.config import load_config_key
 
 def create_alloydb_engine(vector_name):
+
+    if not AlloyDBEngine:
+        log.error("Can't create AlloyDBEngine - install via `pip install sunholo[gcp,database]`")
+        raise ValueError("Can't import AlloyDBEngine")
 
     alloydb_config = load_config_key(
         'alloydb_config', 
