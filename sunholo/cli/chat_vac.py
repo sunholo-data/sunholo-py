@@ -12,7 +12,6 @@ import sys
 import subprocess
 import json
 import requests
-import os
 from pathlib import Path
 
 from rich import print
@@ -320,7 +319,7 @@ def vac_command(args):
 def invoke_vac(service_url, data, vector_name=None, metadata=None, is_file=False):
     try:
         if is_file:
-            console.print("Uploading file to chunker...")
+            console.print("Uploading file...")
             # Handle file upload
             if not isinstance(data, Path) or not data.is_file():
                 raise ValueError("For file uploads, 'data' must be a Path object pointing to a valid file.")
@@ -335,7 +334,7 @@ def invoke_vac(service_url, data, vector_name=None, metadata=None, is_file=False
 
             response = requests.post(service_url, files=files, data=form_data)
         else:
-            console.print("Uploading JSON to chunker...")
+            console.print("Uploading JSON...")
             try:
                 if isinstance(data, dict):
                     json_data = data

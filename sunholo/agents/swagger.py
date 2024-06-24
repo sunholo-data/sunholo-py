@@ -198,24 +198,20 @@ See more at https://dev.sunholo.com/
             }
         }
     }
-    
     vac_services = vac_config['vac']
     
-    for vector_name, config in vac_services.items():
+    def configure_agent(vector_name, config, agent_config_paths):
         agent_type = config['agent']
-        agent_config_paths = agent_config['agents'].get(agent_type, {})
         log.info(f'Configuring swagger for agent_type: {agent_type} for vector_name: {vector_name}')
         try:
             stem = route_vac(vector_name).strip()
         except ValueError:
             log.warning(f"Failed to find URL stem for {vector_name}/{agent_type} - skipping")
-            continue
-        
+            return
+
         for method, endpoints in agent_config_paths.items():
-            # controls if get requests are protected or not
             do_auth = True
 
-            # default get: noauth, post: auth
             if method not in ['get', 'post', 'get-auth', 'post-noauth']:
                 continue
 
@@ -228,7 +224,7 @@ See more at https://dev.sunholo.com/
             elif method == 'get':
                 do_auth = False
             elif method == 'post':
-                do_auth = True # not needed but to be clear whats happening
+                do_auth = True
 
             for endpoint_key, endpoint_template in endpoints.items():
                 endpoint_template = endpoint_template.strip()
@@ -262,79 +258,26 @@ See more at https://dev.sunholo.com/
                         }
                     }))
                 }
-    # Handle default agent configuration for agent types without specific entries
+
+    for vector_name, config in vac_services.items():
+        agent_type = config['agent']
+        agent_config_paths = agent_config['agents'].get(agent_type, {})
+        configure_agent(vector_name, config, agent_config_paths)
+
     default_agent_config = agent_config['agents'].get('default', {})
-    
+
     for vector_name, config in vac_services.items():
         agent_type = config['agent']
         if agent_type in agent_config['agents']:
             continue
         log.info(f'Applying default configuration for agent_type: {agent_type} for vector_name: {vector_name}')
-        try:
-            stem = route_vac(vector_name).strip()
-        except ValueError:
-            log.warning(f"Failed to find URL stem for {vector_name}/{agent_type} - skipping")
-            continue
-
-        for method, endpoints in default_agent_config.items():
-            # controls if get requests are protected or not
-            do_auth = True
-
-            # default get: noauth, post: auth
-            if method not in ['get', 'post', 'get-auth', 'post-noauth']:
-                continue
-
-            if method == 'get-auth':
-                do_auth = True
-                method = 'get'
-            elif method == 'post-noauth':
-                do_auth = False
-                method = 'post'
-            elif method == 'get':
-                do_auth = False
-            elif method == 'post':
-                do_auth = True # not needed but to be clear whats happening
-
-            for endpoint_key, endpoint_template in endpoints.items():
-                endpoint_template = endpoint_template.strip()
-                endpoint_address = endpoint_template.replace("{stem}", stem).replace("{vector_name}", vector_name).strip()
-                endpoint_path = endpoint_template.replace("{stem}", f"/{agent_type}").replace("{vector_name}", vector_name).strip()
-                log.debug(f"default Endpoint_template: {endpoint_template}")
-                log.debug(f"default endpoint address: {endpoint_address}")
-                log.debug(f"default endpoint_path: {endpoint_path}")
-                if endpoint_path not in swagger_template['paths']:
-                    swagger_template['paths'][endpoint_path] = {}
-                
-                operation_id = f"{method}_{agent_type}_{endpoint_key}_{vector_name}"
-
-                security = [{'ApiKeyAuth': []}] if do_auth else [{'None': []}]
-
-                swagger_template['paths'][endpoint_path][method] = {
-                    'summary': f"{method.capitalize()} {agent_type}",
-                    'operationId': operation_id,
-                    'x-google-backend': {
-                        'address': endpoint_address,
-                        'protocol': 'h2',
-                        'deadline': 180000  # Timeout of 3 minutes (1,800,00 milliseconds)
-                    },
-                    'security': security,
-                    'responses': copy.deepcopy(default_agent_config.get('response', {}).get(endpoint_key, {
-                        '200': {
-                            'description': 'Default - A successful response',
-                            'schema': {
-                                'type': 'string'
-                            }
-                        }
-                    }))
-                }
+        configure_agent(vector_name, config, default_agent_config)
 
     yaml = YAML()
-    yaml.width = 4096 # to avoid breaking urls
+    yaml.width = 4096
 
-    # Capture YAML output in a string buffer
     string_stream = StringIO()
     yaml.dump(swagger_template, string_stream)
     yaml_string = string_stream.getvalue()
 
     return yaml_string
-    
