@@ -2,10 +2,8 @@ from sunholo.logging import setup_logging
 from sunholo.utils.config import load_config_key
 
 # VAC specific imports
-from sunholo.llamaindex.import_files import init_vertex, get_corpus
-from vertexai.preview import rag
-from vertexai.preview.generative_models import GenerativeModel, Tool
-import vertexai
+from sunholo.vertex import init_vertex, get_vertex_memories
+from vertexai.preview.generative_models import GenerativeModel
 
 log = setup_logging("template")
 
@@ -34,8 +32,7 @@ def vac_stream(question: str, vector_name, chat_history=[], callback=None, **kwa
 
 #TODO: change this to a batch VAC function
 def vac(question: str, vector_name, chat_history=[], **kwargs):
-    # Create a gemini-pro model instance
-    # https://ai.google.dev/api/python/google/generativeai/GenerativeModel#streaming
+
     rag_model = create_model(vector_name)
 
     response = rag_model.generate_content(question)
@@ -52,27 +49,14 @@ def create_model(vector_name):
         raise ValueError(f"Need config.{vector_name}.gcp_config to configure XXXX on VertexAI")
 
     init_vertex(gcp_config)
-    corpus = get_corpus(gcp_config)
-
-    log.info(f"Got corpus: {corpus}")
-
-    if not corpus:
-        raise ValueError("Could not find a valid corpus: {corpus}")
-
-    rag_retrieval_tool = Tool.from_retrieval(
-        retrieval=rag.Retrieval(
-            source=rag.VertexRagStore(
-                rag_corpora=[corpus.name],  # Currently only 1 corpus is allowed.
-                similarity_top_k=10,  # Optional
-            ),
-        )
-    )
+    corpus_tools = get_vertex_memories(vector_name)
 
     model = load_config_key("model", vector_name=vector_name, kind="vacConfig")
+    
     # Create a gemini-pro model instance
     # https://ai.google.dev/api/python/google/generativeai/GenerativeModel#streaming
     rag_model = GenerativeModel(
-        model_name=model or "gemini-1.0-pro-002", tools=[rag_retrieval_tool]
+        model_name=model or "gemini-1.0-pro-002", tools=[corpus_tools]
     )
 
     return rag_model

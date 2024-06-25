@@ -53,7 +53,7 @@ def pick_retriever(vector_name, embeddings=None):
                     continue
 
                 embeddings = embeddings or get_embeddings(vector_name)
-                read_only = value.get('readonly')
+                read_only = value.get('read_only')
                 vectorstore = pick_vectorstore(vectorstore, 
                                                vector_name=vector_name, 
                                                embeddings=embeddings, 
@@ -103,7 +103,7 @@ def metadata_retriever(metadata: dict, key: str, vector_name:str, embeddings=Non
                     if key not in metadata:
                         raise ValueError(f"Missing {key} in {metadata}")
                     the_id = metadata[key]
-                    read_only = value.get('readonly')
+                    read_only = value.get('read_only')
                     embeddings = embeddings or get_embeddings(vector_name)
                     vectorstore = pick_vectorstore(vectorstore, 
                                                    vector_name=the_id, 
