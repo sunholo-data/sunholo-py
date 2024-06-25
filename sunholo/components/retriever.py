@@ -57,7 +57,7 @@ def pick_retriever(vector_name, embeddings=None):
             if value.get('provider') == "GoogleCloudEnterpriseSearchRetriever":
                 log.info(f"Found GoogleCloudEnterpriseSearchRetriever {value['provider']}")
                 gcp_retriever = GoogleCloudEnterpriseSearchRetriever(
-                    project_id=get_gcp_project(include_config=True),
+                    project_id=get_gcp_project(),
                     search_engine_id=value["db_id"],
                     location_id=value.get("location", "global"),
                     engine_data_type=1 if value.get("type","unstructured") == "structured" else 0,

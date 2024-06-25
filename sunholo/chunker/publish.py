@@ -19,7 +19,7 @@ def publish_if_urls(the_content, vector_name):
 
 
 def publish_chunks(chunks: list[Document], vector_name: str):
-    project = get_gcp_project(include_config=True)
+    project = get_gcp_project()
     if not project:
         log.warning("No GCP project found for PubSub, no message sent")
 
@@ -47,7 +47,7 @@ def publish_chunks(chunks: list[Document], vector_name: str):
     
 
 def publish_text(text:str, vector_name: str):
-    project = get_gcp_project(include_config=True)
+    project = get_gcp_project()
     if not project:
         log.warning("No GCP project found for PubSub, no message sent")
 
@@ -61,7 +61,7 @@ def publish_text(text:str, vector_name: str):
     pubsub_manager.publish_message(text)
 
 def process_docs_chunks_vector_name(chunks, vector_name, metadata):
-    project = get_gcp_project(include_config=True)
+    project = get_gcp_project()
     if not project:
         log.warning("No GCP project found for PubSub, no message sent")
 
