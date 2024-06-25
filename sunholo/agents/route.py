@@ -62,7 +62,9 @@ def route_endpoint(vector_name, method = 'post', override_endpoint=None):
         if '{vector_name}' in value and vector_name is not None:
             format_args['vector_name'] = vector_name
         
-        log.debug('format_args: {format_args} - value: {value} - key: {key}')
+        if not isinstance(value, str):
+            log.warning('endpoint value not string? format_args: {format_args} - value: {value} - key: {key}')
+            
         endpoints[key] = value.format(**format_args)
 
     return endpoints
