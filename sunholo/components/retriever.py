@@ -46,10 +46,18 @@ def pick_retriever(vector_name, embeddings=None):
             vectorstore = value.get('vectorstore')
             if vectorstore:
                 log.info(f"Found vectorstore {vectorstore}")
-                if embeddings is None:
-                    embeddings = get_embeddings(vector_name)
+                from_metadata_id = value.get('from_metadata_id')
+                if from_metadata_id:
+                    # this entry needs to be fetched via metadata key
+                    log.info(f"Skipped from_metadata_id for {vectorstore}")
+                    continue
+
+                embeddings = embeddings or get_embeddings(vector_name)
                 read_only = value.get('readonly')
-                vectorstore = pick_vectorstore(vectorstore, vector_name=vector_name, embeddings=embeddings, read_only=read_only)
+                vectorstore = pick_vectorstore(vectorstore, 
+                                               vector_name=vector_name, 
+                                               embeddings=embeddings, 
+                                               read_only=read_only)
                 k_override = value.get('k', 3)
                 vs_retriever = vectorstore.as_retriever(search_kwargs=dict(k=k_override))
                 retriever_list.append(vs_retriever)
@@ -71,10 +79,54 @@ def pick_retriever(vector_name, embeddings=None):
         log.info(f"No retrievers were created for {memories}")
         return None
     
+    retriever = process_retrieval(retriever_list, vector_name)
+
+    return retriever
+
+def metadata_retriever(metadata: dict, key: str, vector_name:str, embeddings=None):
+    """
+    Decides which vector_name to retrieve from metadata passed
+    """
+    memories = load_memories(vector_name)
+
+    retriever_list = []
+    for memory in memories:  # Iterate over the list
+        for key, value in memory.items():  # Now iterate over the dictionary
+            log.info(f"Found memory {key}")
+            vectorstore = value.get('vectorstore')
+            if vectorstore:
+                log.info(f"Found vectorstore {vectorstore}")
+                from_metadata_id = value.get('from_metadata_id')
+                if from_metadata_id:
+                    # this entry needs to be fetched via metadata key
+                    log.info(f"Finding id from_metadata_id for {vectorstore}")
+                    if key not in metadata:
+                        raise ValueError(f"Missing {key} in {metadata}")
+                    the_id = metadata[key]
+                    read_only = value.get('readonly')
+                    embeddings = embeddings or get_embeddings(vector_name)
+                    vectorstore = pick_vectorstore(vectorstore, 
+                                                   vector_name=the_id, 
+                                                   embeddings=embeddings, 
+                                                   read_only=read_only)
+                    k_override = value.get('k', 3)
+                    id_retriever = vectorstore.as_retriever(search_kwargs=dict(k=k_override))
+                    retriever_list.append(id_retriever)
+                else:
+                    continue
+
+    if not retriever_list or len(retriever_list) == 0:
+        log.info(f"No retrievers were created for {memories}")
+        return None
+    
+    retriever = process_retrieval(retriever_list, vector_name)
+
+    return retriever
+    
+
+
+def process_retrieval(retriever_list: list, vector_name: str):
     k_override = load_config_key("memory_k", vector_name, kind="vacConfig")
-    if not k_override:
-        k_override = 3
-        
     lotr = MergerRetriever(retrievers=retriever_list)
 
     filter_embeddings = get_embeddings(vector_name)
@@ -83,5 +135,5 @@ def pick_retriever(vector_name, embeddings=None):
     retriever = ContextualCompressionRetriever(
         base_compressor=pipeline, base_retriever=lotr, 
         k=k_override)
-
+    
     return retriever

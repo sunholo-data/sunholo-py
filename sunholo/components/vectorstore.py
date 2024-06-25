@@ -14,7 +14,7 @@
 import os
 from ..logging import log
 
-def pick_vectorstore(vs_str, vector_name, embeddings, read_only=None):
+def pick_vectorstore(vs_str: str, vector_name: str, embeddings, read_only=None):
     log.debug('Picking vectorstore')
         
     if vs_str == 'supabase':
