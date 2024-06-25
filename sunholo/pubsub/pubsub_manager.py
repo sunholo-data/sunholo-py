@@ -69,7 +69,7 @@ class PubSubManager:
         except PermissionDenied:
                     # Obtain the current credentials being used
             credentials, project_id = default()
-            log.error(f"Permission denied to get/create Pub/Sub topic {self.pubsub_topic} - project: {self.project_id} - credentials: {credentials}")
+            log.error(f"Permission denied to get/create Pub/Sub topic {self.pubsub_topic} - project: {self.project_id} - credentials: {credentials.service_account_email}")
         except Exception as e:
             # Catch any other exceptions and log them
             log.error(f"An unexpected error occurred while accessing Pub/Sub topic {self.pubsub_topic}: {e}")
