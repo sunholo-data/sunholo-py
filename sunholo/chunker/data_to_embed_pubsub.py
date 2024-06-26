@@ -60,7 +60,7 @@ def process_chunker_data(message_data, metadata, vector_name):
         metadata["vector_name"] = vector_name
 
     if message_data is None:
-        log.error("No message_data was found in data: {data}")
+        log.error(f"No message_data was found in data: {message_data}")
         return
 
     log.debug(f"Found metadata in pubsub: {metadata}")

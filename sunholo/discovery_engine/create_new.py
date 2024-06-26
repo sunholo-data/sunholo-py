@@ -6,6 +6,13 @@ def create_new_discovery_engine(vector_name):
 
     chunker_config = load_config_key("chunker", vector_name=vector_name, kind="vacConfig")
 
+    if chunker_config:
+        chunk_size = chunker_config.get("chunk_size")
+    
+    if not chunk_size:
+        chunk_size = 500
+
+
     project_id = gcp_config.get('project_id')
     #location = gcp_config.get('location')
 
@@ -16,6 +23,6 @@ def create_new_discovery_engine(vector_name):
                     #location=location
                     )
 
-    new_store = de.create_data_store(chunk_size=chunker_config.get("chunk_size"))
+    new_store = de.create_data_store(chunk_size=chunk_size)
 
     return new_store
