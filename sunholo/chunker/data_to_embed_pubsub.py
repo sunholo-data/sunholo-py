@@ -20,6 +20,8 @@ from .publish import process_docs_chunks_vector_name
 from .splitter import chunk_doc_to_docs
 
 from ..llamaindex.import_files import llamaindex_chunker_check
+from ..discovery_engine.chunker_handler import discovery_engine_chunker_check
+
 from . import loaders
 
 def direct_file_to_embed(file_name: pathlib.Path, metadata: dict, vector_name: str):
@@ -65,10 +67,13 @@ def process_chunker_data(message_data, metadata, vector_name):
 
     # checks if only a llamaindex chunking/embedder, return early as no other processing needed
     llamacheck = llamaindex_chunker_check(message_data, metadata, vector_name)
-    
     if llamacheck:
-
         return llamacheck
+    
+    # if only a discovery engine memory, return early as no other processing needed
+    discovery_check = discovery_engine_chunker_check(message_data, metadata, vector_name)
+    if discovery_check:
+        return discovery_check
 
     chunks = []
 

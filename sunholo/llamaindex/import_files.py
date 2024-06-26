@@ -105,28 +105,8 @@ def do_llamaindex(message_data, metadata, vector_name):
         return metadata
     
     else:
-        raise NotImplementedError("Only gs:// and https://drive data is supported")
-        # write text to file and upload it
-        # TODO(developer): Update and un-comment below lines
-        # project_id = "PROJECT_ID"
-        # corpus_name = "projects/{project_id}/locations/us-central1/ragCorpora/{rag_corpus_id}"
-        # path = "path/to/local/file.txt"
-        # display_name = "file_display_name"
-        # description = "file description"
-
-        # Initialize Vertex AI API once per session
-        #path = 'path/to/local/file.txt'
-
-        # Write the message_data to a file
-        #with open(path, 'w') as file:
-        #    file.write(message_data)
-
-        #rag_file = rag.upload_file(
-        #    corpus_name=corpus_name,
-        #    path=path,
-        #    display_name=display_name,
-        #    description=description,
-        #)
+        log.warning("Only gs:// and https://drive data is supported for llamaindex")
+        
 
 def check_llamaindex_in_memory(vector_name):
     memories = load_config_key("memory", vector_name=vector_name, kind="vacConfig")
