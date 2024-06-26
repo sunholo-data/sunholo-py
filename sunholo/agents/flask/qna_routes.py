@@ -258,7 +258,12 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
             # the header forwarded
             auth_header = request.headers.get('X-Forwarded-Authorization')
             if auth_header:
-                api_key = auth_header.split(' ')[1]  # Assuming "Bearer <api_key>"
+                
+                if auth_header.startswith('Bearer '):
+                    api_key = auth_header.split(' ')[1]  # Assuming "Bearer <api_key>"
+                else:
+                    return jsonify({'error': 'Invalid authorization header does not start with "Bearer " - got: {auth_header}'}), 401
+                
                 endpoints_host = os.getenv('_ENDPOINTS_HOST')
                 if not endpoints_host:
                     return jsonify({'error': '_ENDPOINTS_HOST environment variable not found'}), 401
@@ -425,8 +430,9 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                 return make_openai_response(user_message, vector_name, 'ERROR: could not find an answer')
 
         except Exception as err:
-            log.error(f"OpenAI response error: {err}")
-            return jsonify({'error': f'QNA_ERROR: An error occurred: {str(err)} traceback: {traceback.format_exc()}'}), 500
+            log.error(f"OpenAI response error: {str(err)} traceback: {traceback.format_exc()}")
+            
+            return make_openai_response(user_message, vector_name, f'ERROR: {str(err)}')
 
 
 def create_langfuse_trace(request, vector_name):

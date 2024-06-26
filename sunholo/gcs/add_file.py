@@ -26,6 +26,10 @@ from ..utils.config import load_config_key
 
 
 def handle_base64_image(base64_data, vector_name):
+    model = load_config_key("model", vector_name, "vacConfig")
+    if model.startswith("gpt"): # pass it to gpt directly
+        return base64_data, base64_data.split(",",1)
+    
     try:
         header, encoded = base64_data.split(",", 1)
         data = base64.b64decode(encoded)

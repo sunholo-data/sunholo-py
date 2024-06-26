@@ -44,6 +44,8 @@ A focus for Multivac is providing flexible user interfaces for GenAI application
 * Desktop client applications via tools such as https://jan.ai
 * Any OpenAPI compatible tool will work with a VAC API call - even if you are calling a non-OpenAI model.  
 
+An individual VAC could also create its own UI, since its being served via a HTTP container.
+
 Get in touch if you would like to see other ways to interact with GenAI!   
 
 ## Data Integrations

@@ -54,10 +54,15 @@ def pick_retriever(vector_name, embeddings=None):
 
                 embeddings = embeddings or get_embeddings(vector_name)
                 read_only = value.get('read_only')
-                vectorstore = pick_vectorstore(vectorstore, 
-                                               vector_name=vector_name, 
-                                               embeddings=embeddings, 
-                                               read_only=read_only)
+                try:
+                    vectorstore = pick_vectorstore(vectorstore, 
+                                                vector_name=vector_name, 
+                                                embeddings=embeddings, 
+                                                read_only=read_only)
+                except Exception as e:
+                    log.error(f"Failed to pick_vectorstore {vectorstore} for {vector_name} - {str(e)} - skipping")
+                    continue
+                
                 k_override = value.get('k', 3)
                 vs_retriever = vectorstore.as_retriever(search_kwargs=dict(k=k_override))
                 retriever_list.append(vs_retriever)
