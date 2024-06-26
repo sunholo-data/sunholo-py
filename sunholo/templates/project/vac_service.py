@@ -12,6 +12,22 @@ def vac_stream(question: str, vector_name, chat_history=[], callback=None, **kwa
 
     rag_model = create_model(vector_name)
 
+    # example of image/video processing
+    url = None
+    if kwargs.get('image_uri'):
+        log.info(f"Got image_url: {kwargs.get('image_url')}")
+        url = kwargs["image_uri"]
+    else:
+        log.debug("No image_uri found")
+
+    mime = None
+    if kwargs.get('mime'):
+        log.info(f"Got mime: {kwargs.get('image_url')}")
+        mime = kwargs["mime"]
+    else:
+        log.debug("No mime found")
+
+    # streaming model calls
     response = rag_model.generate_content(question, stream=True)
     for chunk in response:
         try:
@@ -52,7 +68,7 @@ def create_model(vector_name):
     corpus_tools = get_vertex_memories(vector_name)
 
     model = load_config_key("model", vector_name=vector_name, kind="vacConfig")
-    
+
     # Create a gemini-pro model instance
     # https://ai.google.dev/api/python/google/generativeai/GenerativeModel#streaming
     rag_model = GenerativeModel(

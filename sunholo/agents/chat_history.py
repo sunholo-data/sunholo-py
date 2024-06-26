@@ -103,7 +103,7 @@ def create_message_element(message: dict):
     if 'text' in message:  # This is a Slack or Google Chat message
         log.info(f"Found text element - {message['text']}")
         return message['text']
-    elif 'content' in message: # Discord message
+    elif 'content' in message: # Discord or OpenAI history message
         log.info(f"Found content element - {message['content']}")
         return message['content']
     else:  
@@ -130,6 +130,8 @@ def is_human(message: dict):
         return message["name"] == "Human"
     elif 'sender' in message:  # Google Chat
         return message['sender']['type'] == 'HUMAN'
+    elif 'role' in message:
+        return message['role'] == 'user'
     else:
         # Slack: Check for the 'user' field and absence of 'bot_id' field
         return 'user' in message and 'bot_id' not in message
@@ -174,5 +176,7 @@ def is_ai(message: dict):
         return message["name"] == "AI"
     elif 'sender' in message:  # Google Chat
         return message['sender']['type'] == 'BOT'
+    elif 'role' in message:
+        return message['role'] == 'assistant'
     else:
         return 'bot_id' in message  # Slack
