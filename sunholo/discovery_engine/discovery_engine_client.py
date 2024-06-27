@@ -218,44 +218,46 @@ class DiscoveryEngineClient:
     def process_chunks(self, response):
         all_chunks = []
 
-        if 'results' not in response:
+        # Check if the response contains results
+        if not hasattr(response, 'results') or not response.results:
             raise ValueError(f'No results found in response: {response=}')
         
-        for result in response['results']:
-            chunk = result['chunk']
-            chunk_metadata = chunk['chunkMetadata']
+        # Iterate through each result in the response
+        for result in response.results:
+            chunk = result.chunk
+            chunk_metadata = chunk.chunkMetadata
 
-            if 'previousChunks' in chunk_metadata:
+            if hasattr(chunk_metadata, 'previousChunks'):
                 # Process previous chunks
-                for prev_chunk in chunk['chunkMetadata']['previousChunks']:
+                for prev_chunk in chunk_metadata.previousChunks:
                     prev_chunk_string = (
-                        f"# {prev_chunk['id']}\n"
-                        f"{prev_chunk['content']}\n"
+                        f"# {prev_chunk.id}\n"
+                        f"{prev_chunk.content}\n"
                         f"## metadata\n"
-                        f"Document URI: {prev_chunk['documentMetadata']['uri']}\n"
-                        f"Document Title: {prev_chunk['documentMetadata']['title']}\n"
+                        f"Document URI: {prev_chunk.documentMetadata.uri}\n"
+                        f"Document Title: {prev_chunk.documentMetadata.title}\n"
                     )
                     all_chunks.append(prev_chunk_string)
 
             # Process fetched chunk
             fetched_chunk_string = (
-                f"# {chunk['id']}\n"
-                f"{chunk['content']}\n"
+                f"# {chunk.id}\n"
+                f"{chunk.content}\n"
                 f"## metadata\n"
-                f"Document URI: {chunk['documentMetadata']['uri']}\n"
-                f"Document Title: {chunk['documentMetadata']['title']}\n"
+                f"Document URI: {chunk.documentMetadata.uri}\n"
+                f"Document Title: {chunk.documentMetadata.title}\n"
             )
             all_chunks.append(fetched_chunk_string)
 
             # Process next chunks
-            if 'nextChunks' in chunk_metadata:
-                for next_chunk in chunk_metadata['nextChunks']:
+            if hasattr(chunk_metadata, 'nextChunks'):
+                for next_chunk in chunk_metadata.nextChunks:
                     next_chunk_string = (
-                        f"# {next_chunk['id']}\n"
-                        f"{next_chunk['content']}\n"
+                        f"# {next_chunk.id}\n"
+                        f"{next_chunk.content}\n"
                         f"## metadata\n"
-                        f"Document URI: {next_chunk['documentMetadata']['uri']}\n"
-                        f"Document Title: {next_chunk['documentMetadata']['title']}\n"
+                        f"Document URI: {next_chunk.documentMetadata.uri}\n"
+                        f"Document Title: {next_chunk.documentMetadata.title}\n"
                     )
                     all_chunks.append(next_chunk_string)
 
