@@ -155,6 +155,7 @@ class DiscoveryEngineClient:
         num_previous_chunks: int = 3,
         num_next_chunks: int = 3,
         page_size: int = 10,
+        parse_chunks_to_string: bool = True,
         doc_or_chunks: str = "CHUNKS",  # or DOCUMENTS
         serving_config: str = "default_serving_config",
     ):
@@ -166,6 +167,7 @@ class DiscoveryEngineClient:
             num_previous_chunks (int, optional): Number of previous chunks to return for context (default is 3).
             num_next_chunks (int, optional): Number of next chunks to return for context (default is 3).
             page_size (int, optional): The maximum number of results to return per page (default is 10).
+            parse_chunks_to_string: If True will put chunks in one big string, False will return object
 
         Returns:
             discoveryengine.SearchResponse: The search response object containing the search results.
@@ -201,7 +203,60 @@ class DiscoveryEngineClient:
 
         search_response = self.search_client.search(search_request)
 
+        if parse_chunks_to_string:
+            
+            return self.process_chunks(search_response)
+        
         return search_response
+
+    def process_chunks(self, response):
+        all_chunks = []
+
+        if 'results' not in response:
+            raise ValueError('No results found in response')
+        
+        for result in response['results']:
+            chunk = result['chunk']
+            chunk_metadata = chunk['chunkMetadata']
+
+            if 'previousChunks' in chunk_metadata:
+                # Process previous chunks
+                for prev_chunk in chunk['chunkMetadata']['previousChunks']:
+                    prev_chunk_string = (
+                        f"# {prev_chunk['id']}\n"
+                        f"{prev_chunk['content']}\n"
+                        f"## metadata\n"
+                        f"Document URI: {prev_chunk['documentMetadata']['uri']}\n"
+                        f"Document Title: {prev_chunk['documentMetadata']['title']}\n"
+                    )
+                    all_chunks.append(prev_chunk_string)
+
+            # Process fetched chunk
+            fetched_chunk_string = (
+                f"# {chunk['id']}\n"
+                f"{chunk['content']}\n"
+                f"## metadata\n"
+                f"Document URI: {chunk['documentMetadata']['uri']}\n"
+                f"Document Title: {chunk['documentMetadata']['title']}\n"
+            )
+            all_chunks.append(fetched_chunk_string)
+
+            # Process next chunks
+            if 'nextChunks' in chunk_metadata:
+                for next_chunk in chunk_metadata['nextChunks']:
+                    next_chunk_string = (
+                        f"# {next_chunk['id']}\n"
+                        f"{next_chunk['content']}\n"
+                        f"## metadata\n"
+                        f"Document URI: {next_chunk['documentMetadata']['uri']}\n"
+                        f"Document Title: {next_chunk['documentMetadata']['title']}\n"
+                    )
+                    all_chunks.append(next_chunk_string)
+
+        # Combine all chunks into one long string
+        result_string = "\n".join(all_chunks)
+
+        return result_string
 
     def import_documents(self,
         gcs_uri: Optional[str] = None,

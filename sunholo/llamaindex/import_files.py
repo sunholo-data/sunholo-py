@@ -61,7 +61,6 @@ def do_llamaindex(message_data, metadata, vector_name):
     corpuses = []
     for memory in memories:
         for key, value in memory.items():  # Now iterate over the dictionary
-            log.info(f"Found memory {key}")
             vectorstore = value.get('vectorstore')
             if vectorstore == "llamaindex":
                 log.info(f"Found vectorstore {vectorstore}")
