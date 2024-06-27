@@ -67,6 +67,54 @@ vac:
           vectorstore: vertex_ai_search # or discovery_engine
 ```
 
+To use within a Langchain app, the [`DiscoveryEngineClient`](../sunholo/discovery_engine/discovery_engine_client/) can be used to import or export chunks from the Vertex AI Search data store.
+
+An example for a `vac_service.py` file is below, based of a [Langchain QA Chat to docs tutorial](https://python.langchain.com/v0.2/docs/how_to/qa_chat_history_how_to).
+
+```python
+from sunholo.components import pick_retriever, get_llm, get_embeddings
+from sunholo.discovery_engine.discovery_engine_client import DiscoveryEngineClient
+from sunholo.utils.gcp_project import get_gcp_project
+from sunholo.utils.parsers import escape_braces
+
+def vac(question: str, vector_name, chat_history=[], **kwargs):
+
+    llm = get_llm(vector_name)
+    embeddings = get_embeddings(vector_name)
+    retriever = pick_retriever(vector_name, embeddings=embeddings)
+    intro_prompt = load_prompt_from_yaml("intro", prefix=vector_name)
+
+    # create data store client, that has the vector_name VAC as its id
+    de = DiscoveryEngineClient(vector_name, project_id=get_gcp_project())
+
+    chunks = de.get_chunks(question)
+    chunk_prompt = intro_prompt.format(context=chunks)
+
+    # we stuff chunks into a langchain prompt that may contain { } 
+    # so use escape_braces() so it doesn't break langchain promptTemplate
+    chunked_prompt = escape_braces(chunk_prompt) + "\n{context}\nQuestion:{input}\nYour Answer:\n"
+
+    message_tuples = [
+        ("system", "You are an assistant bot who is very helpful in your answers"),
+        ("human", {"type": "text", "text": chunked_prompt})
+    ]
+
+    prompt = ChatPromptTemplate.from_messages(message_tuples)
+
+    summarise_prompt   = PromptTemplate.from_template(load_prompt_from_yaml("summarise", prefix=vector_name))
+    
+    question_answer_chain = create_stuff_documents_chain(llm, prompt)
+    history_aware_retriever = create_history_aware_retriever(
+        llm, retriever, summarise_prompt
+    )
+
+    chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
+    
+    response = chain.invoke({"input": question, "chat_history": chat_history})
+
+    return {"answer": response}
+```
+
 
 ## LlamaIndex on Vertex AI
 
