@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.69.11'
+version = '0.69.12'
 
 setup(
     name='sunholo',
@@ -76,6 +76,7 @@ setup(
             "python-socketio",
             "rich",
             "supabase",
+            "tantivy",
             "tiktoken",
 
         ],
@@ -91,6 +92,7 @@ setup(
             "pgvector",
             "psycopg2-binary",
             "lancedb",
+            "tantivy"
         ],
         'pipeline': [
             "GitPython",

@@ -119,8 +119,14 @@ class GoogleCloudLogging:
         if log_text:
             if isinstance(log_struct, dict):
                 logger.log_struct(log_struct, severity=severity, source_location=caller_info)
-            else:
+            elif isinstance(log_struct, str):
                 logger.log_text(log_text, severity=severity, source_location=caller_info)
+            else:
+                try:
+                    turn_to_text = str(log_text)
+                    logger.log_text(turn_to_text, severity=severity, source_location=caller_info)
+                except Exception as err:
+                    print(f"Could not log this: {log_text=} - {str(err)}")
 
         elif log_struct:
             if not isinstance(log_struct, dict):

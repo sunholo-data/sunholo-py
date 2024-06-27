@@ -201,19 +201,25 @@ class DiscoveryEngineClient:
             ),
         )
 
+        log.info(f"Discovery engine request: {search_request=}")
         search_response = self.search_client.search(search_request)
+        
 
         if parse_chunks_to_string:
-            
-            return self.process_chunks(search_response)
+
+            big_string = self.process_chunks(search_response)
+            log.info(f"Discovery engine chunks string sample: {big_string[:100]}")
+
+            return big_string
         
+        log.info("Discovery engine response object")
         return search_response
 
     def process_chunks(self, response):
         all_chunks = []
 
         if 'results' not in response:
-            raise ValueError('No results found in response')
+            raise ValueError(f'No results found in response: {response=}')
         
         for result in response['results']:
             chunk = result['chunk']
@@ -311,9 +317,9 @@ class DiscoveryEngineClient:
         try:
             operation = import_documents_with_retry(self.doc_client, request)
         except ResourceExhausted as e:
-            print(f"Operation failed after retries due to quota exceeded: {e}")
+            log.error(f"Operation failed after retries due to quota exceeded: {e}")
         except Exception as e:
-            print(f"An unexpected error occurred: {e}")
+            log.error(f"An unexpected error occurred: {e}")
 
         return operation.operation.name
 
