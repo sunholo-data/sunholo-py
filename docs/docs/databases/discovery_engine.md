@@ -21,3 +21,5 @@ vac:
       - discovery_engine_vertex_ai_search:
           vectorstore: vertex_ai_search # or discovery_engine
 ```
+
+Since no chunking is necessary, documents are not indexed via the embedding service, but directly sent to the Vertex AI Search data store, with the same id as the VAC name e.g. sample_vector in above example.  Make new Data Stores by creating new VACs.

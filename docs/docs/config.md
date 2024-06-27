@@ -118,8 +118,7 @@ vac:
           vectorstore: llamaindex # only on vertex
           rag_id: 4611686018427387904 # generated via vertex RAG
       - agent_data_store:
-          vectorstore: vertexai_agent_builder # only on vertex
-          data_store_id: 1231231231231  # generated via vertex
+          vectorstore: vector_ai_search # only on vertex
     gcp_config:
       project_id: multivac-internal-dev # default project
       location: us-central1   # default location

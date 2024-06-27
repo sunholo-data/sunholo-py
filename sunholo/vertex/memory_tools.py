@@ -8,6 +8,8 @@ from ..logging import log
 from ..utils.config import load_config_key
 from ..components import load_memories
 from ..llamaindex.get_files import fetch_corpus
+from ..discovery_engine.discovery_engine_client import DiscoveryEngineClient
+from ..utils.gcp_project import get_gcp_project
 
 def get_vertex_memories(vector_name):
     """
@@ -42,10 +44,7 @@ def get_vertex_memories(vector_name):
     if not rag:
         raise ValueError("Need to install vertexai module via `pip install sunholo[gcp]`")
     
-    global_project_id = gcp_config.get('project_id')
     global_location = gcp_config.get('location')
-    global_rag_id = gcp_config.get('rag_id')
-    global_data_store_id = gcp_config.get('data_store_id')
 
     memories = load_memories(vector_name)
     tools = []
@@ -60,12 +59,16 @@ def get_vertex_memories(vector_name):
             if vectorstore == "llamaindex":
                 log.info(f"Found vectorstore {vectorstore}")
                 rag_id = value.get('rag_id')
+                if rag_id is None:
+                    raise ValueError("Must specify rag_id if using vectorstore: llamaindex")
+                
                 project_id = gcp_config.get('project_id')
                 location = gcp_config.get('location')
+
                 corpus = fetch_corpus(
-                    project_id=project_id or global_project_id,
+                    project_id=project_id or get_gcp_project(),
                     location=location or global_location,
-                    rag_id=rag_id or global_rag_id
+                    rag_id=rag_id
                 )
                 corpus_tool = Tool.from_retrieval(
                     retrieval=rag.Retrieval(
@@ -76,13 +79,12 @@ def get_vertex_memories(vector_name):
                     )
                 )
                 tools.append(corpus_tool)
-            elif vectorstore == "vertexai_agent_builder":
-                log.info(f"Found vectorstore {vectorstore}")
-                data_store_id = value.get('data_store_id') or global_data_store_id
-                project_id = gcp_config.get('project_id') or global_project_id
-                location = gcp_config.get('location') or global_location
-                data_store_path=f"projects/{project_id}/locations/{location}/collections/default_collection/dataStores/{data_store_id}"
+            elif vectorstore == "discovery_engine" or vectorstore == "vertex_ai_search":
 
+                de = DiscoveryEngineClient(vector_name, project_id=get_gcp_project())
+                log.info(f"Found vectorstore {vectorstore}")
+
+                data_store_path = de.data_store_path()
                 corpus_tool = Tool.from_retrieval(
                     grounding.Retrieval(grounding.VertexAISearch(datastore=data_store_path))
                 )

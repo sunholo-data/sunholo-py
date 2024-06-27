@@ -1,6 +1,7 @@
 from ..logging import log
+from ..utils.gcp_project import get_gcp_project
 
-def init_vertex(gcp_config):
+def init_vertex(gcp_config=None, location="eu"):
     """
     Initializes the Vertex AI environment using the provided Google Cloud Platform configuration.
 
@@ -12,6 +13,7 @@ def init_vertex(gcp_config):
         gcp_config (dict): A dictionary containing the Google Cloud Platform configuration with keys:
             - 'project_id': The Google Cloud project ID to configure for Vertex AI.
             - 'location': The Google Cloud region to configure for Vertex AI.
+            If default None it will derive it from the environment
 
     Raises:
         KeyError: If the necessary keys ('project_id' or 'location') are missing in the gcp_config dictionary.
@@ -37,7 +39,11 @@ def init_vertex(gcp_config):
 
         return None
     
-    # Initialize Vertex AI API once per session
-    project_id = gcp_config.get('project_id')
-    location = gcp_config.get('location')
+    if gcp_config:
+        # Initialize Vertex AI API once per session
+        project_id = gcp_config.get('project_id')
+        location = gcp_config.get('location') or location
+    else:
+        project_id = get_gcp_project()
+
     vertexai.init(project=project_id, location=location)

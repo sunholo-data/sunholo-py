@@ -80,6 +80,13 @@ class DiscoveryEngineClient:
             predicate=if_exception_type(ResourceExhausted)  # Retry if a ResourceExhausted error occurs
         )
     
+    def data_store_path(self, collection: str = "default_collection"):
+        return self.store_client.collection_path(
+            project=self.project_id,
+            location=self.location,
+            collection=collection,
+        )
+
     def create_data_store(
         self, chunk_size: int = 500,
         collection: str = "default_collection"
@@ -121,15 +128,9 @@ class DiscoveryEngineClient:
             document_processing_config=doc_config
         )
 
-        parent = self.store_client.collection_path(
-            project=self.project_id,
-            location=self.location,
-            collection=collection,
-        )
-
         # https://cloud.google.com/python/docs/reference/discoveryengine/0.11.4/google.cloud.discoveryengine_v1alpha.types.CreateDataStoreRequest
         request = discoveryengine.CreateDataStoreRequest(
-            parent=parent,
+            parent=self.data_store_path(collection),
             data_store_id=self.data_store_id,
             data_store=data_store,
             # Optional: For Advanced Site Search Only
