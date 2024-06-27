@@ -51,6 +51,8 @@ def do_discovery_engine(message_data, metadata, vector_name):
 
     if message_data.startswith("gs://"):
         log.info(f"DiscoveryEngineClient.import_files for {message_data}")
+        if "/pdf_parts/" in message_data:
+            return None
         for corp in corpuses:
             try:
                 response = corp.import_documents(
