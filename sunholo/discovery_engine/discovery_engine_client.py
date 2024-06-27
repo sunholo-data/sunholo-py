@@ -239,15 +239,8 @@ class DiscoveryEngineClient:
         # Make the request
         operation = self.doc_client.import_documents(request=request)
 
-        log.info(f"Waiting for operation to complete: {operation.operation.name}")
-        response = operation.result()
-
-        # Once the operation is complete,
-        # get information from operation metadata
-        metadata = discoveryengine.ImportDocumentsMetadata(operation.metadata)
-
         # Handle the response
-        log.info(f"{response=} {metadata=}")
+        log.info(f"{operation=}")
 
         return operation.operation.name
 
