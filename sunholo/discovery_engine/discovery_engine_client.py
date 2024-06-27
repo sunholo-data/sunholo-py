@@ -61,16 +61,13 @@ class DiscoveryEngineClient:
             if location != "global"
             else None
         )
-        self.client = discoveryengine.DataStoreServiceClient(client_options=client_options)
-        self.parent = self.client.branch_path(
-            project=project_id,
-            location=location,
-            data_store=data_store_id,
-            branch="default_branch",
-        )
+        self.store_client  = discoveryengine.DataStoreServiceClient(client_options=client_options)
+        self.doc_client    = discoveryengine.DocumentServiceClient(client_options=client_options)
+        self.search_client = discoveryengine.SearchServiceClient(client_options=client_options)
 
     def create_data_store(
-        self, chunk_size: int = 500
+        self, chunk_size: int = 500,
+        collection: str = "default_collection"
     ) -> str:
         """
         Creates a new data store with default configuration.
@@ -109,9 +106,15 @@ class DiscoveryEngineClient:
             document_processing_config=doc_config
         )
 
+        parent = self.store_client.collection_path(
+            project=self.project_id,
+            location=self.location,
+            collection=collection,
+        )
+
         # https://cloud.google.com/python/docs/reference/discoveryengine/0.11.4/google.cloud.discoveryengine_v1alpha.types.CreateDataStoreRequest
         request = discoveryengine.CreateDataStoreRequest(
-            parent=self.parent,
+            parent=parent,
             data_store_id=self.data_store_id,
             data_store=data_store,
             # Optional: For Advanced Site Search Only
@@ -119,7 +122,7 @@ class DiscoveryEngineClient:
         )
 
         # Make the request
-        operation = self.client.create_data_store(request=request)
+        operation = self.store_client.create_data_store(request=request)
 
         log.info(f"Waiting for operation to complete: {operation.operation.name}")
         response = operation.result()
@@ -140,6 +143,7 @@ class DiscoveryEngineClient:
         num_next_chunks: int = 3,
         page_size: int = 10,
         doc_or_chunks: str = "CHUNKS",  # or DOCUMENTS
+        serving_config: str = "default_serving_config",
     ):
         """Retrieves chunks or documents based on a query.
 
@@ -161,22 +165,19 @@ class DiscoveryEngineClient:
                     print(f"Chunk: {chunk.snippet}, document name: {chunk.document_name}")
             ```
         """
-        serving_config = self.client.get_default_serving_config(
-            name=self.client.serving_config_path(
-                project=self.project_id, 
-                location=self.location, 
-                data_store=self.data_store_id, 
-                serving_config="default_serving_config")
-                ).name
-        
+
+        serving_config_path = self.search_client.serving_config_path(
+            self.project_id,
+            self.location,
+            self.data_store_id,
+            serving_config
+        )
+
         search_request = discoveryengine.SearchRequest(
-            serving_config=serving_config,
+            serving_config=serving_config_path,
             query=query,
             page_size=page_size, 
             content_search_spec=discoveryengine.SearchRequest.ContentSearchSpec(
-                #snippet_spec=discoveryengine.SearchRequest.ContentSearchSpec.SnippetSpec(
-                #    return_snippet=True
-                #),
                 search_result_mode=doc_or_chunks,  # CHUNKS or DOCUMENTS
                 chunk_spec=discoveryengine.SearchRequest.ContentSearchSpec.ChunkSpec(
                     num_previous_chunks=num_previous_chunks,
@@ -185,13 +186,14 @@ class DiscoveryEngineClient:
             ),
         )
 
-        search_response = self.client.search(search_request)
+        search_response = self.search_client.search(search_request)
 
         return search_response
 
     def import_documents(self,
         gcs_uri: Optional[str] = None,
         data_schema="content",
+        branch="default_branch",
         bigquery_dataset: Optional[str] = None,
         bigquery_table: Optional[str] = None,
         bigquery_project_id: Optional[str] = None,
@@ -203,9 +205,16 @@ class DiscoveryEngineClient:
         
         """
 
+        parent = self.doc_client.branch_path(
+            self.project_id, 
+            self.location, 
+            self.data_store_id, 
+            branch
+        )
+
         if gcs_uri:
             request = discoveryengine.ImportDocumentsRequest(
-                parent=self.parent,
+                parent=parent,
                 # https://cloud.google.com/python/docs/reference/discoveryengine/latest/google.cloud.discoveryengine_v1alpha.types.GcsSource
                 gcs_source=discoveryengine.GcsSource(
                     input_uris=[gcs_uri], data_schema=data_schema,
@@ -215,7 +224,7 @@ class DiscoveryEngineClient:
             )
         else:
             request = discoveryengine.ImportDocumentsRequest(
-                parent=self.parent,
+                parent=parent,
                 bigquery_source=discoveryengine.BigQuerySource(
                     project_id=bigquery_project_id or self.project_id,
                     dataset_id=bigquery_dataset,
@@ -227,7 +236,7 @@ class DiscoveryEngineClient:
             )
 
         # Make the request
-        operation = self.client.import_documents(request=request)
+        operation = self.doc_client.import_documents(request=request)
 
         log.info(f"Waiting for operation to complete: {operation.operation.name}")
         response = operation.result()
