@@ -1,5 +1,6 @@
 from ..logging import log
 from ..utils.config import load_config_key
+from ..utils.gcp_project import get_gcp_project
 from ..components import load_memories
 
 from .discovery_engine_client import DiscoveryEngineClient
@@ -20,11 +21,6 @@ def do_discovery_engine(message_data, metadata, vector_name):
     ```
     """
 
-    global_gcp_config = load_config_key("gcp_config", vector_name="global", kind="vacConfig")
-    gcp_config = load_config_key("gcp_config", vector_name=vector_name, kind="vacConfig")
-    if not gcp_config and not global_gcp_config:
-        raise ValueError(f"Need config.{vector_name}.gcp_config to configure discovery engine")
-
     memories = load_memories(vector_name)
     tools = []
 
@@ -38,11 +34,10 @@ def do_discovery_engine(message_data, metadata, vector_name):
             vectorstore = value.get('vectorstore')
             if vectorstore == "discovery_engine" or vectorstore == "vertex_ai_search":
                 log.info(f"Found vectorstore {vectorstore}")
-                project_id = gcp_config.get('project_id') or global_gcp_config['project_id']
                 #location = gcp_config.get('location') 
                 corpus = DiscoveryEngineClient(
                     data_store_id=vector_name, 
-                    project_id=project_id,
+                    project_id=get_gcp_project(),
                     # location needs to be 'eu' or 'us' which doesn't work with other configurations
                     #location=location or global_location
                     )
