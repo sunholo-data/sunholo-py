@@ -137,3 +137,18 @@ def check_kwargs_support(func):
         if param.kind == param.VAR_KEYWORD:
             return True
     return False
+
+def escape_braces(text):
+    """
+    Escapes single braces in the text by converting them to double braces.
+    
+    Args:
+        text (str): The input string containing single braces.
+        
+    Returns:
+        str: The modified string with single braces converted to double braces.
+    """
+    # Replace single braces with double braces
+    text = re.sub(r'(?<!{){(?!{)', '{{', text)  # Replace '{' with '{{' if not already double braced
+    text = re.sub(r'(?<!})}(?!})', '}}', text)  # Replace '}' with '}}' if not already double braced
+    return text

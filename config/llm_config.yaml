@@ -112,7 +112,6 @@ vac:
     memory:
       - discovery_engine_vertex_ai_search:
           vectorstore: vertex_ai_search # or discovery_engine
-          
       - per_user_id:
           vectorstore: lancedb
           from_metadata_id: user_id # look up this value in the metadata - if present, put in vectorstore of that name
@@ -154,6 +153,7 @@ vac:
     model: gemini-1.5-pro-preview-0514
     agent: vertex-genai
     display_name: LlamaIndex via Vertex AI
+    code_execution: true
     grounding:
       google_search: true
     memory:

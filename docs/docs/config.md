@@ -107,10 +107,13 @@ vac:
     llm: vertex  # using google vertex
     model: gemini-1.5-pro-preview-0514 # models within google vertex
     agent: vertex-genai # using VAC created for Vertex
-    display_name: LlamaIndex via Vertex AI # for UI to the end user
+    display_name: Lots of Vertex AI features # for UI to the end user
+    code_execution: true # to add code execution abilities
     grounding: # vertex only - add grounding
       google_search: true
     memory: # multiple memory allowed
+      - discovery_engine_vertex_ai_search:
+          vectorstore: vertex_ai_search # or 'discovery_engine'
       - llamaindex-native:
           vectorstore: llamaindex # only on vertex
           rag_id: 4611686018427387904 # generated via vertex RAG
