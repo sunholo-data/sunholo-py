@@ -3,6 +3,7 @@ try:
     from google.cloud import discoveryengine_v1alpha as discoveryengine
     from google.api_core.retry import Retry, if_exception_type
     from google.api_core.exceptions import ResourceExhausted
+    from google.cloud.discoveryengine_v1alpha import SearchResponse, Chunk
 except ImportError:
     ClientOptions = None
     discoveryengine = None
@@ -214,8 +215,17 @@ class DiscoveryEngineClient:
         
         log.info("Discovery engine response object")
         return search_response
+    
+    def chunk_format(self, chunk: Chunk):
+        return (
+                    f"# {chunk.id}\n"
+                    f"{chunk.content}\n"
+                    f"## metadata\n"
+                    f"Document URI: {chunk.document_metadata.uri}\n"
+                    f"Document Title: {chunk.document_metadata.title}\n"
+                )        
 
-    def process_chunks(self, response):
+    def process_chunks(self, response: SearchResponse):
         all_chunks = []
 
         # Check if the response contains results
@@ -225,41 +235,19 @@ class DiscoveryEngineClient:
         # Iterate through each result in the response
         for result in response.results:
             chunk = result.chunk
-            chunk_metadata = chunk.chunkMetadata
+            chunk_metadata = chunk.ChunkMetadata
 
-            if hasattr(chunk_metadata, 'previousChunks'):
+            if hasattr(chunk_metadata, 'previous_chunks'):
                 # Process previous chunks
-                for prev_chunk in chunk_metadata.previousChunks:
-                    prev_chunk_string = (
-                        f"# {prev_chunk.id}\n"
-                        f"{prev_chunk.content}\n"
-                        f"## metadata\n"
-                        f"Document URI: {prev_chunk.documentMetadata.uri}\n"
-                        f"Document Title: {prev_chunk.documentMetadata.title}\n"
-                    )
-                    all_chunks.append(prev_chunk_string)
+                for prev_chunk in chunk_metadata.previous_chunks:
+                    all_chunks.append(self.chunk_format(prev_chunk))
 
-            # Process fetched chunk
-            fetched_chunk_string = (
-                f"# {chunk.id}\n"
-                f"{chunk.content}\n"
-                f"## metadata\n"
-                f"Document URI: {chunk.documentMetadata.uri}\n"
-                f"Document Title: {chunk.documentMetadata.title}\n"
-            )
-            all_chunks.append(fetched_chunk_string)
+            all_chunks.append(self.chunk_format(chunk))
 
             # Process next chunks
-            if hasattr(chunk_metadata, 'nextChunks'):
-                for next_chunk in chunk_metadata.nextChunks:
-                    next_chunk_string = (
-                        f"# {next_chunk.id}\n"
-                        f"{next_chunk.content}\n"
-                        f"## metadata\n"
-                        f"Document URI: {next_chunk.documentMetadata.uri}\n"
-                        f"Document Title: {next_chunk.documentMetadata.title}\n"
-                    )
-                    all_chunks.append(next_chunk_string)
+            if hasattr(chunk_metadata, 'next_chunks'):
+                for next_chunk in chunk_metadata.next_chunks:
+                    all_chunks.append(self.chunk_format(next_chunk))
 
         # Combine all chunks into one long string
         result_string = "\n".join(all_chunks)
