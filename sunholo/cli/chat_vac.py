@@ -211,7 +211,11 @@ def headless_mode(service_url, service_name, user_input, chat_history=None, stre
             if isinstance(token, bytes):
                 token = token.decode('utf-8')
             print(token, end='', flush=True)
-            answer += token
+            if isinstance(token, dict):
+                # ?
+                pass
+            elif isinstance(token, str):
+                answer += token
 
     if answer:
         chat_history.append({"name": "Human", "content": user_input})

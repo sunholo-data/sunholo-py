@@ -60,10 +60,10 @@ def process_chunker_data(message_data, metadata, vector_name):
         metadata["vector_name"] = vector_name
 
     if message_data is None:
-        log.error(f"No message_data was found in data: {message_data}")
+        log.warning(f"No message_data was found in data: {metadata=}")
         return
 
-    log.debug(f"Found metadata in pubsub: {metadata}")
+    log.debug(f"Found metadata in pubsub: {metadata=}")
 
     # checks if only a llamaindex chunking/embedder, return early as no other processing needed
     llamacheck = llamaindex_chunker_check(message_data, metadata, vector_name)
