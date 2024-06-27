@@ -2,18 +2,20 @@ from .discovery_engine_client import DiscoveryEngineClient
 from ..utils.config import load_config_key
 
 def create_new_discovery_engine(vector_name):
+    global_config = load_config_key("gcp_config", "global", kind="vacConfig")
     gcp_config = load_config_key("gcp_config", vector_name=vector_name, kind="vacConfig")
 
     chunker_config = load_config_key("chunker", vector_name=vector_name, kind="vacConfig")
 
+    chunk_size = 500
     if chunker_config:
-        chunk_size = chunker_config.get("chunk_size")
+        if "chunk_size" in chunker_config:
+            chunk_size = chunker_config["chunk_size"]    
+
+    project_id = gcp_config.get('project_id') or global_config.get('project_id')
+    if not project_id:
+        raise ValueError("Could not find project_id in gcp_config")
     
-    if not chunk_size:
-        chunk_size = 500
-
-
-    project_id = gcp_config.get('project_id')
     #location = gcp_config.get('location')
 
     de = DiscoveryEngineClient(
