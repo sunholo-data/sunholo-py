@@ -3,6 +3,7 @@ from ..utils.config import load_config_key
 from ..components import load_memories
 
 from .discovery_engine_client import DiscoveryEngineClient
+from .create_new import create_new_discovery_engine
     
 
 def do_discovery_engine(message_data, metadata, vector_name):
@@ -19,13 +20,10 @@ def do_discovery_engine(message_data, metadata, vector_name):
     ```
     """
 
+    global_gcp_config = load_config_key("gcp_config", vector_name="global", kind="vacConfig")
     gcp_config = load_config_key("gcp_config", vector_name=vector_name, kind="vacConfig")
-    if not gcp_config:
+    if not gcp_config and not global_gcp_config:
         raise ValueError(f"Need config.{vector_name}.gcp_config to configure discovery engine")
-
-    global_project_id = gcp_config.get('project_id')
-    #global_location = gcp_config.get('location')
-    global_data_store_id = gcp_config.get('data_store_id')
 
     memories = load_memories(vector_name)
     tools = []
@@ -40,12 +38,11 @@ def do_discovery_engine(message_data, metadata, vector_name):
             vectorstore = value.get('vectorstore')
             if vectorstore == "discovery_engine" or vectorstore == "vertex_ai_search":
                 log.info(f"Found vectorstore {vectorstore}")
-                data_store_id = value.get('data_store_id')
-                project_id = gcp_config.get('project_id')
+                project_id = gcp_config.get('project_id') or global_gcp_config['project_id']
                 #location = gcp_config.get('location') 
                 corpus = DiscoveryEngineClient(
-                    data_store_id=data_store_id or global_data_store_id, 
-                    project_id=project_id or global_project_id,
+                    data_store_id=vector_name, 
+                    project_id=project_id,
                     # location needs to be 'eu' or 'us' which doesn't work with other configurations
                     #location=location or global_location
                     )
@@ -67,6 +64,20 @@ def do_discovery_engine(message_data, metadata, vector_name):
                 log.info(f"Imported file to corpus: {response} with metadata: {metadata}")
             except Exception as err:
                 log.error(f"Error importing {message_data} - {corp=} - {str(err)}")
+
+                if str(err).startswith("404"):
+                    log.info(f"Attempting to create a new DiscoveryEngine corpus: {vector_name}")
+                    try:
+                        new_corp = create_new_discovery_engine(vector_name)
+                    except Exception as err:
+                        log.error(f"Failed to create new DiscoveryEngine {vector_name} - {str(err)}")
+                        continue
+                    if new_corp:
+                        log.info(f"Found new DiscoveryEngine {vector_name=} - {new_corp=}")
+                        response = corp.import_documents(
+                            gcs_uri=message_data
+                        )
+                    
                 continue
 
         metadata["source"] = message_data

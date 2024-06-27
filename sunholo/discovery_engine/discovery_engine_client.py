@@ -124,8 +124,9 @@ class DiscoveryEngineClient:
         # Make the request
         operation = self.store_client.create_data_store(request=request)
 
-        log.info(f"Waiting for operation to complete: {operation.operation.name}")
+        log.info(f"Waiting for datastore operation to complete: {operation.operation.name}")
         response = operation.result()
+        log.info(f"Datastore operation creation complete: {response=}")
 
         # Once the operation is complete,
         # get information from operation metadata
