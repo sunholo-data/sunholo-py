@@ -8,6 +8,7 @@ except ImportError:
     ClientOptions = None
     discoveryengine = None
     Chunk = None
+    SearchResponse = None
 
 from ..logging import log
 from typing import Optional
