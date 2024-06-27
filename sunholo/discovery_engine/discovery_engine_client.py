@@ -1,6 +1,8 @@
 try:
     from google.api_core.client_options import ClientOptions
     from google.cloud import discoveryengine_v1alpha as discoveryengine
+    from google.api_core.retry import Retry, if_exception_type
+    from google.api_core.exceptions import ResourceExhausted
 except ImportError:
     ClientOptions = None
     discoveryengine = None
@@ -65,6 +67,16 @@ class DiscoveryEngineClient:
         self.doc_client    = discoveryengine.DocumentServiceClient(client_options=client_options)
         self.search_client = discoveryengine.SearchServiceClient(client_options=client_options)
 
+    @classmethod
+    def my_retry(cls):
+        return Retry(
+            initial=1.0,       # Initial delay before retrying (in seconds)
+            maximum=60.0,      # Maximum delay between retries (in seconds)
+            multiplier=2.0,    # Multiplier for the delay between retries
+            timeout=300.0,     # Maximum total time to wait before giving up (in seconds)
+            predicate=if_exception_type(ResourceExhausted)  # Retry if a ResourceExhausted error occurs
+        )
+    
     def create_data_store(
         self, chunk_size: int = 500,
         collection: str = "default_collection"
@@ -237,10 +249,16 @@ class DiscoveryEngineClient:
             )
 
         # Make the request
-        operation = self.doc_client.import_documents(request=request)
-
-        # Handle the response
-        log.info(f"{operation=}")
+        @self.my_retry()
+        def import_documents_with_retry(doc_client, request):
+            return doc_client.import_documents(request=request)
+        
+        try:
+            operation = import_documents_with_retry(self.doc_client, request)
+        except ResourceExhausted as e:
+            print(f"Operation failed after retries due to quota exceeded: {e}")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
 
         return operation.operation.name
 
