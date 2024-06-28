@@ -5,8 +5,6 @@ from ..utils.gcp_project import get_gcp_project
 from ..utils.parsers import validate_extension_id
 import base64
 import json
-import pprint
-import pandas
 from io import StringIO
 
 class VertexAIExtensions:
@@ -99,46 +97,6 @@ class VertexAIExtensions:
 
         return extension
 
-    def create_extension_code_interpreter(self, code_artifacts_bucket=None):
-        init_vertex(location=self.location)
-
-        runtime_config = None
-        if code_artifacts_bucket:
-            runtime_config = {"codeInterpreterRuntimeConfig":
-                              {
-                                  "fileInputGcsBucket": code_artifacts_bucket,
-                                  "fileOutputGcsBucket": code_artifacts_bucket
-                              }
-                              }
-
-        llm_description = """
-        Tool to generate and execute valid Python code from a natural
-        language description, or to execute custom Python code.
-        Use this tool to:
-        - generate and/or execute code for various tasks:
-            - perform a wide variety of mathematical calculations, for example, add,
-            subtract, multiply, divide, average, power, factorial, quotient,
-            formulae, logarithms, random numbers, trigonometric functions, and
-            equations;
-            - sort, filter, select top results, and otherwise analyze data (including
-            data acquired from other tools and Extensions);
-            - create visualizations, plot charts, draw graphs, shapes, print results,
-            etc.
-        - execute custom code and get results and output files.
-        """
-
-        code_extension = self.create_extension_instance(
-            display_name="Code Interpreter",
-            description="This extension generates and executes code in the specified language",
-            open_api_gcs_uri="gs://vertex-extension-public/code_interpreter.yaml",
-            llm_name="code_interpreter_tool",
-            llm_description=llm_description,
-            runtime_config=runtime_config
-        )
-        log.info(f"Created code extension: {code_extension=}")
-
-        return code_extension
-
     def execute_extension(self, operation_id: str, operation_params: dict, extension_id: str):
         init_vertex(location=self.location)
 
@@ -210,6 +168,7 @@ class VertexAIExtensions:
                 file_html_content = ('<img src="data:image/png;base64, '
                                      f'{output_file.get("contents")}" />')
             elif file_name.endswith(".json"):
+                import pprint
                 # Pretty print JSON
                 json_pp = pprint.pformat(
                     json.loads(file_contents.decode()),
@@ -218,6 +177,10 @@ class VertexAIExtensions:
                 file_html_content = (f'<span>{json_pp}</span>')
             elif file_name.endswith(".csv"):
                 # CSV
+                try:
+                    import pandas
+                except ImportError:
+                    log.error("Need pandas for csv processing")
                 csv_md = pandas.read_csv(
                     StringIO(file_contents.decode())).to_markdown(index=False)
                 file_html_content = f'<span>{csv_md}</span>'
@@ -231,6 +194,7 @@ class VertexAIExtensions:
 
         buffer_html = [details_tml.format(**_file) for _file in file_list]
         return "".join(buffer_html)
+    
     def process_response(self, response: dict, save_files_locally=None) -> str:
         result_template = """
         <details open>

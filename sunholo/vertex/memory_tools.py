@@ -90,13 +90,13 @@ def get_vertex_memories(vector_name):
                     de = DiscoveryEngineClient(vector_name, project_id=get_gcp_project())
                     log.info(f"Found vectorstore {vectorstore}")
 
-                    data_store_path = de.data_store_path()
+                    data_store_path = f"{de.data_store_path()}/dataStores/{vector_name}"
                     corpus_tool = Tool.from_retrieval(
                         grounding.Retrieval(grounding.VertexAISearch(datastore=data_store_path))
                     )
                     tools.append(corpus_tool)
                 except Exception as err:
-                    log.error(f"Failed to fetch DiscoveryEngine groudning - {str(err)} - skipping")
+                    log.error(f"Failed to fetch DiscoveryEngine grounding - {str(err)} - skipping")
                     continue
                 
 
