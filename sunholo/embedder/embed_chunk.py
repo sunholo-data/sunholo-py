@@ -142,8 +142,11 @@ def embed_pubsub_chunk(data: dict):
                             continue
 
                 vectorstore_obj = pick_vectorstore(vectorstore, vector_name=vector_name, embeddings=embeddings)
-                vs_retriever = vectorstore_obj.as_retriever(search_kwargs=dict(k=3))
-                vectorstore_list.append(vs_retriever)
+                if vectorstore_obj:
+                    vs_retriever = vectorstore_obj.as_retriever(search_kwargs=dict(k=3))
+                    vectorstore_list.append(vs_retriever)
+                else:
+                    log.warning(f"No vectorstore added for {vectorstore}")
 
     # can have multiple vectorstores per embed
     metadata_list = []
