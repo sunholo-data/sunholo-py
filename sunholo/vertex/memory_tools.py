@@ -65,34 +65,43 @@ def get_vertex_memories(vector_name):
                 project_id = gcp_config.get('project_id')
                 location = gcp_config.get('location')
 
-                corpus = fetch_corpus(
-                    project_id=project_id or get_gcp_project(),
-                    location=location or global_location,
-                    rag_id=rag_id
-                )
-                corpus_tool = Tool.from_retrieval(
-                    retrieval=rag.Retrieval(
-                        source=rag.VertexRagStore(
-                            rag_corpora=[corpus.name],  # Currently only 1 corpus is allowed.
-                            similarity_top_k=10,  # Optional
-                        ),
+                try:
+                    corpus = fetch_corpus(
+                        project_id=project_id or get_gcp_project(),
+                        location=location or global_location,
+                        rag_id=rag_id
                     )
-                )
-                tools.append(corpus_tool)
+                    corpus_tool = Tool.from_retrieval(
+                        retrieval=rag.Retrieval(
+                            source=rag.VertexRagStore(
+                                rag_corpora=[corpus.name],  # Currently only 1 corpus is allowed.
+                                similarity_top_k=10,  # Optional
+                            ),
+                        )
+                    )
+                    tools.append(corpus_tool)
+                except Exception as err:
+                    log.error(f"Failed to fetch vertex.rag: {str(err)} - skipping")
+                    continue
+
             elif vectorstore == "discovery_engine" or vectorstore == "vertex_ai_search":
 
-                de = DiscoveryEngineClient(vector_name, project_id=get_gcp_project())
-                log.info(f"Found vectorstore {vectorstore}")
+                try:
+                    de = DiscoveryEngineClient(vector_name, project_id=get_gcp_project())
+                    log.info(f"Found vectorstore {vectorstore}")
 
-                data_store_path = de.data_store_path()
-                corpus_tool = Tool.from_retrieval(
-                    grounding.Retrieval(grounding.VertexAISearch(datastore=data_store_path))
-                )
-                tools.append(corpus_tool)
+                    data_store_path = de.data_store_path()
+                    corpus_tool = Tool.from_retrieval(
+                        grounding.Retrieval(grounding.VertexAISearch(datastore=data_store_path))
+                    )
+                    tools.append(corpus_tool)
+                except Exception as err:
+                    log.error(f"Failed to fetch DiscoveryEngine groudning - {str(err)} - skipping")
+                    continue
                 
 
     if not tools:
-        log.warning("No llamaindex Vertex corpus configurations could be found")
+        log.warning("No Vertex corpus configurations could be found")
     
     return tools
 

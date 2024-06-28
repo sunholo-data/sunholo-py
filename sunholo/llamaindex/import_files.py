@@ -64,6 +64,8 @@ def do_llamaindex(message_data, metadata, vector_name):
             vectorstore = value.get('vectorstore')
             if vectorstore == "llamaindex":
                 log.info(f"Found vectorstore {vectorstore}")
+                if value.get('read_only'):
+                    continue
                 rag_id = value.get('rag_id')
                 project_id = gcp_config.get('project_id')
                 location = gcp_config.get('location')

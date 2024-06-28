@@ -34,6 +34,8 @@ def do_discovery_engine(message_data, metadata, vector_name):
             vectorstore = value.get('vectorstore')
             if vectorstore == "discovery_engine" or vectorstore == "vertex_ai_search":
                 log.info(f"Found vectorstore {vectorstore}")
+                if value.get('read_only'):
+                    continue
                 #location = gcp_config.get('location') 
                 corpus = DiscoveryEngineClient(
                     data_store_id=vector_name, 
