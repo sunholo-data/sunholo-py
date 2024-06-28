@@ -14,6 +14,38 @@
 import re
 import hashlib
 
+def validate_extension_id(ext_id):
+    """
+    Ensures the passed string fits the criteria for an extension ID.
+    If not, changes it so it will be.
+
+    Criteria:
+    - Length should be 4-63 characters.
+    - Valid characters are lowercase letters, numbers, and hyphens ("-").
+    - Should start with a number or a lowercase letter.
+
+    Args:
+        ext_id (str): The extension ID to validate and correct.
+
+    Returns:
+        str: The validated and corrected extension ID.
+    """
+    # Replace invalid characters
+    ext_id = re.sub(r'[^a-z0-9-]', '-', ext_id.lower())
+    
+    # Ensure it starts with a number or a lowercase letter
+    if not re.match(r'^[a-z0-9]', ext_id):
+        ext_id = 'a' + ext_id
+    
+    # Trim to 63 characters
+    ext_id = ext_id[:63]
+    
+    # Pad to at least 4 characters
+    while len(ext_id) < 4:
+        ext_id += 'a'
+    
+    return ext_id
+
 def contains_url(message_data):
     """
     Check if the provided text contains a URL.

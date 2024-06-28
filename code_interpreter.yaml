@@ -1,0 +1,115 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: code_interpreter_tool
+  description: >
+    This tool supports the following operations based on user input:
+
+    1. **Generates and Executes Code:** Accepts an user query in natural language, generates corresponding code, and executes it to produce results for the user query.
+
+
+    Supported AuthTypes:
+
+    - `GOOGLE_SERVICE_ACCOUNT_AUTH`: (Vertex AI Extension Service Agent is supported).
+paths:
+  /generate_and_execute:
+    post:
+      operationId: generate_and_execute
+      description: >
+        Get the results of a natural language query by generating and executing a code snippet.
+        Example queries: "Find the max in [1, 2, 5]" or "Plot average sales by year (from data.csv)".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - query
+              properties:
+                query:
+                  type: string
+                  description: >
+                    Required. The Natural language query to get the results for.
+                    The query string can optionally contain data to use for the code generated.
+                    For example: "I have a list of numbers: [1, 2, 3, 4]. Find the largest number in the provided data."
+                timeout:
+                  type: number
+                  description: >
+                    Optional. Timeout in miliseconds for the code execution. Default value: 30000.
+                files:
+                  type: array
+                  description: >
+                    Optional. Input files to use when executing the generated code.
+                    If specified, the file contents are expected be base64-encoded.
+                    For example: [{"name": "data.csv", "contents": "aXRlbTEsaXRlbTI="}]
+
+                    Only one of `file_gcs_uris` and `files` field should be provided.
+                  items:
+                    $ref: "#/components/schemas/File"
+                file_gcs_uris:
+                  type: array
+                  description: >
+                    Optional. GCS URIs of input files to use when executing the generated code.
+                    For example: ["gs://input-bucket/data.csv"]
+
+                    Only one of `file_gcs_uris` and `files` field should be provided.
+                    This option is only applicable when `file_input_gcs_bucket` is specified in `Extension.CodeInterpreterRuntimeConfig`.
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: >
+            The results of generating and executing code based on the natual language query.
+            The result contains the generated code, and the STDOUT, STDERR, and output files from code execution.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerationAndExecutionResult"
+components:
+  schemas:
+    File:
+      description: >
+        File used as inputs and outputs of code execution. The `contents` string should be base64-encoded bytes.
+        For example: [{"name": "data.csv", "contents": "aXRlbTEsaXRlbTI="}]
+      type: object
+      properties:
+        name:
+          type: string
+        contents:
+          type: string
+          format: byte
+    GenerationAndExecutionResult:
+      description: >
+        The results of generating and executing code based on the natual language query.
+      properties:
+        generated_code:
+          type: string
+          description: >
+            The generated code in markdown format.
+            For example: "```python\nprint(\"Hello World\")\n```"
+        execution_result:
+          type: string
+          description: >
+            The code execution result string from STDOUT.
+        execution_error:
+          type: string
+          description: >
+            The code execution error string from STDERR.
+        output_files:
+          type: array
+          description: >
+            The output files generated from code execution.
+            If present, the file contents are required be base64-encoded.
+            For example: [{"name": "data.csv", "contents": "aXRlbTEsaXRlbTI="}]
+          items:
+            $ref: "#/components/schemas/File"
+        output_gcs_uris:
+          type: array
+          description: >
+            The output GCS URIs of files generated from code execution.
+            For example: ["gs://output-bucket/subfolder/output.csv"]
+
+            This field is only applicable when `file_output_gcs_bucket` is specified in `Extension.CodeInterpreterRuntimeConfig`.
+          items:
+            type: string

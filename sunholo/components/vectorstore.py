@@ -138,4 +138,4 @@ def pick_vectorstore(vs_str: str, vector_name: str, embeddings, read_only=None):
         return vectorstore
 
     else:
-        raise NotImplementedError(f'No llm implemented for {vs_str}')   
+        log.warning(f'No llm implemented for {vs_str}')   
