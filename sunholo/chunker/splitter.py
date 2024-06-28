@@ -62,7 +62,7 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
 
         if len(content) < min_size:
             combined_documents_content += content + "\n"
-            log.info(f"Appending document as its smaller than {min_size}: length {len(content)} - appended doc length {len(combined_documents_content)}")
+            log.debug(f"Appending document as its smaller than {min_size}: length {len(content)} - appended doc length {len(combined_documents_content)}")
         else:
             if combined_documents_content:
                 combined_documents.append(Document(page_content=combined_documents_content, metadata=document.metadata))
@@ -81,7 +81,7 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
             # If a chunk is smaller than the min_size, append it to temporary_chunk with a line break and continue
             if len(chunk) < min_size:
                 temporary_chunk += chunk + "\n"
-                log.info(f"Appending chunk as its smaller than {min_size}: length {len(chunk)}")
+                log.debug(f"Appending chunk as its smaller than {min_size}: length {len(chunk)}")
                 continue
 
             # If there's content in temporary_chunk, append it to the current chunk
@@ -92,7 +92,7 @@ def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 8
             # If the combined chunk is still less than the min_size, append to temporary_chunk with a line break and continue
             if len(chunk) < min_size:
                 temporary_chunk += chunk + "\n"
-                log.info(f"Appending chunk as its smaller than {min_size}: length {len(chunk)}")
+                log.debug(f"Appending chunk as its smaller than {min_size}: length {len(chunk)}")
                 continue
             
             log.info(f"Adding chunk of length {len(chunk)}")

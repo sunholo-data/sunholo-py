@@ -32,11 +32,8 @@ def process_pubsub_message(data: dict) -> tuple:
     messageId = data['message'].get('messageId')
     publishTime = data['message'].get('publishTime')
     vector_name = attributes.get('namespace', None)
-    if vector_name is None:
-        log.warning(f"Did not find key vector_name within attributes: {attributes}")
-    
-    # to show we found it
-    attributes['vector_name'] = vector_name
+    if vector_name:
+        attributes['vector_name'] = vector_name
 
     log.info(f"Process Pub/Sub was triggered by messageId {messageId} published at {publishTime}")
     log.debug(f"Process Pub/Sub data: {message_data}")

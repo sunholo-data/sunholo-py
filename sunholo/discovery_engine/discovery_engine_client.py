@@ -310,9 +310,13 @@ class DiscoveryEngineClient:
         try:
             operation = import_documents_with_retry(self.doc_client, request)
         except ResourceExhausted as e:
-            log.error(f"Operation failed after retries due to quota exceeded: {e}")
+            log.error(f"DiscoveryEngine Operation failed after retries due to quota exceeded: {e}")
+
+            raise e
         except Exception as e:
-            log.error(f"An unexpected error occurred: {e}")
+            log.error(f"An unexpected DiscoveryEngine error occurred: {e}")
+
+            raise e
 
         return operation.operation.name
 
