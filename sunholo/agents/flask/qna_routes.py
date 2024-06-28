@@ -46,7 +46,7 @@ cache_duration = timedelta(minutes=5)  # Cache duration
 
 def make_openai_response(user_message, vector_name, answer):
     response_id = str(uuid.uuid4())
-    log.info("openai response: Q: {user_message} to VECTOR_NAME: {vector_name} - A: {answer}")
+    log.info(f"openai response: Q: {user_message} to VECTOR_NAME: {vector_name} - A: {answer}")
     openai_response = {
         "id": response_id,
         "object": "chat.completion",
@@ -63,9 +63,9 @@ def make_openai_response(user_message, vector_name, answer):
             "finish_reason": "stop"
         }],
         "usage": {
-            "prompt_tokens": len(user_message.split()),
-            "completion_tokens": len(answer.split()),
-            "total_tokens": len(user_message.split()) + len(answer.split())
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "total_tokens": 0
         }
     }
 
