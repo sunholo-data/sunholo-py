@@ -64,8 +64,11 @@ def pick_retriever(vector_name, embeddings=None):
                     continue
                 
                 k_override = value.get('k', 3)
-                vs_retriever = vectorstore.as_retriever(search_kwargs=dict(k=k_override))
-                retriever_list.append(vs_retriever)
+                if vectorstore:
+                    vs_retriever = vectorstore.as_retriever(search_kwargs=dict(k=k_override))
+                    retriever_list.append(vs_retriever)
+                else:
+                    log.warning(f"No vectorstore found despite being in config: {key=}")
             
             if value.get('provider') == "GoogleCloudEnterpriseSearchRetriever":
                 log.info(f"Found GoogleCloudEnterpriseSearchRetriever {value['provider']}")

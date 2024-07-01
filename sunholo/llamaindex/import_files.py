@@ -81,7 +81,7 @@ def do_llamaindex(message_data, metadata, vector_name):
                 
                 corpuses.append(corpus)
     if not corpuses:
-        log.error("Could not find a RAG corpus to import data to")
+        log.warning("Could not find a Vertex Llamaindex RAG corpus to import data to despite being in config")
         return None
     
     try:
