@@ -101,6 +101,11 @@ class DiscoveryEngineClient:
             str: The name of the long-running operation for data store creation.
         """
 
+        if chunk_size > 500:
+            chunk_size = 500
+        elif chunk_size < 100:
+            chunk_size = 100
+
         # https://cloud.google.com/python/docs/reference/discoveryengine/latest/google.cloud.discoveryengine_v1alpha.types.DocumentProcessingConfig
         doc_config = discoveryengine.DocumentProcessingConfig(
             chunking_config=discoveryengine.DocumentProcessingConfig.ChunkingConfig(
