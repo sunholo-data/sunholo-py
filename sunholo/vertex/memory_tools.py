@@ -106,6 +106,17 @@ def get_vertex_memories(vector_name):
     
     return tools
 
+def get_google_search_grounding(vector_name):
+    # can't have this and llamaindex memories?
+    ground = load_config_key("grounding", vector_name=vector_name, kind="vacConfig")
+    if ground and ground.get("google_search"):
+        gs_tool = Tool.from_google_search_retrieval(grounding.GoogleSearchRetrieval())
+        log.info(f"Got Search Tool: {gs_tool}")
+        return gs_tool
+    
+    log.info(f"No google search config available for {vector_name}")
+    return None
+
 def print_grounding_response(response):
     """Prints Gemini response with grounding citations."""
     grounding_metadata = response.candidates[0].grounding_metadata
