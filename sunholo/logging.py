@@ -101,6 +101,10 @@ class GoogleCloudLogging:
             severity (str, optional): The severity level of the log entry. Defaults to "INFO".
         """
 
+        from .utils.version import sunholo_version
+
+        log_text = f"[{sunholo_version()}] {log_text}"
+
         if not logger_name and not self.logger_name:
             raise ValueError("Must provide a logger name e.g. 'run.googleapis.com%2Fstderr'")
         
