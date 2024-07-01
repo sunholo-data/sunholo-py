@@ -11,7 +11,7 @@ except ImportError:
     SearchResponse = None
 
 from ..logging import log
-from typing import Optional
+from typing import Optional, List
 
 class DiscoveryEngineClient:
     """
@@ -69,6 +69,7 @@ class DiscoveryEngineClient:
         self.store_client  = discoveryengine.DataStoreServiceClient(client_options=client_options)
         self.doc_client    = discoveryengine.DocumentServiceClient(client_options=client_options)
         self.search_client = discoveryengine.SearchServiceClient(client_options=client_options)
+        self.engine_client = discoveryengine.EngineServiceClient(client_options=client_options)
 
     @classmethod
     def my_retry(cls):
@@ -261,6 +262,59 @@ class DiscoveryEngineClient:
         result_string = "\n".join(all_chunks)
 
         return result_string
+    
+    def create_engine(self,
+        engine_id: str, 
+        data_store_ids: List[str],
+        solution_type=None
+        search_tier=None,
+        search_add_ons=None
+    ) -> str:
+
+        # The full resource name of the collection
+        # e.g. projects/{project}/locations/{location}/collections/default_collection
+        parent = self.data_store_path()
+
+        engine = discoveryengine.Engine(
+            display_name=engine_id,
+            # Options: GENERIC, MEDIA, HEALTHCARE_FHIR
+            industry_vertical=discoveryengine.IndustryVertical.GENERIC,
+            # Options: SOLUTION_TYPE_RECOMMENDATION, SOLUTION_TYPE_SEARCH, SOLUTION_TYPE_CHAT, SOLUTION_TYPE_GENERATIVE_CHAT
+            solution_type=solution_type or discoveryengine.SolutionType.SOLUTION_TYPE_SEARCH,
+            # For search apps only
+            search_engine_config=discoveryengine.Engine.SearchEngineConfig(
+                # Options: SEARCH_TIER_STANDARD, SEARCH_TIER_ENTERPRISE
+                search_tier=search_tier or discoveryengine.SearchTier.SEARCH_TIER_ENTERPRISE,
+                # Options: SEARCH_ADD_ON_LLM, SEARCH_ADD_ON_UNSPECIFIED
+                search_add_ons=search_add_ons or [discoveryengine.SearchAddOn.SEARCH_ADD_ON_UNSPECIFIED],
+            ),
+            # For generic recommendation apps only
+            # similar_documents_config=discoveryengine.Engine.SimilarDocumentsEngineConfig,
+            data_store_ids=data_store_ids,
+        )
+
+        request = discoveryengine.CreateEngineRequest(
+            parent=parent,
+            engine=engine,
+            engine_id=engine_id,
+        )
+
+        # Make the request
+        operation = self.engine_client.create_engine(request=request)
+
+        log.info(f"Waiting for create vertex ai search operation to complete: {operation.operation.name}")
+        response = operation.result()
+
+        # Once the operation is complete,
+        # get information from operation metadata
+        metadata = discoveryengine.CreateEngineMetadata(operation.metadata)
+
+        # Handle the response
+        log.info(f"{response=} {metadata=}")
+
+        return operation.operation.name
+
+
 
     def import_documents(self,
         gcs_uri: Optional[str] = None,
