@@ -7,8 +7,6 @@ try:
 except ImportError:
     sync_playwright = None
 
-app = Flask(__name__)
-
 class BrowseWebWithImagePromptsBot:
     """
     Examples:
