@@ -75,10 +75,13 @@ setup(
             "psycopg2-binary",
             "pypdf",
             "python-socketio",
+            "pytesseract",
             "rich",
             "supabase",
+            "tabulate",
             "tantivy",
             "tiktoken",
+            "unstructured[local-inference]",
 
         ],
         'cli': [
@@ -99,7 +102,9 @@ setup(
             "GitPython",
             "lark",
             "pypdf",
+            "pytesseract",
             "tabulate",
+            "unstructured[local-inference]",
         ],
         'gcp': [
             "google-auth-httplib2",
