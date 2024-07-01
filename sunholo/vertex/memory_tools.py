@@ -88,6 +88,10 @@ def get_vertex_memories(vector_name):
 
                 try:
                     project_id = value.get('project_id') or get_gcp_project()
+                    if value.get('chunks'):
+                        log.warning("Data stores for chunks do not work with Tools yet, call data store directly instead")
+                        continue
+
                     de = DiscoveryEngineClient(vector_name, project_id=project_id)
                     log.info(f"Found vectorstore {vectorstore}")
 

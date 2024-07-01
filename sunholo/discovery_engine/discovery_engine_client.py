@@ -87,8 +87,14 @@ class DiscoveryEngineClient:
             location=self.location,
             collection=collection,
         )
+    
+    def create_data_store(self, type="chunk", chunk_size: int = 500, collection: str = "default_collection"):
+        if type == "chunk":
+            return self.create_data_store_chunk(chunk_size, collection)
+        else:
+            raise NotImplementedError("Not done yet - non-chunk data stores.")
 
-    def create_data_store(
+    def create_data_store_chunk(
         self, chunk_size: int = 500,
         collection: str = "default_collection"
     ) -> str:
@@ -166,7 +172,6 @@ class DiscoveryEngineClient:
         num_next_chunks: int = 3,
         page_size: int = 10,
         parse_chunks_to_string: bool = True,
-        doc_or_chunks: str = "CHUNKS",  # or DOCUMENTS
         serving_config: str = "default_serving_config",
     ):
         """Retrieves chunks or documents based on a query.
@@ -178,6 +183,7 @@ class DiscoveryEngineClient:
             num_next_chunks (int, optional): Number of next chunks to return for context (default is 3).
             page_size (int, optional): The maximum number of results to return per page (default is 10).
             parse_chunks_to_string: If True will put chunks in one big string, False will return object
+            serving_config: The resource name of the Search serving config 
 
         Returns:
             discoveryengine.SearchResponse: The search response object containing the search results.
@@ -198,12 +204,13 @@ class DiscoveryEngineClient:
             serving_config
         )
 
+
         search_request = discoveryengine.SearchRequest(
             serving_config=serving_config_path,
             query=query,
             page_size=page_size, 
             content_search_spec=discoveryengine.SearchRequest.ContentSearchSpec(
-                search_result_mode=doc_or_chunks,  # CHUNKS or DOCUMENTS
+                search_result_mode="CHUNKS", 
                 chunk_spec=discoveryengine.SearchRequest.ContentSearchSpec.ChunkSpec(
                     num_previous_chunks=num_previous_chunks,
                     num_next_chunks=num_next_chunks,
@@ -270,7 +277,9 @@ class DiscoveryEngineClient:
         search_tier=None,
         search_add_ons=None,
     ) -> str:
-
+        """
+        You only need this if calling Data Store via Vertex Tools.
+        """
         # The full resource name of the collection
         # e.g. projects/{project}/locations/{location}/collections/default_collection
         parent = self.data_store_path()
@@ -300,8 +309,13 @@ class DiscoveryEngineClient:
         )
 
         # Make the request
-        operation = self.engine_client.create_engine(request=request)
+        try:
+            operation = self.engine_client.create_engine(request=request)
+        except AlreadyExists as err:
+            log.info(f"Engine already exists: - {str(err)}")
 
+            return engine_id
+        
         log.info(f"Waiting for create vertex ai search operation to complete: {operation.operation.name}")
         response = operation.result()
 
