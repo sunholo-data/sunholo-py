@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.70.6'
+version = '0.71.0'
 
 setup(
     name='sunholo',
@@ -71,6 +71,7 @@ setup(
             "langfuse",
             "pg8000",
             "pgvector",
+            "playwright",
             "psycopg2-binary",
             "pypdf",
             "python-socketio",
@@ -123,6 +124,9 @@ setup(
         ],
         'anthropic': [
             "langchain-anthropic>=0.1.13",        
+        ],
+        'tools' : [
+            'playwright'
         ],
         'http': [
             "fastapi",

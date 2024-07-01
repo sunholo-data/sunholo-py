@@ -2,7 +2,7 @@ try:
     from google.api_core.client_options import ClientOptions
     from google.cloud import discoveryengine_v1alpha as discoveryengine
     from google.api_core.retry import Retry, if_exception_type
-    from google.api_core.exceptions import ResourceExhausted
+    from google.api_core.exceptions import ResourceExhausted, AlreadyExists
     from google.cloud.discoveryengine_v1alpha import SearchResponse, Chunk
 except ImportError:
     ClientOptions = None
@@ -313,6 +313,9 @@ class DiscoveryEngineClient:
             log.error(f"DiscoveryEngine Operation failed after retries due to quota exceeded: {e}")
 
             raise e
+        except AlreadyExists as e:
+            log.warning(f"DiscoveryEngine - Already exists: {e} - {gcs_uri=} {bigquery_table=}")
+
         except Exception as e:
             log.error(f"An unexpected DiscoveryEngine error occurred: {e}")
 
