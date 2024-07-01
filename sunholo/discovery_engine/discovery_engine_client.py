@@ -266,9 +266,9 @@ class DiscoveryEngineClient:
     def create_engine(self,
         engine_id: str, 
         data_store_ids: List[str],
-        solution_type=None
+        solution_type=None,
         search_tier=None,
-        search_add_ons=None
+        search_add_ons=None,
     ) -> str:
 
         # The full resource name of the collection
