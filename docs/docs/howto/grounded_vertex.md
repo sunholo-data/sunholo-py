@@ -1,4 +1,4 @@
-# Creating a grounded Vertex app
+# Creating a grounded in Google Search VertexAI app
 
 This goes through how to make a Vertex AI app with grounding via Google Search.
 
@@ -90,7 +90,7 @@ def vac(question: str, vector_name, chat_history=[], **kwargs):
     return {"answer": response.text}
 
 
-# TODO: common model setup to both batching and streaming
+# common model setup to both batching and streaming
 def create_model(vector_name):
     gcp_config = load_config_key("gcp_config", vector_name=vector_name, kind="vacConfig")
 
@@ -108,48 +108,8 @@ def create_model(vector_name):
     return rag_model
 ```
 
-### Streaming
+## Deploy
 
-As a minimum the streaming function needs these arguments:
+Run the Flask app locally to check it, assuming you are logged in locally with gcloud.
 
-```python
-def vac_stream(question: str, vector_name, chat_history=[], callback=None, **kwargs):
-...
-```
-
-* `question`: the text of the question typcially sent by the user
-* `vector_name`: the vector_name is an instance of your VAC, tailored to its own namespace.  AT least one is required per VAC, but you can many with different variations of prompt, model etc.
-* `chat_history`: A list of chat history messages
-* `callback`: Do not add anything here, it will be used by the VAC to print out the streaming chat tokens.
-* `kwargs`: Any other additional arguments you may need, but can also include some listed below:
-  - `image_uri`: the image URI location for image/video models
-  - `mime`: the MIME type of the URI location
-  - #TODO: more
-
-### Images/Videos
-
-Images can be automatically inserted into your request arguments.
-
-Make a request to upload a new image via a POST form request.  The VAC will then upload that image to a Google Cloud Storage bucket, and return the URL, or if say the endpoint accepts base64 images pass that through.
-
-The image and mime type are then available to your VACs in the `kwargs` via `uri` and `mime`
-
-```python
-def vac_stream(question: str, vector_name: str, chat_history=[], callback=None, **kwargs):
-
-...
-    url = None
-    if kwargs.get('image_uri'):
-        log.info(f"Got image_url: {kwargs.get('image_url')}")
-        url = kwargs["image_uri"]
-    else:
-        log.debug("No image_uri found")
-
-    mime = None
-    if kwargs.get('mime'):
-        log.info(f"Got mime: {kwargs.get('image_url')}")
-        mime = kwargs["mime"]
-    else:
-        log.debug("No mime found")
-...
-```
+#TODO
