@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.2.1">
 <title data-rh="true">discovery_engine_client.py | Sunholo Dev Portal</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://dev.sunholo.com/docs/sunholo/discovery_engine/discovery_engine_client"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="discovery_engine_client.py | Sunholo Dev Portal"><meta data-rh="true" name="description" content="Source: sunholo/discoveryengine/discoveryengineclient.py"><meta data-rh="true" property="og:description" content="Source: sunholo/discoveryengine/discoveryengineclient.py"><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://dev.sunholo.com/docs/sunholo/discovery_engine/discovery_engine_client"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/discovery_engine/discovery_engine_client" hreflang="en"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/discovery_engine/discovery_engine_client" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.f6c7f565.css">
-<script src="/assets/js/runtime~main.f2613182.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.3102b51b.js" defer="defer"></script>
 <script src="/assets/js/main.52dc76d7.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -35,7 +35,13 @@ location (str, optional): The location of the data store (default is &#x27;eu&#x
 </ul>
 </li>
 <li>
-<p>create_data_store(self, chunk_size: int = 500, collection: str = &#x27;default_collection&#x27;) -&gt; str</p>
+<p>create_data_store(self, type=&#x27;chunk&#x27;, chunk_size: int = 500, collection: str = &#x27;default_collection&#x27;)</p>
+<ul>
+<li>No docstring available.</li>
+</ul>
+</li>
+<li>
+<p>create_data_store_chunk(self, chunk_size: int = 500, collection: str = &#x27;default_collection&#x27;) -&gt; str</p>
 <ul>
 <li>Creates a new data store with default configuration.</li>
 </ul>
@@ -49,7 +55,7 @@ str: The name of the long-running operation for data store creation.</p>
 <li>
 <p>create_engine(self, engine_id: str, data_store_ids: List[str], solution_type=None, search_tier=None, search_add_ons=None) -&gt; str</p>
 <ul>
-<li>No docstring available.</li>
+<li>You only need this if calling Data Store via Vertex Tools.</li>
 </ul>
 </li>
 <li>
@@ -59,7 +65,7 @@ str: The name of the long-running operation for data store creation.</p>
 </ul>
 </li>
 <li>
-<p>get_chunks(self, query: str, num_previous_chunks: int = 3, num_next_chunks: int = 3, page_size: int = 10, parse_chunks_to_string: bool = True, doc_or_chunks: str = &#x27;CHUNKS&#x27;, serving_config: str = &#x27;default_serving_config&#x27;)</p>
+<p>get_chunks(self, query: str, num_previous_chunks: int = 3, num_next_chunks: int = 3, page_size: int = 10, parse_chunks_to_string: bool = True, serving_config: str = &#x27;default_serving_config&#x27;)</p>
 <ul>
 <li>Retrieves chunks or documents based on a query.</li>
 </ul>
@@ -71,7 +77,8 @@ collection_id (str): The ID of the collection to search.
 num_previous_chunks (int, optional): Number of previous chunks to return for context (default is 3).
 num_next_chunks (int, optional): Number of next chunks to return for context (default is 3).
 page_size (int, optional): The maximum number of results to return per page (default is 10).
-parse_chunks_to_string: If True will put chunks in one big string, False will return object</p>
+parse_chunks_to_string: If True will put chunks in one big string, False will return object
+serving_config: The resource name of the Search serving config</p>
 <p>Returns:
 discoveryengine.SearchResponse: The search response object containing the search results.</p>
 <p>Example:</p>
