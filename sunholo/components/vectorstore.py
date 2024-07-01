@@ -136,6 +136,4 @@ def pick_vectorstore(vs_str: str, vector_name: str, embeddings, read_only=None):
         log.info(f"Chose LanceDB for {vector_name} using {LANCEDB_BUCKET}")
 
         return vectorstore
-
-    else:
-        log.warning(f'No llm implemented for {vs_str}')   
+ 

@@ -69,11 +69,16 @@ def do_llamaindex(message_data, metadata, vector_name):
                 rag_id = value.get('rag_id')
                 project_id = gcp_config.get('project_id')
                 location = gcp_config.get('location')
-                corpus = fetch_corpus(
-                    project_id=project_id or global_project_id,
-                    location=location or global_location,
-                    rag_id=rag_id or global_rag_id
-                )
+                try:
+                    corpus = fetch_corpus(
+                        project_id=project_id or global_project_id,
+                        location=location or global_location,
+                        rag_id=rag_id or global_rag_id
+                    )
+                except Exception as err:
+                    log.warning(f"Failed to fetch LlamaIndex corpus: {err=}")
+                    continue
+                
                 corpuses.append(corpus)
     if not corpuses:
         log.error("Could not find a RAG corpus to import data to")

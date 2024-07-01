@@ -62,8 +62,8 @@ def get_vertex_memories(vector_name):
                 if rag_id is None:
                     raise ValueError("Must specify rag_id if using vectorstore: llamaindex")
                 
-                project_id = gcp_config.get('project_id')
-                location = gcp_config.get('location')
+                project_id = value.get('project_id') or gcp_config.get('project_id')
+                location = value.get('location') or gcp_config.get('location')
 
                 try:
                     corpus = fetch_corpus(
@@ -87,7 +87,8 @@ def get_vertex_memories(vector_name):
             elif vectorstore == "discovery_engine" or vectorstore == "vertex_ai_search":
 
                 try:
-                    de = DiscoveryEngineClient(vector_name, project_id=get_gcp_project())
+                    project_id = value.get('project_id') or get_gcp_project()
+                    de = DiscoveryEngineClient(vector_name, project_id=project_id)
                     log.info(f"Found vectorstore {vectorstore}")
 
                     data_store_path = f"{de.data_store_path()}/dataStores/{vector_name}"
