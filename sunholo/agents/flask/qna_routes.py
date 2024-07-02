@@ -15,7 +15,6 @@
 
 import json
 import traceback
-import datetime
 import uuid
 
 from ...agents import extract_chat_history, handle_special_commands
@@ -142,7 +141,7 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
                 name="start_streaming_chat",
                 metadata=vac_config,
                 input = all_input,
-                completion_start_time=datetime.datetime.now(),
+                completion_start_time=datetime.now(),
                 model=vac_config.get("model") or vac_config.get("llm")
             )
 

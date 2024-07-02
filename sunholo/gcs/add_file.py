@@ -25,24 +25,62 @@ from ..logging import log
 from ..utils.config import load_config_key
 
 
-def handle_base64_image(base64_data, vector_name):
+def handle_base64_image(base64_data: str, vector_name: str, extension: str):
+    """
+    Handle base64 image data, decode it, save it as a file, upload it to GCS, and return the image URI and MIME type.
+
+    Args:
+        base64_data (str): The base64 encoded image data.
+        vector_name (str): The vector name for the GCS path.
+        extension (str): The file extension of the image (e.g., ".jpg", ".png").
+
+    Returns:
+        Tuple[str, str]: The URI of the uploaded image and the MIME type.
+    """
     model = load_config_key("llm", vector_name, "vacConfig")
-    if model.startswith("openai"): # pass it to gpt directly
-        return base64_data, base64_data.split(",",1)
-    
+    if model.startswith("openai"):  # pass it to gpt directly
+        return base64_data, base64_data.split(",", 1)
+
     try:
         header, encoded = base64_data.split(",", 1)
         data = base64.b64decode(encoded)
 
-        filename = f"{uuid.uuid4()}.jpg"
+        filename = f"{uuid.uuid4()}{extension}"
         with open(filename, "wb") as f:
             f.write(data)
 
         image_uri = add_file_to_gcs(filename, vector_name)
         os.remove(filename)  # Clean up the saved file
-        return image_uri, "image/jpeg"
+
+        # Determine MIME type based on extension
+        mime_type = {
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".png": "image/png",
+            ".gif": "image/gif",
+            ".bmp": "image/bmp",
+            ".tiff": "image/tiff"
+        }.get(extension.lower(), "application/octet-stream")  # Default MIME type if unknown
+
+        return image_uri, mime_type
     except Exception as e:
         raise Exception(f'Base64 image upload failed: {str(e)}')
+
+
+def resolve_bucket(vector_name):
+    bucket_config = load_config_key("upload", vector_name, "vacConfig")
+    if bucket_config:
+        if bucket_config.get("buckets"):
+            bucket_name = bucket_config.get("buckets").get("all")
+
+    bucket_name = bucket_name if bucket_name else os.getenv('GCS_BUCKET', None)
+    if bucket_name is None:
+        raise ValueError("No bucket found to upload to: GCS_BUCKET returned None")
+    
+    if bucket_name.startswith("gs://"):
+        bucket_name = bucket_name.removeprefix("gs://")
+    
+    return bucket_name
 
 def add_file_to_gcs(filename: str, vector_name:str, bucket_name: str=None, metadata:dict=None, bucket_filepath:str=None):
 
@@ -56,17 +94,7 @@ def add_file_to_gcs(filename: str, vector_name:str, bucket_name: str=None, metad
         return None
     
     if bucket_name is None:
-        bucket_config = load_config_key("upload", vector_name, "vacConfig")
-        if bucket_config:
-            if bucket_config.get("buckets"):
-                bucket_name = bucket_config.get("buckets").get("all")
-
-    bucket_name = bucket_name if bucket_name else os.getenv('GCS_BUCKET', None)
-    if bucket_name is None:
-        raise ValueError("No bucket found to upload to: GCS_BUCKET returned None")
-    
-    if bucket_name.startswith("gs://"):
-        bucket_name = bucket_name.removeprefix("gs://")
+        bucket_name = resolve_bucket(vector_name)
     
     bucket = storage_client.get_bucket(bucket_name)
     now = datetime.datetime.now()

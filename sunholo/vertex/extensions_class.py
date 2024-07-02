@@ -136,7 +136,11 @@ class VertexAIExtensions:
 
         return response
 
-    def execute_code_extension(self, query: str, filenames: list[str] = None, gcs_files: list[str] = None):
+    def execute_code_extension(self, 
+                               query: str, 
+                               filenames: list[str] = None, 
+                               gcs_files: list[str] = None,
+                               bucket_name: str = None):
         if filenames and gcs_files:
             raise ValueError("Can't specify both filenames and gcs_files")
         
@@ -149,7 +153,16 @@ class VertexAIExtensions:
                 break
 
         if not code_interpreter_exists:
-            extension_code_interpreter = extensions.Extension.from_hub("code_interpreter")
+            if bucket_name:
+                runtime_config = {
+                    "codeInterpreterRuntimeConfig": {
+                        "fileInputGcsBucket": f"{bucket_name}/extensions/input/",
+                        "fileOutputGcsBucket": f"{bucket_name}/extensions/output/",
+                    }
+                }
+            extension_code_interpreter = extensions.Extension.from_hub("code_interpreter", runtime_config=runtime_config)
+
+        # This field is only applicable when `file_output_gcs_bucket` is specified in `Extension.CodeInterpreterRuntimeConfig`.
 
         operation_params = {"query": query}
 
@@ -166,7 +179,7 @@ class VertexAIExtensions:
         
         if gcs_files:
             operation_params["file_gcs_uris"] = gcs_files
-        
+        log.info("Executing code interpreter")
         response = extension_code_interpreter.execute(
             operation_id="generate_and_execute",
             operation_params=operation_params)
