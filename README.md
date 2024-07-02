@@ -3,6 +3,16 @@ This is the Sunholo Python project, a comprehensive toolkit for working with lan
 
 Please refer to the website for full documentation at https://dev.sunholo.com/
 
+## Tests via pytest
+
+If loading from GitHub, run tests:
+
+```bash
+pip install pytest
+pip install . --use-feature=in-tree-build
+pytest tests
+```
+
 ## Demos
 
 Using https://github.com/charmbracelet/vhs
