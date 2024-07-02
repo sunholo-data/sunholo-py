@@ -89,11 +89,17 @@ def stream_chat_session(service_url, service_name, stream=True):
                     console.print("[bold red]Invalid file upload[/bold red]")
                     continue
                 
-                console.print(f"[bold yellow]{service_name}:[/bold yellow] Uploaded {file_path} to {file_reply}", end='\n')
+                console.print(f"[bold yellow]{service_name}:[/bold yellow] Uploaded {file_path} to {file_reply} - image will be sent each reply until you issue 'clear_upload' ", end='\n')
             
             except FileNotFoundError:
                 console.print("[bold red]File not found. Please check the path and try again.[/bold red]")
-                continue 
+
+            # file_reply stays for each message from now on
+            continue 
+
+        if user_input.lower().startswith("clear_upload"):
+            console.print("[bold yellow]File upload path cleared.[/bold yellow]")
+            file_path = None
         
         if not stream:
             vac_response = send_to_qa(user_input,
