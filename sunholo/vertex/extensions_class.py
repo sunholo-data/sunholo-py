@@ -188,7 +188,24 @@ class VertexAIExtensions:
             [item['name'] for item in response['output_files']])
 
         if response.get('execution_error'):
+            #TODO: setup iteration many times with a timeout
             log.error(f"Code Execution Response failed with: {response.get('execution_error')} - maybe retry?")
+            new_query = f"""
+<original_query>{query}</original_query>
+<original_output>{response.get('generated_code')}</original_output>
+The code above failed with this error:
+<code_error>{response.get('execution_error')}</code_error>
+Please try again again to satisfy the original query.
+"""
+            operation_params = {"query": new_query}
+            response = extension_code_interpreter.execute(
+                operation_id="generate_and_execute",
+                operation_params=operation_params)
+            
+            self.CODE_INTERPRETER_WRITTEN_FILES.extend([item['name'] for item in response['output_files']])
+            if response.get('execution_error'):
+                log.error(f"Code Execution Response failed twice: {response.get('execution_error')}")
+
 
         return response
 
