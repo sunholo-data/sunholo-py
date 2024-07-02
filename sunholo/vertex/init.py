@@ -1,5 +1,18 @@
 from ..logging import log
 from ..utils.gcp_project import get_gcp_project
+import os
+
+def init_genai():
+    try:
+        import google.generativeai as genai
+    except ImportError:
+        raise ImportError("google.generativeai not installed, please install via 'pip install sunholo[gcp]")
+    
+    GOOGLE_API_KEY=os.getenv('GOOGLE_API_KEY')
+    if not GOOGLE_API_KEY:
+        raise ValueError("google.generativeai needs GOOGLE_API_KEY set in environment variable")
+
+    genai.configure(api_key=GOOGLE_API_KEY)
 
 def init_vertex(gcp_config=None, location="eu"):
     """
