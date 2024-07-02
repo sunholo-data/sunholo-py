@@ -188,13 +188,6 @@ class VertexAIExtensions:
             operation_id="generate_and_execute",
             operation_params=operation_params)
 
-        if 'output_files' in response:
-            self.CODE_INTERPRETER_WRITTEN_FILES.extend(
-                [item['name'] for item in response['output_files']])
-        
-        if 'output_gcs_uris' in response:
-            self.CODE_INTERPRETER_WRITTEN_FILES.extend(response['output_gcs_uris'])            
-
         if response.get('execution_error'):
             #TODO: setup iteration many times with a timeout
             log.error(f"Code Execution Response failed with: {response.get('execution_error')} - maybe retry?")
@@ -210,10 +203,15 @@ Please try again again to satisfy the original query.
                 operation_id="generate_and_execute",
                 operation_params=operation_params)
             
-            self.CODE_INTERPRETER_WRITTEN_FILES.extend([item['name'] for item in response['output_files']])
             if response.get('execution_error'):
                 log.error(f"Code Execution Response failed twice: {response.get('execution_error')}")
 
+        if 'output_files' in response:
+            self.CODE_INTERPRETER_WRITTEN_FILES.extend(
+                [item['name'] for item in response['output_files']])
+        
+        if 'output_gcs_uris' in response:
+            self.CODE_INTERPRETER_WRITTEN_FILES.extend(response['output_gcs_uris'])   
 
         return response
 
