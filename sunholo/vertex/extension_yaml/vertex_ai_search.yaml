@@ -1,0 +1,65 @@
+openapi: "3.0.0"
+info:
+  title: Vertex AI Search
+  version: v1alpha
+  description: >
+    Performs search on user ingested data including website and unstructured data type.
+
+    This extension is used when user wants to search or retrieve meaningful results from their ingested data in the Vertex AI Search service.
+
+    User needs to create a data store in global region and specify search scope in Vertex AI Search service first. For quality purpose, we encourage to turn on advanced indexing for website data and turn on enterprise edition for unstructured data.
+
+    The search results can be controlled by the serving config provided in the runtime config.
+
+    Supported AuthTypes:
+    - GOOGLE_SERVICE_ACCOUNT_AUTH: (only supports using Vertex AI Extension Service Agent).
+paths:
+  /search:
+    get:
+      operationId: search
+      description: Performs a search operation based on user's natural language query
+      parameters:
+      - name: query
+        in: query
+        schema:
+          type: string
+        description: User natural language instructions for search.
+        required: true
+      responses:
+        default:
+          description: Search execution result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResult"
+
+components:
+  schemas:
+    SearchResult:
+      description: Top results from search response.
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+                description: Retrieved document title.
+              display_link:
+                type: string
+                description: Retrieved document link to display.
+              link:
+                type: string
+                description: Retrieved document link.
+              extractive_segments:
+                type: array
+                description: Extractive segments from the retrieved file.
+                items:
+                  type: string
+              extractive_answers:
+                type: array
+                description: Extractive answers from the retrieved file. These are generated from the extractive segments.
+                items:
+                  type: string

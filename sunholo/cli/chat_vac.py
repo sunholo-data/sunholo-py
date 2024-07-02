@@ -139,7 +139,7 @@ def stream_chat_session(service_url, service_name, stream=True):
                     stream_timeout=120,
                     message_author=user_id,
                     #TODO: populate these
-                    image_url=None,
+                    image_url=file_reply,
                     source_filters=None,
                     search_kwargs=None,
                     private_docs=None,
@@ -161,7 +161,7 @@ def stream_chat_session(service_url, service_name, stream=True):
             vac_response = ""
 
             # point or star?
-            with console.status("[bold orange]Thinking...[/bold orange]", spinner="star") as status:
+            with console.status(f"[bold orange]Thinking...{file_reply}[/bold orange]", spinner="star") as status:
                 for token in stream_response():
                     if not response_started:
                         status.stop()

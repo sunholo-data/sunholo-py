@@ -160,9 +160,10 @@ class VertexAIExtensions:
                         "fileOutputGcsBucket": f"{bucket_name}/extensions/output/",
                     }
                 }
+                log.info(f"Creating buckets with {runtime_config=}")
             else:
                 runtime_config = {}
-                
+
             extension_code_interpreter = extensions.Extension.from_hub("code_interpreter", runtime_config=runtime_config)
 
         # This field is only applicable when `file_output_gcs_bucket` is specified in `Extension.CodeInterpreterRuntimeConfig`.
@@ -187,8 +188,12 @@ class VertexAIExtensions:
             operation_id="generate_and_execute",
             operation_params=operation_params)
 
-        self.CODE_INTERPRETER_WRITTEN_FILES.extend(
-            [item['name'] for item in response['output_files']])
+        if 'output_files' in response:
+            self.CODE_INTERPRETER_WRITTEN_FILES.extend(
+                [item['name'] for item in response['output_files']])
+        
+        if 'output_gcs_uris' in response:
+            self.CODE_INTERPRETER_WRITTEN_FILES.extend(response['output_gcs_uris'])            
 
         if response.get('execution_error'):
             #TODO: setup iteration many times with a timeout
