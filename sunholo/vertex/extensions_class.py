@@ -195,7 +195,7 @@ class VertexAIExtensions:
         buffer_html = [details_tml.format(**_file) for _file in file_list]
         return "".join(buffer_html)
     
-    def process_response(self, response: dict, save_files_locally=None) -> str:
+    def process_response(self, response: dict, save_file_name=None) -> str:
         result_template = """
         <details open>
             <summary class='main_summary'>{summary}:</summary>
@@ -234,8 +234,8 @@ class VertexAIExtensions:
     {result}
 </div>
 """
-        if save_files_locally:
-            with open('code_execution_results.html', 'w') as file:
+        if save_file_name:
+            with open(save_file_name or 'code_execution_results.html', 'w') as file:
                 file.write(html_content)
 
         return html_content
