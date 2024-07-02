@@ -156,8 +156,8 @@ class VertexAIExtensions:
             if bucket_name:
                 runtime_config = {
                     "codeInterpreterRuntimeConfig": {
-                        "fileInputGcsBucket": f"{bucket_name}/extensions/input/",
-                        "fileOutputGcsBucket": f"{bucket_name}/extensions/output/",
+                        "fileInputGcsBucket": bucket_name,
+                        "fileOutputGcsBucket": bucket_name,
                     }
                 }
                 log.info(f"Creating buckets with {runtime_config=}")
