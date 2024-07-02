@@ -1,4 +1,8 @@
-from vertexai.preview import extensions
+try:
+    from vertexai.preview import extensions
+except ImportError:
+    extensions = None
+
 from .init import init_vertex
 from ..logging import log
 from ..utils.gcp_project import get_gcp_project
@@ -9,6 +13,9 @@ from io import StringIO
 
 class VertexAIExtensions:
     def __init__(self):
+        if extensions is None:
+            raise ImportError("VertexAIExtensions needs vertexai.previewextensions to be installed. Install via `pip install sunholo[gcp]`")
+        
         self.CODE_INTERPRETER_WRITTEN_FILES = []
         self.css_styles = """
         <style>
@@ -20,6 +27,20 @@ class VertexAIExtensions:
         """
         self.IMAGE_FILE_EXTENSIONS = set(["jpg", "jpeg", "png"])
         self.location = "us-central1"
+
+    def list_extensions(self):
+        the_list = extensions.Extension.list()
+        
+        extensions_list = []
+        for ext in the_list:
+            extensions_list.append({
+                "resource_name": getattr(ext, 'resource_name', ''),
+                "display_name": getattr(ext, 'display_name', 'N/A'),
+                "description": getattr(ext, 'description', 'N/A')
+            })
+        
+        return extensions_list
+        
 
     def get_extension_import_config(self, display_name: str, description: str,
                                     api_spec_gcs: dict, service_account_name: dict, tool_use_examples: list):
@@ -118,8 +139,19 @@ class VertexAIExtensions:
     def execute_code_extension(self, query: str, filenames: list[str] = None, gcs_files: list[str] = None):
         if filenames and gcs_files:
             raise ValueError("Can't specify both filenames and gcs_files")
+        
+        listed_extensions = self.list_extensions()
+        code_interpreter_exists = False
+        for ext in listed_extensions:
+            if ext.get('display_name') == 'Code Interpreter':
+                code_interpreter_exists = True
+                extension_code_interpreter = extensions.Extension(ext['resource_name'])
+                break
 
-        extension_code_interpreter = extensions.Extension.from_hub("code_interpreter")
+        if not code_interpreter_exists:
+            extension_code_interpreter = extensions.Extension.from_hub("code_interpreter")
+
+        operation_params = {"query": query}
 
         file_arr = None
         if filenames:
@@ -130,14 +162,14 @@ class VertexAIExtensions:
                 }
                 for filename in filenames
             ]
-
+            operation_params["files"] = file_arr
+        
+        if gcs_files:
+            operation_params["file_gcs_uris"] = gcs_files
+        
         response = extension_code_interpreter.execute(
             operation_id="generate_and_execute",
-            operation_params={
-                "query": query,
-                "files": file_arr,
-                "file_gcs_uris": gcs_files
-            })
+            operation_params=operation_params)
 
         self.CODE_INTERPRETER_WRITTEN_FILES.extend(
             [item['name'] for item in response['output_files']])
