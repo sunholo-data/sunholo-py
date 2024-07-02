@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.71.13'
+version = '0.71.14'
 
 setup(
     name='sunholo',
@@ -55,7 +55,7 @@ setup(
             "google-cloud-storage",
             "google-cloud-pubsub",
             "google-cloud-discoveryengine",
-            "google-generativeai",
+            "google-generativeai>=0.7.1",
             "gunicorn",
             "httpcore",
             "httpx",
@@ -117,7 +117,7 @@ setup(
             "google-cloud-logging",
             "google-cloud-pubsub",
             "google-cloud-discoveryengine",
-            "google-generativeai>=0.4.1",
+            "google-generativeai>=0.7.1",
             "langchain-google-genai>=1.0.5",
             "langchain_google_alloydb_pg>=0.2.2",
             "google-api-python-client",
