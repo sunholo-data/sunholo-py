@@ -3,6 +3,11 @@ from ..utils.gcp_project import get_gcp_project
 import os
 
 def init_genai():
+    """
+    There are some features that come to the google.generativeai first, 
+    which needs to be authenticated via a GOOGLE_API_KEY environment variable, 
+    created via the Google AI Console at https://aistudio.google.com/app/apikey 
+    """
     try:
         import google.generativeai as genai
     except ImportError:
