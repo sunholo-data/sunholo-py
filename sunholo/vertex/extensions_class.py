@@ -183,7 +183,7 @@ class VertexAIExtensions:
         
         if gcs_files:
             operation_params["file_gcs_uris"] = gcs_files
-        log.info("Executing code interpreter")
+        log.info(f"Executing code interpreter with {operation_params=}")
         response = extension_code_interpreter.execute(
             operation_id="generate_and_execute",
             operation_params=operation_params)
