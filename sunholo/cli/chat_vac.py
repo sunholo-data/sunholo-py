@@ -5,9 +5,11 @@ from ..utils.config import load_config_key
 from ..utils.api_key import has_multivac_api_key
 from ..logging import log
 from ..qna.parsers import parse_output
+from ..gcs.add_file import add_file_to_gcs
 from .run_proxy import clean_proxy_list, start_proxy, stop_proxy
 
 import uuid
+import os
 import sys
 import subprocess
 import json
@@ -44,6 +46,17 @@ def get_service_url(vac_name, project, region, no_config=False):
 
     return url
 
+def handle_file_upload(file, vector_name):
+    if not Path(file).is_file():
+        return None
+    
+    file_url = add_file_to_gcs(file, 
+                               vector_name=vector_name, 
+                               metadata={"type": "cli"},
+                               bucket_filepath=f"{vector_name}/uploads/{os.path.basename(file)}")
+    
+    return file_url
+
 def stream_chat_session(service_url, service_name, stream=True):
 
     user_id = generate_user_id()
@@ -62,7 +75,25 @@ def stream_chat_session(service_url, service_name, stream=True):
 
         if special_reply:
              console.print(f"[bold yellow]{service_name}:[/bold yellow] {special_reply}", end='\n')
-             continue     
+             continue    
+
+        if user_input.lower().startswith("upload"):
+            file_path = user_input.split(" ", 1)[1] if " " in user_input else None
+            if not file_path:
+                console.print("[bold red]Please provide a valid file path.[/bold red]")
+                continue
+
+            try:
+                file_reply = handle_file_upload(file_path, vector_name=service_name)
+                if not file_reply:
+                    console.print("[bold red]Invalid file upload[/bold red]")
+                    continue
+                
+                console.print(f"[bold yellow]{service_name}:[/bold yellow] Uploaded {file_path} to {file_reply}", end='\n')
+            
+            except FileNotFoundError:
+                console.print("[bold red]File not found. Please check the path and try again.[/bold red]")
+                continue 
         
         if not stream:
             vac_response = send_to_qa(user_input,
@@ -70,7 +101,7 @@ def stream_chat_session(service_url, service_name, stream=True):
                 chat_history=chat_history,
                 message_author=user_id,
                 #TODO: populate these
-                image_url=None,
+                image_url=file_reply,
                 source_filters=None,
                 search_kwargs=None,
                 private_docs=None,

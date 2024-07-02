@@ -160,6 +160,9 @@ class VertexAIExtensions:
                         "fileOutputGcsBucket": f"{bucket_name}/extensions/output/",
                     }
                 }
+            else:
+                runtime_config = {}
+                
             extension_code_interpreter = extensions.Extension.from_hub("code_interpreter", runtime_config=runtime_config)
 
         # This field is only applicable when `file_output_gcs_bucket` is specified in `Extension.CodeInterpreterRuntimeConfig`.

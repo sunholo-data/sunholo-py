@@ -72,10 +72,10 @@ def resolve_bucket(vector_name):
     if bucket_config:
         if bucket_config.get("buckets"):
             bucket_name = bucket_config.get("buckets").get("all")
-
-    bucket_name = bucket_name if bucket_name else os.getenv('GCS_BUCKET', None)
-    if bucket_name is None:
-        raise ValueError("No bucket found to upload to: GCS_BUCKET returned None")
+    else:
+        bucket_name = os.getenv('GCS_BUCKET')
+        if not bucket_name:
+            raise ValueError("No bucket found to upload to: GCS_BUCKET returned None")
     
     if bucket_name.startswith("gs://"):
         bucket_name = bucket_name.removeprefix("gs://")
@@ -93,7 +93,7 @@ def add_file_to_gcs(filename: str, vector_name:str, bucket_name: str=None, metad
         log.error(f"Error creating storage client: {str(err)}")
         return None
     
-    if bucket_name is None:
+    if not bucket_name:
         bucket_name = resolve_bucket(vector_name)
     
     bucket = storage_client.get_bucket(bucket_name)
