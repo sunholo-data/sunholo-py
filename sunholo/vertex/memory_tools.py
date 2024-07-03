@@ -92,6 +92,12 @@ def get_vertex_memories(vector_name):
                         log.warning("Data stores for chunks do not work with Tools yet, call data store directly instead")
                         continue
 
+                    if value.get('read_only'):
+                        new_vector_name = value.get('vector_name')
+                        if not new_vector_name:
+                            log.warning("read_only specified but no new vector_name to read from")
+                        vector_name = new_vector_name
+
                     de = DiscoveryEngineClient(vector_name, project_id=project_id)
                     log.info(f"Found vectorstore {vectorstore}")
 
