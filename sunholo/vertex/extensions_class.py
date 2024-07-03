@@ -168,6 +168,7 @@ class VertexAIExtensions:
 
         # This field is only applicable when `file_output_gcs_bucket` is specified in `Extension.CodeInterpreterRuntimeConfig`.
 
+        log.info(f"extension_code_interpreter: {extension_code_interpreter.resource_name}")
         operation_params = {"query": query}
 
         file_arr = None
