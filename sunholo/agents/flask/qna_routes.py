@@ -510,11 +510,11 @@ def prep_vac(request, vector_name):
                     data["image_uri"] = image_uri
                     data["mime"] = mime_type
                 except Exception as e:
-                    return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
+                    log.error(f"Error uploading file: {str(e)}")
             else:
-                return jsonify({"error": "No file selected"}), 400
+                log.info("No file selected to upload to GCS")
     else:
-        return jsonify({"error": "Unsupported content type"}), 400
+        log.warning(f"Error uploading file: Unsupported content type {request.content_type}")
 
     log.info(f"vac/{vector_name} got data: {data}")
 

@@ -85,7 +85,11 @@ def resolve_bucket(vector_name):
     
     return bucket_name
 
-def add_file_to_gcs(filename: str, vector_name:str, bucket_name: str=None, metadata:dict=None, bucket_filepath:str=None):
+def add_file_to_gcs(filename: str, 
+                    vector_name:str, 
+                    bucket_name: str=None, 
+                    metadata:dict=None, 
+                    bucket_filepath:str=None):
 
     if not storage:
         return None
