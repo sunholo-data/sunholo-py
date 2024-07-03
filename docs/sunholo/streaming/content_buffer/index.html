@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.2.1">
 <title data-rh="true">content_buffer.py | Sunholo Dev Portal</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://dev.sunholo.com/docs/sunholo/streaming/content_buffer"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="content_buffer.py | Sunholo Dev Portal"><meta data-rh="true" name="description" content="Source: sunholo/streaming/contentbuffer.py"><meta data-rh="true" property="og:description" content="Source: sunholo/streaming/contentbuffer.py"><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://dev.sunholo.com/docs/sunholo/streaming/content_buffer"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/streaming/content_buffer" hreflang="en"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/streaming/content_buffer" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.f6c7f565.css">
-<script src="/assets/js/runtime~main.0726f3de.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.519ccb50.js" defer="defer"></script>
 <script src="/assets/js/main.74448bb8.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -50,44 +50,69 @@ Initializes tracking variables for code blocks, buffer content, and the finished
 <p>If the buffer ends with a numbered list pattern or specified tokens, the buffer is flushed
 to the content buffer. Otherwise, the buffer is left intact for further accumulation.</p>
 <ul>
-<li>
-<p>on_agent_action(self, action: &#x27;AgentAction&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;Any&#x27;</p>
+<li>on_agent_action(self, action: &#x27;AgentAction&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;Any&#x27;<!-- -->
 <ul>
 <li>Run on agent action.</li>
 </ul>
 </li>
-<li>
-<p>on_agent_finish(self, finish: &#x27;AgentFinish&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;</p>
+</ul>
+<p>Args:
+action (AgentAction): The agent action.
+**kwargs (Any): Additional keyword arguments.</p>
 <ul>
-<li>Run on agent end.</li>
+<li>on_agent_finish(self, finish: &#x27;AgentFinish&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;<!-- -->
+<ul>
+<li>Run on the agent end.</li>
 </ul>
 </li>
-<li>
-<p>on_chain_end(self, outputs: &#x27;Dict[str, Any]&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;</p>
+</ul>
+<p>Args:
+finish (AgentFinish): The agent finish.
+**kwargs (Any): Additional keyword arguments.</p>
 <ul>
-<li>Run when chain ends running.</li>
+<li>on_chain_end(self, outputs: &#x27;Dict[str, Any]&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;<!-- -->
+<ul>
+<li>Run when a chain ends running.</li>
 </ul>
 </li>
-<li>
-<p>on_chain_error(self, error: &#x27;BaseException&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;</p>
+</ul>
+<p>Args:
+outputs (Dict[str, Any]): The outputs of the chain.
+**kwargs (Any): Additional keyword arguments.</p>
+<ul>
+<li>on_chain_error(self, error: &#x27;BaseException&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;<!-- -->
 <ul>
 <li>Run when chain errors.</li>
 </ul>
 </li>
-<li>
-<p>on_chain_start(self, serialized: &#x27;Dict[str, Any]&#x27;, inputs: &#x27;Dict[str, Any]&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;</p>
+</ul>
+<p>Args:
+error (BaseException): The error that occurred.
+**kwargs (Any): Additional keyword arguments.</p>
 <ul>
-<li>Run when chain starts running.</li>
+<li>on_chain_start(self, serialized: &#x27;Dict[str, Any]&#x27;, inputs: &#x27;Dict[str, Any]&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;<!-- -->
+<ul>
+<li>Run when a chain starts running.</li>
 </ul>
 </li>
-<li>
-<p>on_chat_model_start(self, serialized: &#x27;Dict[str, Any]&#x27;, messages: &#x27;List[List[BaseMessage]]&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;</p>
+</ul>
+<p>Args:
+serialized (Dict[str, Any]): The serialized chain.
+inputs (Dict[str, Any]): The inputs to the chain.
+**kwargs (Any): Additional keyword arguments.</p>
+<ul>
+<li>on_chat_model_start(self, serialized: &#x27;Dict[str, Any]&#x27;, messages: &#x27;List[List[BaseMessage]]&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;<!-- -->
 <ul>
 <li>Run when LLM starts running.</li>
 </ul>
 </li>
-<li>
-<p>on_llm_end(self, response: langchain_core.outputs.llm_result.LLMResult, **kwargs: Any) -&gt; None</p>
+</ul>
+<p>Args:
+serialized (Dict[str, Any]): The serialized LLM.
+messages (List[List[BaseMessage]]): The messages to run.
+**kwargs (Any): Additional keyword arguments.</p>
+<ul>
+<li>on_llm_end(self, response: langchain_core.outputs.llm_result.LLMResult, **kwargs: Any) -&gt; None<!-- -->
 <ul>
 <li>Handles the end of LLM streaming.</li>
 </ul>
@@ -99,14 +124,17 @@ response (LLMResult): The result returned by the LLM.
 <p>Writes any remaining buffer content to the content buffer, and sets a signal indicating
 that the streaming has finished.</p>
 <ul>
-<li>
-<p>on_llm_error(self, error: &#x27;BaseException&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;</p>
+<li>on_llm_error(self, error: &#x27;BaseException&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;<!-- -->
 <ul>
 <li>Run when LLM errors.</li>
 </ul>
 </li>
-<li>
-<p>on_llm_new_token(self, token: str, **kwargs: Any) -&gt; None</p>
+</ul>
+<p>Args:
+error (BaseException): The error that occurred.
+**kwargs (Any): Additional keyword arguments.</p>
+<ul>
+<li>on_llm_new_token(self, token: str, **kwargs: Any) -&gt; None<!-- -->
 <ul>
 <li>Processes a new token from the LLM output.</li>
 </ul>
@@ -119,12 +147,17 @@ token (str): The new token generated by the LLM.
 The buffer content is written to the content buffer when appropriate tokens or
 patterns are detected.</p>
 <ul>
-<li>
-<p>on_llm_start(self, serialized: &#x27;Dict[str, Any]&#x27;, prompts: &#x27;List[str]&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;</p>
+<li>on_llm_start(self, serialized: &#x27;Dict[str, Any]&#x27;, prompts: &#x27;List[str]&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;<!-- -->
 <ul>
 <li>Run when LLM starts running.</li>
 </ul>
 </li>
+</ul>
+<p>Args:
+serialized (Dict[str, Any]): The serialized LLM.
+prompts (List[str]): The prompts to run.
+**kwargs (Any): Additional keyword arguments.</p>
+<ul>
 <li>
 <p>on_retriever_end(self, documents: &#x27;Sequence[Document]&#x27;, *, run_id: &#x27;UUID&#x27;, parent_run_id: &#x27;Optional[UUID]&#x27; = None, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;Any&#x27;</p>
 <ul>
@@ -140,40 +173,71 @@ patterns are detected.</p>
 <li>
 <p>on_retriever_start(self, serialized: &#x27;Dict[str, Any]&#x27;, query: &#x27;str&#x27;, *, run_id: &#x27;UUID&#x27;, parent_run_id: &#x27;Optional[UUID]&#x27; = None, tags: &#x27;Optional[List[str]]&#x27; = None, metadata: &#x27;Optional[Dict[str, Any]]&#x27; = None, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;Any&#x27;</p>
 <ul>
-<li>Run when Retriever starts running.</li>
+<li>Run when the Retriever starts running.</li>
 </ul>
 </li>
-<li>
-<p>on_retry(self, retry_state: &#x27;RetryCallState&#x27;, *, run_id: &#x27;UUID&#x27;, parent_run_id: &#x27;Optional[UUID]&#x27; = None, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;Any&#x27;</p>
+</ul>
+<p>Args:
+serialized (Dict[str, Any]): The serialized Retriever.
+query (str): The query.
+run_id (UUID): The run ID. This is the ID of the current run.
+parent_run_id (UUID): The parent run ID. This is the ID of the parent run.
+tags (Optional[List[str]]): The tags.
+metadata (Optional[Dict[str, Any]]): The metadata.
+kwargs (Any): Additional keyword arguments.</p>
+<ul>
+<li>on_retry(self, retry_state: &#x27;RetryCallState&#x27;, *, run_id: &#x27;UUID&#x27;, parent_run_id: &#x27;Optional[UUID]&#x27; = None, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;Any&#x27;<!-- -->
 <ul>
 <li>Run on a retry event.</li>
 </ul>
 </li>
-<li>
-<p>on_text(self, text: &#x27;str&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;</p>
+</ul>
+<p>Args:
+retry_state (RetryCallState): The retry state.
+run_id (UUID): The run ID. This is the ID of the current run.
+parent_run_id (UUID): The parent run ID. This is the ID of the parent run.
+kwargs (Any): Additional keyword arguments.</p>
 <ul>
-<li>Run on arbitrary text.</li>
+<li>on_text(self, text: &#x27;str&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;<!-- -->
+<ul>
+<li>Run on an arbitrary text.</li>
 </ul>
 </li>
-<li>
-<p>on_tool_end(self, output: &#x27;Any&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;</p>
+</ul>
+<p>Args:
+text (str): The text to print.
+**kwargs (Any): Additional keyword arguments.</p>
+<ul>
+<li>on_tool_end(self, output: &#x27;Any&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;<!-- -->
 <ul>
 <li>Run when tool ends running.</li>
 </ul>
 </li>
-<li>
-<p>on_tool_error(self, error: &#x27;BaseException&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;</p>
+</ul>
+<p>Args:
+output (Any): The output of the tool.
+**kwargs (Any): Additional keyword arguments.</p>
+<ul>
+<li>on_tool_error(self, error: &#x27;BaseException&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;<!-- -->
 <ul>
 <li>Run when tool errors.</li>
 </ul>
 </li>
-<li>
-<p>on_tool_start(self, serialized: &#x27;Dict[str, Any]&#x27;, input_str: &#x27;str&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;</p>
+</ul>
+<p>Args:
+error (BaseException): The error that occurred.
+**kwargs (Any): Additional keyword arguments.</p>
 <ul>
-<li>Run when tool starts running.</li>
+<li>on_tool_start(self, serialized: &#x27;Dict[str, Any]&#x27;, input_str: &#x27;str&#x27;, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;None&#x27;<!-- -->
+<ul>
+<li>Run when the tool starts running.</li>
 </ul>
 </li>
 </ul>
+<p>Args:
+serialized (Dict[str, Any]): The serialized tool.
+input_str (str): The input string.
+**kwargs (Any): Additional keyword arguments.</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="contentbuffer">ContentBuffer<a href="#contentbuffer" class="hash-link" aria-label="Direct link to ContentBuffer" title="Direct link to ContentBuffer">​</a></h3>
 <p>A buffer class for storing and managing textual content.</p>
 <p>This class provides methods to write text to the buffer, read the entire buffer content,
