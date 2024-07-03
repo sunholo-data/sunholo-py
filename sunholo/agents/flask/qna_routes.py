@@ -508,6 +508,7 @@ def prep_vac(request, vector_name):
                 try:
                     image_uri, mime_type = handle_file_upload(file, vector_name)
                     data["image_uri"] = image_uri
+                    data["image_url"] = image_uri
                     data["mime"] = mime_type
                 except Exception as e:
                     log.error(f"Error uploading file: {str(e)}")
