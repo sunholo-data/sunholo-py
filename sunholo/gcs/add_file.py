@@ -121,7 +121,7 @@ def add_file_to_gcs(filename: str,
     blob = bucket.blob(bucket_filepath)
     blob_prev = bucket.blob(bucket_filepath_prev)
 
-    if blob.exists():
+    if blob.exists() and not os.getenv('EXTENSIONS_BUCKET'):
         log.info(f"File {filename} already exists in gs://{bucket_name}/{bucket_filepath}")
         return f"gs://{bucket_name}/{bucket_filepath}"
 

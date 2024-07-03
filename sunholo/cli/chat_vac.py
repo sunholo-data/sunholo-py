@@ -50,10 +50,14 @@ def handle_file_upload(file, vector_name):
     if not Path(file).is_file():
         return None
     
+    agent_name = load_config_key("agent", vector_name, kind="vacConfig")
+    # vertex can't handle directories
+    bucket_filepath = f"{vector_name}/uploads/{os.path.basename(file)}" if agent_name != "vertex-genai" else os.path.basename(file)
+
     file_url = add_file_to_gcs(file, 
                                vector_name=vector_name, 
                                metadata={"type": "cli"},
-                               bucket_filepath=f"{vector_name}/uploads/{os.path.basename(file)}")
+                               bucket_filepath=bucket_filepath)
     
     return file_url
 
@@ -61,6 +65,7 @@ def stream_chat_session(service_url, service_name, stream=True):
 
     user_id = generate_user_id()
     chat_history = []
+    agent_name = load_config_key("agent", service_name, kind="vacConfig")
     while True:
         session_id = str(uuid.uuid4())
         user_input = Prompt.ask("[bold cyan]You[/bold cyan]")
@@ -136,7 +141,7 @@ def stream_chat_session(service_url, service_name, stream=True):
                     chat_history=chat_history,
                     generate_f_output=lambda x: x,  # Replace with actual processing function
                     stream_wait_time=0.5,
-                    stream_timeout=120,
+                    stream_timeout=120 if agent_name != "vertex-genai" else 1200,
                     message_author=user_id,
                     #TODO: populate these
                     image_url=file_reply,
