@@ -68,6 +68,9 @@ def handle_base64_image(base64_data: str, vector_name: str, extension: str):
 
 
 def resolve_bucket(vector_name):
+    if os.getenv('EXTENSIONS_BUCKET'):
+        return os.getenv('EXTENSIONS_BUCKET')
+    
     bucket_config = load_config_key("upload", vector_name, "vacConfig")
     if bucket_config:
         if bucket_config.get("buckets"):
@@ -103,6 +106,9 @@ def add_file_to_gcs(filename: str, vector_name:str, bucket_name: str=None, metad
     day = now.strftime("%d") 
     hour = now.strftime("%H")
     hour_prev = (now - datetime.timedelta(hours=1)).strftime("%H")
+
+    if os.getenv('EXTENSIONS_BUCKET'):
+        bucket_filepath = os.path.basename(filename)
 
     if not bucket_filepath:
         bucket_filepath = f"{vector_name}/{year}/{month}/{day}/{hour}/{os.path.basename(filename)}"
