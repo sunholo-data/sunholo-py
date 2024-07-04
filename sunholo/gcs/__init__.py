@@ -1,1 +1,1 @@
-from .download_url import construct_download_link, get_bytes_from_gcs
+from .download_url import construct_download_link, get_bytes_from_gcs, get_image_from_gcs

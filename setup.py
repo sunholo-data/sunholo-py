@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.71.28'
+version = '0.71.29'
 
 setup(
     name='sunholo',
@@ -71,6 +71,7 @@ setup(
             "langfuse",
             "pg8000",
             "pgvector",
+            "pillow",
             "playwright",
             "psycopg2-binary",
             "pypdf",
@@ -107,6 +108,8 @@ setup(
             "unstructured[local-inference]",
         ],
         'gcp': [
+            "google-api-python-client",
+            "google-cloud-alloydb-connector[pg8000]",
             "google-auth-httplib2",
             "google-auth-oauthlib",
             "google-cloud-aiplatform",
@@ -120,8 +123,8 @@ setup(
             "google-generativeai>=0.7.1",
             "langchain-google-genai>=1.0.5",
             "langchain_google_alloydb_pg>=0.2.2",
-            "google-api-python-client",
-            "google-cloud-alloydb-connector[pg8000]",
+            "pillow",
+
         ],
         'openai': [
             "langchain-openai",

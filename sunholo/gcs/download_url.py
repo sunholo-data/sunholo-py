@@ -14,12 +14,27 @@ except ImportError:
 
 from ..logging import log
 from ..utils.gcp import is_running_on_gcp
+from io import BytesIO
+try:
+    from PIL import Image
+except ImportError:
+    Image = None
 
 gcs_credentials = None
 project_id = None
 gcs_client = None
 gcs_bucket_cache = {}
 
+def get_image_from_gcs(gs_uri: str):
+    """Converts image bytes from GCS to a PIL Image object."""
+    image_bytes = get_bytes_from_gcs(gs_uri)
+    if not Image:
+        raise ImportError('Could not import PIL (pillow) - install via `pip install sunholo[gcp]`')
+    try:
+        img = Image.open(BytesIO(image_bytes))
+        return img
+    except IOError as e:
+        raise ValueError("Unable to open image from bytes:", e)
 
 def get_bytes_from_gcs(gs_uri):
     """
