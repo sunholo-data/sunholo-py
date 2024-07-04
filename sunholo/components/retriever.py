@@ -13,7 +13,7 @@
 #   limitations under the License.
 from ..logging import log
 from .vectorstore import pick_vectorstore
-from ..utils import load_config_key
+from ..utils import load_config_key, ConfigManager
 from .llm import get_embeddings
 from ..utils.gcp_project import get_gcp_project
 
@@ -27,7 +27,7 @@ from langchain.retrievers import ContextualCompressionRetriever
 
 
 def load_memories(vector_name):
-    memories = load_config_key("memory", vector_name, kind="vacConfig")
+    memories = ConfigManager(vector_name).vacConfig("memory")
     log.info(f"Found memory settings for {vector_name}: {memories}")
     if not memories or len(memories) == 0:
         log.info(f"No memory settings found for {vector_name}")

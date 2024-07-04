@@ -1,8 +1,8 @@
 from ..logging import log
-from ..utils import load_config_key
+from ..utils import ConfigManager
 
 # Load the YAML file
-def load_prompt_from_yaml(key, prefix="sunholo", file_path=None):
+def load_prompt_from_yaml(key, prefix="sunholo", load_from_file=False):
     """
     Returns a string you can use with Langfuse PromptTemplate.from_template() 
 
@@ -17,6 +17,12 @@ def load_prompt_from_yaml(key, prefix="sunholo", file_path=None):
     from langchain_core.prompts import PromptTemplate
     
     """
+    config = ConfigManager(prefix)
+    if load_from_file:
+        
+        return config.promptConfig(key)
+
+
     from langfuse import Langfuse
 
     # Initialize Langfuse client
@@ -35,4 +41,4 @@ def load_prompt_from_yaml(key, prefix="sunholo", file_path=None):
     except Exception as err:
         log.warning(f"Could not find langfuse template: {langfuse_template} - {str(err)} - attempting to load from promptConfig")
 
-    return load_config_key(key, vector_name=prefix, kind="promptConfig")
+    return config.promptConfig(key)

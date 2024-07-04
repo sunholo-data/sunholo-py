@@ -1,6 +1,6 @@
 try:
     from vertexai.preview import rag
-    from vertexai.preview.generative_models import Tool, grounding, GenerationResponse
+    from vertexai.preview.generative_models import Tool, grounding
 except ImportError:
     rag = None
 
