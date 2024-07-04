@@ -20,6 +20,46 @@ project_id = None
 gcs_client = None
 gcs_bucket_cache = {}
 
+
+def get_bytes_from_gcs(gs_uri):
+    """
+    Downloads a file from Google Cloud Storage and returns its bytes.
+
+    Args:
+        gs_uri (str): The Google Cloud Storage URI of the file to download (e.g., 'gs://bucket_name/file_name').
+
+    Returns:
+        bytes: The content of the file in bytes, or None if an error occurs.
+    """
+    if not gs_uri.startswith('gs://'):
+        log.error(f"Invalid GCS URI: {gs_uri}")
+        return None
+    
+    try:
+        storage_client = storage.Client()
+    except Exception as err:
+        log.error(f"Error creating storage client: {str(err)}")
+        return None
+    
+    try:
+        # Parse the GCS URI
+        path_parts = gs_uri[5:].split('/', 1)
+        bucket_name = path_parts[0]
+        blob_name = path_parts[1]
+
+        # Get the bucket and blob
+        bucket = storage_client.bucket(bucket_name)
+        blob = bucket.blob(blob_name)
+
+        # Download the blob as bytes
+        file_bytes = blob.download_as_bytes()
+        return file_bytes
+
+    except Exception as err:
+        log.error(f"Error downloading file from GCS: {str(err)}")
+        return None
+
+
 if is_running_on_gcp():
     # Perform a refresh request to get the access token of the current credentials (Else, it's None)
     gcs_credentials, project_id = google.auth.default()
