@@ -11,22 +11,25 @@ There are various config files available that control different features such as
 Use the config functions within [`sunholo.utils`](sunholo/utils/config) to use the config files within your GenAI application.  The most often used config is `vacConfig` below, which is called like this:
 
 ```python
-from sunholo.utils import load_config_key
+from sunholo.utils import ConfigManager
 
-vector_name = 'pirate_speak'
-llm = load_config_key('llm', vector_name, kind='vacConfig')
+pirate_config = ConfigManager('pirate_speak')
+llm = pirate_config.vacConfig('llm')
 # 'openai'
-agent = load_config_key('agent', vector_name, kind='vacConfig')
+agent = pirate_config.vacConfig('agent')
 # 'langserve'
 
 vector_name = 'eduvac'
-llm = load_config_key('llm', vector_name, kind='vacConfig')
+eduvac_config = ConfigManager('eduvac')
+llm = eduvac_config.vacConfig('llm')
 # 'anthropic'
-agent = load_config_key('agent', vector_name, kind='vacConfig')
+agent = eduvac_config.vacConfig('agent')
 # 'eduvac'
 ```
 
-You can call your config files anything, just make sure they are in the `config/` folder relative to your working directory, or as configured via the `_CONFIG_FOLDER` environment variable.
+You can call your config files anything, just make sure they are in the `config/` folder relative to your working directory, or as configured via the `VAC_CONFIG_FOLDER` environment variable.
+
+Config files in your local `config/` folder will merge with the files within `VAC_CONFIG_FOLDER` which you can use to setup dev, test environments and to keep config files closer to your VAC code.
 
 ## sunholo CLI
 
