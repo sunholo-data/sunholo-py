@@ -101,16 +101,53 @@ class VertexAIExtensions:
         # google.cloud.aiplatform_v1beta1.types.ToolUseExample
         return self.tool_use_examples
     
-    def update_tool_use_examples(self):
+
+    def update_tool_use_examples_via_patch(self):
+        import requests
+        import json
+        from google.auth import default
+        from google.auth.transport.requests import Request
 
         extension = self.created_extension
         if extension is None:
             raise ValueError("Need to create the extension first")
-        
-        tool_use_examples_proto = []
-        
-        for example in self.tool_use_examples['tool_use_examples']:
-            pass
+
+        # Get the access token using Google authentication
+        credentials, project_id = default()
+        credentials.refresh(Request())
+        access_token = credentials.token
+
+        ENDPOINT=f"{self.location}-aiplatform.googleapis.com"
+        URL=f"https://{ENDPOINT}/v1beta1"
+
+        extension_id = self.created_extension.resource_name
+
+        # Define the URL and extension ID
+        url = f"{URL}/{extension_id}"
+        log.info(f"PATCH {url}")
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+
+        # Define the payload
+        payload = {
+            "toolUseExamples": self.tool_use_examples['tool_use_examples']
+        }
+
+        # Make the PATCH request
+        response = requests.patch(
+            url,
+            headers=headers,
+            params={"update_mask": "toolUseExamples"},
+            data=json.dumps(payload)
+        )
+
+        # Check the response
+        if response.status_code == 200:
+            log.info("Tool use examples updated successfully.")
+        else:
+            log.info(f"Failed to update tool use examples. Status code: {response.status_code}, Response: {response.text}")
         
 
     def create_extension_manifest(self,
@@ -167,7 +204,7 @@ class VertexAIExtensions:
         self.created_extension = extension
 
         if tool_example_file:
-            self.update_tool_use_examples()
+            self.update_tool_use_examples_via_patch()
 
         return extension
 
