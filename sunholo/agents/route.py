@@ -12,18 +12,24 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from ..logging import log
-from ..utils import load_config_key, load_config
+from ..utils import load_config, ConfigManager
 
-def route_vac(vector_name: str) -> str :
+def route_vac(vector_name: str=None, config=None) -> str :
     """
     Considers what VAC this vector_name belongs to
     """
-    agent_url = load_config_key('agent_url', vector_name=vector_name, kind="vacConfig")
+    if not vector_name and not config:
+        raise ValueError("Must provide config or vector_name argument")
+    
+    if not config:
+        config = ConfigManager(vector_name)
+
+    agent_url = config.vacConfig('agent_url')
     if agent_url:
         log.info('agent_url found in llm_config.yaml')
         return agent_url
 
-    agent = load_config_key('agent', vector_name, kind="vacConfig")
+    agent = config.vacConfig('agent')
     log.info(f'agent_type: {agent}')
 
     agent_route, _ = load_config('config/cloud_run_urls.json')
@@ -37,15 +43,21 @@ def route_vac(vector_name: str) -> str :
     log.info(f'agent_url: {agent_url}')
     return agent_url
 
-def route_endpoint(vector_name, method = 'post', override_endpoint=None):
+def route_endpoint(vector_name=None, method = 'post', override_endpoint=None, config=None):
 
-    agent_type = load_config_key('agent_type', vector_name, kind="vacConfig")
-    if not agent_type:
-        agent_type = load_config_key('agent', vector_name, kind="vacConfig")
-
-    stem = route_vac(vector_name) if not override_endpoint else override_endpoint
+    if vector_name is None and config is None:
+        raise ValueError('vector_name and config can not both be None')
     
-    agents_config = load_config_key(agent_type, vector_name, kind="agentConfig")
+    if not config:
+        config = ConfigManager(vector_name)
+
+    agent_type = config.vacConfig('agent_type')
+    if not agent_type:
+        agent_type = config.vacConfig('agent')
+
+    stem = route_vac(config=config) if not override_endpoint else override_endpoint
+    
+    agents_config = config.agentConfig(agent_type)
     
     log.info(f"agents_config: {agents_config}")
     if method not in agents_config:

@@ -8,7 +8,8 @@ from pathlib import Path
 from .sun_rich import console
 from rich.progress import Progress
 
-from .chat_vac import resolve_service_url, invoke_vac
+from ..invoke import invoke_vac
+from .chat_vac import resolve_service_url
 from .run_proxy import stop_proxy
 
 def create_metadata(vac, metadata):

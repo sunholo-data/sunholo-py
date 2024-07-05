@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from ..logging import log
-from ..utils import load_config_key
+from ..utils import ConfigManager
 from ..auth import get_header
 import requests
 import aiohttp
@@ -46,18 +46,20 @@ def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs
     ```
     """
 
+    config = ConfigManager(vector_name)
+
     # Add chat_history/vector_name to kwargs so langserve can use them too
     kwargs['chat_history'] = chat_history
 
-    agent = load_config_key("agent", vector_name=vector_name, kind="vacConfig")
-    agent_type = load_config_key("agent_type", vector_name=vector_name, kind="vacConfig")
+    agent = config.vacConfig("agent")
+    agent_type = config.vacConfig("agent_type")
 
     override_endpoint = kwargs.get("override_endpoint")
     if override_endpoint:
         log.info(f"Overriding endpoint with {override_endpoint}")
 
     # {'stream': '', 'invoke': ''}
-    endpoints = route_endpoint(vector_name, override_endpoint=override_endpoint)
+    endpoints = route_endpoint(override_endpoint=override_endpoint, config=config)
 
     if stream:
         qna_endpoint = endpoints["stream"]

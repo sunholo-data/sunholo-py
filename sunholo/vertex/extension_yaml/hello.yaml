@@ -1,0 +1,33 @@
+  openapi: "3.0.0"
+  info:
+    version: 1.0.0
+    title: Hello Extension
+    description: Learn to build Vertex AI extensions
+  servers:
+    - url: [API_SERVICE_URL]
+  paths:
+    /hello:
+      get:
+        operationId: "say_hello"
+        description: "Say hello in prompted language."
+        parameters:
+          - name: "apiServicePrompt"
+            in: query
+            description: "Language"
+            required: true
+            schema:
+              type: string
+        responses:
+          '200':
+            description: Successful operation.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Result"
+  components:
+    schemas:
+      Result:
+        description: "Hello in the requested language."
+        properties:
+          apiServiceOutput:
+            type: string

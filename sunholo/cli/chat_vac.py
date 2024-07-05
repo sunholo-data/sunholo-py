@@ -1,19 +1,19 @@
 from ..agents import send_to_qa, handle_special_commands
 from ..streaming import generate_proxy_stream, can_agent_stream
 from ..utils.user_ids import generate_user_id
-from ..utils.config import load_config_key
+from ..utils import ConfigManager
 from ..utils.api_key import has_multivac_api_key
 from ..logging import log
 from ..qna.parsers import parse_output
 from ..gcs.add_file import add_file_to_gcs
 from .run_proxy import clean_proxy_list, start_proxy, stop_proxy
+from ..invoke import invoke_vac
 
 import uuid
 import os
 import sys
 import subprocess
 import json
-import requests
 from pathlib import Path
 
 from rich import print
@@ -30,7 +30,7 @@ def get_service_url(vac_name, project, region, no_config=False):
     if no_config:
         agent_name = vac_name
     else:
-        agent_name = load_config_key("agent", vac_name, kind="vacConfig")
+        agent_name = ConfigManager(vac_name).vacConfig("agent")
 
     proxies = clean_proxy_list()
     if agent_name in proxies:
@@ -50,7 +50,7 @@ def handle_file_upload(file, vector_name):
     if not Path(file).is_file():
         return None
     
-    agent_name = load_config_key("agent", vector_name, kind="vacConfig")
+    agent_name = ConfigManager(vector_name).vacConfig("agent")
     # vertex can't handle directories
     bucket_filepath = f"{vector_name}/uploads/{os.path.basename(file)}" if agent_name != "vertex-genai" else os.path.basename(file)
 
@@ -65,7 +65,7 @@ def stream_chat_session(service_url, service_name, stream=True):
 
     user_id = generate_user_id()
     chat_history = []
-    agent_name = load_config_key("agent", service_name, kind="vacConfig")
+    agent_name = ConfigManager(service_name).vacConfig("agent")
     while True:
         session_id = str(uuid.uuid4())
         user_input = Prompt.ask("[bold cyan]You[/bold cyan]")
@@ -274,15 +274,19 @@ def resolve_service_url(args, no_config=False):
 
         return args.url_override
     
-    agent_name = load_config_key("agent", args.vac_name, kind="vacConfig")
-    agent_url = load_config_key("agent_url", args.vac_name, "vacConfig")
+    config = ConfigManager(args.vac_name)
+    global_config = ConfigManager("global")
+
+    agent_name = config.vacConfig("agent")
+    agent_url = config.vacConfig("agent_url")
+
     if agent_url:
         console.print("Found agent_url within vacConfig: {agent_url}")
     
     # via public cloud endpoints - assumes no gcloud auth
     if has_multivac_api_key():
         log.debug("Found MULTIVAC_API_KEY")
-        gcp_config = load_config_key("gcp_config", "global", "vacConfig")
+        gcp_config = global_config.vacConfig("gcp_config")
         endpoints_base_url = gcp_config.get("endpoints_base_url")
         if not endpoints_base_url:
             console.print("[bold red]MULTIVAC_API_KEY env var is set but no config.gcp_config.endpoints_base_url can be found[/bold red]")
@@ -310,6 +314,8 @@ def resolve_service_url(args, no_config=False):
 
 def vac_command(args):
 
+    config = ConfigManager(args.vac_name)
+
     if args.action == 'list':
 
         list_cloud_run_services(args.project, args.region)
@@ -324,7 +330,7 @@ def vac_command(args):
     
     elif args.action == 'chat':
         service_url = resolve_service_url(args)
-        agent_name   = load_config_key("agent", args.vac_name, kind="vacConfig")
+        agent_name   = config.vacConfig("agent")
 
         streamer = can_agent_stream(agent_name)
         log.debug(f"streamer: {streamer}")
@@ -334,9 +340,10 @@ def vac_command(args):
         if args.headless:
             headless_mode(service_url, args.vac_name, args.user_input, args.chat_history, stream=streamer)
         else:
-            display_name = load_config_key("display_name", vector_name=args.vac_name,  kind="vacConfig")
-            description  = load_config_key("description", vector_name=args.vac_name, kind="vacConfig")
-            endpoints_config = load_config_key(agent_name, "dummy_value", kind="agentConfig")
+            display_name = config.vacConfig("display_name")
+            description  = config.vacConfig("description")
+            endpoints_config = config.agentConfig(agent_name)
+
             post_endpoints = endpoints_config['post']
 
             display_endpoints = ' '.join(f"{key}: {value}" for key, value in post_endpoints.items())
@@ -361,54 +368,6 @@ def vac_command(args):
         service_url = resolve_service_url(args, no_config=True)
 
         invoke_vac(service_url, args.data, is_file=args.is_file)
-
-def invoke_vac(service_url, data, vector_name=None, metadata=None, is_file=False):
-    try:
-        if is_file:
-            console.print("Uploading file...")
-            # Handle file upload
-            if not isinstance(data, Path) or not data.is_file():
-                raise ValueError("For file uploads, 'data' must be a Path object pointing to a valid file.")
-            
-            files = {
-                'file': (data.name, open(data, 'rb')),
-            }
-            form_data = {
-                'vector_name': vector_name,
-                'metadata': json.dumps(metadata) if metadata else '',
-            }
-
-            response = requests.post(service_url, files=files, data=form_data)
-        else:
-            console.print("Uploading JSON...")
-            try:
-                if isinstance(data, dict):
-                    json_data = data
-                else:
-                    json_data = json.loads(data)
-            except json.JSONDecodeError as err:
-                console.print(f"[bold red]ERROR: invalid JSON: {str(err)} [/bold red]")
-                sys.exit(1)
-            except Exception as err:
-                console.print(f"[bold red]ERROR: could not parse JSON: {str(err)} [/bold red]")
-                sys.exit(1)
-
-            log.debug(f"Sending data: {data} or json_data: {json.dumps(json_data)}")
-            # Handle JSON data
-            headers = {"Content-Type": "application/json"}
-            response = requests.post(service_url, headers=headers, data=json.dumps(json_data))
-
-        response.raise_for_status()
-
-        the_data = response.json()
-        console.print(the_data)
-
-        return the_data
-    
-    except requests.exceptions.RequestException as e:
-        console.print(f"[bold red]ERROR: Failed to invoke VAC: {e}[/bold red]")
-    except Exception as e:
-        console.print(f"[bold red]ERROR: An unexpected error occurred: {e}[/bold red]")
 
 
 def list_cloud_run_services(project, region):
