@@ -20,10 +20,18 @@ class ConfigManager:
         agent = config.vacConfig("agent")
         ```
         """
+        local_config_folder = os.path.join(os.getcwd(), "config")
+        if os.path.isdir(local_config_folder):
+            print("Found local config folder - will overwrite any global configurations: {local_config_folder}")
+        else:
+            local_config_folder = None
+        if os.getenv("VAC_CONFIG_FOLDER") is None and local_config_folder is None:
+            raise ValueError(f"Must have either a local config/ folder in this dir ({os.getcwd()}/config/) or a folder specified via the VAC_CONFIG_FOLDER environment variable, or both.")
+
         self.vector_name = vector_name
         self.config_cache = {}
         self.config_folder = os.getenv("VAC_CONFIG_FOLDER", os.getcwd())
-        self.local_config_folder = os.path.join(os.getcwd(), "config")
+        self.local_config_folder = local_config_folder
         self.configs_by_kind = self.load_all_configs()
 
     def load_all_configs(self):
@@ -38,14 +46,15 @@ class ConfigManager:
 
         log.debug(f"Loading all configs from folder: {self.config_folder} and local folder: {self.local_config_folder}")
         global_configs_by_kind = self._load_configs_from_folder(self.config_folder)
-        local_configs_by_kind = self._load_configs_from_folder(self.local_config_folder)
 
-        # Merge local configs into global configs
-        for kind, local_config in local_configs_by_kind.items():
-            if kind in global_configs_by_kind:
-                global_configs_by_kind[kind] = self._merge_dicts(global_configs_by_kind[kind], local_config)
-            else:
-                global_configs_by_kind[kind] = local_config
+        if self.local_config_folder:
+            local_configs_by_kind = self._load_configs_from_folder(self.local_config_folder)
+            # Merge local configs into global configs
+            for kind, local_config in local_configs_by_kind.items():
+                if kind in global_configs_by_kind:
+                    global_configs_by_kind[kind] = self._merge_dicts(global_configs_by_kind[kind], local_config)
+                else:
+                    global_configs_by_kind[kind] = local_config
 
         return global_configs_by_kind
 

@@ -66,6 +66,7 @@ def stream_chat_session(service_url, service_name, stream=True):
     user_id = generate_user_id()
     chat_history = []
     agent_name = ConfigManager(service_name).vacConfig("agent")
+    file_reply = None
     while True:
         session_id = str(uuid.uuid4())
         user_input = Prompt.ask("[bold cyan]You[/bold cyan]")

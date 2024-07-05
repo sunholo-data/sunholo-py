@@ -42,6 +42,13 @@ class VertexAIExtensions:
         description="Querying the VAC above my database", 
         service_account='sa-serviceaccount@my-project.iam.gserviceaccount.com')
     ```
+
+    Call the extension
+    ```python
+    operation_params = {"input": {"question":"This needs to be in same schema as your openapi spec"}
+    vex.execute_extension("an_operation_id_from_your_openai_spec", 
+                          operation_params = operation_params)
+    ```
     """
     def __init__(self):
         if extensions is None:
@@ -183,7 +190,7 @@ class VertexAIExtensions:
     def create_extension(self,
                          display_name: str,
                          description: str,
-                         open_api_gcs_uri: str = None,
+                         open_api_file: str = None,
                          tool_example_file: str = None,
                          runtime_config: dict = None,
                          service_account: str = None):
@@ -191,10 +198,13 @@ class VertexAIExtensions:
         project_id = get_gcp_project()
         extension_name = f"projects/{project_id}/locations/us-central1/extensions/{validate_extension_id(display_name)}"
 
+        if open_api_file:
+            self.upload_openapi_file(open_api_file)
+
         manifest = self.create_extension_manifest(
             display_name,
             description,
-            open_api_gcs_uri = self.openapi_file_gcs or open_api_gcs_uri, 
+            open_api_gcs_uri = self.openapi_file_gcs, 
             service_account = service_account, 
         )
 
@@ -218,14 +228,19 @@ class VertexAIExtensions:
 
         return extension.resource_name
 
-    def execute_extension(self, operation_id: str, operation_params: dict, extension_id: str):
+    def execute_extension(self, operation_id: str, operation_params: dict, extension_id: str=None):
         init_vertex(location=self.location)
 
-        if not extension_id.startswith("projects/"):
-            project_id = get_gcp_project()
-            extension_name = f"projects/{project_id}/locations/{self.location}/extensions/{extension_id}"
-        else:
-            extension_name = extension_id
+        if not extension_id:
+            extension_name = self.created_extension.resource_name
+            if extension_name is None:
+                raise ValueError("Must specify extension_id or init one with class")
+        else:  
+            if not extension_id.startswith("projects/"):
+                project_id = get_gcp_project()
+                extension_name = f"projects/{project_id}/locations/{self.location}/extensions/{extension_id}"
+            else:
+                extension_name = extension_id
 
         extension = extensions.Extension(extension_name)
 

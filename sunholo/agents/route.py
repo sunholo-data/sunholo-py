@@ -48,6 +48,9 @@ def route_endpoint(vector_name=None, method = 'post', override_endpoint=None, co
     if vector_name is None and config is None:
         raise ValueError('vector_name and config can not both be None')
     
+    if config:
+        vector_name = config.vector_name
+
     if not config:
         config = ConfigManager(vector_name)
 
