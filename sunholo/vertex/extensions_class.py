@@ -20,10 +20,15 @@ class VertexAIExtensions:
     from sunholo.vertex import VertexAIExtensions
     vex = VertexAIExtensions()
     vex.list_extensions()
-    # [{'resource_name': 'projects/374404277595/locations/us-central1/extensions/770924776838397952', 'display_name': 'Code Interpreter', 'description': 'N/A'}]
+    # [{'resource_name': 'projects/374404277595/locations/us-central1/extensions/770924776838397952', 
+    #   'display_name': 'Code Interpreter', 
+    #   'description': 'N/A'}]
+    ```
 
-    # creating an extension
+    Creating an extension example as per:
+    https://cloud.google.com/vertex-ai/generative-ai/docs/extensions/create-extension
 
+    ```python
     ## validates before upload
     vex.upload_openapi_file("your-extension-name.yaml")
     vex.openapi_file_gcs
@@ -31,7 +36,12 @@ class VertexAIExtensions:
 
     ## load in examples to be used by creation later
     vex.load_tool_use_examples('your-examples.yaml')
->>> 
+
+    vex.create_extension(
+        "My New Extension", 
+        description="Querying the VAC above my database", 
+        service_account='sa-serviceaccount@my-project.iam.gserviceaccount.com')
+    ```
     """
     def __init__(self):
         if extensions is None:
@@ -206,7 +216,7 @@ class VertexAIExtensions:
         if tool_example_file:
             self.update_tool_use_examples_via_patch()
 
-        return extension
+        return extension.resource_name
 
     def execute_extension(self, operation_id: str, operation_params: dict, extension_id: str):
         init_vertex(location=self.location)
