@@ -22,7 +22,7 @@ except ImportError:
     storage = None
 
 from ..logging import log
-from ..utils.config import load_config_key
+from ..utils import load_config_key, ConfigManager
 
 
 def handle_base64_image(base64_data: str, vector_name: str, extension: str):
@@ -37,7 +37,8 @@ def handle_base64_image(base64_data: str, vector_name: str, extension: str):
     Returns:
         Tuple[str, str]: The URI of the uploaded image and the MIME type.
     """
-    model = load_config_key("llm", vector_name, "vacConfig")
+    
+    model = ConfigManager(vector_name).vacConfig("llm")
     if model.startswith("openai"):  # pass it to gpt directly
         return base64_data, base64_data.split(",", 1)
 
@@ -69,16 +70,19 @@ def handle_base64_image(base64_data: str, vector_name: str, extension: str):
 
 def resolve_bucket(vector_name):
     if os.getenv('EXTENSIONS_BUCKET'):
+        log.warning('Resolving to EXTENSIONS_BUCKET environment variable')
         return os.getenv('EXTENSIONS_BUCKET')
     
-    bucket_config = load_config_key("upload", vector_name, "vacConfig")
-    if bucket_config:
-        if bucket_config.get("buckets"):
-            bucket_name = bucket_config.get("buckets").get("all")
-    else:
-        bucket_name = os.getenv('GCS_BUCKET')
-        if not bucket_name:
-            raise ValueError("No bucket found to upload to: GCS_BUCKET returned None")
+    if vector_name:
+        bucket_config = ConfigManager(vector_name).vacConfig("upload")
+
+        if bucket_config:
+            if bucket_config.get("buckets"):
+                bucket_name = bucket_config.get("buckets").get("all")
+
+    bucket_name = bucket_name or os.getenv('GCS_BUCKET')
+    if not bucket_name:
+        raise ValueError("No bucket found to upload to: GCS_BUCKET returned None")
     
     if bucket_name.startswith("gs://"):
         bucket_name = bucket_name.removeprefix("gs://")
@@ -86,7 +90,7 @@ def resolve_bucket(vector_name):
     return bucket_name
 
 def add_file_to_gcs(filename: str, 
-                    vector_name:str, 
+                    vector_name:str=None, 
                     bucket_name: str=None, 
                     metadata:dict=None, 
                     bucket_filepath:str=None):
@@ -114,7 +118,11 @@ def add_file_to_gcs(filename: str,
     if os.getenv('EXTENSIONS_BUCKET'):
         bucket_filepath = os.path.basename(filename)
 
+    if vector_name is None:
+            vector_name = "global"
+    
     if not bucket_filepath:
+        
         bucket_filepath = f"{vector_name}/{year}/{month}/{day}/{hour}/{os.path.basename(filename)}"
     bucket_filepath_prev = f"{vector_name}/{year}/{month}/{day}/{hour_prev}/{os.path.basename(filename)}"
 

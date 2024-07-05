@@ -10,8 +10,29 @@ from ..utils.parsers import validate_extension_id
 import base64
 import json
 from io import StringIO
+import os
 
 class VertexAIExtensions:
+    """
+    Example
+
+    ```python
+    from sunholo.vertex import VertexAIExtensions
+    vex = VertexAIExtensions()
+    vex.list_extensions()
+    # [{'resource_name': 'projects/374404277595/locations/us-central1/extensions/770924776838397952', 'display_name': 'Code Interpreter', 'description': 'N/A'}]
+
+    # creating an extension
+
+    ## validates before upload
+    vex.upload_openapi_file("your-extension-name.yaml")
+    vex.openapi_file_gcs
+    # 'gs://your-extensions-bucket/your-extension-name.yaml'
+
+    ## load in examples to be used by creation later
+    vex.load_tool_use_examples('your-examples.yaml')
+>>> 
+    """
     def __init__(self):
         if extensions is None:
             raise ImportError("VertexAIExtensions needs vertexai.previewextensions to be installed. Install via `pip install sunholo[gcp]`")
@@ -27,6 +48,10 @@ class VertexAIExtensions:
         """
         self.IMAGE_FILE_EXTENSIONS = set(["jpg", "jpeg", "png"])
         self.location = "us-central1"
+        self.openapi_file_gcs = None
+        self.tool_use_examples = None
+        self.manifest = {}
+        self.created_extensions = []
 
     def list_extensions(self):
         the_list = extensions.Extension.list()
@@ -40,81 +65,109 @@ class VertexAIExtensions:
             })
         
         return extensions_list
+    
+    def validate_openapi(self, filename):
+        try:
+            from openapi_spec_validator import validate
+            from openapi_spec_validator.readers import read_from_filename
+        except ImportError:
+            raise ImportError("Must have openapi-spec-validator installed - install via `pip install sunholo[tools]`")
+        
+        spec_dict, spec_url = read_from_filename(filename)
+        validate(spec_dict)
+    
+    def upload_to_gcs(self, filename):
+        if not os.getenv('EXTENSIONS_BUCKET'):
+            raise ValueError('Please specify env var EXTENSIONS_BUCKET for location to upload openapi spec')
+        
+        from ..gcs.add_file import add_file_to_gcs
+        file_base = os.path.basename(filename)
+
+        self_uri = add_file_to_gcs(file_base, bucket_filepath=file_base)
+
+        return self_uri
+    
+    def upload_openapi_file(self, filename: str):
+        self.validate_openapi(filename)
+
+        self.openapi_file_gcs = self.upload_to_gcs(filename)
+    
+    def load_tool_use_examples(self, filename: str):
+        import yaml
+
+        with open(filename, 'r') as file:
+            self.tool_use_examples = yaml.safe_load(file)
+
+        # google.cloud.aiplatform_v1beta1.types.ToolUseExample
+        return self.tool_use_examples
+    
+    def update_tool_use_examples(self):
+
+        extension = self.created_extension
+        if extension is None:
+            raise ValueError("Need to create the extension first")
+        
+        tool_use_examples_proto = []
+        
+        for example in self.tool_use_examples['tool_use_examples']:
+            pass
         
 
-    def get_extension_import_config(self, display_name: str, description: str,
-                                    api_spec_gcs: dict, service_account_name: dict, tool_use_examples: list):
-        tool_use_examples = [
-            {
-                "extensionOperation": {
-                    "operationId": "say_hello",
-                },
-                "displayName": "Say hello in the requested language",
-                "query": "Say hello in French",
-                "requestParams": {
-                    "fields": [
-                        {
-                            "key": "apiServicePrompt",
-                            "value": {
-                                "string_value": "French",
-                            }
-                        }
-                    ]
-                },
-                "responseParams": {
-                    "fields": [
-                        {
-                            "key": "apiServiceOutput",
-                            "value": {
-                                "string_value": "bonjour",
-                            },
-                        }
-                    ],
-                },
-                "responseSummary": "Bonjour"
-            }
-        ]
+    def create_extension_manifest(self,
+                                  display_name,
+                                  description,
+                                  open_api_gcs_uri: str, 
+                                  service_account: str):
 
-        return {
-            "displayName": display_name,
-            "description": description,
-            "manifest": {
-                "name": "EXTENSION_NAME_LLM",
-                "description": "DESCRIPTION_LLM",
+        self.manifest = {
+                "name": display_name,
+                "description": description,
                 "apiSpec": {
-                    "openApiGcsUri": api_spec_gcs,
+                    "openApiGcsUri": open_api_gcs_uri,
                 },
                 "authConfig": {
                     "authType": "OAUTH",
-                    "oauthConfig": {"service_account": service_account_name}
+                    "oauthConfig": {"service_account": service_account}
                 }
-            },
-            "toolUseExamples": tool_use_examples,
         }
 
-    def create_extension_instance(self, display_name: str, description: str, open_api_gcs_uri: str,
-                                  llm_name: str = None, llm_description: str = None, runtime_config: dict = None, service_account: str = None):
+        return self.manifest
+
+    def create_extension(self,
+                         display_name: str,
+                         description: str,
+                         open_api_gcs_uri: str = None,
+                         tool_example_file: str = None,
+                         runtime_config: dict = None,
+                         service_account: str = None):
+        
         project_id = get_gcp_project()
         extension_name = f"projects/{project_id}/locations/us-central1/extensions/{validate_extension_id(display_name)}"
+
+        manifest = self.create_extension_manifest(
+            display_name,
+            description,
+            open_api_gcs_uri = self.openapi_file_gcs or open_api_gcs_uri, 
+            service_account = service_account, 
+        )
+
+        if tool_example_file:
+            self.load_tool_use_examples(tool_example_file)
 
         extension = extensions.Extension.create(
             extension_name=extension_name,
             display_name=display_name,
             description=description,
-            runtime_config=runtime_config or None,
-            manifest={
-                "name": llm_name or display_name,
-                "description": llm_description or description,
-                "api_spec": {
-                    "open_api_gcs_uri": open_api_gcs_uri
-                },
-                "auth_config": {
-                    "auth_type": "GOOGLE_SERVICE_ACCOUNT_AUTH",
-                    "google_service_account_config": service_account or {},
-                },
-            },
+            runtime_config=runtime_config or None, # sets things like what bucket will be used
+            manifest=manifest,
+            #tool_use_examples=self.tool_use_examples
         )
         log.info(f"Created Vertex Extension: {extension_name}")
+        
+        self.created_extension = extension
+
+        if tool_example_file:
+            self.update_tool_use_examples()
 
         return extension
 

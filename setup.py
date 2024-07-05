@@ -112,7 +112,7 @@ setup(
             "google-cloud-alloydb-connector[pg8000]",
             "google-auth-httplib2",
             "google-auth-oauthlib",
-            "google-cloud-aiplatform",
+            "google-cloud-aiplatform>=1.58.0",
             "google-cloud-bigquery",
             "google-cloud-build",
             "google-cloud-service-control",
@@ -134,6 +134,7 @@ setup(
             "langchain-anthropic>=0.1.13",        
         ],
         'tools' : [
+            'openapi-spec-validator',
             'playwright'
         ],
         'http': [

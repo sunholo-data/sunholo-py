@@ -4,7 +4,7 @@
     title: Hello Extension
     description: Learn to build Vertex AI extensions
   servers:
-    - url: [API_SERVICE_URL]
+    - url: 'API_SERVICE_URL'
   paths:
     /hello:
       get:
