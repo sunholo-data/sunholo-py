@@ -59,15 +59,16 @@ def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs
         log.info(f"Overriding endpoint with {override_endpoint}")
 
     # {'stream': '', 'invoke': ''}
-    endpoints = route_endpoint(override_endpoint=override_endpoint, config=config)
+    post_endpoints = route_endpoint(override_endpoint=override_endpoint, config=config)
 
     if stream:
-        qna_endpoint = endpoints["stream"]
+        qna_endpoint = post_endpoints["stream"]
     else: 
-        qna_endpoint = endpoints["invoke"]
+        qna_endpoint = post_endpoints["invoke"]
 
     if agent == "langserve" or agent_type == "langserve":
-        qna_data = prepare_request_data(user_input, endpoints["input_schema"], vector_name, **kwargs)
+        get_endpoints = route_endpoint(override_endpoint=override_endpoint, method = 'get', config=config)
+        qna_data = prepare_request_data(user_input, get_endpoints["input_schema"], vector_name, **kwargs)
     else:
         # Base qna_data dictionary
         qna_data = {

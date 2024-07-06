@@ -1,0 +1,207 @@
+kind: agentConfig
+apiVersion: v2
+agents:
+  default:
+    post-noauth:
+      # authentication checks are carried out within the app instead
+      openai: "{stem}/openai/v1/chat/completions"
+      openai-vac: "{stem}/openai/v1/chat/completions/{vector_name}"
+      openai-health: "{stem}/openai/health"
+    #get-auth:
+      # add get endpoints that do need authentication
+    post:
+      stream: "{stem}/vac/streaming/{vector_name}"
+      invoke: "{stem}/vac/{vector_name}"
+    get:
+      home: "{stem}"
+      health: "{stem}/health"
+    response:
+      invoke:
+        '200':
+          description: Successful invocation response
+          schema:
+            type: object
+            properties:
+              answer:
+                type: string
+              source_documents:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    page_content:
+                      type: string
+                    metadata:
+                      type: string
+      stream:
+        '200':
+          description: Successful stream response
+          schema:
+            type: string
+      openai:
+        '200':
+          description: Successful OpenAI response
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+              object:
+                type: string
+              created:
+                type: string
+              model:
+                type: string
+              system_fingerprint:
+                type: string
+              choices:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    index:
+                      type: integer
+                    delta:
+                      type: object
+                      properties:
+                        content:
+                          type: string
+                    logprobs:
+                      type: string
+                    finish_reason:
+                      type: string
+              usage:
+                type: object
+                properties:
+                  prompt_tokens:
+                    type: integer
+                  completion_tokens:
+                    type: integer
+                  total_tokens:
+                    type: integer
+      openai-vac:
+        '200':
+          description: Successful OpenAI VAC response
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+              object:
+                type: string
+              created:
+                type: string
+              model:
+                type: string
+              system_fingerprint:
+                type: string
+              choices:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    index:
+                      type: integer
+                    message:
+                      type: object
+                      properties:
+                        role:
+                          type: string
+                        content:
+                          type: string
+                    logprobs:
+                      type: string
+                    finish_reason:
+                      type: string
+              usage:
+                type: object
+                properties:
+                  prompt_tokens:
+                    type: integer
+                  completion_tokens:
+                    type: integer
+                  total_tokens:
+                    type: integer
+      home:
+        '200':
+          description: OK
+          schema:
+            type: string
+      openai-health:
+        '200':
+          description: A healthy OpenAI authenticated response
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+      health:
+        '200':
+          description: A healthy response
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+        '500':
+          description: Unhealthy response
+          schema:
+            type: string
+
+  autogen:
+    #stream: "{stem}/vac/streaming/{vector_name}"
+    post:
+      invoke: "{stem}/api/generate"
+
+  crewai:
+    #stream: "{stem}/vac/streaming/{vector_name}"
+    post:
+      invoke: "{stem}/invoke_crewai"
+
+  eduvac:
+    get:
+      docs: "{stem}/docs"
+      openapi: "{stem}/openapi.json"
+      input_schema: "{stem}/{vector_name}/input_schema"
+      output_schema: "{stem}/{vector_name}/output_schema"
+      config_schema: "{stem}/{vector_name}/config_schema"
+    get-auth:
+      playground: "{stem}/{vector_name}/playground"
+    #post-noauth:
+      # add post endpoints that do not need authentication
+    post:
+      stream: "{stem}/{vector_name}/stream"
+      invoke: "{stem}/{vector_name}/invoke"
+      batch: "{stem}/{vector_name}/batch"
+      stream_log: "{stem}/{vector_name}/stream_log"
+
+  langserve:
+    get:
+      docs: "{stem}/docs"
+      openapi: "{stem}/openapi.json"
+      output_schema: "{stem}/{vector_name}/output_schema"
+      input_schema: "{stem}/{vector_name}/input_schema"
+      config_schema: "{stem}/{vector_name}/config_schema"
+    get-auth:
+      playground: "{stem}/{vector_name}/playground"    
+    #post-noauth:
+      # add post endpoints that do not need authentication
+    post:
+      stream: "{stem}/{vector_name}/stream"
+      invoke: "{stem}/{vector_name}/invoke"
+      batch: "{stem}/{vector_name}/batch"
+      stream_log: "{stem}/{vector_name}/stream_log"
+  
+  chunker:
+    get:
+      home: "{stem}"
+    post:
+      pubsub: "{stem}/pubsub_to_store"
+      file: "{stem}/direct_file_to_embed"
+
+  embedder:
+    get:
+      home: "{stem}"
+    post: 
+      embed: "{stem}/embed_chunk"
+

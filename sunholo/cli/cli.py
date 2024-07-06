@@ -10,7 +10,7 @@ from .chat_vac import setup_vac_subparser
 from .embedder import setup_embedder_subparser
 from .swagger import setup_swagger_subparser
 
-from ..utils.config import load_config_key
+from ..utils import ConfigManager
 
 from ..logging import log
 
@@ -20,9 +20,9 @@ from rich.panel import Panel
 
 def load_default_gcp_config():
     try:
-        gcp_config = load_config_key('gcp_config', 'global', kind="vacConfig")
+        gcp_config = ConfigManager("global").vacConfig("gcp_config")
     except FileNotFoundError as e:
-        console.print(f"{e} - move config/ folder to working directory or set the _CONFIG_FOLDER environment variable to its location")
+        console.print(f"{e} - move config/ folder to working directory or set the VAC_CONFIG_FOLDER environment variable to its location")
         sys.exit(1)
 
     if gcp_config:

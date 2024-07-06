@@ -9,6 +9,9 @@ class ConfigManager:
     def __init__(self, vector_name: str):
         """
         Initialize the ConfigManager with a vector name.
+        Requires a local config/ folder holding your configuration files or the env var VAC_CONFIG_FOLDER to be set.
+
+        Read more at: https://dev.sunholo.com/docs/config
 
         Args:
             vector_name (str): The name of the vector in the configuration files.
@@ -16,13 +19,13 @@ class ConfigManager:
         Example:
         ```python
         # Usage example:
-        config = ConfigManager("myVector")
+        config = ConfigManager("my_vac")
         agent = config.vacConfig("agent")
         ```
         """
         local_config_folder = os.path.join(os.getcwd(), "config")
         if os.path.isdir(local_config_folder):
-            print("Found local config folder - will overwrite any global configurations: {local_config_folder}")
+            print(f"Found local config folder {local_config_folder} - will overwrite any global configurations")
         else:
             local_config_folder = None
         if os.getenv("VAC_CONFIG_FOLDER") is None and local_config_folder is None:

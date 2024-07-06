@@ -57,7 +57,7 @@ def load_all_configs():
     """
     from ..logging import log
 
-    if not os.getenv("_CONFIG_FOLDER", None):
+    if not os.getenv("_CONFIG_FOLDER"):
         log.debug("_CONFIG_FOLDER is not set, using os.getcwd() instead")
     else:
         log.debug(f"_CONFIG_FOLDER set to: {os.getenv('_CONFIG_FOLDER')}")

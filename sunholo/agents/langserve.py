@@ -97,6 +97,6 @@ def prepare_request_data(user_input, endpoint, vector_name, **kwargs):
 
         return request_data
     else:
-        log.error("Invalid or no input schema available.")
+        log.error(f"Invalid or no input schema available for {endpoint=} {input_schema=}")
         return None
 
