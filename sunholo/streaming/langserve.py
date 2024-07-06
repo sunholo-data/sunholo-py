@@ -158,11 +158,14 @@ def parse_json_data(json_data: dict):
     try:
         if isinstance(json_data, dict):
             content = json_data.get('content', None)
+            metadata = json_data.get('metadata', None)
             if content is not None: # content can be '' empty string
                 #log.debug(f'Yield content: {content}')
                 yield content
+            elif metadata is not None:
+                log.debug('Metadata:', metadata)
             else:
-                log.debug(f'No "content" key found, yielding all json data dict: {json_data}')
+                log.debug(f'No "content" or "metadata" key found, yielding all json data dict: {json_data}')
                 yield json_data # Yielding all JSON data
         elif isinstance(json_data, str):
             yield json_data
