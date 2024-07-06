@@ -183,6 +183,10 @@ def stream_chat_session(service_url, service_name, stream=True):
             read_file = None
             read_file_count = None
             continue
+
+        if user_input.lower().startswith("!"):
+            console.print("[bold red]Could find no valid chat command for you, sorry[/bold red]")
+            continue
         
         if read_file:
             user_input = f"<user added file>{read_file}</user added file>\n{user_input}"

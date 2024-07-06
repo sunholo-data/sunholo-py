@@ -334,11 +334,18 @@ Exiting chat session.
 
 #### Interacting with files
 
+
+##### Uploads
+
 You can upload files to a bucket such as images with `!upload` that can be used to talk with for example image models.  The uploaded file will stay in session until you remove it via `!clear_upload`.  The file is uploaded to the configured Google Cloud Storage bucket.
 
 ```bash
 You: !upload my_image.png
 ```
+
+#### Local files inserted into prompts
+
+![](img/sunholo-vac-chat-with-files.gif)
 
 You can also examine whats in your local directory if you've forgotten the name via `!ls`, or print out a file tree with `!tree`
 
@@ -467,7 +474,7 @@ Sunholo Multivac is a platform designed to simplify the deployment and use of Ge
 ...
 ```
 
-### No Proxy
+### sunholo vac --no-proxy
 
 When using with public endpoints such as the webapp, or within Multivac VPC, no proxy is needed.  This allows you to use within CI/CD to run integration tests of your VACs after deployment, such as within Cloud Build:
 
