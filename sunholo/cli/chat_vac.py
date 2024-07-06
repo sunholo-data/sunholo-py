@@ -8,6 +8,8 @@ from ..qna.parsers import parse_output
 from ..gcs.add_file import add_file_to_gcs
 from .run_proxy import clean_proxy_list, start_proxy, stop_proxy
 from ..invoke import invoke_vac
+from ..utils.big_context import has_text_extension, merge_text_files, load_gitignore_patterns, build_file_tree
+import tempfile
 
 import uuid
 import os
@@ -24,6 +26,55 @@ from rich.panel import Panel
 from rich.text import Text
 from rich.table import Table
 
+def read_and_add_to_user_input(user_input):
+    read_input = None
+
+    path = user_input.split(" ", 1)[1] if " " in user_input else None
+    if not path:
+        console.print("[bold red]Please provide a valid file or folder path.[/bold red]")
+        return None
+
+    if os.path.isfile(path):
+        if not has_text_extension(path):
+            console.print("[bold red]Unsupported file type. Please provide a text file or preprocess to text, or use !upload (e.g. images) or `sunholo embed`.[/bold red]")
+            return None
+
+        try:
+            with open(path, 'r', encoding='utf-8') as file:
+                file_content = file.read()
+            read_input = file_content
+            console.print(f"[bold yellow]File content from {path} read into user_input: [{len(read_input.split())}] words[/bold yellow]")
+        except FileNotFoundError:
+            console.print("[bold red]File not found. Please check the path and try again.[/bold red]")
+            return None
+        except IOError:
+            console.print("[bold red]File could not be read. Please ensure it is a readable text file.[/bold red]")
+            return None
+    elif os.path.isdir(path):
+        patterns = []
+        gitignore_path = os.path.join(path, '.gitignore')
+    
+        if os.path.exists(gitignore_path):
+            patterns = load_gitignore_patterns(gitignore_path)
+    
+        try:
+            with tempfile.NamedTemporaryFile(delete=False, mode='w+', encoding='utf-8') as temp_file:
+                temp_file_path = temp_file.name
+                file_tree = merge_text_files(path, temp_file_path, patterns)
+                console.print(f"[bold yellow]Contents of the folder '{path}' have been merged add added to input.[/bold yellow]")
+                console.print("\n".join(file_tree))
+                temp_file.seek(0)
+                read_input = temp_file.read()
+                console.print(f"[bold yellow]Total words: [{len(read_input.split())}] - watch out for high token costs! Use !clear_read to reset[/bold yellow]")
+            os.remove(temp_file_path)  # Clean up the temporary file
+        except Exception as e:
+            console.print(f"[bold red]An error occurred while reading the folder: {str(e)}[/bold red]")
+            return None
+    else:
+        console.print("[bold red]The provided path is neither a file nor a folder. Please check the path and try again.[/bold red]")
+        return None
+    
+    return read_input
 
 def get_service_url(vac_name, project, region, no_config=False):
 
@@ -67,6 +118,8 @@ def stream_chat_session(service_url, service_name, stream=True):
     chat_history = []
     agent_name = ConfigManager(service_name).vacConfig("agent")
     file_reply = None
+    read_file = None
+    read_file_count = None
     while True:
         session_id = str(uuid.uuid4())
         user_input = Prompt.ask("[bold cyan]You[/bold cyan]")
@@ -81,9 +134,26 @@ def stream_chat_session(service_url, service_name, stream=True):
 
         if special_reply:
              console.print(f"[bold yellow]{service_name}:[/bold yellow] {special_reply}", end='\n')
-             continue    
+             continue
 
-        if user_input.lower().startswith("upload"):
+        if user_input.lower().startswith("!read"):
+            read_file = read_and_add_to_user_input(user_input)
+            if read_file:
+                read_file_count = len(read_file.split())
+            continue
+
+        if user_input.lower().startswith("!ls"):
+            items = os.listdir(os.getcwd())
+            for item in items:
+                console.print(item)
+            continue
+
+        if user_input.lower().startswith("!tree"):
+            tree = build_file_tree(os.getcwd(), patterns=[])
+            console.print(tree)
+            continue
+
+        if user_input.lower().startswith("!upload"):
             file_path = user_input.split(" ", 1)[1] if " " in user_input else None
             if not file_path:
                 console.print("[bold red]Please provide a valid file path.[/bold red]")
@@ -95,7 +165,7 @@ def stream_chat_session(service_url, service_name, stream=True):
                     console.print("[bold red]Invalid file upload[/bold red]")
                     continue
                 
-                console.print(f"[bold yellow]{service_name}:[/bold yellow] Uploaded {file_path} to {file_reply} - image will be sent each reply until you issue 'clear_upload' ", end='\n')
+                console.print(f"[bold yellow]{service_name}:[/bold yellow] Uploaded {file_path} to {file_reply} - image will be sent each reply until you issue '!clear_upload' ", end='\n')
             
             except FileNotFoundError:
                 console.print("[bold red]File not found. Please check the path and try again.[/bold red]")
@@ -103,10 +173,25 @@ def stream_chat_session(service_url, service_name, stream=True):
             # file_reply stays for each message from now on
             continue 
 
-        if user_input.lower().startswith("clear_upload"):
+        if user_input.lower().startswith("!clear_upload"):
             console.print("[bold yellow]File upload path cleared.[/bold yellow]")
             file_path = None
+            continue
+
+        if user_input.lower().startswith("!clear_read"):
+            console.print("[bold yellow]Read in file(s) cleared.[/bold yellow]")
+            read_file = None
+            read_file_count = None
+            continue
         
+        if read_file:
+            user_input = f"<user added file>{read_file}</user added file>\n{user_input}"
+        
+        # guardrail
+        if len(user_input)> 1000000:
+            console.print("[bold red]Over 1 million characters in user_input, aborting as probably unintentional. Use API directly instead.[/bold red]")
+            continue
+
         if not stream:
             vac_response = send_to_qa(user_input,
                 vector_name=service_name,
@@ -166,8 +251,15 @@ def stream_chat_session(service_url, service_name, stream=True):
             response_started = False
             vac_response = ""
 
-            # point or star?
-            with console.status(f"[bold orange]Thinking...{file_reply}[/bold orange]", spinner="star") as status:
+            
+            thinking = "[bold orange]Thinking...[/bold orange]"
+            if file_reply:
+                thinking = f"[bold orange]Thinking with upload {file_reply} - issue !clear_upload to remove...[/bold orange]"
+            
+            if read_file:
+                thinking = f"{thinking} - [bold orange]additional [{read_file_count}] words added via !read_file contents - issue !clear_read to remove[/bold orange]"
+
+            with console.status(thinking, spinner="star") as status:
                 for token in stream_response():
                     if not response_started:
                         status.stop()

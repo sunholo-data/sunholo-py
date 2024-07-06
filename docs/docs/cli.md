@@ -328,6 +328,168 @@ You: exit
 Exiting chat session.
 ```
 
+### Interacting with files
+
+You can upload files to a bucket such as images with `!upload` that can be used to talk with for example image models.  The uploaded file will stay in session until you remove it via `!clear_upload`.  The file is uploaded to the configured Google Cloud Storage bucket.
+
+```bash
+You: !upload my_image.png
+```
+
+You can also examine whats in your local directory if you've forgotten the name via `!ls`, or print out a file tree with `!tree`
+
+```bash
+You: !ls
+cloudbuild.yaml
+README.md
+public
+package.json
+src
+
+You: !tree
+[
+    'reactapp/',
+    '    cloudbuild.yaml',
+    '    README.md',
+    '    package.json',
+    '    public/',
+    '        index.html',
+    '    src/',
+    '        App.css',
+    '        index.js',
+    '        index.css',
+    '        App.js'
+]
+```
+
+You can upload files that can be parsed as text (code files, markdown, text etc.) via `!read` that will be prefixed to your questions for that session until you issue `!clear_read`:
+
+```bash
+You: !read README.md
+File content from README.md read into user_input: [46] words
+```
+
+This also work with folders - so you can read in all the text/code files from a folder and have it within your prompt for each question (useful for code assistants).  It uses the `sunholo merge-text` functions to read through a folder and merge all availabel files, respecting the `.gitignore` file:
+
+> Be careful to not spend lots of money on tokens by prefixing your prompts with a huge folder worth of text!
+
+```bash
+You: !read reactapp
+- merging reactapp...
+- merging reactapp/public...
+- merging reactapp/src...
+Contents of the folder 'reactapp' have been merged add added to input.
+reactapp/
+    .DS_Store
+    cloudbuild.yaml
+    README.md
+    package.json
+    public/
+        index.html
+    src/
+        App.css
+        index.js
+        index.css
+        App.js
+Total words: [1801] - watch out for high token costs! Use !clear_read to reset
+```
+
+An example of how it can be used is below:
+
+```bash
+mark@macbook-air application % sunholo vac chat personal_llama
+╭──────────────────────────────────── Personal Llama ─────────────────────────────────────╮
+│ Gemini with grounding via Google Search and LlamaIndex                                  │
+╰─ stream: https://multivac-api.sunholo.com/v1/vertex-genai/vac/streaming/personal_llama ─╯
+You: !read react_app
+The provided path is neither a file nor a folder. Please check the path and try again.
+You: !read reactapp
+- merging reactapp...
+- merging reactapp/public...
+- merging reactapp/src...
+Contents of the folder 'reactapp' have been merged add added to input.
+reactapp/
+    .DS_Store
+    cloudbuild.yaml
+    README.md
+    package.json
+    public/
+        index.html
+    src/
+        App.css
+        index.js
+        index.css
+        App.js
+Total words: [1801] - watch out for high token costs! Use !clear_read to reset
+You: can you summarise what this react app does and provide an improvement to App.js
+✹ Thinking... - additional [1801] words added via !read_file contents - issue !clear_read to remove
+```
+
+The response:
+
+````bash
+personal_llama: I am very certain that I can answer that based on the provided code. 
+
+This React app is a simple chat interface for a Langchain QNA service (Langserve). 
+
+The user can ask a question, and the React app will send the question to the Langserve 
+service and display the response in the chat window. The app uses a streaming approach to 
+display the bot's response in real time as it's being generated.
+
+Here's an improvement to the `App.js` file:
+
+**Improvement:**
+The app currently attempts to reconnect to the stream if the connection drops, which is 
+good for handling temporary network issues. However, it would be beneficial to add a 
+maximum retry limit to prevent infinite retry attempts in case of a persistent server-side 
+error. 
+
+**Modified Code:**
+
+```javascript
+import React, { useState, useEffect, useRef } from 'react';
+import { RemoteRunnable } from "langchain/runnables/remote";
+import './App.css';
+
+const axios = require('axios');
+
+function App() {
+  // ... 
+
+  const MAX_RETRY_COUNT = 3; // Define the maximum retry attempts
+
+  // ...  
+
+  const reconnectStream = async (retryCount) => {
+    if (retryCount >= MAX_RETRY_COUNT) {
+      console.error('Max retry count reached. Unable to reconnect to stream.');
+      setError('Unable to connect to the server. Please try again later.');
+      return;
+    }
+
+    try {
+      const stream = await getSchemaAndStream(inputText, path);
+      handleStreamData(stream, retryCount);
+    } catch (error) {
+      console.error('Error reconnecting to stream:', error);
+      setError('Failed to reconnect to the stream.');
+    }
+  };
+
+  // ... 
+}
+
+export default App;
+```
+
+This modification introduces a `MAX_RETRY_COUNT` constant and adds a check within the 
+`reconnectStream` function to prevent further retry attempts once the limit is reached. 
+This prevents the app from getting stuck in an infinite loop of retry attempts if there's a
+problem with the server or the Langchain service. 
+````
+
+> TODO: download any artifact files or parse out code examples to edit the file directly
+
 ### Headless mode
 
 With headless mode, you just get the answer streamed to terminal.  Ask your question quoted in the next positional argument:
