@@ -214,7 +214,7 @@ optional arguments:
   --no-proxy            Do not use the proxy and connect directly to the VAC service.
 ```
 
-### Authentication via `roles/run.invoker`
+#### Authentication via `roles/run.invoker`
 
 Your local `gcloud` user needs to have IAM access of `roles/run.invoker` to the VAC service to be able to call it, else you will get the error:
 
@@ -222,7 +222,7 @@ Your local `gcloud` user needs to have IAM access of `roles/run.invoker` to the 
 > Internal Server Error for url: http://127.0.0.1:8080/vac/streaming/edmonbrain`
 
 
-### Examples
+### sunholo vac list
 
 List all the VACs available to your account for the project defined.
 
@@ -258,12 +258,16 @@ $> sunholo vac list
 └──────────────────┴──────────────┴────────────────────────────────────────────────┴─────────┴──────┘
 ```
 
+### sunholo vac get-url
+
 Get the URL of a specific VAC
 
 ```bash
 $> sunholo vac get-url edmonbrain
 https://edmonbrain-xxxxxxxx.a.run.app
 ```
+
+### sunholo vac chat
 
 Chat with a VAC from the command line.  To exit a chat, use `exit`
 
@@ -328,7 +332,7 @@ You: exit
 Exiting chat session.
 ```
 
-### Interacting with files
+#### Interacting with files
 
 You can upload files to a bucket such as images with `!upload` that can be used to talk with for example image models.  The uploaded file will stay in session until you remove it via `!clear_upload`.  The file is uploaded to the configured Google Cloud Storage bucket.
 
@@ -433,64 +437,12 @@ personal_llama: I am very certain that I can answer that based on the provided c
 This React app is a simple chat interface for a Langchain QNA service (Langserve). 
 
 The user can ask a question, and the React app will send the question to the Langserve 
-service and display the response in the chat window. The app uses a streaming approach to 
-display the bot's response in real time as it's being generated.
-
-Here's an improvement to the `App.js` file:
-
-**Improvement:**
-The app currently attempts to reconnect to the stream if the connection drops, which is 
-good for handling temporary network issues. However, it would be beneficial to add a 
-maximum retry limit to prevent infinite retry attempts in case of a persistent server-side 
-error. 
-
-**Modified Code:**
-
-```javascript
-import React, { useState, useEffect, useRef } from 'react';
-import { RemoteRunnable } from "langchain/runnables/remote";
-import './App.css';
-
-const axios = require('axios');
-
-function App() {
-  // ... 
-
-  const MAX_RETRY_COUNT = 3; // Define the maximum retry attempts
-
-  // ...  
-
-  const reconnectStream = async (retryCount) => {
-    if (retryCount >= MAX_RETRY_COUNT) {
-      console.error('Max retry count reached. Unable to reconnect to stream.');
-      setError('Unable to connect to the server. Please try again later.');
-      return;
-    }
-
-    try {
-      const stream = await getSchemaAndStream(inputText, path);
-      handleStreamData(stream, retryCount);
-    } catch (error) {
-      console.error('Error reconnecting to stream:', error);
-      setError('Failed to reconnect to the stream.');
-    }
-  };
-
-  // ... 
-}
-
-export default App;
-```
-
-This modification introduces a `MAX_RETRY_COUNT` constant and adds a check within the 
-`reconnectStream` function to prevent further retry attempts once the limit is reached. 
-This prevents the app from getting stuck in an infinite loop of retry attempts if there's a
-problem with the server or the Langchain service. 
+...etc...
 ````
 
 > TODO: download any artifact files or parse out code examples to edit the file directly
 
-### Headless mode
+### sunholo vac chat --headless
 
 With headless mode, you just get the answer streamed to terminal.  Ask your question quoted in the next positional argument:
 
