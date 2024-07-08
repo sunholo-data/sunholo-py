@@ -6,8 +6,10 @@ from . import chunker
 from . import cli
 from . import components
 from . import database
+from . import discovery_engine
 from . import embedder
 from . import gcs
+from . import invoke
 from . import langfuse
 from . import llamaindex
 from . import lookup
@@ -15,6 +17,7 @@ from . import patches
 from . import pubsub
 from . import qna
 from . import streaming
+from . import tools
 from . import utils
 from . import vertex
 import logging
@@ -28,8 +31,10 @@ __all__ = ['agents',
            'cli',
            'components', 
            'database', 
+           'discovery_engine',
            'embedder', 
            'gcs', 
+           'invoke',
            'langfuse', 
            'llamaindex',
            'lookup', 
@@ -37,6 +42,7 @@ __all__ = ['agents',
            'pubsub',
            'qna', 
            'streaming', 
+           'tools',
            'utils', 
            'vertex',
            'logging']
