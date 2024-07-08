@@ -8,7 +8,7 @@ Vision (or Video) capable GenAI models can create playwright commands based on s
 
 The sunholo `BrowseWebWithImagePromptsBot()` class provides methods that you can hook into any GenAI vision model to enable prompt-to-browser features.  It coordinates working with your model and prompt to feed in screenshots until the stated "session goal" is achieved.
 
-An example of it browsing the website looking for a VAC defintion is shown for demo purposes:
+An example of it browsing the website looking for what the VAC acronym means is shown for demo purposes:
 
 ![](../img/browser_tool.gif)
 
