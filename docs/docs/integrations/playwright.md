@@ -18,6 +18,8 @@ Cookies and the action log of what happened are saved to disk:
 
 ![](../img/browser_tool_files.png)
 
+### Action log
+
 Action log saves the model's description on what it did:
 
 ```json
@@ -29,6 +31,8 @@ Action log saves the model's description on what it did:
 ```
 
 The action log will pick up from where it left off if you use the same session_id.
+
+### Response schema
 
 The full response from the bot looks like this:
 
@@ -62,7 +66,7 @@ The full response from the bot looks like this:
 }
 ```
 
-### Using with your model
+## Using with your own GenAI model and prompt
 
 The class requires you to write a `send_prompt_to_llm()` method which will recieve the screenshots and prompt variables and output the instructions for the next browsing task.  A demo of doing this with [Gemini Flash 1.5](https://deepmind.google/technologies/gemini/flash/) is shown below:
 
@@ -269,6 +273,8 @@ class GeminiBot(BrowseWebWithImagePromptsBot):
         return json_object     
 ```
 
+## Serving on HTTP
+
 You can then put the model behind a HTTP endpoint to created a VAC and have it hooked into Multivac's Cloud Endpoints and Vertex Extension integrations.
 
 ```python
@@ -299,6 +305,8 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)), debug=True)
 ```
 
+### Local Testing
+
 When testing locally, launch the app via `python app.py` then call it locally via:
 
 ```bash
@@ -308,3 +316,7 @@ When testing locally, launch the app via `python app.py` then call it locally vi
     -F "browser_type=chromium" \
     -F "session_goal=Find out what the VAC acyonym means in Multi-VAC"
 ```
+
+### Multivac Cloud Testing
+
+TODO
