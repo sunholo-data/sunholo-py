@@ -495,7 +495,7 @@ This method should be implemented by subclasses: `def send_prompt_to_llm(self, p
             while in_session:
                 if next_instructions and 'status' in next_instructions:
                     if next_instructions['status'] == 'in-progress':
-                        log.info(f'Browser message: {next_instructions.get('message')}')
+                        log.info(f'Browser message: {next_instructions.get("message")}')
                         if 'new_instructions' not in next_instructions:
                             log.error('Browser status: "in-progress" but no new_instructions')
                         last_message = next_instructions['message']
