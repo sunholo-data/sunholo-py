@@ -8,6 +8,12 @@ from ..logging import log
 
 from ..utils.parsers import get_clean_website_name
 
+try:
+    from playwright.sync_api import sync_playwright, Response
+except ImportError:
+    sync_playwright = None
+    Response = None
+
 class BrowseWebWithImagePromptsBot:
     """
     BrowseWebWithImagePromptsBot is a base class for creating bots that interact with web pages using Playwright.
@@ -114,8 +120,10 @@ class BrowseWebWithImagePromptsBot:
         except ImportError as err:
             print(err)
             sync_playwright = None
+
         if not sync_playwright:
             raise ImportError("playright needed for BrowseWebWithImagePromptsBot class - install via `pip install sunholo[tools]`")
+        
         self.session_id = session_id or datetime.now().strftime("%Y%m%d%H%M%S")
         self.website_name = website_name
         self.browser_type = browser_type
@@ -124,6 +132,7 @@ class BrowseWebWithImagePromptsBot:
         self.screenshot_dir = f"browser_tool/{get_clean_website_name(website_name)}/{session_id}"
         os.makedirs(self.screenshot_dir, exist_ok=True)
         self.cookie_file = os.path.join(self.screenshot_dir, "cookies.json")
+        self.action_log_file = os.path.join(self.screenshot_dir, "action_log.json")
         self.playwright = sync_playwright().start()
         
         if browser_type == 'chromium':
@@ -138,7 +147,7 @@ class BrowseWebWithImagePromptsBot:
         self.context = self.browser.new_context()
         self.page = self.context.new_page()
         self.load_cookies()
-        self.actions_log = []
+        self.action_log = []
         self.session_goal = None
         self.session_screenshots = []
 
@@ -152,71 +161,175 @@ class BrowseWebWithImagePromptsBot:
         cookies = self.context.cookies()
         with open(self.cookie_file, 'w') as f:
             json.dump(cookies, f)
+    
+    def save_action_log(self):
+        with open(self.action_log_file, 'w') as f:
+            json.dump(self.action_log, f)
+    
+    def load_action_log(self):
+        if os.path.exists(self.action_log_file):
+            with open(self.action_log_file, 'r') as f:
+                action_log = json.load(f)
+                self.action_log = action_log
 
     def navigate(self, url):
+        def handle_response(response: Response): # type: ignore
+                status = response.status
+                url = response.url
+                if 300 <= status < 400:
+                    log.info(f"Redirecting from {url}")
         try:
-            self.page.goto(url)
+            self.page.on("response", handle_response)
+
+            previous_url = self.page.url
+
+            response = self.page.goto(url)
+            status = response.status
+            if status != 200:
+                log.error(f"Failed to navigate to {url}: HTTP {status}")
+                self.action_log.append(f"Tried to navigate to {url} but failed: HTTP {status} - browsing back to {previous_url}")
+                url = previous_url
+                self.page.goto(previous_url)
+  
             self.page.wait_for_load_state()
             log.info(f'Navigated to {url}')
-            self.actions_log.append(f"Navigated to {url}")
+            self.action_log.append(f"Navigated to {url}")
+
         except Exception as err:
             log.warning(f"navigate failed with {str(err)}")
-            self.actions_log.append(f"Tried to navigate to {url} but got an error")
+            self.action_log.append(f"Tried to navigate to {url} but got an error")
 
+    def get_locator(self, selector, by_text=True):
+        if by_text:
+            elements = self.page.locator(f"text={selector}").all()
+            if elements:
+                return elements[0]
+            else:
+                log.warning(f"No elements found with text: {selector}")
+                return None
+        else:
+            return self.page.locator(selector)
 
-    def click(self, selector):
+    def click(self, selector, by_text=True):
+        (x,y)=(0,0)
+
+        element = self.get_locator(selector, by_text=by_text)
+        if element is None:
+            self.action_log.append(f"Tried to click on text {selector} but it was not a valid location to click")
+            return (x,y)
+
         try:
-            self.page.click(selector)
+            bounding_box = element.bounding_box()
+            if bounding_box:
+                x = bounding_box['x'] + bounding_box['width'] / 2
+                y = bounding_box['y'] + bounding_box['height'] / 2
+        except Exception as err:
+            log.warning(f"Could not do bounding box - {str(err)}")
+        
+        try:
+            element.click()
             self.page.wait_for_load_state()
-            log.info(f"Clicked on element with selector {selector}")
-            self.actions_log.append(f"Clicked on element with selector {selector}")
+            log.info(f"Clicked on element with selector {selector} at {x=},{y=}")
+            self.action_log.append(f"Clicked on element with selector {selector} at {x=},{y=}")
+
+            return (x,y)
+        
         except Exception as err:
             log.warning(f"click failed with {str(err)}")
-            self.actions_log.append(f"Tried to click on element with selector {selector} but got an error")            
+            self.action_log.append(f"Tried to click on element with selector {selector} at {x=},{y=} but got an error")  
 
-    def scroll(self, direction='down', amount=1):
+            return (x,y)          
+
+    def scroll(self, direction='down', amount=100):
         try:
-            for _ in range(amount):
-                if direction == 'down':
-                    self.page.evaluate("window.scrollBy(0, window.innerHeight)")
-                elif direction == 'up':
-                    self.page.evaluate("window.scrollBy(0, -window.innerHeight)")
-                elif direction == 'left':
-                    self.page.evaluate("window.scrollBy(-window.innerWidth, 0)")
-                elif direction == 'right':
-                    self.page.evaluate("window.scrollBy(window.innerWidth, 0)")
-                self.page.wait_for_timeout(500)
-                log.info(f"Scrolled {direction} by {amount} page heights")
-                self.actions_log.append(f"Scrolled {direction} by {amount} page heights")
+            if direction == 'down':
+                self.page.mouse.wheel(0, amount)
+            elif direction == 'up':
+                self.page.mouse.wheel(0, -amount)
+            elif direction == 'left':
+                self.page.mouse.wheel(-amount, 0)
+            elif direction == 'right':
+                self.page.mouse.wheel(amount, 0)
+            self.page.wait_for_timeout(500)
+            log.info(f"Scrolled {direction} by {amount} pixels")
+            self.action_log.append(f"Scrolled {direction} by {amount} pixels")
         except Exception as err:
             log.warning(f"Scrolled failed with {str(err)}")
-            self.actions_log.append(f"Tried to scroll {direction} by {amount} page heights but got an error")
+            self.action_log.append(f"Tried to scroll {direction} by {amount} pixels but got an error")
 
+    def type_text(self, selector, text, by_text=True):
+        (x,y)=(0,0)
+        element = self.get_locator(selector, by_text=by_text)
+        if element is None:
+            self.action_log.append(f"Tried to type {text} via website text: {selector} but it was not a valid location to add text")
+            return (x,y)
 
-    def type_text(self, selector, text):
         try:
-            self.page.fill(selector, text)
+            bounding_box = element.bounding_box()
+            if bounding_box:
+                x = bounding_box['x'] + bounding_box['width'] / 2
+                y = bounding_box['y'] + bounding_box['height'] / 2
+        except Exception as err:
+            log.warning(f"Could not do bounding box - {str(err)}")
+        
+        try:
+            element.fill(text)
             self.page.wait_for_load_state()
-            log.info(f"Typed text '{text}' into element with selector {selector}")
-            self.actions_log.append(f"Typed text '{text}' into element with selector {selector}")
+            log.info(f"Typed text '{text}' into element with selector {selector} at {x=},{y=}")
+            self.action_log.append(f"Typed text '{text}' into element with selector {selector} at {x=},{y=}")
+
+            return (x, y)
+        
         except Exception as err:
             log.warning(f"Typed text failed with {str(err)}")
-            self.actions_log.append(f"Tried to type text '{text}' into element with selector {selector} but got an error")
+            self.action_log.append(f"Tried to type text '{text}' into element with selector {selector} at {x=},{y=} but got an error")
 
-    def take_screenshot(self, final=False):
+            return (x, y)
+
+    def take_screenshot(self, final=False, full_page=False, mark_action=None):
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        parsed_url = urllib.parse.urlparse({self.page.url})
+        parsed_url = urllib.parse.urlparse(self.page.url)
+
         url_path = parsed_url.path
+        if url_path == "/":
+            url_path = "index.html"
         if final:
             screenshot_path = os.path.join(self.screenshot_dir, f"final/{timestamp}_{url_path}.png")
         else:
             screenshot_path = os.path.join(self.screenshot_dir, f"{timestamp}_{url_path}.png")
-        self.page.screenshot(path=screenshot_path)
+        self.page.screenshot(path=screenshot_path, full_page=full_page)
+        
+        if mark_action:
+            self.mark_screenshot(screenshot_path, mark_action)
+
         log.info(f"Screenshot {self.page.url} taken and saved to {screenshot_path}")
-        #self.actions_log.append(f"Screenshot {self.page.url} taken and saved to {screenshot_path}")
+        #self.action_log.append(f"Screenshot {self.page.url} taken and saved to {screenshot_path}")
         self.session_screenshots.append(screenshot_path)
 
         return screenshot_path
+
+    def mark_screenshot(self, screenshot_path, mark_action):
+        """
+        Marks the screenshot with the specified action.
+
+        Parameters:
+            screenshot_path (str): The path to the screenshot.
+            mark_action (dict): Action details for marking the screenshot.
+        """
+        from PIL import Image, ImageDraw
+
+        image = Image.open(screenshot_path)
+        draw = ImageDraw.Draw(image)
+        
+        if mark_action['type'] == 'click':
+            x, y = mark_action['position']
+            radius = 10
+            draw.ellipse((x-radius, y-radius, x+radius, y+radius), outline='red', width=3)
+        elif mark_action['type'] == 'type':
+            x, y = mark_action['position']
+            draw.rectangle((x-5, y-5, x+5, y+5), outline='blue', width=3)
+        
+        image.save(screenshot_path)
 
     def get_latest_screenshot_path(self):
         screenshots = sorted(
@@ -230,7 +343,7 @@ class BrowseWebWithImagePromptsBot:
 
     def create_prompt_vars(self, last_message):
         prompt = {
-            "last_actions": self.actions_log,
+            "last_actions": self.action_log,
             "session_goal": self.session_goal,
             "last_message": last_message
         }
@@ -291,23 +404,30 @@ This method should be implemented by subclasses: `def send_prompt_to_llm(self, p
         if not isinstance(instructions, list):
             log.error(f"{instructions} {type(instructions)}")
         for instruction in instructions:
+            mark_action = None
             if not isinstance(instruction, dict):
                 log.error(f"{instruction} {type(instruction)}")
             action = instruction['action']
             if action == 'navigate':
                 self.navigate(instruction['url'])
             elif action == 'click':
-                self.click(instruction['selector'])
+                x,y = self.click(instruction['selector'])
+                if (x,y) != (0,0):
+                    mark_action = {'type':'click', 'position': (x,y)}
             elif action == 'scroll':
-                self.scroll(instruction.get('direction', 'down'), instruction.get('amount', 1))
+                self.scroll(instruction.get('direction', 'down'), 
+                            int(instruction.get('amount', 1))
+                            )
             elif action == 'type':
-                self.type_text(instruction['selector'], instruction['text'])
+                x,y = self.type_text(instruction['selector'], instruction['text'])
+                if (x,y) != (0,0):
+                    mark_action = {'type':'type', 'position': (x,y)}
             self.steps += 1
             if self.steps >= self.max_steps:
                 log.warning(f"Reached the maximum number of steps: {self.max_steps}")
                 return
             
-        screenshot_path = self.take_screenshot()
+        screenshot_path = self.take_screenshot(mark_action=mark_action)
         next_browser_instructions = self.send_screenshot_to_llm(
                 screenshot_path, 
                 last_message=last_message)
@@ -330,8 +450,10 @@ This method should be implemented by subclasses: `def send_prompt_to_llm(self, p
                         if 'new_instructions' not in next_instructions:
                             log.error('Browser status: "in-progress" but no new_instructions')
                         last_message = next_instructions['message']
-                        log.info(f'Browser message: {last_message}')
-                        next_instructions = self.execute_instructions(next_instructions['new_instructions'], last_message=last_message)
+                        self.action_log.append(last_message)
+                        next_instructions = self.execute_instructions(
+                            next_instructions['new_instructions'], 
+                            last_message=last_message)
                     else:
                         log.info(f'Session finished due to status={next_instructions["status"]}')
                         in_session=False
@@ -344,12 +466,14 @@ This method should be implemented by subclasses: `def send_prompt_to_llm(self, p
             log.info("Session finished")
             final_path = self.take_screenshot(final=True)
             self.close()
+            self.save_action_log()
             
             return {
                 "website": self.website_name,
-                "log": self.actions_log,
+                "log": self.action_log,
                 "next_instructions": next_instructions,
                 "session_screenshots": self.session_screenshots,
                 "final_page": final_path,
+                "session_goal": self.session_goal
             }
 
