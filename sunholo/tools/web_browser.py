@@ -516,9 +516,13 @@ This method should be implemented by subclasses: `def send_prompt_to_llm(self, p
             self.take_screenshot()
             
             self.close()
+
+            answer = None
+            if next_instructions and next_instructions.get('status') == 'completed':
+                answer = next_instructions.get('message'),
             
             return {
-                "answer": next_instructions.get('message', 'No last message was received'),
+                "answer": answer,
                 "metadata": {
                     "website": self.website_name,
                     "log": self.action_log,
