@@ -189,12 +189,11 @@ class BrowseWebWithImagePromptsBot:
             if status != 200:
                 log.error(f"Failed to navigate to {url}: HTTP {status}")
                 self.action_log.append(f"Tried to navigate to {url} but failed: HTTP {status} - browsing back to {previous_url}")
-                url = previous_url
-                self.page.goto(previous_url)
+                self.page.go_back()
   
             self.page.wait_for_load_state()
-            log.info(f'Navigated to {url}')
-            self.action_log.append(f"Navigated to {url}")
+            log.info(f'Navigated to {self.page.url}')
+            self.action_log.append(f"Navigated to {self.page.url}")
 
         except Exception as err:
             log.warning(f"navigate failed with {str(err)}")
@@ -202,7 +201,7 @@ class BrowseWebWithImagePromptsBot:
 
     def get_locator(self, selector, by_text=True):
         if by_text:
-            elements = self.page.locator(f"text={selector}").all()
+            elements = self.page.get_by_text(selector).all()
             if elements:
                 return elements[0]
             else:
@@ -357,9 +356,11 @@ class BrowseWebWithImagePromptsBot:
             output = json.loads(response)
         elif isinstance(response, list):
             log.warning(f'Response was a list, assuming its only new_instructions: {response=}')
-            output['new_instructions'] = response
-            output['status'] = 'in-progress'
-            output['message'] = 'No message was received, which is a mistake by the assistant'
+            output = {
+                'new_instructions' : response,
+                'status': 'in-progress',
+                'message': 'No message was received, which is a mistake by the assistant'
+            }
         else:
             log.warning(f'Unknown response: {response=} {type(response)}')
             output = None

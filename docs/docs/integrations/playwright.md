@@ -102,7 +102,7 @@ instruction_schema = genai.protos.Schema(
         'amount': genai.protos.Schema(type=genai.protos.Type.INTEGER),
         'message': genai.protos.Schema(type=genai.protos.Type.STRING),
     },
-    required=['action']
+    required=['action', 'message']
 )
 
 instructions_schema = genai.protos.Schema(
