@@ -3,6 +3,7 @@ import base64
 import json
 from datetime import datetime
 import urllib.parse
+import time
 
 from ..logging import log
 
@@ -354,12 +355,18 @@ class BrowseWebWithImagePromptsBot:
             output = response
         elif isinstance(response, str):
             output = json.loads(response)
-
-        #TODO: more validation
-        log.info(f'Response: {output=}')
+        elif isinstance(response, list):
+            log.warning(f'Response was a list, assuming its only new_instructions: {response=}')
+            output['new_instructions'] = response
+            output['status'] = 'in-progress'
+            output['message'] = 'No message was received, which is a mistake by the assistant'
+        else:
+            log.warning(f'Unknown response: {response=} {type(response)}')
+            output = None
 
         if 'status' not in output:
             log.error(f'Response did not contain status')
+            
 
         if 'new_instructions' not in output:
             log.warning(f'Response did not include new_instructions')
@@ -391,6 +398,8 @@ This method should be implemented by subclasses: `def send_prompt_to_llm(self, p
         self.save_cookies()
         self.browser.close()
         self.playwright.stop()
+        self.save_action_log()
+        self.create_gif_from_pngs()
 
     def execute_instructions(self, instructions: list, last_message: str=None):
         if not instructions: 
@@ -426,13 +435,50 @@ This method should be implemented by subclasses: `def send_prompt_to_llm(self, p
             if self.steps >= self.max_steps:
                 log.warning(f"Reached the maximum number of steps: {self.max_steps}")
                 return
-            
+        time.sleep(2) 
         screenshot_path = self.take_screenshot(mark_action=mark_action)
         next_browser_instructions = self.send_screenshot_to_llm(
                 screenshot_path, 
                 last_message=last_message)
             
         return next_browser_instructions
+
+    def create_gif_from_pngs(self, frame_duration=500):
+        """
+        Creates a GIF from a folder of PNG images.
+
+        Args:
+            folder_path (str): The path to the folder containing PNG images.
+            output_gif_path (str): The path where the output GIF will be saved.
+            duration (int): Duration between frames in milliseconds.
+
+        Example:
+            create_gif_from_pngs('/path/to/png_folder', '/path/to/output.gif', duration=500)
+        """
+        from PIL import Image
+
+        folder_path=self.screenshot_dir
+        output_gif_path = os.path.join(self.screenshot_dir, "session.gif")
+
+        # List all PNG files in the folder
+        png_files = [f for f in sorted(os.listdir(folder_path)) if f.endswith('.png')]
+
+        # Open images and store them in a list
+        images = [Image.open(os.path.join(folder_path, file)) for file in png_files]
+
+        duration = len(images) * frame_duration
+        # Save images as a GIF
+        if images:
+            images[0].save(
+                output_gif_path,
+                save_all=True,
+                append_images=images[1:],
+                duration=duration,
+                loop=0
+            )
+            print(f"GIF saved at {output_gif_path}")
+        else:
+            print("No PNG images found in the folder.")
     
     def start_session(self, instructions, session_goal):
             self.session_goal = session_goal
@@ -441,6 +487,9 @@ This method should be implemented by subclasses: `def send_prompt_to_llm(self, p
                 instructions = [{'action': 'navigate', 'url': self.website_name}]
 
             next_instructions = self.execute_instructions(instructions)
+
+            # load previous actions from same session
+            self.load_action_log()
 
             in_session = True
             while in_session:
@@ -464,16 +513,16 @@ This method should be implemented by subclasses: `def send_prompt_to_llm(self, p
                     break
             
             log.info("Session finished")
-            final_path = self.take_screenshot(final=True)
+            final_screenshot = self.take_screenshot()
+            
             self.close()
-            self.save_action_log()
             
             return {
                 "website": self.website_name,
                 "log": self.action_log,
                 "next_instructions": next_instructions,
                 "session_screenshots": self.session_screenshots,
-                "final_page": final_path,
+                "final_screenshot": final_screenshot,
                 "session_goal": self.session_goal
             }
 
