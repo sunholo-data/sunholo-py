@@ -280,4 +280,13 @@ See more at https://dev.sunholo.com/
     yaml.dump(swagger_template, string_stream)
     yaml_string = string_stream.getvalue()
 
+    try:
+        from openapi_spec_validator import validate
+        swagger_dict = yaml.load(yaml_string)
+        swagger_dict['host'] = 'api.sunholo.com'
+        validated = validate(swagger_dict)
+        log.info(f'swagger validation errors: {validated}')
+    except ImportError:
+        log.error("Must have openapi-spec-validator installed to validate - install via `pip install sunholo'[tools]'`")
+
     return yaml_string
