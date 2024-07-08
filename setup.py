@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.73.3'
+version = '0.74.0'
 
 setup(
     name='sunholo',
@@ -73,6 +73,7 @@ setup(
             "pgvector",
             "pillow",
             "playwright",
+            "psutil",
             "psycopg2-binary",
             "pypdf",
             "python-socketio",
@@ -82,7 +83,7 @@ setup(
             "tabulate",
             "tantivy",
             "tiktoken",
-            "unstructured[local-inference]",
+            "unstructured[local-inference]==0.14.9",
 
         ],
         'cli': [
@@ -102,10 +103,11 @@ setup(
         'pipeline': [
             "GitPython",
             "lark",
+            "psutil",
             "pypdf",
             "pytesseract",
             "tabulate",
-            "unstructured[local-inference]",
+            "unstructured[local-inference]==0.14.9",
         ],
         'gcp': [
             "google-api-python-client",

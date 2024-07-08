@@ -13,6 +13,7 @@
 #   limitations under the License.
 import re
 import hashlib
+import urllib.parse
 
 def validate_extension_id(ext_id):
     """
@@ -184,3 +185,7 @@ def escape_braces(text):
     text = re.sub(r'(?<!{){(?!{)', '{{', text)  # Replace '{' with '{{' if not already double braced
     text = re.sub(r'(?<!})}(?!})', '}}', text)  # Replace '}' with '}}' if not already double braced
     return text
+
+def get_clean_website_name(url):
+    parsed_url = urllib.parse.urlparse(url)
+    return parsed_url.netloc
