@@ -513,16 +513,19 @@ This method should be implemented by subclasses: `def send_prompt_to_llm(self, p
                     break
             
             log.info("Session finished")
-            final_screenshot = self.take_screenshot()
+            self.take_screenshot()
             
             self.close()
             
             return {
-                "website": self.website_name,
-                "log": self.action_log,
-                "next_instructions": next_instructions,
-                "session_screenshots": self.session_screenshots,
-                "final_screenshot": final_screenshot,
-                "session_goal": self.session_goal
+                "answer": next_instructions.get('message', 'No last message was received'),
+                "metadata": {
+                    "website": self.website_name,
+                    "log": self.action_log,
+                    "next_instructions": next_instructions,
+                    "session_screenshots": self.session_screenshots,
+                    "session_goal": self.session_goal,
+                    "session_id": self.session_id,
+                }
             }
 

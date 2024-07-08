@@ -28,6 +28,40 @@ Action log saves the model's description on what it did:
 "Clicked on element with selector What is a VAC? at x=145.67578125,y=359.79296875"]
 ```
 
+The action log will pick up from where it left off if you use the same session_id.
+
+The full response from the bot looks like this:
+
+```json
+{
+  "answer": "The task is complete. The 'What is a VAC?' FAQ has been clicked and the content is now visible. The text is 'A VAC (Virtual Agent Compute) is a virtualized environment that provides a secure and isolated space for running GenAI models.'",
+  "metadata": {
+    "log": [
+      "Navigated to https://www.sunholo.com",
+      "The task is not complete as the FAQs are not shown. Clicked on the 'FAQ' button.",
+      "Clicked on element with selector FAQ at x=459.5390625,y=48.0",
+      "The task is not complete as I do not yet see the content of the FAQ. Clicked on the 'What is a VAC?' FAQ. ",
+      "Clicked on element with selector What is a VAC? at x=145.67578125,y=359.79296875",
+      "The task is not yet complete as I do not see the 'What is a VAC?' FAQ. Navigated to the FAQ page. ",
+      "Clicked on element with selector FAQ at x=459.5390625,y=48.0"
+    ],
+    "next_instructions": {
+      "message": "The task is complete. The 'What is a VAC?' FAQ has been clicked and the content is now visible. The text is 'A VAC (Virtual Agent Compute) is a virtualized environment that provides a secure and isolated space for running GenAI models.'",
+      "new_instructions": [],
+      "status": "completed"
+    },
+    "session_goal": "find out what the VAC acyonym means in Multi-VAC",
+    "session_id": "session123",
+    "session_screenshots": [
+      "browser_tool/www.sunholo.com/session123/20240708192048_index.html.png",
+      "browser_tool/www.sunholo.com/session123/20240708192053_index.html.png",
+      "browser_tool/www.sunholo.com/session123/20240708192055_index.html.png"
+    ],
+    "website": "https://www.sunholo.com"
+  }
+}
+```
+
 ### Using with your model
 
 The class requires you to write a `send_prompt_to_llm()` method which will recieve the screenshots and prompt variables and output the instructions for the next browsing task.  A demo of doing this with [Gemini Flash 1.5](https://deepmind.google/technologies/gemini/flash/) is shown below:
@@ -227,21 +261,12 @@ class GeminiBot(BrowseWebWithImagePromptsBot):
             
         """)
 
-        log.info(f"Browser prompt_vars: {prompt_vars}")
-
         # Generate content with the model
         response = model.generate_content([screenshot, prompt], tool_config={'function_calling_config':'ANY'})
 
-        log.debug(f"Browser tool returns: {response=}")
+        json_object = json.loads(response.text)
 
-        try:
-            json_object = json.loads(response.text)
-            log.info(f"Got valid json: {json_object}")
-
-            return json_object
-        
-        except Exception as err:
-            log.error(f"Failed to parse GenAI output to JSON: {response=} - {str(err)}")        
+        return json_object     
 ```
 
 You can then put the model behind a HTTP endpoint to created a VAC and have it hooked into Multivac's Cloud Endpoints and Vertex Extension integrations.
