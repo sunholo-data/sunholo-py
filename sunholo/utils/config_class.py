@@ -90,6 +90,9 @@ class ConfigManager:
                         config = self._reload_config_file(config_file, filename, folder == self.local_config_folder)
                 else:
                     config = self._reload_config_file(config_file, filename, folder == self.local_config_folder)
+                if config is None:
+                    log.error(f"No config found within {filename}")
+                    continue
                 kind = config.get('kind')
                 if kind:
                     configs_by_kind[kind] = config
