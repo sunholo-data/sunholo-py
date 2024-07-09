@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 import urllib.parse
 import time
+from io import BytesIO
 
 from ..logging import log
 
@@ -115,7 +116,14 @@ class BrowseWebWithImagePromptsBot:
     ```
     """
 #class BrowseWebWithImagePromptsBot:
-    def __init__(self, session_id, website_name, browser_type='chromium', headless=True, max_steps=10):
+    def __init__(
+            self,
+            website_name:str, 
+            session_id: str=None, 
+            browser_type:str='chromium', 
+            headless:bool=True, 
+            max_steps:int=10
+        ):
         try:
             from playwright.sync_api import sync_playwright
         except ImportError as err:
@@ -125,12 +133,19 @@ class BrowseWebWithImagePromptsBot:
         if not sync_playwright:
             raise ImportError("playright needed for BrowseWebWithImagePromptsBot class - install via `pip install sunholo[tools]`")
         
-        self.session_id = session_id or datetime.now().strftime("%Y%m%d%H%M%S")
+        log.info(f"Starting BrowseWebWithImagePromptsBot with {website_name=}, {session_id=}, {browser_type=}, {headless=}, {max_steps=}")
+        
+        # Assign session_id if it is None or 'None'
+        if not session_id or session_id == 'None':
+            self.session_id = datetime.now().strftime("%Y%m%d%H%M%S")
+        else:
+            self.session_id = session_id
+
         self.website_name = website_name
-        self.browser_type = browser_type
-        self.max_steps = max_steps
+        self.browser_type = browser_type or 'chromium'
+        self.max_steps = int(max_steps)
         self.steps = 0
-        self.screenshot_dir = f"browser_tool/{get_clean_website_name(website_name)}/{session_id}"
+        self.screenshot_dir = f"browser_tool/{get_clean_website_name(website_name)}/{self.session_id}"
         os.makedirs(self.screenshot_dir, exist_ok=True)
         self.cookie_file = os.path.join(self.screenshot_dir, "cookies.json")
         self.action_log_file = os.path.join(self.screenshot_dir, "action_log.json")
@@ -198,17 +213,48 @@ class BrowseWebWithImagePromptsBot:
         except Exception as err:
             log.warning(f"navigate failed with {str(err)}")
             self.action_log.append(f"Tried to navigate to {url} but got an error")
+    
+    def get_locator_via_roles_and_text(self, selector: str):
+        interactive_roles = ["button", "link", "menuitem", "menuitemcheckbox", "menuitemradio", "tab", "option"]
+
+        for role in interactive_roles:
+            log.info(f'Trying role {role} for selector {selector}')
+            elements = self.page.get_by_role(role).get_by_text(selector).locator("visible=true").all()
+            if elements:
+                log.info(f"Got {len(elements)} elements for selector {selector} with role {role}")
+                for element in elements:
+                    try:
+                        log.info(f"Trying {selector} with element.hover locator: {element}")
+                        try:
+                            element.hover(timeout=10000, trial=True)
+                            self.action_log.append(f"Successfully found element via selector: {selector}")
+
+                            return element
+                        
+                        except Exception as err:
+                            log.warning(f"Could not hover over element: {element} {str(err)} - trying next element")
+                    except Exception as e:
+                        log.error(f"Failed to get locator for selector '{selector}' with role {role}: {str(e)}")
+                    
+                    time.sleep(0.5)  # Wait for a bit before retrying
+            
+            log.info(f"No elements for '{selector}' within role '{role}'")
+
+        self.action_log.append(f"FAILED: Using page.get_by_role('role').locator('text={selector}').locator('visible=true') could not find any valid element. Try something else.")
+        return None
 
     def get_locator(self, selector, by_text=True):
         if by_text:
-            elements = self.page.get_by_text(selector).all()
-            if elements:
-                return elements[0]
-            else:
-                log.warning(f"No elements found with text: {selector}")
-                return None
+            element = self.get_locator_via_roles_and_text(selector)
         else:
-            return self.page.locator(selector)
+            element = self.page.locator(selector)
+        
+        if element:
+            return element
+
+        log.error(f"Failed to get locator for selector {selector}")
+
+        return None
 
     def click(self, selector, by_text=True):
         (x,y)=(0,0)
@@ -229,14 +275,14 @@ class BrowseWebWithImagePromptsBot:
         try:
             element.click()
             self.page.wait_for_load_state()
-            log.info(f"Clicked on element with selector {selector} at {x=},{y=}")
-            self.action_log.append(f"Clicked on element with selector {selector} at {x=},{y=}")
+            log.info(f"Clicked on {element=} with {selector=} at {x=},{y=}")
+            self.action_log.append(f"Clicked on {element=} with {selector=} at {x=},{y=}")
 
             return (x,y)
         
         except Exception as err:
             log.warning(f"click failed with {str(err)}")
-            self.action_log.append(f"Tried to click on element with selector {selector} at {x=},{y=} but got an error")  
+            self.action_log.append(f"Tried to click on {element=} with {selector=} at {x=},{y=} but got an error")  
 
             return (x,y)          
 
@@ -261,7 +307,7 @@ class BrowseWebWithImagePromptsBot:
         (x,y)=(0,0)
         element = self.get_locator(selector, by_text=by_text)
         if element is None:
-            self.action_log.append(f"Tried to type {text} via website text: {selector} but it was not a valid location to add text")
+            self.action_log.append(f"Tried to type {text} via website text: {selector} but it was not a valid element to add text")
             return (x,y)
 
         try:
@@ -275,32 +321,38 @@ class BrowseWebWithImagePromptsBot:
         try:
             element.fill(text)
             self.page.wait_for_load_state()
-            log.info(f"Typed text '{text}' into element with selector {selector} at {x=},{y=}")
-            self.action_log.append(f"Typed text '{text}' into element with selector {selector} at {x=},{y=}")
+            log.info(f"Typed text '{text}' into {element=} with {selector=} at {x=},{y=}")
+            self.action_log.append(f"Typed text '{text}' into {element=} with {selector=} at {x=},{y=}")
 
             return (x, y)
         
         except Exception as err:
             log.warning(f"Typed text failed with {str(err)}")
-            self.action_log.append(f"Tried to type text '{text}' into element with selector {selector} at {x=},{y=} but got an error")
+            self.action_log.append(f"Tried to type text '{text}' into {element=} with {selector=} at {x=},{y=} but got an error")
 
             return (x, y)
 
-    def take_screenshot(self, final=False, full_page=False, mark_action=None):
+    def take_screenshot(self, full_page=False, mark_action=None):
+
+        from PIL import Image
+
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         parsed_url = urllib.parse.urlparse(self.page.url)
 
         url_path = parsed_url.path
         if url_path == "/":
             url_path = "index.html"
-        if final:
-            screenshot_path = os.path.join(self.screenshot_dir, f"final/{timestamp}_{url_path}.png")
         else:
-            screenshot_path = os.path.join(self.screenshot_dir, f"{timestamp}_{url_path}.png")
-        self.page.screenshot(path=screenshot_path, full_page=full_page)
+            url_path = url_path.replace("/","_")
+        screenshot_path = os.path.join(self.screenshot_dir, f"{timestamp}_{url_path}.png")
+        screenshot_bytes = self.page.screenshot(full_page=full_page, scale='css')
         
         if mark_action:
-            self.mark_screenshot(screenshot_path, mark_action)
+            image = self.mark_screenshot(screenshot_bytes, mark_action)
+        else:
+            image = Image.open(BytesIO(screenshot_bytes))
+        
+        image.save(screenshot_path, format='png')
 
         log.info(f"Screenshot {self.page.url} taken and saved to {screenshot_path}")
         #self.action_log.append(f"Screenshot {self.page.url} taken and saved to {screenshot_path}")
@@ -308,17 +360,17 @@ class BrowseWebWithImagePromptsBot:
 
         return screenshot_path
 
-    def mark_screenshot(self, screenshot_path, mark_action):
+    def mark_screenshot(self, screenshot_bytes, mark_action):
         """
         Marks the screenshot with the specified action.
 
         Parameters:
-            screenshot_path (str): The path to the screenshot.
+            screenshot_bytes (bytes): The bytes of the screenshot.
             mark_action (dict): Action details for marking the screenshot.
         """
         from PIL import Image, ImageDraw
-
-        image = Image.open(screenshot_path)
+        time.sleep(1) # maybe pass in bytes to avoid waiting for file to be written
+        image = Image.open(BytesIO(screenshot_bytes))
         draw = ImageDraw.Draw(image)
         
         if mark_action['type'] == 'click':
@@ -329,7 +381,7 @@ class BrowseWebWithImagePromptsBot:
             x, y = mark_action['position']
             draw.rectangle((x-5, y-5, x+5, y+5), outline='blue', width=3)
         
-        image.save(screenshot_path)
+        return image
 
     def get_latest_screenshot_path(self):
         screenshots = sorted(
@@ -364,6 +416,10 @@ class BrowseWebWithImagePromptsBot:
         else:
             log.warning(f'Unknown response: {response=} {type(response)}')
             output = None
+        
+        if not output:
+            log.error(f'Got no output from response: {response=}')
+            return None
 
         if 'status' not in output:
             log.error(f'Response did not contain status')
@@ -396,6 +452,8 @@ This method should be implemented by subclasses: `def send_prompt_to_llm(self, p
 """)
 
     def close(self):
+        log.info(f"Session {self.session_id} finished")
+        self.take_screenshot()
         self.save_cookies()
         self.browser.close()
         self.playwright.stop()
@@ -444,7 +502,7 @@ This method should be implemented by subclasses: `def send_prompt_to_llm(self, p
             
         return next_browser_instructions
 
-    def create_gif_from_pngs(self, frame_duration=500):
+    def create_gif_from_pngs(self, frame_duration=300):
         """
         Creates a GIF from a folder of PNG images.
 
@@ -501,9 +559,17 @@ This method should be implemented by subclasses: `def send_prompt_to_llm(self, p
                             log.error('Browser status: "in-progress" but no new_instructions')
                         last_message = next_instructions['message']
                         self.action_log.append(last_message)
-                        next_instructions = self.execute_instructions(
-                            next_instructions['new_instructions'], 
-                            last_message=last_message)
+                        try:
+                            next_instructions = self.execute_instructions(
+                                next_instructions['new_instructions'], 
+                                last_message=last_message)
+                        except Exception as err:
+                            log.error(f'session aborted due to: {str(err)}')
+                            next_instructions = {
+                                'status': 'error',
+                                'message': f'session errored with: {str(err)}'
+                            }
+                            break
                     else:
                         log.info(f'Session finished due to status={next_instructions["status"]}')
                         in_session=False
@@ -512,9 +578,6 @@ This method should be implemented by subclasses: `def send_prompt_to_llm(self, p
                     log.info('Session finished due to next_instructions being empty')
                     in_session=False
                     break
-            
-            log.info("Session finished")
-            self.take_screenshot()
             
             self.close()
 
