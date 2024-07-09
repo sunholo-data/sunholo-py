@@ -186,6 +186,6 @@ def escape_braces(text):
     text = re.sub(r'(?<!})}(?!})', '}}', text)  # Replace '}' with '}}' if not already double braced
     return text
 
-def get_clean_website_name(url):
+def get_clean_website_name(url: str):
     parsed_url = urllib.parse.urlparse(url)
     return parsed_url.netloc

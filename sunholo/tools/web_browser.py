@@ -213,6 +213,35 @@ class BrowseWebWithImagePromptsBot:
         except Exception as err:
             log.warning(f"navigate failed with {str(err)}")
             self.action_log.append(f"Tried to navigate to {url} but got an error")
+
+    def get_locator_via_roles_and_placeholder(self, selector: str):
+        interactive_roles = ["button", "link", "menuitem", "menuitemcheckbox", "menuitemradio", "tab", "option"]
+
+        for role in interactive_roles:
+            log.info(f'Trying role {role} for selector {selector}')
+            elements = self.page.get_by_role(role).get_by_placeholder(selector).locator("visible=true").all()
+            if elements:
+                log.info(f"Got {len(elements)} elements for selector {selector} with role {role}")
+                for element in elements:
+                    try:
+                        log.info(f"Trying {selector} with element.hover locator: {element}")
+                        try:
+                            element.hover(timeout=10000, trial=True)
+                            self.action_log.append(f"Successfully found element via selector: {selector}")
+
+                            return element
+                        
+                        except Exception as err:
+                            log.warning(f"Could not hover over element: {element} {str(err)} - trying next element")
+                    except Exception as e:
+                        log.error(f"Failed to get locator for selector '{selector}' with role {role}: {str(e)}")
+                    
+                    time.sleep(0.5)  # Wait for a bit before retrying
+            
+            log.info(f"No elements for '{selector}' within role '{role}'")
+
+        self.action_log.append(f"FAILED: Using page.get_by_role('role').get_by_placeholder('{selector}').locator('visible=true') could not find any valid element. Try something else.")
+        return None
     
     def get_locator_via_roles_and_text(self, selector: str):
         interactive_roles = ["button", "link", "menuitem", "menuitemcheckbox", "menuitemradio", "tab", "option"]
@@ -240,7 +269,7 @@ class BrowseWebWithImagePromptsBot:
             
             log.info(f"No elements for '{selector}' within role '{role}'")
 
-        self.action_log.append(f"FAILED: Using page.get_by_role('role').locator('text={selector}').locator('visible=true') could not find any valid element. Try something else.")
+        self.action_log.append(f"FAILED: Using page.get_by_role('role').get_by_text('{selector}').locator('visible=true') could not find any valid element. Try something else.")
         return None
 
     def get_locator(self, selector, by_text=True):
@@ -256,10 +285,10 @@ class BrowseWebWithImagePromptsBot:
 
         return None
 
-    def click(self, selector, by_text=True):
+    def click(self, selector):
         (x,y)=(0,0)
 
-        element = self.get_locator(selector, by_text=by_text)
+        element = self.get_locator_via_roles_and_text(selector)
         if element is None:
             self.action_log.append(f"Tried to click on text {selector} but it was not a valid location to click")
             return (x,y)
@@ -303,9 +332,9 @@ class BrowseWebWithImagePromptsBot:
             log.warning(f"Scrolled failed with {str(err)}")
             self.action_log.append(f"Tried to scroll {direction} by {amount} pixels but got an error")
 
-    def type_text(self, selector, text, by_text=True):
+    def type_text(self, selector, text):
         (x,y)=(0,0)
-        element = self.get_locator(selector, by_text=by_text)
+        element = self.get_locator_via_roles_and_placeholder(selector)
         if element is None:
             self.action_log.append(f"Tried to type {text} via website text: {selector} but it was not a valid element to add text")
             return (x,y)
@@ -344,6 +373,10 @@ class BrowseWebWithImagePromptsBot:
             url_path = "index.html"
         else:
             url_path = url_path.replace("/","_")
+        
+        if get_clean_website_name(url_path) != self.website_name:
+            url_path = f"{get_clean_website_name(url_path)}_{url_path}"
+            
         screenshot_path = os.path.join(self.screenshot_dir, f"{timestamp}_{url_path}.png")
         screenshot_bytes = self.page.screenshot(full_page=full_page, scale='css')
         
@@ -358,7 +391,7 @@ class BrowseWebWithImagePromptsBot:
         #self.action_log.append(f"Screenshot {self.page.url} taken and saved to {screenshot_path}")
         self.session_screenshots.append(screenshot_path)
 
-        return screenshot_path
+        return screenshot_bytes
 
     def mark_screenshot(self, screenshot_bytes, mark_action):
         """
@@ -433,9 +466,9 @@ class BrowseWebWithImagePromptsBot:
 
         return output        
 
-    def send_screenshot_to_llm(self, screenshot_path, last_message):
-        with open(screenshot_path, "rb") as image_file:
-            encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
+    def send_screenshot_to_llm(self, screenshot_bytes, last_message):
+
+        encoded_image = base64.b64encode(screenshot_bytes).decode('utf-8')
         
         prompt_vars = self.create_prompt_vars(last_message)
         response = self.send_prompt_to_llm(prompt_vars, encoded_image)  # Sending prompt and image separately
@@ -495,9 +528,9 @@ This method should be implemented by subclasses: `def send_prompt_to_llm(self, p
                 log.warning(f"Reached the maximum number of steps: {self.max_steps}")
                 return
         time.sleep(2) 
-        screenshot_path = self.take_screenshot(mark_action=mark_action)
+        screenshot_bytes = self.take_screenshot(mark_action=mark_action)
         next_browser_instructions = self.send_screenshot_to_llm(
-                screenshot_path, 
+                screenshot_bytes, 
                 last_message=last_message)
             
         return next_browser_instructions
