@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.2.1">
 <title data-rh="true">web_browser.py | Sunholo Dev Portal</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://dev.sunholo.com/docs/sunholo/tools/web_browser"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="web_browser.py | Sunholo Dev Portal"><meta data-rh="true" name="description" content="Source: sunholo/tools/webbrowser.py"><meta data-rh="true" property="og:description" content="Source: sunholo/tools/webbrowser.py"><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://dev.sunholo.com/docs/sunholo/tools/web_browser"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/tools/web_browser" hreflang="en"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/tools/web_browser" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.f6c7f565.css">
-<script src="/assets/js/runtime~main.379f6b46.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.f9dce490.js" defer="defer"></script>
 <script src="/assets/js/main.2a92a374.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -91,7 +91,7 @@ Executes the given set of instructions, takes a screenshot after each step, and 
 </ul>
 </li>
 <li>
-<p>click(self, selector, by_text=True)</p>
+<p>click(self, selector)</p>
 <ul>
 <li>No docstring available.</li>
 </ul>
@@ -136,6 +136,12 @@ create_gif_from_pngs(&#x27;/path/to/png_folder&#x27;, &#x27;/path/to/output.gif&
 </li>
 <li>
 <p>get_locator(self, selector, by_text=True)</p>
+<ul>
+<li>No docstring available.</li>
+</ul>
+</li>
+<li>
+<p>get_locator_via_roles_and_placeholder(self, selector: str)</p>
 <ul>
 <li>No docstring available.</li>
 </ul>
@@ -200,7 +206,7 @@ mark_action (dict): Action details for marking the screenshot.</p>
 </ul>
 </li>
 <li>
-<p>send_screenshot_to_llm(self, screenshot_path, last_message)</p>
+<p>send_screenshot_to_llm(self, screenshot_bytes, last_message)</p>
 <ul>
 <li>No docstring available.</li>
 </ul>
@@ -218,7 +224,7 @@ mark_action (dict): Action details for marking the screenshot.</p>
 </ul>
 </li>
 <li>
-<p>type_text(self, selector, text, by_text=True)</p>
+<p>type_text(self, selector, text)</p>
 <ul>
 <li>No docstring available.</li>
 </ul>
