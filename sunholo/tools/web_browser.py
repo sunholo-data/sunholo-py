@@ -361,6 +361,7 @@ class BrowseWebWithImagePromptsBot:
 
             return (x, y)
 
+    def execute_custom_command(self, command):
         """
         Executes a custom command on the page object.
 
