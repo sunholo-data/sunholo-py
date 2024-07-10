@@ -236,6 +236,7 @@ class VertexAIExtensions:
             if extension_name is None:
                 raise ValueError("Must specify extension_id or init one with class")
         else:  
+            extension_id = str(extension_id)
             if not extension_id.startswith("projects/"):
                 project_id = get_gcp_project()
                 extension_name = f"projects/{project_id}/locations/{self.location}/extensions/{extension_id}"
@@ -244,10 +245,28 @@ class VertexAIExtensions:
 
         extension = extensions.Extension(extension_name)
 
+        log.info(f"Executing extension {extension_name=} with {operation_id=} and {operation_params=}")
+
+        # local testing auth
+        from ..utils.gcp import is_running_on_cloudrun
+        auth_config=None # on cloud run it sorts itself out via default creds(?)
+
+        if not is_running_on_cloudrun():
+            from ..auth import get_local_gcloud_token
+            log.warning("Using local authentication via gcloud")
+            auth_config = {
+                    "authType": "OAUTH",
+                    "oauth_config": {"access_token": f"'{get_local_gcloud_token()}'"}
+                }
+            log.info(auth_config)
+
         response = extension.execute(
             operation_id=operation_id,
             operation_params=operation_params,
+            runtime_auth_config=auth_config
         )
+
+        log.info(f"Extension {extension_name=} {response=}")
 
         return response
 

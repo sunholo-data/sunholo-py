@@ -7,6 +7,7 @@ from ..utils.gcp import is_running_on_cloudrun
 from ..utils.api_key import has_multivac_api_key, get_multivac_api_key
 from ..logging import log
 from ..agents.route import route_vac
+from .gcloud import get_local_gcloud_token
 
 def get_run_url(vector_name=None):
 
@@ -33,20 +34,11 @@ def get_id_token(url: str) -> str:
         import google.oauth2.id_token  # type: ignore
         auth_req = google.auth.transport.requests.Request()
         log.info(f'Got id_token for {url}')
-        return google.oauth2.id_token.fetch_id_token(auth_req, url)
-    else:
-        # Use gcloud credentials locally
-        import subprocess
 
-        return (
-            subprocess.run(
-                ["gcloud", "auth", "print-identity-token"],
-                stdout=subprocess.PIPE,
-                check=True,
-            )
-            .stdout.strip()
-            .decode()
-        )
+        return google.oauth2.id_token.fetch_id_token(auth_req, url)
+
+    return get_local_gcloud_token()
+
 
 def get_header(vector_name) -> Optional[dict]:
     if has_multivac_api_key():
