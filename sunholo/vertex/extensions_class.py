@@ -88,7 +88,7 @@ class VertexAIExtensions:
             from openapi_spec_validator import validate
             from openapi_spec_validator.readers import read_from_filename
         except ImportError:
-            raise ImportError("Must have openapi-spec-validator installed - install via `pip install sunholo[tools]`")
+            raise ImportError("Must have openapi-spec-validator installed - install via `pip install sunholo'[tools]'`")
         
         spec_dict, spec_url = read_from_filename(filename)
         validate(spec_dict)
@@ -197,6 +197,11 @@ class VertexAIExtensions:
         
         project_id = get_gcp_project()
         extension_name = f"projects/{project_id}/locations/us-central1/extensions/{validate_extension_id(display_name)}"
+
+        listed_extensions = self.list_extensions()
+        for ext in listed_extensions:
+            if ext.get('resource_name') == extension_name:
+                raise NameError(f"resouce_name {extension_name} already exists.  Delete it or rename your new extension")
 
         if open_api_file:
             self.upload_openapi_file(open_api_file)
