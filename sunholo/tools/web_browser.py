@@ -361,6 +361,67 @@ class BrowseWebWithImagePromptsBot:
 
             return (x, y)
 
+        """
+        Executes a custom command on the page object.
+
+        Args:
+            command (str): The command string to be executed.
+        """
+        try:
+            element_part = command.get('get_locator')
+            operation = command.get('operation')
+
+            if not element_part or not operation:
+                raise ValueError("Both 'element_part' and 'operation' must be provided in the command")
+            
+            # Dynamically get the method and its parameters
+            method_name, params = self.parse_element_part(element_part)
+            method = getattr(self.page, method_name)
+            element = method(*params)
+
+            if not element:
+                raise ValueError(f"Element not found for selector: {element_part}")
+
+            # Execute the operation
+            exec(f"element.{operation}")
+
+            # Mark the action on the screenshot
+            bounding_box = element.bounding_box()
+            if bounding_box:
+                x = bounding_box['x'] + bounding_box['width'] / 2
+                y = bounding_box['y'] + bounding_box['height'] / 2
+                mark_action = {'type': operation, 'position': (x, y)}
+                self.take_screenshot(mark_action=mark_action)
+            else:
+                self.take_screenshot()
+
+            log.info(f"Executed custom command on element: {element_part} with operation: {operation}")
+            self.action_log.append(f"Executed custom command on element: {element_part} with operation: {operation}")
+
+        except Exception as e:
+            log.error(f"Failed to execute custom command: {command}. Error: {str(e)}")
+            self.action_log.append(f"Failed to execute custom command: {command}. Error: {str(e)}")
+
+    def parse_element_part(self, element_part):
+        """
+        Parses the element_part string to extract the method name and its parameters.
+
+        Args:
+            element_part (str): The element part string (e.g., "get_by_role('button')")
+
+        Returns:
+            tuple: A tuple containing the method name and a list of parameters.
+        """
+        try:
+            # Extract the method name and parameters
+            method_name = element_part.split('(')[0]
+            params_str = element_part.split('(')[1].rstrip(')')
+            params = eval(f'[{params_str}]')  # Safely evaluate parameters
+
+            return method_name, params
+        except Exception as e:
+            raise ValueError(f"Failed to parse element part: {element_part}. Error: {str(e)}")
+
     def take_screenshot(self, full_page=False, mark_action=None):
 
         from PIL import Image
@@ -523,6 +584,10 @@ This method should be implemented by subclasses: `def send_prompt_to_llm(self, p
                 x,y = self.type_text(instruction['selector'], instruction['text'])
                 if (x,y) != (0,0):
                     mark_action = {'type':'type', 'position': (x,y)}
+            elif action == 'execute':
+                x,y,mark = self.execute_custom_command(instruction['command'])
+                if mark:
+                    mark_action = {'type': mark, 'position': (x,y)}
             self.steps += 1
             if self.steps >= self.max_steps:
                 log.warning(f"Reached the maximum number of steps: {self.max_steps}")
