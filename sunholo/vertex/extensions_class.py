@@ -258,7 +258,6 @@ class VertexAIExtensions:
                     "authType": "OAUTH",
                     "oauth_config": {"access_token": f"'{get_local_gcloud_token()}'"}
                 }
-            log.info(auth_config)
 
         response = extension.execute(
             operation_id=operation_id,
