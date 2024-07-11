@@ -131,7 +131,10 @@ def check_llamaindex_in_memory(vector_name):
 
 def llamaindex_chunker_check(message_data, metadata, vector_name):
     # llamaindex handles its own chunking/embedding
-    memories = ConfigManager(vector_name).vacConfig("memory")
+    memories = load_memories(vector_name)
+    if not memories:
+        return None
+    
     total_memories = len(memories)
     llama = None
     if check_llamaindex_in_memory(vector_name):
