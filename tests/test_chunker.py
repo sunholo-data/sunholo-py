@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from sunholo.chunker.data_to_embed_pubsub import data_to_embed_pubsub
+from sunholo.chunker.pubsub import data_to_embed_pubsub
 
 # Mock external calls within the function
 @patch('sunholo.chunker.data_to_embed_pubsub.process_pubsub_message', return_value=({}, {}, 'test_vector'))
