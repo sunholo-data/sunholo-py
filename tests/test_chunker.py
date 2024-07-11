@@ -3,8 +3,8 @@ from unittest.mock import patch, MagicMock
 from sunholo.chunker.pubsub import data_to_embed_pubsub
 
 # Mock external calls within the function
-@patch('sunholo.chunker.data_to_embed_pubsub.process_pubsub_message', return_value=({}, {}, 'test_vector'))
-@patch('sunholo.chunker.data_to_embed_pubsub.process_chunker_data', return_value='processed_data')
+@patch('sunholo.chunker.pubsub.process_pubsub_message', return_value=({}, {}, 'test_vector'))
+@patch('sunholo.chunker.process_chunker_data.process_chunker_data', return_value='processed_data')
 def test_data_to_embed_pubsub(mock_process_chunker_data, mock_process_pubsub_message):
     # Test the function with various inputs including edge cases
     assert data_to_embed_pubsub({}) == 'processed_data'
