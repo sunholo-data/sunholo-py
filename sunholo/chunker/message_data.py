@@ -173,10 +173,15 @@ def handle_http_message(message_data: str, metadata: dict, vector_name:str):
 
     return chunks, metadata
 
-def handle_json_content_message(message_data: str, metadata: dict, vector_name: str):
+def handle_json_content_message(message_data: dict, metadata: dict, vector_name: str):
     log.info("No tailored message_data detected, processing message json")
     # Process message containing direct JSON content
-    the_json = json.loads(message_data)
+    try:
+        the_json = json.loads(message_data)
+    except Exception as e:
+        log.error(f"Could not load message {message_data} as JSON - {str(e)}")
+        return {"metadata": f"Could not load message as JSON - {str(e)}"}
+    
     the_metadata = the_json.get("metadata", {})
     metadata.update(the_metadata)
     the_content = the_json.get("page_content", None)
