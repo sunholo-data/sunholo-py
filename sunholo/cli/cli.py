@@ -9,6 +9,7 @@ from .run_proxy import setup_proxy_subparser
 from .chat_vac import setup_vac_subparser
 from .embedder import setup_embedder_subparser
 from .swagger import setup_swagger_subparser
+from .vertex import setup_vertex_subparser
 
 from ..utils import ConfigManager
 
@@ -84,6 +85,8 @@ def main(args=None):
     setup_embedder_subparser(subparsers)
     # swagger generation
     setup_swagger_subparser(subparsers)
+    # vertex
+    setup_vertex_subparser(subparsers)
 
     #TODO: add database setup commands: alloydb and supabase
 

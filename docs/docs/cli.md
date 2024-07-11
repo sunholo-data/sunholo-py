@@ -776,7 +776,42 @@ agents:
       config_schema: "{stem}/{vector_name}/config_schema"
       batch: "{stem}/{vector_name}/batch"
       stream_log: "{stem}/{vector_name}/stream_log"
-
-
 ```
 
+## sunholo vertex
+
+This interacts with Google Vertex AI 
+
+```shell
+usage: sunholo vertex [-h] {create-extension,list-extensions} ...
+
+positional arguments:
+  {create-extension,list-extensions}
+                        Vertex AI subcommands
+    create-extension    Create a Vertex AI extension
+    list-extensions     List all Vertex AI extensions
+
+optional arguments:
+  -h, --help            show this help message and exit
+```
+
+### sunholo vertex list-extensions
+
+This lets you create and list Vertex AI extensions
+
+```shell
+sunholo --project your-project vertex list-extensions
+[
+    {
+        'resource_name': 'projects/1232323/locations/us-central1/extensions/7454266623856214016',
+        'display_name': 'Code Interpreter',
+        'description': 'N/A'
+    }
+]
+```
+
+### sunholo vertex create-extension
+
+This lets you upload the openapi config files to a bucket and deploy to Vertex AI Extensions
+
+```shell

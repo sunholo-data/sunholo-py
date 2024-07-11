@@ -69,9 +69,12 @@ class VertexAIExtensions:
         self.tool_use_examples = None
         self.manifest = {}
         self.created_extensions = []
+        self.bucket_name = os.getenv('EXTENSIONS_BUCKET')
 
-    def list_extensions(self):
-        the_list = extensions.Extension.list()
+    def list_extensions(self, project_id:str=None):
+        project_id = project_id or get_gcp_project()
+        log.info(f"Creating extension within {project_id=}")
+        the_list = extensions.Extension.list(project=project_id)
         
         extensions_list = []
         for ext in the_list:
@@ -94,20 +97,23 @@ class VertexAIExtensions:
         validate(spec_dict)
     
     def upload_to_gcs(self, filename):
-        if not os.getenv('EXTENSIONS_BUCKET'):
-            raise ValueError('Please specify env var EXTENSIONS_BUCKET for location to upload openapi spec')
+        if not self.bucket_name:
+            raise ValueError('Please specify bucket_name or env var EXTENSIONS_BUCKET for location to upload openapi spec')
         
         from ..gcs.add_file import add_file_to_gcs
         file_base = os.path.basename(filename)
 
-        self_uri = add_file_to_gcs(file_base, bucket_filepath=file_base)
+        self_uri = add_file_to_gcs(file_base, bucket_filepath=file_base, bucket_name=self.bucket_name)
 
         return self_uri
     
     def upload_openapi_file(self, filename: str):
         self.validate_openapi(filename)
+        if not self.bucket_name:
+            raise ValueError('Please specify env var EXTENSIONS_BUCKET for location to upload openapi spec')
+        
 
-        self.openapi_file_gcs = self.upload_to_gcs(filename)
+        self.openapi_file_gcs = self.upload_to_gcs(filename, bucket_name=self.bucket_name)
     
     def load_tool_use_examples(self, filename: str):
         import yaml
@@ -193,15 +199,23 @@ class VertexAIExtensions:
                          open_api_file: str = None,
                          tool_example_file: str = None,
                          runtime_config: dict = None,
-                         service_account: str = None):
+                         service_account: str = None,
+                         project_id: str = None,
+                         bucket_name: str = None):
         
-        project_id = get_gcp_project()
+        project_id = project_id or get_gcp_project()
+        log.info(f"Creating extension within {project_id=}")
         extension_name = f"projects/{project_id}/locations/us-central1/extensions/{validate_extension_id(display_name)}"
 
+        if bucket_name:
+            log.info(f"Setting extension bucket name to {bucket_name}")
+            self.bucket_name = bucket_name
+
         listed_extensions = self.list_extensions()
+        log.info(f"Listing extensions:\n {listed_extensions}")
         for ext in listed_extensions:
-            if ext.get('resource_name') == extension_name:
-                raise NameError(f"resouce_name {extension_name} already exists.  Delete it or rename your new extension")
+            if ext.get('display_name') == display_name:
+                raise NameError(f"display_name {display_name} already exists.  Delete it or rename your new extension")
 
         if open_api_file:
             self.upload_openapi_file(open_api_file)
@@ -233,7 +247,7 @@ class VertexAIExtensions:
 
         return extension.resource_name
 
-    def execute_extension(self, operation_id: str, operation_params: dict, extension_id: str=None):
+    def execute_extension(self, operation_id: str, operation_params: dict, extension_id: str=None, project_id: str=None):
         init_vertex(location=self.location)
 
         if not extension_id:
@@ -243,7 +257,7 @@ class VertexAIExtensions:
         else:  
             extension_id = str(extension_id)
             if not extension_id.startswith("projects/"):
-                project_id = get_gcp_project()
+                project_id = project_id or get_gcp_project()
                 extension_name = f"projects/{project_id}/locations/{self.location}/extensions/{extension_id}"
             else:
                 extension_name = extension_id

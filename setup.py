@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.75.1'
+version = '0.76.0'
 
 setup(
     name='sunholo',

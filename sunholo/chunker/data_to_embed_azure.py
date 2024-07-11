@@ -13,19 +13,16 @@
 #   limitations under the License.
 
 from ..logging import log
-from ..pubsub import process_pubsub_message
+from ..azure import process_azure_blob_event
 from .process_chunker_data import process_chunker_data
 
 def data_to_embed_pubsub(data: dict):
-    """Triggered from a message on a Cloud Pub/Sub topic.
+    """Triggered from a message on an Azure Data Grid event.
     Args:
          data JSON
     """
 
-    message_data, metadata, vector_name = process_pubsub_message(data)
+    message_data, metadata, vector_name = process_azure_blob_event(data)
 
     return process_chunker_data(message_data, metadata, vector_name)
-
-
-
 
