@@ -16,13 +16,26 @@ from ..logging import log
 from ..azure import process_azure_blob_event
 from .process_chunker_data import process_chunker_data
 
-def data_to_embed_pubsub(data: dict):
+def data_to_embed_pubsub(events: list):
     """Triggered from a message on an Azure Data Grid event.
     Args:
          data JSON
     """
+    validation_event_type = "Microsoft.EventGrid.SubscriptionValidationEvent"
+    storage_blob_created_event = "Microsoft.Storage.BlobCreated"
+    
+    for event in events:
+        event_type = event['eventType']
+        data = event['data']
 
-    message_data, metadata, vector_name = process_azure_blob_event(data)
+        if event_type == validation_event_type:
+            validation_code = data['validationCode']
+            log.info(f"Got SubscriptionValidation event data, validation code: {validation_code}, topic: {event['topic']}")
+            
+            # Return the validation response
+            return {"ValidationResponse": validation_code}
+        elif event_type == storage_blob_created_event:
 
-    return process_chunker_data(message_data, metadata, vector_name)
+            message_data, metadata, vector_name = process_azure_blob_event(events)
 
+            return process_chunker_data(message_data, metadata, vector_name)

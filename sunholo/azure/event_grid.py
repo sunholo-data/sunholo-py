@@ -1,11 +1,12 @@
+# process_azure_blob_event.py
 from ..logging import log
 
-def process_azure_blob_event(data: dict) -> tuple:
+def process_azure_blob_event(events: list) -> tuple:
     """
     Extracts message data and metadata from an Azure Blob Storage event.
 
     Args:
-        data (dict): The Azure Event Grid event data.
+        events (list): The list of Azure Event Grid event data.
 
     Returns:
         tuple: A tuple containing the blob URL, attributes as metadata, and the vector name.
@@ -35,28 +36,34 @@ def process_azure_blob_event(data: dict) -> tuple:
         "metadataVersion": "1"
     }
     """
-    # Extract relevant fields from the event data
-    blob_url = data['data']['url']
-    event_time = data['eventTime']
-    event_id = data['id']
-    event_type = data['eventType']
-    subject = data['subject']
-    attributes = {
-        'event_type': event_type,
-        'event_time': event_time,
-        'event_id': event_id,
-        'subject': subject,
-        'url': blob_url
-    }
+    storage_blob_created_event = "Microsoft.Storage.BlobCreated"
     
-    # Extract 'vector_name' from the container name
-    vector_name = subject.split('/')[4]  # Extracting the container name
-    
-    log.info(f"Process Azure Blob Event was triggered by eventId {event_id} at {event_time}")
-    log.debug(f"Process Azure Blob Event data: {blob_url}")
-    
-    # Check for a valid Azure Blob Storage event type
-    if event_type == "Microsoft.Storage.BlobCreated":
-        log.info(f"Got valid event from Azure Blob Storage: {blob_url}")
+    for event in events:
+        event_type = event['eventType']
+        data = event['data']
 
-    return blob_url, attributes, vector_name
+        if event_type == storage_blob_created_event:
+            blob_url = data['url']
+            event_time = event['eventTime']
+            event_id = event['id']
+            subject = event['subject']
+            attributes = {
+                'event_type': event_type,
+                'event_time': event_time,
+                'event_id': event_id,
+                'subject': subject,
+                'url': blob_url
+            }
+
+            vector_name = subject.split('/')[4]  # Extracting the container name
+            
+            log.info(f"Process Azure Blob Event was triggered by eventId {event_id} at {event_time}")
+            log.debug(f"Process Azure Blob Event data: {blob_url}")
+            
+            # Check for a valid Azure Blob Storage event type
+            if event_type == "Microsoft.Storage.BlobCreated":
+                log.info(f"Got valid event from Azure Blob Storage: {blob_url}")
+            
+            return blob_url, attributes, vector_name
+
+    return None, None, None

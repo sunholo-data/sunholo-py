@@ -72,6 +72,7 @@ def format_chunk_return(chunks, metadata, vector_name):
                     
             return output_list
 
+    # returns None when not on GCP
     process_docs_chunks_vector_name(chunks, vector_name, metadata)
 
     return metadata
