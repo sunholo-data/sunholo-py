@@ -102,6 +102,9 @@ def check_discovery_engine_in_memory(vector_name):
 def discovery_engine_chunker_check(message_data, metadata, vector_name):
     # discovery engine handles its own chunking/embedding
     memories = load_config_key("memory", vector_name=vector_name, kind="vacConfig")
+    if not memories:
+        return None
+    
     total_memories = len(memories)
     llama = None
     if check_discovery_engine_in_memory(vector_name):
