@@ -40,6 +40,7 @@ setup(
         # Define optional dependencies with feature names
         'all': [
             "asyncpg",
+            "azure-storage-blob",
             "fastapi",
             "flask",
             "google-auth",
@@ -85,6 +86,9 @@ setup(
             "tiktoken",
             "unstructured[local-inference]==0.14.9",
 
+        ],
+        'azure': [
+            "azure-storage-blob"
         ],
         'cli': [
             "jsonschema>=4.21.1",
