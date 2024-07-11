@@ -180,7 +180,7 @@ def handle_json_content_message(message_data: dict, metadata: dict, vector_name:
         the_json = json.loads(message_data)
     except Exception as e:
         log.error(f"Could not load message {message_data} as JSON - {str(e)}")
-        return {"metadata": f"Could not load message as JSON - {str(e)}"}
+        return None, {"metadata": f"Could not load message as JSON - {str(e)}"}
     
     the_metadata = the_json.get("metadata", {})
     metadata.update(the_metadata)
@@ -191,7 +191,7 @@ def handle_json_content_message(message_data: dict, metadata: dict, vector_name:
 
     if the_content is None:
         log.info("No content found")
-        return {"metadata": "No content found in 'page_content' JSON field"}
+        return None, {"metadata": "No content found in 'page_content' JSON field"}
     
     docs = [Document(page_content=the_content, metadata=metadata)]
 
