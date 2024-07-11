@@ -16,7 +16,7 @@ from ..logging import log
 from ..azure import process_azure_blob_event
 from .process_chunker_data import process_chunker_data
 
-def data_to_embed_pubsub(events: list):
+def data_to_embed_azure(events: list):
     """Triggered from a message on an Azure Data Grid event.
     Args:
          data JSON
