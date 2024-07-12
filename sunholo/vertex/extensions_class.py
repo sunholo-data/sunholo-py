@@ -295,6 +295,9 @@ class VertexAIExtensions:
                 }
         else:
             log.warning("No vac configuration and not running locally so no authentication being set for this extension API call")
+        
+        if auth_config:
+            log.info(f"{auth_config=}")
 
         response = extension.execute(
             operation_id=operation_id,
