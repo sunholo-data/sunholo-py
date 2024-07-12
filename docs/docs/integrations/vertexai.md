@@ -48,7 +48,7 @@ extension_content = get_extension_content(question, config=config, animal="cat")
 
 ### VertexAIExtensions()
 
-The underlying [VertexAIExtensions()](sunholo/vertex/extensions_class) class has methods to aid creating extensions and executing them. See its documentation for more information.
+The underlying [VertexAIExtensions()](../sunholo/vertex/extensions_class) class has methods to aid creating extensions and executing them. See its documentation for more information.
 
 ## Vertex AI Search
 
