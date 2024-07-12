@@ -1,5 +1,55 @@
 # Vertex AI
 
+## Vertex AI Extensions
+
+[Vertex AI Extensions](https://cloud.google.com/vertex-ai/generative-ai/docs/extensions/overview) are API endpoints your GenAI applications can use to import data not within the model.  Extensions often wrap another API.  
+
+An example is the Code Extension, which lets you execute code in your GenAI workflow. 
+
+Since each VAC running has its own API endpoints, they are candidates for becoming Vertex AI Extensions to be called from other VACs or other GenAI applications not running upon Multivac Cloud.  Vertex AI Extensions have different authentication options ranging from free to an API key or OAuth2.  
+
+The `VertexAIExtensions` class provides methods for executing, creating and deploy Vertex AI extensions. 
+
+Set `extensions` within your `vacConfig` to use specific extensions in your VAC:
+
+```yaml
+  my_extension_powered_vac:
+    llm: vertex
+    model: gemini-1.5-pro-001
+    agent: vertex-genai
+    extensions:
+      - operation_id: post_edmonbrain_invoke
+        vac: edmonbrain # optional - if extension is calling a vac then this is used to determine the URL for the extension
+        extension_display_name: 'Edmonbrain Database' # specify this or extension_id
+        #extension_id: 123123123
+        operation_params: # helps get_extension_content() to know what schema will send in data and how to parse it out its reply
+          output:
+            answer: "output.content"  # which key to use for question
+            metadata: "output.metadata"  # which key to use for metadata
+          input:
+            question: ""  # Placeholder for the question parameter
+            chat_history: []  # Optional chat history
+            # other input parameters as needed by your extension
+            animal: ""
+```
+
+You could then fetch data from the Vertex AI Extension from within your app using the class:
+
+```python
+from sunholo.vertex import get_extension_content
+from sunholo.utils import ConfigManager
+
+config = ConfigManager('my_extension_powered_vac')
+question = "What is in my database that talks about kittens?")
+
+# maybe other params your extension handles i.e. 'animal'
+extension_content = get_extension_content(question, config=config, animal="cat")
+```
+
+### VertexAIExtensions()
+
+The underlying [VertexAIExtensions()](sunholo/vertex/extensions_class) class has methods to aid creating extensions and executing them. See its documentation for more information.
+
 ## Vertex AI Search
 
 Formally called Enterprise Search and AI Search and Conversation, this is a data store chunk version.
