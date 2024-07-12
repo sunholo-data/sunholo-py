@@ -19,7 +19,7 @@ class VertexAIExtensions:
 
     ```python
     from sunholo.vertex import VertexAIExtensions
-    vex = VertexAIExtensions()
+    vex = VertexAIExtensions(project_id='your-project')
     vex.list_extensions()
     # [{'resource_name': 'projects/374404277595/locations/us-central1/extensions/770924776838397952', 
     #   'display_name': 'Code Interpreter', 
@@ -53,7 +53,7 @@ class VertexAIExtensions:
     """
     def __init__(self, project_id=None):
         if extensions is None:
-            raise ImportError("VertexAIExtensions needs vertexai.previewextensions to be installed. Install via `pip install sunholo[gcp]`")
+            raise ImportError("VertexAIExtensions needs vertexai.preview extensions to be installed. Install via `pip install sunholo'[gcp]'`")
         
         self.CODE_INTERPRETER_WRITTEN_FILES = []
         self.css_styles = """
@@ -71,12 +71,13 @@ class VertexAIExtensions:
         self.manifest = {}
         self.created_extensions = []
         self.bucket_name = os.getenv('EXTENSIONS_BUCKET')
-        init_vertex(location=self.location, project_id=project_id)
+        self.project_id = project_id or get_gcp_project()
+        self.access_token = None
+        init_vertex(location=self.location, project_id=self.project_id)
 
-    def list_extensions(self, project_id:str=None):
-        project_id = project_id or get_gcp_project()
-        log.info(f"Creating extension within {project_id=}")
-        the_list = extensions.Extension.list(project=project_id)
+    def list_extensions(self):
+        log.info(f"Creating extension within {self.project_id=}")
+        the_list = extensions.Extension.list(project=self.project_id)
         
         extensions_list = []
         for ext in the_list:
@@ -109,12 +110,25 @@ class VertexAIExtensions:
 
         return self_uri
     
-    def upload_openapi_file(self, filename: str):
+    def upload_openapi_file(self, filename: str, vac:str=None):
+        if vac:
+            from ..agents.route import route_vac
+            import yaml
+
+            new_url = route_vac(vac)
+
+            log.info(f'Overwriting extension URL with VAC url for {vac=} - {new_url=}')
+            
+            openapi = yaml.safe_load(filename)
+
+            openapi['servers'][0]['url'] = new_url
+            with open(filename, 'w') as file:
+                yaml.dump(openapi, file, sort_keys=False)
+
         self.validate_openapi(filename)
         if not self.bucket_name:
             raise ValueError('Please specify env var EXTENSIONS_BUCKET for location to upload openapi spec')
         
-
         self.openapi_file_gcs = self.upload_to_gcs(filename)
     
     def load_tool_use_examples(self, filename: str):
@@ -126,21 +140,25 @@ class VertexAIExtensions:
         # google.cloud.aiplatform_v1beta1.types.ToolUseExample
         return self.tool_use_examples
     
+    def get_auth_token(self):
+        from google.auth import default
+        from google.auth.transport.requests import Request
+
+        credentials, project_id = default()
+        credentials.refresh(Request())
+        self.access_token = credentials.token
+
+        return self.access_token
 
     def update_tool_use_examples_via_patch(self):
         import requests
         import json
-        from google.auth import default
-        from google.auth.transport.requests import Request
 
         extension = self.created_extension
         if extension is None:
             raise ValueError("Need to create the extension first")
 
-        # Get the access token using Google authentication
-        credentials, project_id = default()
-        credentials.refresh(Request())
-        access_token = credentials.token
+        self.get_auth_token()
 
         ENDPOINT=f"{self.location}-aiplatform.googleapis.com"
         URL=f"https://{ENDPOINT}/v1beta1"
@@ -151,7 +169,7 @@ class VertexAIExtensions:
         url = f"{URL}/{extension_id}"
         log.info(f"PATCH {url}")
         headers = {
-            "Authorization": f"Bearer {access_token}",
+            "Authorization": f"Bearer {self.access_token}",
             "Content-Type": "application/json"
         }
 
@@ -202,25 +220,24 @@ class VertexAIExtensions:
                          tool_example_file: str = None,
                          runtime_config: dict = None,
                          service_account: str = None,
-                         project_id: str = None,
-                         bucket_name: str = None):
+                         bucket_name: str = None,
+                         vac: str = None):
         
-        project_id = project_id or get_gcp_project()
-        log.info(f"Creating extension within {project_id=}")
-        extension_name = f"projects/{project_id}/locations/us-central1/extensions/{validate_extension_id(display_name)}"
+        log.info(f"Creating extension within {self.project_id=}")
+        extension_name = f"projects/{self.project_id}/locations/us-central1/extensions/{validate_extension_id(display_name)}"
 
         if bucket_name:
             log.info(f"Setting extension bucket name to {bucket_name}")
             self.bucket_name = bucket_name
 
-        listed_extensions = self.list_extensions(project_id)
+        listed_extensions = self.list_extensions()
         log.info(f"Listing extensions:\n {listed_extensions}")
         for ext in listed_extensions:
             if ext.get('display_name') == display_name:
                 raise NameError(f"display_name {display_name} already exists.  Delete it or rename your new extension")
 
         if open_api_file:
-            self.upload_openapi_file(open_api_file)
+            self.upload_openapi_file(open_api_file, vac)
 
         manifest = self.create_extension_manifest(
             display_name,
@@ -254,10 +271,7 @@ class VertexAIExtensions:
             operation_id: str, 
             operation_params: dict, 
             extension_id: str=None, 
-            project_id: str=None,
             vac: str=None):
-        
-        init_vertex(location=self.location, project_id=project_id)
 
         if not extension_id:
             extension_name = self.created_extension.resource_name
@@ -266,8 +280,7 @@ class VertexAIExtensions:
         else:  
             extension_id = str(extension_id)
             if not extension_id.startswith("projects/"):
-                project_id = project_id or get_gcp_project()
-                extension_name = f"projects/{project_id}/locations/{self.location}/extensions/{extension_id}"
+                extension_name = f"projects/{self.project_id}/locations/{self.location}/extensions/{extension_id}"
             else:
                 extension_name = extension_id
 
@@ -284,14 +297,14 @@ class VertexAIExtensions:
             log.warning("Using local authentication via gcloud")
             auth_config = {
                     "authType": "OAUTH",
-                    "oauth_config": {"access_token": f"'{get_local_gcloud_token()}'"}
+                    "oauth_config": {"access_token": f"{get_local_gcloud_token()}"}
                 }
         elif vac:
             log.info(f"Using authentication via Cloud Run via {vac=}")
             
             auth_config = {
                     "authType": "OAUTH",
-                    "oauth_config": {"access_token": f"'{get_cloud_run_token(vac)}'"}
+                    "oauth_config": {"access_token": f"{get_cloud_run_token(vac)}"}
                 }
         else:
             log.warning("No vac configuration and not running locally so no authentication being set for this extension API call")

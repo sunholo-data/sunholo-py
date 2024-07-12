@@ -12,15 +12,14 @@ def deploy_extension(args):
         tool_example_file=args.tool_example_file,
         open_api_file=args.open_api_file,
         service_account=args.service_account,
-        project_id=args.project,
         bucket_name=args.bucket_name
     )
-    extensions = vex.list_extensions(args.project)
+    extensions = vex.list_extensions()
     console.print(extensions)
 
 def list_extensions(args):
-    vex = VertexAIExtensions()
-    extensions = vex.list_extensions(args.project)
+    vex = VertexAIExtensions(args.project)
+    extensions = vex.list_extensions()
     console.print(extensions)
 
 def setup_vertex_subparser(subparsers):
