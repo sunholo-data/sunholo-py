@@ -7,6 +7,7 @@ from .init import init_vertex
 from ..logging import log
 from ..utils.gcp_project import get_gcp_project
 from ..utils.parsers import validate_extension_id
+from ..utils import ConfigManager
 import base64
 import json
 from io import StringIO
@@ -248,7 +249,14 @@ class VertexAIExtensions:
 
         return extension.resource_name
 
-    def execute_extension(self, operation_id: str, operation_params: dict, extension_id: str=None, project_id: str=None):
+    def execute_extension(
+            self, 
+            operation_id: str, 
+            operation_params: dict, 
+            extension_id: str=None, 
+            project_id: str=None,
+            vac: str=None):
+        
         init_vertex(location=self.location, project_id=project_id)
 
         if not extension_id:
@@ -272,12 +280,21 @@ class VertexAIExtensions:
         auth_config=None # on cloud run it sorts itself out via default creds(?)
 
         if not is_running_on_cloudrun():
-            from ..auth import get_local_gcloud_token
+            from ..auth import get_local_gcloud_token, get_cloud_run_token
             log.warning("Using local authentication via gcloud")
             auth_config = {
                     "authType": "OAUTH",
                     "oauth_config": {"access_token": f"'{get_local_gcloud_token()}'"}
                 }
+        elif vac:
+            log.info(f"Using authentication via Cloud Run via {vac=}")
+            
+            auth_config = {
+                    "authType": "OAUTH",
+                    "oauth_config": {"access_token": f"'{get_cloud_run_token(vac)}'"}
+                }
+        else:
+            log.warning("No vac configuration and not running locally so no authentication being set for this extension API call")
 
         response = extension.execute(
             operation_id=operation_id,
