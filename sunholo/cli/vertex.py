@@ -3,8 +3,8 @@ from ..vertex import VertexAIExtensions
 from .sun_rich import console
 
 def deploy_extension(args):
-    vex = VertexAIExtensions()
-    console.rule(f"Creating Vertex extension '{args.display_name}'")
+    vex = VertexAIExtensions(args.project)
+    console.rule(f"Creating Vertex extension '{args.display_name}' within '{args.project}'")
 
     vex.create_extension(
         args.display_name,

@@ -50,7 +50,7 @@ class VertexAIExtensions:
                           operation_params = operation_params)
     ```
     """
-    def __init__(self):
+    def __init__(self, project_id=None):
         if extensions is None:
             raise ImportError("VertexAIExtensions needs vertexai.previewextensions to be installed. Install via `pip install sunholo[gcp]`")
         
@@ -70,6 +70,7 @@ class VertexAIExtensions:
         self.manifest = {}
         self.created_extensions = []
         self.bucket_name = os.getenv('EXTENSIONS_BUCKET')
+        init_vertex(location=self.location, project_id=project_id)
 
     def list_extensions(self, project_id:str=None):
         project_id = project_id or get_gcp_project()
@@ -113,7 +114,7 @@ class VertexAIExtensions:
             raise ValueError('Please specify env var EXTENSIONS_BUCKET for location to upload openapi spec')
         
 
-        self.openapi_file_gcs = self.upload_to_gcs(filename, bucket_name=self.bucket_name)
+        self.openapi_file_gcs = self.upload_to_gcs(filename)
     
     def load_tool_use_examples(self, filename: str):
         import yaml
@@ -211,7 +212,7 @@ class VertexAIExtensions:
             log.info(f"Setting extension bucket name to {bucket_name}")
             self.bucket_name = bucket_name
 
-        listed_extensions = self.list_extensions()
+        listed_extensions = self.list_extensions(project_id)
         log.info(f"Listing extensions:\n {listed_extensions}")
         for ext in listed_extensions:
             if ext.get('display_name') == display_name:
@@ -248,7 +249,7 @@ class VertexAIExtensions:
         return extension.resource_name
 
     def execute_extension(self, operation_id: str, operation_params: dict, extension_id: str=None, project_id: str=None):
-        init_vertex(location=self.location)
+        init_vertex(location=self.location, project_id=project_id)
 
         if not extension_id:
             extension_name = self.created_extension.resource_name

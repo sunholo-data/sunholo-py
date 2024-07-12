@@ -1,5 +1,6 @@
 from ..logging import log
 from ..utils.gcp_project import get_gcp_project
+from ..auth.refresh import get_default_email
 import os
 
 def init_genai():
@@ -19,7 +20,7 @@ def init_genai():
 
     genai.configure(api_key=GOOGLE_API_KEY)
 
-def init_vertex(gcp_config=None, location="eu"):
+def init_vertex(gcp_config=None, location="eu", project_id=None):
     """
     Initializes the Vertex AI environment using the provided Google Cloud Platform configuration.
 
@@ -62,6 +63,10 @@ def init_vertex(gcp_config=None, location="eu"):
         project_id = gcp_config.get('project_id')
         location = gcp_config.get('location') or location
     else:
-        project_id = get_gcp_project()
+        project_id = project_id or get_gcp_project()
+
+    log.info(f"Auth with email: {get_default_email()} in {project_id}")
 
     vertexai.init(project=project_id, location=location)
+
+

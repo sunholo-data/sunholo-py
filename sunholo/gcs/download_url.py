@@ -3,8 +3,6 @@ from urllib.parse import quote
 from datetime import datetime, timedelta
 
 # needs to be in minimal to check gcp
-import google.auth 
-from google.auth.transport import requests
 from google.auth.exceptions import RefreshError
 
 try:
@@ -14,6 +12,7 @@ except ImportError:
 
 from ..logging import log
 from ..utils.gcp import is_running_on_gcp
+from ..auth.refresh import refresh_credentials, get_default_creds, get_default_email
 from io import BytesIO
 try:
     from PIL import Image
@@ -77,24 +76,10 @@ def get_bytes_from_gcs(gs_uri):
 
 if is_running_on_gcp():
     # Perform a refresh request to get the access token of the current credentials (Else, it's None)
-    gcs_credentials, project_id = google.auth.default()
+    gcs_credentials, project_id = get_default_creds()
     # Prepare global variables for client reuse
     if storage:
         gcs_client = storage.Client()
-
-def refresh_credentials():
-    if not is_running_on_gcp():
-        log.debug("Not running on Google Cloud so no credentials available for GCS.")
-        return False
-    if not gcs_credentials.token or gcs_credentials.expired or not gcs_credentials.valid:
-        try:
-            gcs_credentials.refresh(requests.Request())
-        except Exception as e:
-            log.error(f"Failed to refresh gcs credentials: {e}")
-            return False
-    return True
-
-refresh_credentials()
 
 def get_bucket(bucket_name):
     if bucket_name not in gcs_bucket_cache:
@@ -102,21 +87,10 @@ def get_bucket(bucket_name):
     return gcs_bucket_cache[bucket_name]
 
 def sign_gcs_url(bucket_name:str, object_name:str, expiry_secs = 86400):
-    if not refresh_credentials():
-        log.error("Could not refresh the credentials properly.")
-        return None
-    # https://stackoverflow.com/questions/64234214/how-to-generate-a-blob-signed-url-in-google-cloud-run
+    
+    service_account_email = get_default_email()
 
     expires = datetime.now() + timedelta(seconds=expiry_secs)
-
-    service_account_email = getattr(gcs_credentials, 'service_account_email', None)
-    # If you use a service account credential, you can use the embedded email
-    if not service_account_email:
-        service_account_email = os.getenv('GCS_MAIL_USER')
-        if service_account_email is None:
-            log.error("For local testing must set a GCS_MAIL_USER to sign GCS URLs")
-        log.error("Could not create the credentials for signed requests - no credentials.service_account_email or GCS_MAIL_USER with roles/iam.serviceAccountTokenCreator")
-        return None
 
     try:
         bucket = get_bucket(bucket_name)
