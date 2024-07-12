@@ -8,7 +8,7 @@ An example is the Code Extension, which lets you execute code in your GenAI work
 
 Since each VAC running has its own API endpoints, they are candidates for becoming Vertex AI Extensions to be called from other VACs or other GenAI applications not running upon Multivac Cloud.  Vertex AI Extensions have different authentication options ranging from free to an API key or OAuth2.  
 
-The `VertexAIExtensions` class provides methods for executing, creating and deploy Vertex AI extensions. 
+The `VertexAIExtensions` class provides methods for executing, creating and deploying Vertex AI extensions. 
 
 Set `extensions` within your `vacConfig` to use specific extensions in your VAC:
 
@@ -33,7 +33,7 @@ Set `extensions` within your `vacConfig` to use specific extensions in your VAC:
             animal: ""
 ```
 
-You could then fetch data from the Vertex AI Extension from within your app using the class:
+You could then fetch data from the Vertex AI Extension from within your app using the helper function [get_extension_content()](../sunholo/vertex/extensions_call)
 
 ```python
 from sunholo.vertex import get_extension_content
@@ -62,9 +62,42 @@ memory:
         vectorstore: vertex_ai_search # or 'discovery_engine'
 ```
 
-### Calling Vertex AI Search
+## LlamaIndex on Vertex AI
 
-You can use `vertex_ai_search` or `llamaindex` specified below in your Vertex GenAI apps like this:
+To use Llama Index on Vertex AI, set it as a `memory` within your `vacConfig` file.
+
+Set `vectorstore: llamaindex`
+
+```yaml
+memory:
+    - llamaindex-native:
+        vectorstore: llamaindex
+        rag_id: 4611686018427387904 
+```
+
+
+### Calling Vertex AI Search and LlamaIndex
+
+First add `vectorstore: llamaindex` and/or `vectorstore: vertex_ai_search` to your `vacConfig` file:
+
+```yaml
+kind: vacConfig
+apiVersion: v1
+vac:
+  personal_llama:
+    llm: vertex
+    model: gemini-1.5-pro-preview-0514
+    agent: vertex-genai
+    display_name: Gemini with grounding via LlamaIndex and Vertex AI Search
+    memory:
+      - llamaindex-native:
+          vectorstore: llamaindex
+          rag_id: 4611686018427387904  # created via cli beforehand
+      - discovery_engine_vertex_ai_search:
+          vectorstore: vertex_ai_search # or discovery_engine
+```
+
+Then you can call those memory types (`vertex_ai_search` or `llamaindex`) in your Vertex GenAI apps like this:
 
 ```python
 from sunholo.utils.config import load_config_key
@@ -77,7 +110,9 @@ vac_name = "must_match_your_vacConfig"
 # will init vertex client
 init_vertex()
 
-# will look in your vacConfig for vertex-ai-search and llamaindex vectorstores
+# get_vertex_memories() will look in your vacConfig for vertex-ai-search and llamaindex vectorstores
+# Fetches a Vertex AI Search chunked memory (Discovery Engine)
+# also fetches a LlamaIndex chunked memory (LlamaIndexc on Vertex)
 corpus_tools = get_vertex_memories(vac_name)
 
 # load model from config
@@ -98,26 +133,17 @@ for chunk in response:
 
 ```
 
-The above assumes a vacConfig like this:
+### Calling Vertex AI Search via Langchain
 
-```yaml
-kind: vacConfig
-apiVersion: v1
-vac:
-  personal_llama:
-    llm: vertex
-    model: gemini-1.5-pro-preview-0514
-    agent: vertex-genai
-    display_name: Gemini with grounding via LlamaIndex and Vertex AI Search
-    memory:
-      - llamaindex-native:
-          vectorstore: llamaindex
-          rag_id: 4611686018427387904  # created via cli beforehand
-      - discovery_engine_vertex_ai_search:
-          vectorstore: vertex_ai_search # or discovery_engine
-```
+The above example used the `vertex` python library, but you can use Vertex AI Search from any python script.  
 
-To use within a Langchain app, the [`DiscoveryEngineClient`](../sunholo/discovery_engine/discovery_engine_client/) can be used to import or export chunks from the Vertex AI Search data store.
+> LlamaIndex on Vertex can't be used from non-Vertex framworks, but you can deploy a native LlamaIndex VAC and use it instead - perhaps via Vertex AI Extensions
+
+A popular GenAI framework is Langchain.
+
+To use Vertex AI Search within Langchain, the [`DiscoveryEngineClient`](../sunholo/discovery_engine/discovery_engine_client/) can be used to import or export chunks from the Vertex AI Search data store.
+
+> DiscoveryEngine is the old name for Vertex AI Search
 
 An example for a `vac_service.py` file is below, based of a [Langchain QA Chat to docs tutorial](https://python.langchain.com/v0.2/docs/how_to/qa_chat_history_how_to).
 
@@ -165,21 +191,6 @@ def vac(question: str, vector_name, chat_history=[], **kwargs):
     return {"answer": response}
 ```
 
-
-## LlamaIndex on Vertex AI
-
-To use Llama Index on Vertex AI, set it as a `memory` within your `vacConfig` file.
-
-Set `vectorstore: llamaindex`
-
-```yaml
-memory:
-    - llamaindex-native:
-        vectorstore: llamaindex
-        rag_id: 4611686018427387904 
-```
-
-See above for code calling your data for RAG.
 
 ## Vertex Model Garden
 
