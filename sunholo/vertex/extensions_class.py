@@ -7,7 +7,7 @@ from .init import init_vertex
 from ..logging import log
 from ..utils.gcp_project import get_gcp_project
 from ..utils.parsers import validate_extension_id
-from ..utils import ConfigManager
+from ..auth import get_local_gcloud_token, get_cloud_run_token
 import base64
 import json
 from io import StringIO
@@ -280,7 +280,7 @@ class VertexAIExtensions:
         auth_config=None # on cloud run it sorts itself out via default creds(?)
 
         if not is_running_on_cloudrun():
-            from ..auth import get_local_gcloud_token, get_cloud_run_token
+            
             log.warning("Using local authentication via gcloud")
             auth_config = {
                     "authType": "OAUTH",
