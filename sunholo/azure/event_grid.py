@@ -12,9 +12,10 @@ def process_azure_blob_event(events: list) -> tuple:
         tuple: A tuple containing the blob URL, attributes as metadata, and the vector name.
         
     Example of Event Grid schema:
+    ```
     {
-        "topic": "/subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Storage/storageAccounts/{storage-account}",
-        "subject": "/blobServices/default/containers/{container}/blobs/{blob}",
+        "topic": "/subscriptions/subscription-id/resourceGroups/resource-group/providers/Microsoft.Storage/storageAccounts/storage-account",
+        "subject": "/blobServices/default/containers/container/blobs/blob",
         "eventType": "Microsoft.Storage.BlobCreated",
         "eventTime": "2021-01-01T12:34:56.789Z",
         "id": "event-id",
@@ -26,8 +27,8 @@ def process_azure_blob_event(events: list) -> tuple:
             "contentType": "application/octet-stream",
             "contentLength": 524288,
             "blobType": "BlockBlob",
-            "url": "https://{storage-account}.blob.core.windows.net/{container}/{blob}",
-            "sequencer": "0000000000000000000000000000000000000000000000000000000000000000",
+            "url": "https://storage-account.blob.core.windows.net/container/blob",
+            "sequencer": "0000000000000000000000000",
             "storageDiagnostics": {
                 "batchId": "batch-id"
             }
@@ -35,6 +36,7 @@ def process_azure_blob_event(events: list) -> tuple:
         "dataVersion": "",
         "metadataVersion": "1"
     }
+    ```
     """
     storage_blob_created_event = "Microsoft.Storage.BlobCreated"
     
