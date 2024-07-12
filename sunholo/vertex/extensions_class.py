@@ -7,6 +7,7 @@ from .init import init_vertex
 from ..logging import log
 from ..utils.gcp_project import get_gcp_project
 from ..utils.parsers import validate_extension_id
+from ..utils.gcp import is_running_on_cloudrun
 from ..auth import get_local_gcloud_token, get_cloud_run_token
 import base64
 import json
@@ -271,27 +272,31 @@ class VertexAIExtensions:
             operation_id: str, 
             operation_params: dict, 
             extension_id: str=None, 
+            extension_display_name: str=None,
             vac: str=None):
 
-        if not extension_id:
-            extension_name = self.created_extension.resource_name
-            if extension_name is None:
-                raise ValueError("Must specify extension_id or init one with class")
-        else:  
+        if extension_display_name:
+            extensions = self.list_extensions()
+            for extension in extensions:
+                if extension.get('display_name') == extension_display_name:
+                    log.info(f"Found extension_id for '{extension_display_name}'")
+                    extension_id = extension['resource_name']
+                    break
+        
+        if extension_id:
             extension_id = str(extension_id)
             if not extension_id.startswith("projects/"):
                 extension_name = f"projects/{self.project_id}/locations/{self.location}/extensions/{extension_id}"
             else:
                 extension_name = extension_id
+        else: 
+            extension_name = self.created_extension.resource_name
+            if not extension_name:
+                raise ValueError("Must specify extension_id or extension_name - both were None")
 
         extension = extensions.Extension(extension_name)
 
-        log.info(f"Executing extension {extension_name=} with {operation_id=} and {operation_params=}")
-
-        # local testing auth
-        from ..utils.gcp import is_running_on_cloudrun
-        auth_config=None # on cloud run it sorts itself out via default creds(?)
-
+        auth_config=None
         if not is_running_on_cloudrun():
             
             log.warning("Using local authentication via gcloud")
@@ -308,10 +313,8 @@ class VertexAIExtensions:
                 }
         else:
             log.warning("No vac configuration and not running locally so no authentication being set for this extension API call")
-        
-        if auth_config:
-            log.info(f"{auth_config=}")
 
+        log.info(f"Executing extension {extension_name=} with {operation_id=} and {operation_params=}")
         response = extension.execute(
             operation_id=operation_id,
             operation_params=operation_params,

@@ -66,7 +66,7 @@ def get_cloud_run_token(vector_name):
             }
     log.info(f"Authenticating for run_url {run_url} from {caller_frame.f_code.co_name}")
     id_token = get_id_token(run_url)
-    log.info(f"id_token {id_token}")
+    #log.info(f"id_token {id_token}")
     return id_token
 
 def get_header(vector_name) -> Optional[dict]:
