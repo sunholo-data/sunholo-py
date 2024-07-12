@@ -276,11 +276,11 @@ class VertexAIExtensions:
             vac: str=None):
 
         if extension_display_name:
-            extensions = self.list_extensions()
-            for extension in extensions:
-                if extension.get('display_name') == extension_display_name:
+            exts = self.list_extensions()
+            for ext in exts:
+                if ext.get('display_name') == extension_display_name:
                     log.info(f"Found extension_id for '{extension_display_name}'")
-                    extension_id = extension['resource_name']
+                    extension_id = ext['resource_name']
                     break
         
         if extension_id:
