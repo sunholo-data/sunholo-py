@@ -12,7 +12,7 @@ def init_genai():
     try:
         import google.generativeai as genai
     except ImportError:
-        raise ImportError("google.generativeai not installed, please install via 'pip install sunholo[gcp]")
+        raise ImportError("google.generativeai not installed, please install via 'pip install sunholo'[gcp]'")
     
     GOOGLE_API_KEY=os.getenv('GOOGLE_API_KEY')
     if not GOOGLE_API_KEY:

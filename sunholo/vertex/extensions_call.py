@@ -2,6 +2,106 @@ from .extensions_class import VertexAIExtensions
 from ..utils import ConfigManager
 from ..logging import log
 import collections.abc
+import json
+
+from .genai_functions import genai_structured_output
+
+def dynamic_extension_call(question, vac, project_id:str=None, model_name:str="models/gemini-1.5-pro", **kwargs):
+    config = ConfigManager(vac)
+
+    extensions = config.vacConfig('extensions')
+    if not extensions:
+        log.warning("No extensions founded for vac: {vac}")
+
+        return None
+    
+    responses = []
+    for tool in extensions:
+
+        call_json = parse_extension_input(question, 
+                                          extension_id=tool.get('extension_id'),
+                                          extension_display_name=tool.get('extension_display_name'),
+                                          config=config,
+                                          project_id=project_id,
+                                          model_name=model_name,
+                                          **kwargs)
+        if call_json:
+            question = call_json.pop('question')
+            extension_output = get_extension_content(question=question,
+                                                     config=config,
+                                                     project_id=project_id,
+                                                     **call_json)
+            responses.append(extension_output)
+        else:
+            log.warning(f"No json found for extension {tool}")
+    
+    return responses
+
+def parse_extension_input(
+        question: str, 
+        extension_id: str=None, 
+        extension_display_name:str=None, 
+        config: ConfigManager=None, 
+        project_id:str=None, 
+        model_name:str="models/gemini-1.5-pro", 
+        **kwargs):
+    """
+    Takes a question and kwargs and makes an LLM call to extract parameters for an extension call.
+    If no parameters are found, returns None
+    Once parameters are extracted, makes the call to the extension via get_extenstion_content()
+
+    Example:
+    Assuming an OpenAPI configuration file as follows:
+    
+    """
+
+    extensions = config.vacConfig('extensions')
+    ve = VertexAIExtensions(project_id)
+
+    for ext in extensions:
+        if extension_id == ext.get("extension_id") or extension_display_name == ext.get("extension_display_name"):
+            extension = ve.get_extension(extension_id=extension_id, extension_display_name=extension_display_name)
+            break
+    
+    if not extension:
+        raise ValueError(f"No extension found matching {extension_id=} or {extension_display_name=}")
+    
+    openapi_spec = ve.get_openapi_spec()
+    log.info(f"OpenAPI Spec: {openapi_spec}")
+
+    if not openapi_spec:
+        raise ValueError(f"No input schema detected for {extension=}")
+
+    model = genai_structured_output(
+        openapi_spec, 
+        system_prompt="You are an assistant that must only parse your input into the provided json schema output. Do not attempt to answer any questions or do anything else other than extracting data into the output schema", 
+        model_name=model_name, 
+        **kwargs)
+
+    contents = [
+        "The user question may contain information that can be used to populate the output schema",
+        "As a minimum the question key should container the user question in 'question', but also examine the content and see if you can fill in the rest of the output schema fields",
+        f"User Question to parse: {question}"
+    ]
+
+    tokens = model.count_tokens(contents)
+    log.info(f"Used [{tokens}] in prompt")
+
+    json_response = model.generate_content(contents)
+
+    log.debug(f"parsed_extension_input returns: {json_response=}")
+
+    try:
+        json_object = json.loads(json_response.text)
+        log.info(f"Got valid json: {json_object}")
+
+        return json_object
+    
+    except Exception as err:
+        log.error(f"Failed to parse GenAI output to JSON: {json_response=} - {str(err)}")
+
+        return None 
+
 
 def get_extension_content(question: str, config: ConfigManager, project_id:str=None, **kwargs):
     """
@@ -23,8 +123,8 @@ def get_extension_content(question: str, config: ConfigManager, project_id:str=N
         vac:
             my_vac:
                 extensions:
-                - extension_id: 8524997435263549440
-                  operation_id: post_our_new_energy_invoke_one_generic
+                - extension_id: 8524997435263549440 # or extension_display_name:
+                  operation_id: post_extension_invoke_one_generic
                   vac: our_generic
                   operation_params:
                     input:
@@ -281,4 +381,13 @@ def extract_nested_value(data, key):
 
 if __name__ == "__main__":
     config = ConfigManager("one_ai")
-    get_extension_content("What are PPAs in france like?", config=config)
+    #get_extension_content("What are PPAs in france like?", config=config)
+    parse_extension_input("What are PPAs in france like?", 
+                          extension_display_name="Our New Energy Database2",
+                          config=config)
+    parse_extension_input("What are PPas in france like? Look in files within the PPA/ or /PPA2 folder, returning the whole documents", 
+                          extension_display_name="Our New Energy Database2", 
+                          config=config, model_name="models/gemini-1.5-pro")
+# {'question': 'What are PPas in france like? Look in files within the PPA/ or /PPA2 folder, returning the whole documents', 
+# 'chat_history': [], 'source_filters': ['PPA/', '/PPA2'], 
+# 'source_filters_and_or': False, 'search_kwargs': {}, 'private_docs': [], 'whole_document': True}

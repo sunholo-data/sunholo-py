@@ -6,13 +6,13 @@ except ImportError:
 from .init import init_vertex
 from ..logging import log
 from ..utils.gcp_project import get_gcp_project
-from ..utils.parsers import validate_extension_id
 from ..utils.gcp import is_running_on_cloudrun
 from ..auth import get_local_gcloud_token, get_cloud_run_token
 import base64
 import json
 from io import StringIO
 import os
+import re
 
 class VertexAIExtensions:
     """
@@ -74,6 +74,7 @@ class VertexAIExtensions:
         self.bucket_name = os.getenv('EXTENSIONS_BUCKET')
         self.project_id = project_id or get_gcp_project()
         self.access_token = None
+        self.current_extension = None
         init_vertex(location=self.location, project_id=self.project_id)
 
     def list_extensions(self):
@@ -111,7 +112,7 @@ class VertexAIExtensions:
 
         return self_uri
     
-    def upload_openapi_file(self, filename: str, vac:str=None):
+    def upload_openapi_file(self, filename: str, extension_name:str, vac:str=None):
         if vac:
             from ..agents.route import route_vac
             import yaml
@@ -130,8 +131,19 @@ class VertexAIExtensions:
         if not self.bucket_name:
             raise ValueError('Please specify env var EXTENSIONS_BUCKET for location to upload openapi spec')
         
-        self.openapi_file_gcs = self.upload_to_gcs(filename)
-    
+        upload_name = f"{extension_name}/{filename}"
+
+        self.openapi_file_gcs = self.upload_to_gcs(upload_name)
+
+    def get_openapi_spec(self, extension_id: str=None, extension_display_name:str=None):
+        """
+        Gets the openapi spec file for an extension
+        """
+        if not self.current_extension:
+            self.current_extension = self.get_extension(extension_id=extension_id, extension_display_name=extension_display_name)
+
+        return self.current_extension.api_spec()
+        
     def load_tool_use_examples(self, filename: str):
         import yaml
 
@@ -155,7 +167,7 @@ class VertexAIExtensions:
         import requests
         import json
 
-        extension = self.created_extension
+        extension = self.created_extension or self.current_extension
         if extension is None:
             raise ValueError("Need to create the extension first")
 
@@ -214,6 +226,38 @@ class VertexAIExtensions:
 
         return self.manifest
 
+    def validate_extension_id(self, ext_id: str):
+        """
+        Ensures the passed string fits the criteria for an extension ID.
+        If not, changes it so it will be.
+
+        Criteria:
+        - Length should be 4-63 characters.
+        - Valid characters are lowercase letters, numbers, and hyphens ("-").
+        - Should start with a number or a lowercase letter.
+
+        Args:
+            ext_id (str): The extension ID to validate and correct.
+
+        Returns:
+            str: The validated and corrected extension ID.
+        """
+        # Replace invalid characters
+        ext_id = re.sub(r'[^a-z0-9-]', '-', ext_id.lower())
+        
+        # Ensure it starts with a number or a lowercase letter
+        if not re.match(r'^[a-z0-9]', ext_id):
+            ext_id = 'a' + ext_id
+        
+        # Trim to 63 characters
+        ext_id = ext_id[:63]
+        
+        # Pad to at least 4 characters
+        while len(ext_id) < 4:
+            ext_id += 'a'
+        
+        return ext_id
+
     def create_extension(self,
                          display_name: str,
                          description: str,
@@ -225,7 +269,7 @@ class VertexAIExtensions:
                          vac: str = None):
         
         log.info(f"Creating extension within {self.project_id=}")
-        extension_name = f"projects/{self.project_id}/locations/us-central1/extensions/{validate_extension_id(display_name)}"
+        extension_name = f"projects/{self.project_id}/locations/us-central1/extensions/{self.validate_extension_id(display_name)}"
 
         if bucket_name:
             log.info(f"Setting extension bucket name to {bucket_name}")
@@ -238,7 +282,7 @@ class VertexAIExtensions:
                 raise NameError(f"display_name {display_name} already exists.  Delete it or rename your new extension")
 
         if open_api_file:
-            self.upload_openapi_file(open_api_file, vac)
+            self.upload_openapi_file(open_api_file, self.validate_extension_id(display_name), vac)
 
         manifest = self.create_extension_manifest(
             display_name,
@@ -261,20 +305,25 @@ class VertexAIExtensions:
         log.info(f"Created Vertex Extension: {extension_name}")
         
         self.created_extension = extension
+        self.current_extension = extension
 
         if tool_example_file:
             self.update_tool_use_examples_via_patch()
 
         return extension.resource_name
-
-    def execute_extension(
-            self, 
-            operation_id: str, 
-            operation_params: dict, 
-            extension_id: str=None, 
+    
+    def get_extension(
+            self,
+            extension_id: str=None,
             extension_display_name: str=None,
-            vac: str=None):
+    ):
+        """
+        Resolves the extension_id from the Display Name if not given.
 
+        Returns: 
+        Extension object
+
+        """
         if extension_display_name:
             exts = self.list_extensions()
             for ext in exts:
@@ -293,8 +342,20 @@ class VertexAIExtensions:
             extension_name = self.created_extension.resource_name
             if not extension_name:
                 raise ValueError("Must specify extension_id or extension_name - both were None")
+        
+        self.current_extension = extensions.Extension(extension_name)
 
-        extension = extensions.Extension(extension_name)
+        return self.current_extension
+
+    def execute_extension(
+            self, 
+            operation_id: str, 
+            operation_params: dict, 
+            extension_id: str=None, 
+            extension_display_name: str=None,
+            vac: str=None):
+
+        extension = self.get_extension(extension_id=extension_id, extension_display_name=extension_display_name)
 
         auth_config=None
         if not is_running_on_cloudrun():
@@ -314,14 +375,14 @@ class VertexAIExtensions:
         else:
             log.warning("No vac configuration and not running locally so no authentication being set for this extension API call")
 
-        log.info(f"Executing extension {extension_name=} with {operation_id=} and {operation_params=}")
+        log.info(f"Executing extension {extension.display_name=} with {operation_id=} and {operation_params=}")
         response = extension.execute(
             operation_id=operation_id,
             operation_params=operation_params,
             runtime_auth_config=auth_config
         )
 
-        log.info(f"Extension {extension_name=} {response=}")
+        log.info(f"Extension {extension.display_name=} {response=}")
 
         return response
 
