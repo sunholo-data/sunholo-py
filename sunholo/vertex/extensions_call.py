@@ -6,8 +6,7 @@ import json
 
 from .genai_functions import genai_structured_output
 
-def dynamic_extension_call(question, vac, project_id:str=None, model_name:str="models/gemini-1.5-pro", **kwargs):
-    config = ConfigManager(vac)
+def dynamic_extension_call(question, config:ConfigManager, project_id:str=None, model_name:str="models/gemini-1.5-pro", **kwargs):
 
     extensions = config.vacConfig('extensions')
     if not extensions:
