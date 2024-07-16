@@ -1,6 +1,6 @@
 substitutions:
   _SERVICE_NAME: template
-  _BUILD_FOLDER: application/vac/template
+  _BUILD_FOLDER: template
   _IMAGE_NAME: terraform_managed
   _REGION: terraform_managed
   _ARTIFACT_REGISTRY_REPO_URL: terraform_managed
@@ -31,7 +31,7 @@ steps:
 
       EXPOSE 8080
 
-      RUN uv pip install --upgrade -r requirements.txt
+      RUN pip install --upgrade -r requirements.txt
 
       RUN pip list && python --version
 
@@ -74,6 +74,7 @@ steps:
   - name: 'python:3.9'
     id: validate config
     entrypoint: 'bash'
+    dir: ${_BUILD_FOLDER}
     waitFor: ["-"]
     args:
     - '-c'
