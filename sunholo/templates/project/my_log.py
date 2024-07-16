@@ -1,2 +1,3 @@
 from sunholo.logging import setup_logging
-log = setup_logging("template")
+
+log = setup_logging("sunholo")

@@ -1,7 +1,9 @@
-from .my_log import log
+from my_log import log
 from sunholo.utils import ConfigManager
 
-# VAC specific imports
+# VAC specific imports 
+
+#TODO: Developer to update to their own implementation
 from sunholo.vertex import init_vertex, get_vertex_memories
 from vertexai.preview.generative_models import GenerativeModel
 

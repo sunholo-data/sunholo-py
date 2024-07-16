@@ -249,7 +249,8 @@ def load_config_key(key: str, vector_name: str, kind: str):
         return key_value
     elif kind == 'agentConfig':
         agents = config.get('agents')
-
+        if not agents:
+            return None
         if key in agents:
             return agents[key]
         else:

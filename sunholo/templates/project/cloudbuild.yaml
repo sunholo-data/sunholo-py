@@ -1,6 +1,6 @@
 substitutions:
-  _SERVICE_NAME: template
-  _BUILD_FOLDER: template
+  _SERVICE_NAME: CHANGE_ME
+  _BUILD_FOLDER: CHANGE_ME
   _IMAGE_NAME: terraform_managed
   _REGION: terraform_managed
   _ARTIFACT_REGISTRY_REPO_URL: terraform_managed
@@ -83,14 +83,3 @@ steps:
       sunholo list-configs --validate || exit 1
       sunholo list-configs --kind=vacConfig --vac=${_SERVICE_NAME} --validate || exit 1
 
-  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
-    entrypoint: 'bash'
-    dir: ${_BUILD_FOLDER}
-    id: check VAC working
-    args:
-    - '-c'
-    - |
-        set -e
-        apt-get update && apt-get install -y python3-pip
-        pip3 install --no-cache-dir sunholo[cli]
-        sunholo vac --no-proxy chat ${_SERVICE_NAME} 'hello' --headless || exit 1

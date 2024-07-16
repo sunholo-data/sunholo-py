@@ -74,6 +74,14 @@ def llm_str_to_llm(llm_str, model=None, vector_name=None, config=None):
             return ChatOpenAI(model=model, temperature=0, max_tokens=4000)
                 
         return ChatOpenAI(model=model, temperature=0, max_tokens=4000)
+    
+    elif llm_str == 'genai':
+        from langchain_google_genai import ChatGoogleGenerativeAI
+        if model is None:
+            model = "gemini-pro"
+            log.info(f"No 'model' value in config file - selecting default {model}")
+        
+        return ChatGoogleGenerativeAI(model=model)
 
     elif llm_str == 'vertex':
         # Setup for Vertex LLM

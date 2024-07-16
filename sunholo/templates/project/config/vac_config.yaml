@@ -1,7 +1,7 @@
 kind: vacConfig
 apiVersion: v1
 vac:
-  template_vac:
+  template_vac: #TODO: update to your own vac configuration
     llm: vertex
     model: gemini-1.5-pro-preview-0514
     agent: vertex-genai
