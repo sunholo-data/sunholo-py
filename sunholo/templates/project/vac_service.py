@@ -1,31 +1,14 @@
-from sunholo.logging import setup_logging
-from sunholo.utils.config import load_config_key
+from .my_log import log
+from sunholo.utils import ConfigManager
 
 # VAC specific imports
 from sunholo.vertex import init_vertex, get_vertex_memories
 from vertexai.preview.generative_models import GenerativeModel
 
-log = setup_logging("template")
-
 #TODO: change this to a streaming VAC function
 def vac_stream(question: str, vector_name, chat_history=[], callback=None, **kwargs):
 
     rag_model = create_model(vector_name)
-
-    # example of image/video processing
-    url = None
-    if kwargs.get('image_uri'):
-        log.info(f"Got image_url: {kwargs.get('image_url')}")
-        url = kwargs["image_uri"]
-    else:
-        log.debug("No image_uri found")
-
-    mime = None
-    if kwargs.get('mime'):
-        log.info(f"Got mime: {kwargs.get('image_url')}")
-        mime = kwargs["mime"]
-    else:
-        log.debug("No mime found")
 
     # streaming model calls
     response = rag_model.generate_content(question, stream=True)
@@ -59,15 +42,17 @@ def vac(question: str, vector_name, chat_history=[], **kwargs):
 
 
 # TODO: common model setup to both batching and streaming
-def create_model(vector_name):
-    gcp_config = load_config_key("gcp_config", vector_name=vector_name, kind="vacConfig")
+def create_model(vac):
+    config = ConfigManager(vac)
+
+    gcp_config = config.vacConfig("gcp_config")
     if not gcp_config:
-        raise ValueError(f"Need config.{vector_name}.gcp_config to configure XXXX on VertexAI")
+        raise ValueError(f"Need config.{vac}.gcp_config to configure XXXX on VertexAI")
 
     init_vertex(gcp_config)
-    corpus_tools = get_vertex_memories(vector_name)
+    corpus_tools = get_vertex_memories(vac)
 
-    model = load_config_key("model", vector_name=vector_name, kind="vacConfig")
+    model = config.vacConfig("model")
 
     # Create a gemini-pro model instance
     # https://ai.google.dev/api/python/google/generativeai/GenerativeModel#streaming

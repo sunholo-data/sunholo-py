@@ -522,9 +522,11 @@ def prep_vac(request, vector_name):
     config, _ = load_config("config/llm_config.yaml")
     vac_configs = config.get("vac")
     if vac_configs:
-        vac_config = vac_configs[vector_name]
+        vac_config = vac_configs.get(vector_name)
+        if not vac_config:
+            log.warning("Not a local configured VAC, may be a remote config not synced yet")
 
-    if trace:
+    if trace and vac_config:
         trace.update(input=data, metadata=vac_config)
 
     user_input = data.pop('user_input').strip()

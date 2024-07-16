@@ -2,22 +2,23 @@
 import inspect
 
 from typing import Dict, Optional
-from ..utils.config import load_config_key, load_config
+from ..utils.config import load_config
+from ..utils import ConfigManager
 from ..utils.gcp import is_running_on_cloudrun
 from ..utils.api_key import has_multivac_api_key, get_multivac_api_key
 from ..logging import log
 from ..agents.route import route_vac
 from .gcloud import get_local_gcloud_token
 
-def get_run_url(vector_name=None):
+def get_run_url(config):
 
-    if not vector_name:
+    if not config:
         raise ValueError('Vector name was not specified')
     
-    cloud_urls = route_vac(vector_name)
+    cloud_urls = route_vac(config=config)
     
     cloud_urls, _ = load_config('config/cloud_run_urls.json')
-    agent = load_config_key("agent", vector_name=vector_name, kind="vacConfig")
+    agent = config.vacConfig("agent")
 
     try:
         log.info(f'Looking up URL for {agent}')
@@ -44,10 +45,13 @@ def get_cloud_run_token(vector_name):
         
         return {"x-api-key": get_multivac_api_key()}
 
-    if is_running_on_cloudrun():
-        run_url = get_run_url(vector_name)
-    else:
-        run_url = "http://127.0.0.1:8080"
+    #if is_running_on_cloudrun():
+    #    run_url = get_run_url(vector_name)
+    #else:
+    #    run_url = "http://127.0.0.1:8080"
+    
+    config = ConfigManager(vector_name)
+    run_url = get_run_url(config)
 
     # Append ID Token to make authenticated requests to Cloud Run services
     frame = inspect.currentframe()
