@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from ..logging import log
-from ..utils.config import load_config_key
+from ..utils import load_config_key, ConfigManager
 
 import os
 
@@ -57,7 +57,14 @@ def pick_streaming(vector_name):
     return False
 
 
-def llm_str_to_llm(llm_str, model=None, vector_name=None):
+def llm_str_to_llm(llm_str, model=None, vector_name=None, config=None):
+
+    if llm_str is None:
+        raise NotImplementedError("llm_str was None")
+    
+    if vector_name:
+        config = ConfigManager(vector_name)
+
     if llm_str == 'openai':
         # Setup for OpenAI LLM
         from langchain_openai import ChatOpenAI
@@ -70,7 +77,7 @@ def llm_str_to_llm(llm_str, model=None, vector_name=None):
 
     elif llm_str == 'vertex':
         # Setup for Vertex LLM
-        from langchain_community.llms import VertexAI
+        from langchain_google_vertexai import VertexAI
         if model is None:
             model = 'text-unicorn'
             log.info(f"No 'model' value in config file - selecting default {model}")
@@ -79,7 +86,7 @@ def llm_str_to_llm(llm_str, model=None, vector_name=None):
 
     elif llm_str == 'model_garden':
         from ..patches.langchain.vertexai import VertexAIModelGarden
-        model_garden_config = load_config_key("gcp_config", vector_name, kind="vacConfig")
+        model_garden_config = config.vacConfig("gcp_config")
         if model_garden_config is None:
             raise ValueError("llm='model_garden' requires a gcp_config entry in config yaml file")
         
@@ -97,16 +104,18 @@ def llm_str_to_llm(llm_str, model=None, vector_name=None):
     if llm_str is None:
         raise NotImplementedError(f'No llm implemented for {llm_str}') 
 
-def get_llm(vector_name, model=None):
-    llm_str = load_config_key("llm", vector_name, kind="vacConfig")
-    #model_lookup_filepath = get_module_filepath("lookup/model_lookup.yaml")
-    #model_lookup, _ = load_config(model_lookup_filepath)
+def get_llm(vector_name=None, model=None, config=None):
+
+    if vector_name:
+        config = ConfigManager(vector_name)
+
+    llm_str = config.vacConfig("llm")
 
     if not model:
-        model = load_config_key("model", vector_name, kind="vacConfig")
+        model = config.vacConfig("model")
 
     log.debug(f"Chose LLM: {llm_str}")
-    return llm_str_to_llm(llm_str, model=model, vector_name=vector_name)
+    return llm_str_to_llm(llm_str, model=model, config=config)
 
 def get_llm_chat(vector_name, model=None):
     llm_str = load_config_key("llm", vector_name, kind="vacConfig")

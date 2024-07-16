@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.77.1'
+version = '0.77.2'
 
 setup(
     name='sunholo',
@@ -69,6 +69,7 @@ setup(
             "langchain-google-genai",
             "langchain_google_alloydb_pg",
             "langchain-anthropic>=0.1.13",
+            "langchain-google-vertexai",
             "langfuse",
             "pg8000",
             "pgvector",
@@ -129,6 +130,7 @@ setup(
             "google-generativeai>=0.7.1",
             "langchain-google-genai>=1.0.5",
             "langchain_google_alloydb_pg>=0.2.2",
+            "langchain-google-vertexai",
             "pillow",
 
         ],

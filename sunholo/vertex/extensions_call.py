@@ -10,7 +10,7 @@ def dynamic_extension_call(question, config:ConfigManager, project_id:str=None, 
 
     extensions = config.vacConfig('extensions')
     if not extensions:
-        log.warning("No extensions founded for vac: {vac}")
+        log.warning(f"No extensions founded for vac: {ConfigManager.vector_name}")
 
         return None
     

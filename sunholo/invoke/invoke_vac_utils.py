@@ -21,7 +21,7 @@ def invoke_vac_qa(vac_input: dict, vac_name: str, chat_history=[], stream=False)
     image_uri = vac_input.get('image_url') or vac_input.get('image_uri')
 
     if not stream:
-        log.info(f'Batch invoke_vac_qa with {vac_input=}')
+        log.warning(f'Batch invoke_vac_qa with {vac_input=}')
         vac_response = send_to_qa(
             vac_input["user_input"],
             vector_name=vac_name,
@@ -40,7 +40,8 @@ def invoke_vac_qa(vac_input: dict, vac_name: str, chat_history=[], stream=False)
             },
             user_id=user_id,
             session_id=session_id, 
-            message_source="sunholo.invoke_vac_qa.invoke")
+            message_source="sunholo.invoke_vac_qa.invoke",
+            stream=False)
         
         # ensures {'answer': answer}
         answer = parse_output(vac_response)
