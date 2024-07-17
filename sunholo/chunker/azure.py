@@ -62,9 +62,10 @@ def data_to_embed_azure(events: list):
             #TODO: process the azure blob URL and download it
             
             chunks = process_chunker_data(message_data, metadata, vac_name)
-            all_chunks.extend(chunks)
+            if chunks:
+                all_chunks.extend(chunks)
     
-    if not all_chunks:
+    if not all_chunks or len(chunks) == 0:
         return {'status': 'error', 'message': f'No chunks were found in events: {events}'}
     
     if not vac_name:
