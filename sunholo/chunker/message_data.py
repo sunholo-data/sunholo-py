@@ -259,9 +259,12 @@ def handle_azure_blob(message_data: str, metadata: dict, vector_name: str):
                     pp_basename = os.path.basename(pp)
                     # file_name/pdf_parts/file_name_1.pdf
                     azure_blob_path = f"{file_name.stem}_parts/{pp_basename}"
+
                     # Upload split pages back to Azure Blob storage
-                    with open(pp, "rb") as page_file:
-                        blob_client.upload_blob(name=azure_blob_path, data=page_file)
+                    container_client = blob_service_client.get_container_client(container=container_name)
+                    with open(file=pp, mode="rb") as page_file:
+                        blob_client = container_client.upload_blob(name=azure_blob_path, data=page_file, overwrite=True)
+
                     log.info(f"{azure_blob_path} is now in container {container_name}")
                 log.info(f"Sent split pages for {file_name.name} back to Azure Blob to parallelize the imports")
                 return None, None
