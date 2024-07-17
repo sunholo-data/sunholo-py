@@ -14,6 +14,19 @@
 from ..logging import log
 from ..utils import load_config, ConfigManager
 
+def read_cloud_run_url(agent, cloud_run_urls_file='config/cloud_run_urls.json'):
+    agent_route, _ = load_config(cloud_run_urls_file)
+    log.info(f'agent_route: {agent_route}')
+
+    try:
+        agent_url = agent_route[agent]
+    except KeyError:
+        raise ValueError(f'agent_url not found for {agent}')
+    
+    log.info(f'agent_url: {agent_url}')
+
+    return agent_url
+
 def route_vac(vector_name: str=None, config=None) -> str :
     """
     Considers what VAC this vector_name belongs to
@@ -30,18 +43,8 @@ def route_vac(vector_name: str=None, config=None) -> str :
         return agent_url
 
     agent = config.vacConfig('agent')
-    log.info(f'agent_type: {agent}')
 
-    agent_route, _ = load_config('config/cloud_run_urls.json')
-    log.info(f'agent_route: {agent_route}')
-
-    try:
-        agent_url = agent_route[agent]
-    except KeyError:
-        raise ValueError(f'agent_url not found for {agent}')
-    
-    log.info(f'agent_url: {agent_url}')
-    return agent_url
+    return read_cloud_run_url(agent)
 
 def route_endpoint(vector_name=None, method = 'post', override_endpoint=None, config=None):
 

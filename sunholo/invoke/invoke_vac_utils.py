@@ -33,10 +33,10 @@ def invoke_vac(service_url, data, vector_name=None, metadata=None, is_file=False
                 else:
                     json_data = json.loads(data)
             except json.JSONDecodeError as err:
-                log.error(f"[bold red]ERROR: invalid JSON: {str(err)} [/bold red]")
+                log.error(f"ERROR: invalid JSON: {str(err)}")
                 raise err
             except Exception as err:
-                log.error(f"[bold red]ERROR: could not parse JSON: {str(err)} [/bold red]")
+                log.error(f"ERROR: could not parse JSON: {str(err)}")
                 raise err
 
             log.debug(f"Sending data: {data} or json_data: {json.dumps(json_data)}")
