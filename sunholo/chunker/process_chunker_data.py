@@ -5,7 +5,8 @@ from .message_data import (
     handle_google_drive_message, 
     handle_github_message, 
     handle_http_message, 
-    handle_json_content_message
+    handle_json_content_message,
+    handle_azure_blob
 )
 
 from . import loaders
@@ -14,7 +15,6 @@ from ..discovery_engine.chunker_handler import discovery_engine_chunker_check
 from .publish import process_docs_chunks_vector_name
 from .splitter import chunk_doc_to_docs
 from ..azure.blobs import is_azure_blob
-from .azure import handle_azure_blob
 
 from ..logging import log
 
