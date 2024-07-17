@@ -46,7 +46,7 @@ def handle_base64_image(base64_data: str, vector_name: str, extension: str):
         header, encoded = base64_data.split(",", 1)
         data = base64.b64decode(encoded)
 
-        filename = f"{uuid.uuid4()}{extension}"
+        filename = f"{str(uuid.uuid4())}{extension}"
         with open(filename, "wb") as f:
             f.write(data)
 

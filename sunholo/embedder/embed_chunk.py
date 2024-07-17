@@ -95,7 +95,7 @@ def embed_pubsub_chunk(data: dict):
             doc_id = generate_uuid_from_object_id(metadata["url"])
         else:
             log.warning(f"Could not derive a uuid - creating random uuid for {metadata}")
-            doc_id = uuid.uuid4()
+            doc_id = str(uuid.uuid4())
     else:
         doc_id = metadata["doc_id"]
 
