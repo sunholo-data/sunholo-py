@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.77.5'
+version = '0.78.0'
 
 setup(
     name='sunholo',
@@ -40,6 +40,7 @@ setup(
         # Define optional dependencies with feature names
         'all': [
             "asyncpg",
+            "azure-identity",
             "azure-storage-blob",
             "fastapi",
             "flask",
@@ -89,6 +90,7 @@ setup(
 
         ],
         'azure': [
+            "azure-identity",
             "azure-storage-blob"
         ],
         'cli': [

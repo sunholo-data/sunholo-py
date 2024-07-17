@@ -13,7 +13,8 @@ from ..llamaindex.import_files import llamaindex_chunker_check
 from ..discovery_engine.chunker_handler import discovery_engine_chunker_check
 from .publish import process_docs_chunks_vector_name
 from .splitter import chunk_doc_to_docs
-
+from ..azure.blobs import is_azure_blob
+from .azure import handle_azure_blob
 
 from ..logging import log
 
@@ -42,6 +43,9 @@ def process_chunker_data(message_data, metadata, vector_name):
 
     if message_data.startswith("gs://"):
         chunks, metadata =  handle_gcs_message(message_data, metadata, vector_name)
+
+    elif is_azure_blob(message_data):
+        chunks, metadata = handle_azure_blob(message_data, metadata, vector_name)
 
     elif message_data.startswith("https://drive.google.com") or message_data.startswith("https://docs.google.com"):
         chunks, metadata = handle_google_drive_message(message_data, metadata, vector_name)

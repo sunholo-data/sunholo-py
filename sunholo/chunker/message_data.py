@@ -34,8 +34,6 @@ from . import loaders
 from ..utils.parsers import extract_urls
 from ..gcs.add_file import add_file_to_gcs, get_pdf_split_file_name
 
-
-
 def handle_gcs_message(message_data: str, metadata: dict, vector_name: str):
 
     if not storage:
