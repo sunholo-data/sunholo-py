@@ -22,6 +22,7 @@ from langchain.schema import Document
 from ..components import get_embeddings, pick_vectorstore, load_memories, pick_embedding
 from ..logging import log
 from ..database.uuid import generate_uuid_from_object_id
+from ..utils import ConfigManager
 
 def embed_pubsub_chunk(data: dict):
     """Triggered from a message on a Cloud Pub/Sub topic "embed_chunk" topic
@@ -63,6 +64,9 @@ def embed_pubsub_chunk(data: dict):
         log.error(msg)
         return msg
     
+    config = ConfigManager(vector_name)
+    log.info(f"{config=}")
+    
     log.info(f"Embedding: {vector_name} page_content: {page_content[:30]}...[{len(page_content)}] - {metadata}")
 
     if 'eventTime' not in metadata:
@@ -102,9 +106,9 @@ def embed_pubsub_chunk(data: dict):
     doc = Document(page_content=page_content, metadata=metadata)
 
     # init embedding and vector store
-    embeddings = get_embeddings(vector_name)
+    embeddings = get_embeddings(config=config)
 
-    memories = load_memories(vector_name)
+    memories = load_memories(config=config)
     vectorstore_list = []
     for memory in memories:  # Iterate over the list
         for key, value in memory.items(): 
@@ -114,7 +118,7 @@ def embed_pubsub_chunk(data: dict):
                 # check if vectorstore specific embedding is available
                 embed_llm = value.get('llm')
                 if embed_llm:
-                    embeddings = pick_embedding(embed_llm)
+                    embeddings = pick_embedding(embed_llm, config=config)
                 # check if read only
                 read_only = value.get('read_only')
                 if read_only:

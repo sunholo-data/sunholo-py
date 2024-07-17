@@ -16,15 +16,22 @@ from ..utils import load_config_key, ConfigManager
 
 import os
 
-def pick_llm(vector_name):
+def pick_llm(vector_name:str=None, config:ConfigManager=None):
+
+    if config is None:
+        if vector_name is None:
+            raise ValueError("config and vector_name was None")
+        config = ConfigManager(vector_name)
+
     log.debug('Picking llm')
     
-    llm_str = load_config_key("llm", vector_name, kind="vacConfig")
+    llm_str = config.vacConfig("llm")
     
     if llm_str == 'openai':
-        llm_chat = get_llm_chat(vector_name)
-        llm = get_llm_chat(vector_name, model="gpt-3.5-turbo-16k") # TODO: fix it needs llm_chat and not llm
-        embeddings = get_embeddings(vector_name)
+        llm_chat = get_llm_chat(config=config)
+        llm = get_llm_chat(model="gpt-3.5-turbo-16k", config=config) # TODO: fix it needs llm_chat and not llm
+        embeddings = get_embeddings(config=config)
+
         log.debug("Chose OpenAI")
     elif llm_str == 'vertex':
         llm = get_llm_chat(vector_name) # TODO: fix it needs llm_chat and not llm
@@ -62,7 +69,9 @@ def llm_str_to_llm(llm_str, model=None, vector_name=None, config=None):
     if llm_str is None:
         raise NotImplementedError("llm_str was None")
     
-    if vector_name:
+    if config is None:
+        if vector_name is None:
+            raise ValueError("vector_name and config was None")
         config = ConfigManager(vector_name)
 
     if llm_str == 'openai':
@@ -125,10 +134,16 @@ def get_llm(vector_name=None, model=None, config=None):
     log.debug(f"Chose LLM: {llm_str}")
     return llm_str_to_llm(llm_str, model=model, config=config)
 
-def get_llm_chat(vector_name, model=None):
-    llm_str = load_config_key("llm", vector_name, kind="vacConfig")
+def get_llm_chat(vector_name:str=None, model=None, config:ConfigManager=None):
+
+    if config is None:
+        if vector_name is None:
+            raise ValueError("config and vector_name was None")
+        config = ConfigManager(vector_name)
+
+    llm_str = config.vacConfig("llm")
     if not model:
-        model = load_config_key("model", vector_name, kind="vacConfig")
+        model = config.vacConfig("model")
 
     log.debug(f"Chose LLM: {llm_str}")
     # Configure LLMs based on llm_str
@@ -167,7 +182,7 @@ def get_llm_chat(vector_name, model=None):
         return ChatAnthropic(model_name = model, temperature=0)
     elif llm_str == 'azure':
         from langchain_openai import AzureChatOpenAI
-        azure_config = load_config_key("azure", vector_name, kind="vacConfig")
+        azure_config = config.vacConfig("azure")
         if not azure_config:
             raise ValueError("Need to configure azure.config if llm='azure'")
 
@@ -209,22 +224,37 @@ def get_llm_chat(vector_name, model=None):
     if llm_str is None:
         raise NotImplementedError(f'No llm implemented for {llm_str}')
 
-def get_embeddings(vector_name):
+def get_embeddings(vector_name=None, config:ConfigManager=None):
+
+    if not config:
+        if not vector_name:
+            raise ValueError(f"config and vector_name was None: {vector_name}")
+        config = ConfigManager(vector_name)
+    
 
     llm_str = None
-    embed_dict = load_config_key("embedder", vector_name, kind="vacConfig")
+    embed_dict = config.vacConfig("embedder")
 
     if embed_dict:
         llm_str = embed_dict.get('llm')
 
     if llm_str is None:
-        llm_str = load_config_key("llm", vector_name, kind="vacConfig")
+        llm_str = config.vacConfig("llm")
+    
+    if llm_str is None:
+        raise ValueError(f"llm_str was None: {llm_str}")
 
-    return pick_embedding(llm_str, vector_name=vector_name)
+    return pick_embedding(llm_str, config=config)
 
 
 #TODO: specify model
-def pick_embedding(llm_str: str, vector_name: str=None):
+def pick_embedding(llm_str: str, vector_name: str=None, config: ConfigManager=None):
+
+    if not config:
+        if not vector_name:
+            raise ValueError(f"config and vector_name was None {vector_name}")
+        config = ConfigManager(vector_name)
+
     # get embedding directly from llm_str
     # Configure embeddings based on llm_str
     if llm_str == 'openai':
@@ -244,7 +274,7 @@ def pick_embedding(llm_str: str, vector_name: str=None):
     elif llm_str == 'azure':
         from langchain_openai import AzureOpenAIEmbeddings
         
-        azure_config = load_config_key("azure", vector_name, kind="vacConfig")
+        azure_config = config.vacConfig("azure")
         if not azure_config:
             raise ValueError("Need to configure azure.config if llm='azure'")
 

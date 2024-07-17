@@ -26,8 +26,14 @@ from langchain.retrievers import ContextualCompressionRetriever
 
 
 
-def load_memories(vector_name):
-    memories = ConfigManager(vector_name).vacConfig("memory")
+def load_memories(vector_name:str=None, config:ConfigManager=None):
+    if config is None:
+        if vector_name is None:
+            raise ValueError("vector_name and config were none")
+        config = ConfigManager(vector_name)
+
+    memories = config.vacConfig("memory")
+    
     log.info(f"Found memory settings for {vector_name}: {memories}")
     if not memories or len(memories) == 0:
         log.info(f"No memory settings found for {vector_name}")
