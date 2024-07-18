@@ -36,6 +36,7 @@ steps:
       RUN pip list && python --version
 
       ENV _CONFIG_FOLDER=/gcs_config 
+      ENV ALLOYDB_DB=${_ALLOYDB_DB}
 
       CMD exec gunicorn --bind :\$$PORT --workers 4 --timeout 0 app:app
       EOF
