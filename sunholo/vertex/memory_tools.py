@@ -5,13 +5,14 @@ except ImportError:
     rag = None
 
 from ..custom_logging import log
-from ..utils.config import load_config_key
 from ..components import load_memories
 from ..llamaindex.get_files import fetch_corpus
+from ..llamaindex import LlamaIndexVertexCorpusManager
 from ..discovery_engine.discovery_engine_client import DiscoveryEngineClient
 from ..utils.gcp_project import get_gcp_project
+from ..utils import ConfigManager
 
-def get_vertex_memories(vector_name):
+def get_vertex_memories(vector_name:str=None, config:ConfigManager=None):
     """
     Retrieves a LlamaIndex corpus from Vertex AI based on the provided Google Cloud configuration.
     
@@ -39,7 +40,12 @@ def get_vertex_memories(vector_name):
         print("Error fetching corpus:", str(e))
     ```
     """
-    gcp_config = load_config_key("gcp_config", vector_name=vector_name, kind="vacConfig")
+    if config is None:
+        if vector_name is None:
+            raise ValueError("config or vector_name are required")
+        config = ConfigManager(vector_name)
+
+    gcp_config = config.vacConfig("gcp_config")
 
     if not rag:
         raise ValueError("Need to install vertexai module via `pip install sunholo[gcp]`")
@@ -59,18 +65,22 @@ def get_vertex_memories(vector_name):
             if vectorstore == "llamaindex":
                 log.info(f"Found vectorstore {vectorstore}")
                 rag_id = value.get('rag_id')
-                if rag_id is None:
-                    raise ValueError("Must specify rag_id if using vectorstore: llamaindex")
-                
                 project_id = value.get('project_id') or gcp_config.get('project_id')
                 location = value.get('location') or gcp_config.get('location')
 
-                try:
+                if rag_id:
+                    log.info("Using rag_id for using vectorstore: llamaindex")
                     corpus = fetch_corpus(
-                        project_id=project_id or get_gcp_project(),
-                        location=location or global_location,
-                        rag_id=rag_id
-                    )
+                            project_id=project_id or get_gcp_project(),
+                            location=location or global_location,
+                            rag_id=rag_id
+                        )
+                else:
+                    log.info(f"Using display_name {vector_name} to derive rag_id")
+                    manager = LlamaIndexVertexCorpusManager(project_id=project_id, location=location)
+                    corpus = manager.find_corpus_from_list(vector_name)
+
+                try:
                     corpus_tool = Tool.from_retrieval(
                         retrieval=rag.Retrieval(
                             source=rag.VertexRagStore(
@@ -116,9 +126,14 @@ def get_vertex_memories(vector_name):
     
     return tools
 
-def get_google_search_grounding(vector_name):
+def get_google_search_grounding(vector_name:str=None, config:ConfigManager=None):
+    if config is None:
+        if vector_name is None:
+            raise ValueError("Must specify one of vector_name or config")
+        config = ConfigManager(vector_name)
+
     # can't have this and llamaindex memories?
-    ground = load_config_key("grounding", vector_name=vector_name, kind="vacConfig")
+    ground = config.vacConfig("grounding")
     if ground and ground.get("google_search"):
         gs_tool = Tool.from_google_search_retrieval(grounding.GoogleSearchRetrieval())
         log.info(f"Got Search Tool: {gs_tool}")

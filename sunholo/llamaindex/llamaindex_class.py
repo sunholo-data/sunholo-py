@@ -39,8 +39,8 @@ class LlamaIndexVertexCorpusManager:
         self.location = location
 
         if config:
-            self.project_id = self.config.vacConfig('project_id')
-            self.location = self.config.vacConfig('location')
+            self.project_id = self.config.vacConfig('project_id') or project_id
+            self.location = self.config.vacConfig('location') or location
 
         init_vertex(location=self.location, project_id=self.project_id)
     
@@ -80,11 +80,12 @@ class LlamaIndexVertexCorpusManager:
         """
         corp = self.find_corpus_from_list(display_name)
         if corp:
+
             return corp
         
         corpus = rag.create_corpus(display_name=display_name, description=description or f"Corpus for {display_name}")
-        corpora = rag.list_corpora()
-        log.info(corpora)
+        log.info(f"created Llamaindex corpus {corpus}")
+
         return corpus
 
     def delete_corpus(self, display_name: str):

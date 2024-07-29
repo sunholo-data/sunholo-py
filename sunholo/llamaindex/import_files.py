@@ -7,7 +7,9 @@ from ..custom_logging import log
 from ..utils import ConfigManager
 from ..vertex import init_vertex
 from .get_files import fetch_corpus
+from .llamaindex_class import LlamaIndexVertexCorpusManager
 from ..components import load_memories
+
     
 
 def do_llamaindex(message_data, metadata, vector_name):
@@ -50,7 +52,6 @@ def do_llamaindex(message_data, metadata, vector_name):
 
     global_project_id = gcp_config.get('project_id')
     global_location = gcp_config.get('location')
-    global_rag_id = gcp_config.get('rag_id')
     #global_data_store_id = gcp_config.get('data_store_id')
 
     memories = load_memories(vector_name)
@@ -70,26 +71,32 @@ def do_llamaindex(message_data, metadata, vector_name):
                 rag_id = value.get('rag_id')
                 project_id = gcp_config.get('project_id')
                 location = gcp_config.get('location')
-                try:
-                    corpus = fetch_corpus(
-                        project_id=project_id or global_project_id,
-                        location=location or global_location,
-                        rag_id=rag_id or global_rag_id
-                    )
-                except Exception as err:
-                    log.warning(f"Failed to fetch LlamaIndex corpus: {err=}")
-                    continue
+
+                if rag_id:    
+                    try:
+                        corpus = fetch_corpus(
+                            project_id=project_id or global_project_id,
+                            location=location or global_location,
+                            rag_id=rag_id
+                        )
+                    except Exception as err:
+                        log.warning(f"Failed to fetch LlamaIndex corpus from rag_id: {err=}")
+                        continue
+                else:
+                    try:
+                        log.info("Using vertex llamaindex with own rag_id created via VAC name")
+                        manager = LlamaIndexVertexCorpusManager(config, project_id=project_id, location=location)
+                        # create or get existing:
+                        corpus = manager.create_corpus(vector_name)
+                    except Exception as err:
+                        log.warning(f"Failed to fetch LlamaIndex corpus from display_name: {err=}")
+                        continue
                 
                 corpuses.append(corpus)
+                
     if not corpuses:
         log.info("No Vertex Llamaindex RAG corpus to import data")
         return None
-    
-    try:
-        corpura = rag.list_corpora()
-        log.info(f"All Corpora: {corpura} - {type(corpura)}")
-    except Exception as err:
-        log.warning(f"Could not list any corpora - {str(err)}")
 
     log.info(f"Found llamaindex corpus: {corpuses}")
 
