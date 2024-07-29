@@ -7,7 +7,7 @@ except ImportError:
 from ..custom_logging import log
 from ..components import load_memories
 from ..llamaindex.get_files import fetch_corpus
-from ..llamaindex import LlamaIndexVertexCorpusManager
+from ..llamaindex.llamaindex_class import LlamaIndexVertexCorpusManager
 from ..discovery_engine.discovery_engine_client import DiscoveryEngineClient
 from ..utils.gcp_project import get_gcp_project
 from ..utils import ConfigManager
