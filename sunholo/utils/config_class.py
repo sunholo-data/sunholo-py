@@ -37,6 +37,10 @@ class ConfigManager:
         self.local_config_folder = local_config_folder
         self.configs_by_kind = self.load_all_configs()
 
+        test_agent = self.vacConfig("agent")
+        if not test_agent:
+            print(f"WARNING: No vacConfig.agent found for {self.vector_name} - are you in right folder? {local_config_folder=} {self.config_folder=}")
+
     def load_all_configs(self):
         """
         Load all configuration files from the specified directories into a dictionary.
@@ -121,7 +125,7 @@ class ConfigManager:
         self.config_cache[filename] = (config, datetime.now())
         log.debug(f"Loaded and cached {config_file}")
         if is_local:
-            log.warning(f"Local configuration override for {filename}")
+            log.warning(f"Local configuration override for {filename} via {self.local_config_folder}")
         return config
 
     def _check_and_reload_configs(self):

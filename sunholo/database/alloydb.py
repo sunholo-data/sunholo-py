@@ -232,7 +232,7 @@ async def load_alloydb_sql_async(sql, vector_name):
     return documents
 
 def and_or_ilike(sources, search_type="OR", operator="ILIKE"):
-    unique_sources = set(sources)
+    unique_sources = set(sources.split())
     # Choose the delimiter based on the search_type argument
     delimiter = ' AND ' if search_type.upper() == "AND" else ' OR '
 
@@ -240,14 +240,14 @@ def and_or_ilike(sources, search_type="OR", operator="ILIKE"):
     conditions = delimiter.join(f"TRIM(source) {operator} '%{source}%'" for source in unique_sources)
     if not conditions:
         log.warning("Alloydb doc query found no like_patterns")
-        return []
+        return ""
     
     return conditions
 
 def _get_sources_from_docstore(sources, vector_name, search_type="OR"):
     if not sources:
         log.warning("No sources found for alloydb fetch")
-        return []
+        return ""
 
     table_name = f"{vector_name}_docstore"
 
@@ -263,10 +263,37 @@ def _get_sources_from_docstore(sources, vector_name, search_type="OR"):
 
     return query
 
-
-async def get_sources_from_docstore_async(sources, vector_name, search_type="OR"):
+def _list_sources_from_docstore(sources, vector_name, search_type="OR"):
+    table_name = f"{vector_name}_docstore"
     
-    query = _get_sources_from_docstore(sources, vector_name=vector_name, search_type=search_type)
+
+    if sources:
+        conditions = and_or_ilike(sources, search_type=search_type)
+        query = f"""
+            SELECT DISTINCT langchain_metadata->>'objectId' AS objectId
+            FROM {table_name}
+            WHERE {conditions}
+            ORDER BY langchain_metadata->>'objectId' ASC
+            LIMIT 500;
+        """
+    else:
+        query = f"""
+            SELECT DISTINCT langchain_metadata->>'objectId' AS objectId
+            FROM {table_name}
+            ORDER BY langchain_metadata->>'objectId' ASC
+            LIMIT 500;
+        """
+
+    return query
+
+
+async def get_sources_from_docstore_async(sources, vector_name, search_type="OR", just_source_name=False):
+    
+    if just_source_name:
+        query = _list_sources_from_docstore(sources, vector_name=vector_name, search_type=search_type)
+    else:
+        query = _get_sources_from_docstore(sources, vector_name=vector_name, search_type=search_type)
+
     if not query:
         return []
     
@@ -274,9 +301,13 @@ async def get_sources_from_docstore_async(sources, vector_name, search_type="OR"
     
     return documents
 
-def get_sources_from_docstore(sources, vector_name, search_type="OR"):
+def get_sources_from_docstore(sources, vector_name, search_type="OR", just_source_name=False):
     
-    query = _get_sources_from_docstore(sources, vector_name=vector_name, search_type=search_type)
+    if just_source_name:
+        query = _list_sources_from_docstore(sources, vector_name=vector_name, search_type=search_type)
+    else:
+        query = _get_sources_from_docstore(sources, vector_name=vector_name, search_type=search_type)
+
     if not query:
         return []
     
@@ -303,3 +334,5 @@ def delete_sources_from_alloydb(sources, vector_name):
         DELETE FROM {vector_name}_vectorstore_{vector_length}
         WHERE {conditions}
     """
+
+    return query

@@ -175,6 +175,10 @@ Be careful not to add any speculation or any details that are not covered in the
                 bucket_name = os.getenv("DOC_BUCKET")
                 if not bucket_name:
                     raise ValueError("No DOC_BUCKET configured for summary")
+                
+                if bucket_name.startswith("gs://"):
+                    bucket_name = bucket_name[len("gs://"):]
+                    
                 with tempfile.NamedTemporaryFile(mode='w+', delete=False) as temp_file:
                     temp_file.write(summary)
                     temp_file.flush()
