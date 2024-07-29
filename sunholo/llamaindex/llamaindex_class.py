@@ -3,7 +3,6 @@ try:
 except ImportError:
     rag = None
 
-from ..vertex.init import init_vertex
 from ..utils import ConfigManager
 from ..custom_logging import log
 
@@ -34,6 +33,7 @@ class LlamaIndexVertexCorpusManager:
         Raises:
             ImportError: If vertexai is not installed.
         """
+        from ..vertex.init import init_vertex
         if rag is None:
             raise ImportError("You must install vertexai via `pip install sunholo[gcp]`")
         
