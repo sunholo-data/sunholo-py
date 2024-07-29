@@ -1,5 +1,5 @@
 import re
-from ..logging import log
+from ..custom_logging import log
 
 
 def is_azure_blob(message_data):

@@ -1,6 +1,6 @@
 from .extensions_class import VertexAIExtensions
 from ..utils import ConfigManager
-from ..logging import log
+from ..custom_logging import log
 import collections.abc
 import json
 

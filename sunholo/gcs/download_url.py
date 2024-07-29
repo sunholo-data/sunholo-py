@@ -10,7 +10,7 @@ try:
 except ImportError:
     storage = None
 
-from ..logging import log
+from ..custom_logging import log
 from ..utils.gcp import is_running_on_gcp
 from ..auth.refresh import refresh_credentials, get_default_creds, get_default_email
 from io import BytesIO

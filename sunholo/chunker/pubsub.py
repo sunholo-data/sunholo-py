@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from ..logging import log
+from ..custom_logging import log
 from ..pubsub import process_pubsub_message
 from .process_chunker_data import process_chunker_data
 

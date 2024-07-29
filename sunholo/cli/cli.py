@@ -10,10 +10,11 @@ from .chat_vac import setup_vac_subparser
 from .embedder import setup_embedder_subparser
 from .swagger import setup_swagger_subparser
 from .vertex import setup_vertex_subparser
+from ..llamaindex import setup_llamaindex_subparser
 
 from ..utils import ConfigManager
 
-from ..logging import log
+from ..custom_logging import log
 
 from .sun_rich import console
 import sys
@@ -87,6 +88,8 @@ def main(args=None):
     setup_swagger_subparser(subparsers)
     # vertex
     setup_vertex_subparser(subparsers)
+    # llamaindex
+    setup_llamaindex_subparser(subparsers)
 
     #TODO: add database setup commands: alloydb and supabase
 

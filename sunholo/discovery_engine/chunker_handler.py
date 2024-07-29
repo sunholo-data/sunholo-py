@@ -1,4 +1,4 @@
-from ..logging import log
+from ..custom_logging import log
 from ..utils.config import load_config_key
 from ..utils.gcp_project import get_gcp_project
 from ..components import load_memories

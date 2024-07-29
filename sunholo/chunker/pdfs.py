@@ -13,7 +13,7 @@
 #   limitations under the License.
 import os
 import pathlib
-from ..logging import log
+from ..custom_logging import log
 
 def split_pdf_to_pages(pdf_path, temp_dir):
 

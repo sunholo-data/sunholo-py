@@ -3,7 +3,7 @@ try:
 except ImportError:
     storage = None
 
-from ..logging import log
+from ..custom_logging import log
 
 
 def get_object_metadata(bucket_name, object_name):

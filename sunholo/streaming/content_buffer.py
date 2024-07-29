@@ -17,7 +17,7 @@ from langchain.schema import LLMResult
 
 import threading
 import re
-from ..logging import log
+from ..custom_logging import log
 
 class ContentBuffer:
     """

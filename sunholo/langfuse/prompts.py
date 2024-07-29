@@ -1,4 +1,4 @@
-from ..logging import log
+from ..custom_logging import log
 from ..utils import ConfigManager
 
 # Load the YAML file

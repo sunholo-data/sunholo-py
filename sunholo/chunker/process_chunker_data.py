@@ -16,7 +16,7 @@ from .publish import process_docs_chunks_vector_name
 from .splitter import chunk_doc_to_docs
 from ..azure.blobs import is_azure_blob
 
-from ..logging import log
+from ..custom_logging import log
 
 def process_chunker_data(message_data, metadata, vector_name):
 

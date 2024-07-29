@@ -1,7 +1,7 @@
 import copy
 from ..utils.config import load_all_configs
 from .route import route_vac
-from ..logging import log
+from ..custom_logging import log
 from ruamel.yaml import YAML
 from io import StringIO
 # check it here:

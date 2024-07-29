@@ -11,7 +11,7 @@ except ImportError:
 from .database import get_vector_size
 from .alloydb_client import AlloyDBClient
 
-from ..logging import log
+from ..custom_logging import log
 from ..utils.config import load_config_key
 
 

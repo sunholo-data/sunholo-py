@@ -4,7 +4,7 @@ try:
 except ImportError:
     rag = None
 
-from ..logging import log
+from ..custom_logging import log
 from ..utils.config import load_config_key
 from ..components import load_memories
 from ..llamaindex.get_files import fetch_corpus

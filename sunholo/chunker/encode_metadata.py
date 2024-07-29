@@ -3,7 +3,7 @@ import base64
 import json
 from datetime import datetime, timezone
 
-from ..logging import log
+from ..custom_logging import log
 
 def create_metadata(vac, metadata):
     now_utc = datetime.now(timezone.utc)

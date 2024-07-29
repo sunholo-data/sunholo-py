@@ -133,6 +133,25 @@ for chunk in response:
 
 ```
 
+There is also a class for working with Vertex Corpus, which can be accessed via the CLI or in python code:
+
+```shell
+sunholo llamaindex -h  
+usage: sunholo llamaindex [-h] {create,delete,fetch,find,list} ...
+
+positional arguments:
+  {create,delete,fetch,find,list}
+                        LlamaIndex subcommands
+    create              Create a new corpus
+    delete              Delete a corpus
+    fetch               Fetch a corpus
+    find                Find a corpus
+    list                List all corpus
+
+optional arguments:
+  -h, --help            show this help message and exit
+```
+
 ### Calling Vertex AI Search via Langchain
 
 The above example used the `vertex` python library, but you can use Vertex AI Search from any python script.  

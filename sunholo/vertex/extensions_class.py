@@ -4,7 +4,7 @@ except ImportError:
     extensions = None
 
 from .init import init_vertex
-from ..logging import log
+from ..custom_logging import log
 from ..utils.gcp_project import get_gcp_project
 from ..utils.gcp import is_running_on_cloudrun
 from ..auth import get_local_gcloud_token, get_cloud_run_token

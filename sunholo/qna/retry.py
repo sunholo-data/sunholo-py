@@ -13,7 +13,7 @@
 #   limitations under the License.
 import time
 import traceback
-from ..logging import log
+from ..custom_logging import log
 
 
 def retry_qna(qa_function, question, max_retries=1, initial_delay=5):

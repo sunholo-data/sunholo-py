@@ -1,5 +1,5 @@
 from ..utils import load_config_key
-from ..logging import log
+from ..custom_logging import log
 
 def can_agent_stream(agent_name: str):
 

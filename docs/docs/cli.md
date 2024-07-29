@@ -814,4 +814,23 @@ sunholo --project your-project vertex list-extensions
 
 This lets you upload the openapi config files to a bucket and deploy to Vertex AI Extensions
 
+## sunholo llamaindex
+
+This lets you work with LlamaIndex on Vertex corpus as per [https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/rag-api]
+
 ```shell
+sunholo llamaindex -h  
+usage: sunholo llamaindex [-h] {create,delete,fetch,find,list} ...
+
+positional arguments:
+  {create,delete,fetch,find,list}
+                        LlamaIndex subcommands
+    create              Create a new corpus
+    delete              Delete a corpus
+    fetch               Fetch a corpus
+    find                Find a corpus
+    list                List all corpus
+
+optional arguments:
+  -h, --help            show this help message and exit
+```

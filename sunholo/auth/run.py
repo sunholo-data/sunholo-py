@@ -6,7 +6,7 @@ from ..utils.config import load_config
 from ..utils import ConfigManager
 from ..utils.gcp import is_running_on_cloudrun
 from ..utils.api_key import has_multivac_api_key, get_multivac_api_key
-from ..logging import log
+from ..custom_logging import log
 from ..agents.route import route_vac
 from .gcloud import get_local_gcloud_token
 

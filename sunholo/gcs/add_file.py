@@ -21,7 +21,7 @@ try:
 except ImportError:
     storage = None
 
-from ..logging import log
+from ..custom_logging import log
 from ..utils import load_config_key, ConfigManager
 
 

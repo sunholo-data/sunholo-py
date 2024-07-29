@@ -1,5 +1,5 @@
 from ..utils import load_config_key
-from ..logging import log
+from ..custom_logging import log
 from ..database.alloydb import add_document_if_not_exists
 from ..database.uuid import generate_uuid_from_object_id
 from ..components.llm import llm_str_to_llm
@@ -178,7 +178,7 @@ Be careful not to add any speculation or any details that are not covered in the
                 
                 if bucket_name.startswith("gs://"):
                     bucket_name = bucket_name[len("gs://"):]
-                    
+
                 with tempfile.NamedTemporaryFile(mode='w+', delete=False) as temp_file:
                     temp_file.write(summary)
                     temp_file.flush()

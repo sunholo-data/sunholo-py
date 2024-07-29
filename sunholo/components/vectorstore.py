@@ -12,10 +12,21 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import os
-from ..logging import log
+from ..custom_logging import log
+from ..utils import ConfigManager
 
-def pick_vectorstore(vs_str: str, vector_name: str, embeddings, read_only=None):
+def pick_vectorstore(vs_str: str, vector_name: str=None, embeddings=None, config:ConfigManager=None, read_only=None):
     log.debug('Picking vectorstore')
+
+    if not embeddings:
+        raise ValueError("Requires embeddings")
+    
+    if config is None:
+        if vector_name is None:
+            raise ValueError("vector_name and config were none")
+        config = ConfigManager(vector_name)
+        
+    vector_name = config.vector_name
         
     if vs_str == 'supabase':
         from supabase import Client, create_client

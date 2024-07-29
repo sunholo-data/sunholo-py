@@ -1,5 +1,5 @@
 # process_azure_blob_event.py
-from ..logging import log
+from ..custom_logging import log
 
 def process_azure_blob_event(events: list) -> tuple:
     """

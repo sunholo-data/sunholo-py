@@ -21,7 +21,7 @@ from .content_buffer import ContentBuffer, BufferStreamingStdOutCallbackHandler
 
 from ..qna.parsers import parse_output
 
-from ..logging import log
+from ..custom_logging import log
 from ..utils import load_config_key
 from ..utils.parsers import check_kwargs_support
 

@@ -1,6 +1,6 @@
 
 from typing import Dict, Any
-from ..logging import log
+from ..custom_logging import log
 
 try:
     from langfuse.callback import CallbackHandler

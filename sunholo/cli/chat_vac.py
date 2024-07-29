@@ -3,7 +3,7 @@ from ..streaming import generate_proxy_stream, can_agent_stream
 from ..utils.user_ids import generate_user_id
 from ..utils import ConfigManager
 from ..utils.api_key import has_multivac_api_key
-from ..logging import log
+from ..custom_logging import log
 from ..qna.parsers import parse_output
 from ..gcs.add_file import add_file_to_gcs
 from .run_proxy import clean_proxy_list, start_proxy, stop_proxy

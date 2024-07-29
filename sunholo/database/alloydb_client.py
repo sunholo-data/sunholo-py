@@ -8,7 +8,7 @@ except ImportError:
     pass
 
 from .database import get_vector_size
-from ..logging import log
+from ..custom_logging import log
 
 class AlloyDBClient:
     """

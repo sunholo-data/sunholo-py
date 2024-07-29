@@ -10,7 +10,7 @@ except ImportError:
     Chunk = None
     SearchResponse = None
 
-from ..logging import log
+from ..custom_logging import log
 from typing import Optional, List
 
 class DiscoveryEngineClient:

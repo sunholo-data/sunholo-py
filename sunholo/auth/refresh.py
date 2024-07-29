@@ -6,7 +6,7 @@ from google.auth.transport import requests
 from ..utils.gcp import is_running_on_gcp
 
 
-from ..logging import log
+from ..custom_logging import log
 
 def get_default_email():
     if not refresh_credentials():

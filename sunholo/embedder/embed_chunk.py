@@ -20,7 +20,7 @@ import uuid
 from langchain.schema import Document
 
 from ..components import get_embeddings, pick_vectorstore, load_memories, pick_embedding
-from ..logging import log
+from ..custom_logging import log
 from ..database.uuid import generate_uuid_from_object_id
 from ..utils import ConfigManager
 

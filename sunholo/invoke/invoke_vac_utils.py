@@ -3,7 +3,7 @@ import requests
 
 from pathlib import Path
 
-from ..logging import log
+from ..custom_logging import log
 
 def invoke_vac(service_url, data, vector_name=None, metadata=None, is_file=False):
     """

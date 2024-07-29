@@ -5,7 +5,7 @@ try:
 except ImportError:
     storage = None
 
-from ..logging import log
+from ..custom_logging import log
 
 def download_files_from_gcs(bucket_name: str, source_folder: str, destination_folder: str=None):
     """

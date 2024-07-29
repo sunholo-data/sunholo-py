@@ -36,7 +36,7 @@ def get_module_filepath(filepath: str):
     print(f'Absolute path: {abs_path}')
     ```
     """
-    from ..logging import log
+    from ..custom_logging import log
     
     # Get the root directory of this Python script
     dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -55,7 +55,7 @@ def load_all_configs():
     Files are expected to be either YAML or JSON and must contain a 'kind' key at the root.
     Caching is used to avoid reloading files within a 5-minute window.
     """
-    from ..logging import log
+    from ..custom_logging import log
 
     if not os.getenv("_CONFIG_FOLDER"):
         log.debug("_CONFIG_FOLDER is not set, using os.getcwd() instead")
@@ -102,7 +102,7 @@ def reload_config_file(config_file, filename):
     """
     Helper function to load a config file and update the cache.
     """
-    from ..logging import log
+    from ..custom_logging import log
     with open(config_file, 'r') as file:
         if filename.endswith('.json'):
             config = json.load(file)
@@ -134,7 +134,7 @@ def load_config(filename: str=None) -> tuple[dict, str]:
     ```
     """
     global config_cache
-    from ..logging import log
+    from ..custom_logging import log
     
     if filename is None:
         filename = os.getenv("_CONFIG_FILE", None)
@@ -194,7 +194,7 @@ def load_config_key(key: str, vector_name: str, kind: str):
     ```
     """
     # can't use sunholo.logging due to circular import
-    from ..logging import log
+    from ..custom_logging import log
 
     if kind != 'agentConfig':
         assert isinstance(key, str), f"key must be a string got a {type(key)}"

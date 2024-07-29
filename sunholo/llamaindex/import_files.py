@@ -3,7 +3,7 @@ try:
 except ImportError:
     rag = None
 
-from ..logging import log
+from ..custom_logging import log
 from ..utils import ConfigManager
 from ..vertex import init_vertex
 from .get_files import fetch_corpus

@@ -11,7 +11,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from ..logging import log
+from ..custom_logging import log
 from .vectorstore import pick_vectorstore
 from ..utils import load_config_key, ConfigManager
 from .llm import get_embeddings
@@ -41,9 +41,14 @@ def load_memories(vector_name:str=None, config:ConfigManager=None):
 
     return memories
 
-def pick_retriever(vector_name, embeddings=None):
+def pick_retriever(vector_name:str=None, config:ConfigManager=None, embeddings=None):
 
-    memories = load_memories(vector_name)
+    if config is None:
+        if vector_name is None:
+            raise ValueError("vector_name and config were none")
+        config = ConfigManager(vector_name)
+
+    memories = load_memories(config=config)
 
     retriever_list = []
     for memory in memories:  # Iterate over the list
@@ -58,7 +63,7 @@ def pick_retriever(vector_name, embeddings=None):
                     log.info(f"Skipped from_metadata_id for {vectorstore}")
                     continue
 
-                embeddings = embeddings or get_embeddings(vector_name)
+                embeddings = embeddings or get_embeddings(config=config)
                 read_only = value.get('read_only')
                 try:
                     vectorstore = pick_vectorstore(vectorstore, 
@@ -93,15 +98,15 @@ def pick_retriever(vector_name, embeddings=None):
         log.info(f"No retrievers were created for {memories}")
         return None
     
-    retriever = process_retrieval(retriever_list, vector_name)
+    retriever = process_retrieval(retriever_list, config=config)
 
     return retriever
 
-def metadata_retriever(metadata: dict, key: str, vector_name:str, embeddings=None):
+def metadata_retriever(metadata: dict, key: str, config:ConfigManager, embeddings=None):
     """
     Decides which vector_name to retrieve from metadata passed
     """
-    memories = load_memories(vector_name)
+    memories = load_memories(config=config)
 
     retriever_list = []
     for memory in memories:  # Iterate over the list
@@ -118,7 +123,7 @@ def metadata_retriever(metadata: dict, key: str, vector_name:str, embeddings=Non
                         raise ValueError(f"Missing {key} in {metadata}")
                     the_id = metadata[key]
                     read_only = value.get('read_only')
-                    embeddings = embeddings or get_embeddings(vector_name)
+                    embeddings = embeddings or get_embeddings(config=config)
                     vectorstore = pick_vectorstore(vectorstore, 
                                                    vector_name=the_id, 
                                                    embeddings=embeddings, 
@@ -133,17 +138,18 @@ def metadata_retriever(metadata: dict, key: str, vector_name:str, embeddings=Non
         log.info(f"No retrievers were created for {memories}")
         return None
     
-    retriever = process_retrieval(retriever_list, vector_name)
+    retriever = process_retrieval(retriever_list, config=config)
 
     return retriever
     
 
 
-def process_retrieval(retriever_list: list, vector_name: str):
-    k_override = load_config_key("memory_k", vector_name, kind="vacConfig")
+def process_retrieval(retriever_list: list, config: ConfigManager):
+    k_override = config.vacConfig('memory_k')
     lotr = MergerRetriever(retrievers=retriever_list)
 
-    filter_embeddings = get_embeddings(vector_name)
+    filter_embeddings = get_embeddings(config=config)
+
     filter = EmbeddingsRedundantFilter(embeddings=filter_embeddings)
     pipeline = DocumentCompressorPipeline(transformers=[filter])
     retriever = ContextualCompressionRetriever(

@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.79.0'
+version = '0.79.1'
 
 setup(
     name='sunholo',
@@ -34,7 +34,6 @@ setup(
         "langchain>=0.2.5",
         "langchain_experimental>0.0.60",
         "langchain-community",
-        # Add the minimal dependencies that your package requires here
     ],
     extras_require={
         # Define optional dependencies with feature names

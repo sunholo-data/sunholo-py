@@ -11,7 +11,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from ..logging import log
+from ..custom_logging import log
 from ..utils import load_config, ConfigManager
 
 def read_cloud_run_url(agent, cloud_run_urls_file='config/cloud_run_urls.json'):

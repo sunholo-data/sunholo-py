@@ -26,7 +26,7 @@ from ..utils.parsers import contains_url, extract_urls
 from ..chunker.publish import publish_text
 from ..gcs.add_file import add_file_to_gcs
 from ..utils.config import load_config_key
-from ..logging import log
+from ..custom_logging import log
 
 # config file?
 command_descriptions = {

@@ -1,4 +1,4 @@
-from ..logging import log
+from ..custom_logging import log
 from ..utils.gcp_project import get_gcp_project
 from ..auth.refresh import get_default_email
 import os

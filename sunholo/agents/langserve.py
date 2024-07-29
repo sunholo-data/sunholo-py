@@ -1,5 +1,5 @@
 import requests
-from ..logging import log
+from ..custom_logging import log
 from ..auth import get_header
 
 # Global cache for storing input schemas

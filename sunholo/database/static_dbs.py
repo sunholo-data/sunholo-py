@@ -1,5 +1,5 @@
 import os
-from ..logging import log_folder_location
+from ..custom_logging import log_folder_location
 
 def get_db_directory(db_dir='db'):
     current_script_directory = os.path.dirname(os.path.abspath(__file__))

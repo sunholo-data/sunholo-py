@@ -3,7 +3,7 @@ import datetime
 import tempfile
 import os
 from ..gcs.add_file import add_file_to_gcs, get_image_file_name
-from ..logging import log
+from ..custom_logging import log
 from ..utils.gcp import is_running_on_gcp
 
 

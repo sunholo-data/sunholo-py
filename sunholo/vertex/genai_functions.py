@@ -5,7 +5,7 @@ except ImportError:
 
 from .init import init_genai
 from .safety import genai_safety
-from ..logging import log
+from ..custom_logging import log
 import json
 from .type_dict_to_json import describe_typed_dict, openapi_to_typed_dict, is_typed_dict
 

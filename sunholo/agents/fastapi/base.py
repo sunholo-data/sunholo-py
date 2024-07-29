@@ -11,7 +11,7 @@ try:
 except ImportError:
     FastAPI = None
 
-from ...logging import log
+from ...custom_logging import log
 
 def create_fastapi_app(origins = ["*"],
                        origin_regex = r"https://(.*\.)?sunholo\.com"):

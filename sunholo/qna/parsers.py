@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from sunholo.logging import log
+from sunholo.custom_logging import log
 
 def document_to_dict(document):
     return {

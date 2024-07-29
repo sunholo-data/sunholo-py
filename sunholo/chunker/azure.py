@@ -14,7 +14,7 @@
 import json
 from datetime import datetime, timezone
 
-from ..logging import log
+from ..custom_logging import log
 from ..azure import process_azure_blob_event
 
 from ..invoke import invoke_vac

@@ -18,7 +18,7 @@ from langchain_community.document_loaders import UnstructuredURLLoader
 from langchain_community.document_loaders import GitLoader
 from langchain_community.document_loaders import GoogleDriveLoader
 
-from ..logging import log
+from ..custom_logging import log
 from .pdfs import read_pdf_file
 from ..utils.config import load_config
 

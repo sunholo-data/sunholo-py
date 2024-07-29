@@ -1,4 +1,4 @@
-from ..logging import log
+from ..custom_logging import log
 
 def create_lancedb_index(bucket, vector_name, num_partitions=256, num_sub_vectors=96, text_key="text"):
     try:

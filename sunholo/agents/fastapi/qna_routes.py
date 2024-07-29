@@ -15,7 +15,7 @@ from ...agents import extract_chat_history, handle_special_commands
 from ...qna.parsers import parse_output
 from ...streaming import start_streaming_chat_async
 from ...archive import archive_qa
-from ...logging import log
+from ...custom_logging import log
 
 class VACRequest(BaseModel):
     user_input: str

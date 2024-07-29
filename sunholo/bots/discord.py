@@ -13,7 +13,7 @@
 #   limitations under the License.
 import json, os
 import requests
-from ..logging import log
+from ..custom_logging import log
 
 
 

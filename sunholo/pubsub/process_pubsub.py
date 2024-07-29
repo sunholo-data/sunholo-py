@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 import base64
-from ..logging import log
+from ..custom_logging import log
 from ..gcs.metadata import get_object_metadata
 
 

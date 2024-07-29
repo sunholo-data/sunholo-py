@@ -38,7 +38,7 @@ class ConfigManager:
         self.configs_by_kind = self.load_all_configs()
 
         test_agent = self.vacConfig("agent")
-        if not test_agent:
+        if not test_agent and self.vector_name != "global":
             print(f"WARNING: No vacConfig.agent found for {self.vector_name} - are you in right folder? {local_config_folder=} {self.config_folder=}")
 
     def load_all_configs(self):
@@ -49,7 +49,7 @@ class ConfigManager:
         Returns:
             dict: A dictionary of configurations grouped by their 'kind' key.
         """
-        from ..logging import log
+        from ..custom_logging import log
 
         log.debug(f"Loading all configs from folder: {self.config_folder} and local folder: {self.local_config_folder}")
         global_configs_by_kind = self._load_configs_from_folder(self.config_folder)
@@ -75,7 +75,7 @@ class ConfigManager:
         Returns:
             dict: A dictionary of configurations grouped by their 'kind' key.
         """
-        from ..logging import log
+        from ..custom_logging import log
 
         configs_by_kind = defaultdict(dict)
         current_time = datetime.now()
@@ -116,7 +116,7 @@ class ConfigManager:
         Returns:
             dict: The loaded configuration.
         """
-        from ..logging import log
+        from ..custom_logging import log
         with open(config_file, 'r') as file:
             if filename.endswith('.json'):
                 config = json.load(file)

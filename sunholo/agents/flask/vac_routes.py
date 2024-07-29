@@ -7,7 +7,7 @@ from ...agents import extract_chat_history, handle_special_commands
 from ...qna.parsers import parse_output
 from ...streaming import start_streaming_chat
 from ...archive import archive_qa
-from ...logging import log
+from ...custom_logging import log
 from ...utils.config import load_config
 from ...utils.version import sunholo_version
 import os

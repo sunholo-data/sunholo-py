@@ -17,7 +17,7 @@ import time
 import math
 
 from ..utils.config import get_module_filepath
-from ..logging import log
+from ..custom_logging import log
 from ..utils.config import load_config_key
 
 

@@ -1,5 +1,5 @@
 import json
-from ..logging import log
+from ..custom_logging import log
 
 def extract_chat_history(chat_history=None):
     """

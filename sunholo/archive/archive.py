@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from ..pubsub import PubSubManager
-from ..logging import log
+from ..custom_logging import log
 
 
 

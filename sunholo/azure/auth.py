@@ -5,7 +5,7 @@ except ImportError:
     DefaultAzureCredential = None
     ClientSecretCredential = None
 
-from ..logging import log
+from ..custom_logging import log
 
 def azure_auth():
     """

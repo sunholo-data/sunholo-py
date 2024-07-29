@@ -6,7 +6,7 @@ import urllib.parse
 import time
 from io import BytesIO
 
-from ..logging import log
+from ..custom_logging import log
 
 from ..utils.parsers import get_clean_website_name
 

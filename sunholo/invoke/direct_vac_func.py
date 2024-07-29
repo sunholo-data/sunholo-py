@@ -1,4 +1,4 @@
-from ..logging import log
+from ..custom_logging import log
 from ..agents import send_to_qa
 from ..qna.parsers import parse_output
 from ..streaming import generate_proxy_stream

@@ -19,7 +19,7 @@ except ImportError:
     pubsub_v1 = None
 
 import json
-from ..logging import log
+from ..custom_logging import log
 from ..utils.gcp_project import get_gcp_project
 
 
