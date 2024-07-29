@@ -820,16 +820,21 @@ This lets you work with LlamaIndex on Vertex corpus as per [https://cloud.google
 
 ```shell
 sunholo llamaindex -h  
-usage: sunholo llamaindex [-h] {create,delete,fetch,find,list} ...
+usage: sunholo llamaindex [-h]
+                          {create,delete,fetch,find,list,import_files,upload_file,upload_text}
+                          ...
 
 positional arguments:
-  {create,delete,fetch,find,list}
+  {create,delete,fetch,find,list,import_files,upload_file,upload_text}
                         LlamaIndex subcommands
     create              Create a new corpus
     delete              Delete a corpus
     fetch               Fetch a corpus
     find                Find a corpus
     list                List all corpus
+    import_files        Import files from URLs to a corpus
+    upload_file         Upload a local file to a corpus
+    upload_text         Upload text to a corpus
 
 optional arguments:
   -h, --help            show this help message and exit

@@ -13,7 +13,7 @@
 #   limitations under the License.
 from ..custom_logging import log
 from .vectorstore import pick_vectorstore
-from ..utils import load_config_key, ConfigManager
+from ..utils import ConfigManager
 from .llm import get_embeddings
 from ..utils.gcp_project import get_gcp_project
 

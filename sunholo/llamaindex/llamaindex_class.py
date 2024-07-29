@@ -1,3 +1,6 @@
+import os
+import tempfile
+
 try:
     from vertexai.preview import rag
 except ImportError:
@@ -46,6 +49,60 @@ class LlamaIndexVertexCorpusManager:
             self.location = self.config.vacConfig('location') or location
 
         init_vertex(location=self.location, project_id=self.project_id)
+
+    def upload_text(self, text: str, corpus_display_name: str, description: str = None):
+        """
+        Uploads a text string to a specified corpus by saving it to a temporary file first.
+
+        Args:
+            text (str): The text content to upload.
+            corpus_display_name (str): The display name of the corpus.
+            description (str, optional): Description of the text upload.
+
+        Returns:
+            The uploaded file object.
+        """
+        # Create a temporary file and write the text to it
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.txt') as temp_file:
+            temp_file.write(text.encode('utf-8'))
+            temp_filename = temp_file.name
+        
+        try:
+            # Upload the temporary file
+            uploaded_file = self.upload_file(temp_filename, corpus_display_name, description or text[:50])
+        finally:
+            # Clean up the temporary file
+            os.remove(temp_filename)
+
+        return uploaded_file
+    
+    def upload_file(self, filename:str, corpus_display_name:str, description:str=None):
+        corpus = self.find_corpus_from_list(corpus_display_name)
+
+        rag_file = rag.upload_file(
+            corpus_name=corpus.name,
+            path=filename,
+            display_name=filename,
+            description=description or f"Upload for {filename}",
+        )
+        log.info("Uploaded file: {rag_file}")
+
+        return rag_file
+    
+    def import_files(self, file_imports:list[str], corpus_display_name:str):
+        corpus = self.find_corpus_from_list(corpus_display_name)
+
+        log.info(f"Importing files: {file_imports} into {corpus.name}")
+        response = rag.import_files(
+            corpus_name=corpus.name,
+            paths=file_imports,
+            chunk_size=512,  # Optional
+            chunk_overlap=100,  # Optional
+            max_embedding_requests_per_min=900,  # Optional
+        )
+        log.info(f"Imported files: {response}")
+
+        return response
     
     def list_corpora(self):
         """
@@ -83,7 +140,6 @@ class LlamaIndexVertexCorpusManager:
         """
         corp = self.find_corpus_from_list(display_name)
         if corp:
-
             return corp
         
         corpus = rag.create_corpus(display_name=display_name, description=description or f"Corpus for {display_name}")
@@ -130,7 +186,6 @@ class LlamaIndexVertexCorpusManager:
         return rag.get_corpus(name=corp.name)
 
 def llamaindex_command(args):
-
     if console is None:
         raise ImportError("Need cli tools to use `sunholo llamaindex` - install via `pip install sunholo[cli]`")
     
@@ -148,8 +203,14 @@ def llamaindex_command(args):
         corpus = manager.find_corpus_from_list(display_name=args.display_name)
         console.print(corpus)
     elif args.action == "list":
-        corpura = manager.list_corpora()
-        console.print(corpura)
+        corpora = manager.list_corpora()
+        console.print(corpora)
+    elif args.action == "import_files":
+        manager.import_files(file_imports=args.file_imports, corpus_display_name=args.display_name)
+    elif args.action == "upload_file":
+        manager.upload_file(filename=args.filename, corpus_display_name=args.display_name, description=args.description)
+    elif args.action == "upload_text":
+        manager.upload_text(text=args.text, corpus_display_name=args.display_name, description=args.description)
     else:
         console.print(f"Unknown action: {args.action}")
 
@@ -186,7 +247,28 @@ def setup_llamaindex_subparser(subparsers):
     find_parser.add_argument('vac', nargs='?', default="global", help='The VAC config to set it up for')
 
     # LlamaIndex list command
-    find_parser = llamaindex_subparsers.add_parser('list', help='List all corpus')
-    find_parser.add_argument('vac', nargs='?', default="global", help='The VAC config to set it up for')
+    list_parser = llamaindex_subparsers.add_parser('list', help='List all corpus')
+    list_parser.add_argument('vac', nargs='?', default="global", help='The VAC config to set it up for')
+
+    # LlamaIndex import_files command
+    import_files_parser = llamaindex_subparsers.add_parser('import_files', help='Import files from URLs to a corpus')
+    import_files_parser.add_argument('display_name', help='The name of the corpus')
+    import_files_parser.add_argument('vac', nargs='?', default="global", help='The VAC config to set it up for')
+    import_files_parser.add_argument('file_imports', nargs='+', help='The list of file URLs to import')
+
+    # LlamaIndex upload_file command
+    upload_file_parser = llamaindex_subparsers.add_parser('upload_file', help='Upload a local file to a corpus')
+    upload_file_parser.add_argument('display_name', help='The name of the corpus')
+    upload_file_parser.add_argument('vac', nargs='?', default="global", help='The VAC config to set it up for')
+    upload_file_parser.add_argument('filename', help='The local file path to upload')
+    upload_file_parser.add_argument('--description', help='Description of the file upload', default=None)
+
+    # LlamaIndex upload_text command
+    upload_text_parser = llamaindex_subparsers.add_parser('upload_text', help='Upload text to a corpus')
+    upload_text_parser.add_argument('display_name', help='The name of the corpus')
+    upload_text_parser.add_argument('vac', nargs='?', default="global", help='The VAC config to set it up for')
+    upload_text_parser.add_argument('text', help='The text content to upload')
+    upload_text_parser.add_argument('--description', help='Description of the text upload', default=None)
 
     llamaindex_parser.set_defaults(func=llamaindex_command)
+    
