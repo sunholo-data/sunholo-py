@@ -7,7 +7,10 @@ from ..vertex.init import init_vertex
 from ..utils import ConfigManager
 from ..custom_logging import log
 
-from ..cli.sun_rich import console
+try:
+    from ..cli.sun_rich import console
+except ImportError:
+    console = None
 
 class LlamaIndexVertexCorpusManager:
     """
@@ -127,6 +130,10 @@ class LlamaIndexVertexCorpusManager:
         return rag.get_corpus(name=corp.name)
 
 def llamaindex_command(args):
+
+    if console is None:
+        raise ImportError("Need cli tools to use `sunholo llamaindex` - install via `pip install sunholo[cli]`")
+    
     config = ConfigManager(args.vac)
     manager = LlamaIndexVertexCorpusManager(config=config)
     
