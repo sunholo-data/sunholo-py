@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.2.1">
 <title data-rh="true">llamaindex_class.py | Sunholo Dev Portal</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://dev.sunholo.com/docs/sunholo/llamaindex/llamaindex_class"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="llamaindex_class.py | Sunholo Dev Portal"><meta data-rh="true" name="description" content="Source: sunholo/llamaindex/llamaindexclass.py"><meta data-rh="true" property="og:description" content="Source: sunholo/llamaindex/llamaindexclass.py"><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://dev.sunholo.com/docs/sunholo/llamaindex/llamaindex_class"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/llamaindex/llamaindex_class" hreflang="en"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/llamaindex/llamaindex_class" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.f6c7f565.css">
-<script src="/assets/js/runtime~main.f71bb1cb.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.9334af62.js" defer="defer"></script>
 <script src="/assets/js/main.1267049d.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -61,7 +61,14 @@ display_name (str): The display name of the corpus.</p>
 <p>Returns:
 bool: True if the corpus was deleted, False otherwise.</p>
 <ul>
-<li>fetch_corpus(self, display_name: str)<!-- -->
+<li>
+<p>delete_file(self, file_name, corpus_display_name: str)</p>
+<ul>
+<li>No docstring available.</li>
+</ul>
+</li>
+<li>
+<p>fetch_corpus(self, display_name: str)</p>
 <ul>
 <li>Fetches a corpus by its display name.</li>
 </ul>
@@ -85,6 +92,24 @@ display_name (str): The display name of the corpus.</p>
 <p>Returns:
 The found corpus object if it exists, otherwise None.</p>
 <ul>
+<li>find_file_from_list(self, display_name: str, corpus_display_name: str)<!-- -->
+<ul>
+<li>Finds a file from the list of files by its display name.</li>
+</ul>
+</li>
+</ul>
+<p>Args:
+display_name (str): The display name of the file.
+corpus_display_name (str): The display name of the corpus to look within</p>
+<p>Returns:
+The found file object if it exists, otherwise None.</p>
+<ul>
+<li>
+<p>get_file(self, file_display_name: str = None, file_name: str = None, corpus_display_name: str = None)</p>
+<ul>
+<li>No docstring available.</li>
+</ul>
+</li>
 <li>
 <p>import_files(self, file_imports: list[str], corpus_display_name: str)</p>
 <ul>
@@ -95,6 +120,18 @@ The found corpus object if it exists, otherwise None.</p>
 <p>list_corpora(self)</p>
 <ul>
 <li>List all VertexAI Corpus for the project/location</li>
+</ul>
+</li>
+<li>
+<p>list_files(self, corpus_display_name: str)</p>
+<ul>
+<li>No docstring available.</li>
+</ul>
+</li>
+<li>
+<p>query_corpus(self, query: str, corpus_disply_name: str)</p>
+<ul>
+<li>No docstring available.</li>
 </ul>
 </li>
 <li>
