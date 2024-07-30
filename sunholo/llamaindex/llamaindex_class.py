@@ -3,6 +3,7 @@ import tempfile
 
 try:
     from vertexai.preview import rag
+    from google.cloud.aiplatform_v1beta1 import RetrieveContextsResponse
 except ImportError:
     rag = None
 
@@ -37,6 +38,7 @@ class LlamaIndexVertexCorpusManager:
             ImportError: If vertexai is not installed.
         """
         from ..vertex.init import init_vertex
+
         if rag is None:
             raise ImportError("You must install vertexai via `pip install sunholo[gcp]`")
         
@@ -71,10 +73,13 @@ class LlamaIndexVertexCorpusManager:
         
         try:
             # Upload the temporary file
+            log.info(f"Uploading text:{text[:50]}... to {corpus_display_name}")
             uploaded_file = self.upload_file(temp_filename, corpus_display_name, description or text[:50])
         finally:
             # Clean up the temporary file
             os.remove(temp_filename)
+        
+        log.info(f"Successfully uploaded text:{text[:50]}... to {corpus_display_name}")
 
         return uploaded_file
     
@@ -87,7 +92,7 @@ class LlamaIndexVertexCorpusManager:
             display_name=filename,
             description=description or f"Upload for {filename}",
         )
-        log.info("Uploaded file: {rag_file}")
+        log.info(f"Uploaded file: {rag_file}")
 
         return rag_file
     
@@ -173,7 +178,8 @@ class LlamaIndexVertexCorpusManager:
     
     def query_corpus(self, query:str, corpus_disply_name:str):
         corpus = self.find_corpus_from_list(corpus_disply_name)
-        response = rag.retrieval_query(
+        
+        response:RetrieveContextsResponse = rag.retrieval_query(
             rag_resources=[
                 rag.RagResource(
                     rag_corpus=corpus.name,
