@@ -113,8 +113,9 @@ def choose_splitter(extension: str, chunk_size: int=1024, chunk_overlap:int=200,
 
     if vector_name:
         # check if there is a chunking configuration
-        from ..utils import load_config_key
-        chunk_config = load_config_key("chunker", vector_name=vector_name, kind="vacConfig")
+        from ..utils import ConfigManager
+        config = ConfigManager(vector_name)
+        chunk_config = config.vacConfig("chunker")
         if chunk_config:
             if chunk_config.get("type") == "semantic":
                 embedding_str = chunk_config.get("llm")
@@ -124,7 +125,7 @@ def choose_splitter(extension: str, chunk_size: int=1024, chunk_overlap:int=200,
                     log.info(f"Semantic chunking for {vector_name}")
                     from langchain_experimental.text_splitter import SemanticChunker
                     from ..components import pick_embedding
-                    embeddings = pick_embedding(embedding_str)
+                    embeddings = pick_embedding(embedding_str, config=config)
                     semantic_splitter = SemanticChunker(
                         embeddings, breakpoint_threshold_type="percentile"
                     )
