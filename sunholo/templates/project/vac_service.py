@@ -52,7 +52,7 @@ def create_model(vac):
         raise ValueError(f"Need config.{vac}.gcp_config to configure XXXX on VertexAI")
 
     init_vertex(gcp_config)
-    corpus_tools = get_vertex_memories(vac)
+    corpus_tools = get_vertex_memories(config)
 
     model = config.vacConfig("model")
 

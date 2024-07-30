@@ -100,8 +100,8 @@ vac:
 Then you can call those memory types (`vertex_ai_search` or `llamaindex`) in your Vertex GenAI apps like this:
 
 ```python
-from sunholo.utils.config import load_config_key
 from sunholo.vertex import init_vertex, get_vertex_memories, vertex_safety
+from sunholo.utils import ConfigManager
 
 from vertexai.preview.generative_models import GenerativeModel, Tool
 
@@ -113,10 +113,11 @@ init_vertex()
 # get_vertex_memories() will look in your vacConfig for vertex-ai-search and llamaindex vectorstores
 # Fetches a Vertex AI Search chunked memory (Discovery Engine)
 # also fetches a LlamaIndex chunked memory (LlamaIndexc on Vertex)
-corpus_tools = get_vertex_memories(vac_name)
+config = ConfigManager(vac_name)
+corpus_tools = get_vertex_memories(config)
 
 # load model from config
-model = load_config_key("model", vac_name, kind="vacConfig")
+model = config.vacConfig("model")
 
 # use vertex Generative model with your tools
 rag_model = GenerativeModel(

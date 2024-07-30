@@ -80,7 +80,9 @@ def create_model(vector_name):
         raise ValueError(f"Need config.{vector_name}.gcp_config to configure XXXX on VertexAI")
 
     init_vertex(gcp_config)
-    corpus_tools = get_vertex_memories(vector_name)
+
+    config = ConfigManager(vector_name)
+    corpus_tools = get_vertex_memories(config)
 
     model = load_config_key("model", vector_name=vector_name, kind="vacConfig")
 

@@ -12,7 +12,7 @@ from ..discovery_engine.discovery_engine_client import DiscoveryEngineClient
 from ..utils.gcp_project import get_gcp_project
 from ..utils import ConfigManager
 
-def get_vertex_memories(vector_name:str=None, config:ConfigManager=None):
+def get_vertex_memories(config:ConfigManager):
     """
     Retrieves a LlamaIndex corpus from Vertex AI based on the provided Google Cloud configuration.
     
@@ -40,10 +40,6 @@ def get_vertex_memories(vector_name:str=None, config:ConfigManager=None):
         print("Error fetching corpus:", str(e))
     ```
     """
-    if config is None:
-        if vector_name is None:
-            raise ValueError("config or vector_name are required")
-        config = ConfigManager(vector_name)
 
     gcp_config = config.vacConfig("gcp_config")
 
@@ -52,7 +48,7 @@ def get_vertex_memories(vector_name:str=None, config:ConfigManager=None):
     
     global_location = gcp_config.get('location')
 
-    memories = load_memories(vector_name)
+    memories = load_memories(config=config)
     tools = []
 
     if not memories:
@@ -76,9 +72,9 @@ def get_vertex_memories(vector_name:str=None, config:ConfigManager=None):
                             rag_id=rag_id
                         )
                 else:
-                    log.info(f"Using display_name {vector_name} to derive rag_id")
+                    log.info(f"Using display_name {config.vector_name} to derive rag_id")
                     manager = LlamaIndexVertexCorpusManager(project_id=project_id, location=location)
-                    corpus = manager.find_corpus_from_list(vector_name)
+                    corpus = manager.find_corpus_from_list(config.vector_name)
 
                 try:
                     corpus_tool = Tool.from_retrieval(

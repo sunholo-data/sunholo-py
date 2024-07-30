@@ -6,7 +6,7 @@ from collections import defaultdict
 from .timedelta import format_timedelta
 
 class ConfigManager:
-    def __init__(self, vector_name: str):
+    def __init__(self, vector_name: str, validate:bool=True):
         """
         Initialize the ConfigManager with a vector name.
         Requires a local config/ folder holding your configuration files or the env var VAC_CONFIG_FOLDER to be set.
@@ -15,6 +15,7 @@ class ConfigManager:
 
         Args:
             vector_name (str): The name of the vector in the configuration files.
+            validate (bool): Whether to validate the configurations
         
         Example:
         ```python
@@ -38,7 +39,7 @@ class ConfigManager:
         self.configs_by_kind = self.load_all_configs()
 
         test_agent = self.vacConfig("agent")
-        if not test_agent and self.vector_name != "global":
+        if not test_agent and self.vector_name != "global" and validate:
             print(f"WARNING: No vacConfig.agent found for {self.vector_name} - are you in right folder? {local_config_folder=} {self.config_folder=}")
 
     def load_all_configs(self):
