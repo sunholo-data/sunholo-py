@@ -66,11 +66,15 @@ def get_vertex_memories(config:ConfigManager):
 
                 if rag_id:
                     log.info("Using rag_id for using vectorstore: llamaindex")
-                    corpus = fetch_corpus(
-                            project_id=project_id or get_gcp_project(),
-                            location=location or global_location,
-                            rag_id=rag_id
-                        )
+                    try:
+                        corpus = fetch_corpus(
+                                project_id=project_id or get_gcp_project(),
+                                location=location or global_location,
+                                rag_id=rag_id
+                            )
+                    except Exception as err:
+                        log.error(f"Skipping - No rag found for {rag_id=} - {str(err)}")
+                        continue
                 else:
                     log.info(f"Using display_name {config.vector_name} to derive rag_id")
                     manager = LlamaIndexVertexCorpusManager(project_id=project_id, location=location)

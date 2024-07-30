@@ -1,4 +1,4 @@
-from ..utils import load_config_key
+from ..utils import load_config_key, ConfigManager
 from ..custom_logging import log
 from ..database.alloydb import add_document_if_not_exists
 from ..database.uuid import generate_uuid_from_object_id
@@ -109,8 +109,10 @@ def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_lim
 
     if not docs:
         return None
+    
+    config = ConfigManager(vector_name)
 
-    chunker_config = load_config_key("chunker", vector_name=vector_name, kind="vacConfig")
+    chunker_config = config.vacConfig("chunker")
     summarise_chunking_config = chunker_config.get("summarise") if chunker_config else None
     
     if not summarise_chunking_config:
@@ -122,7 +124,7 @@ def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_lim
     summary_threshold = summarise_chunking_config.get("threshold") if summarise_chunking_config.get("threshold") else summary_threshold_default
     model_limit = summarise_chunking_config.get("model_limit") if summarise_chunking_config.get("model_limit") else model_limit_default
 
-    summary_llm = llm_str_to_llm(summary_llm_str, model=model)
+    summary_llm = llm_str_to_llm(summary_llm_str, model=model, config=config)
 
     doc_summaries = {}
     for doc in docs:
