@@ -43,6 +43,8 @@ class LlamaIndexVertexCorpusManager:
         self.config = config
         self.project_id = project_id
         self.location = location
+        self.corpus_display_name = ""
+        self.corpus = ""
 
         if config:
             self.project_id = self.config.vacConfig('project_id') or project_id
@@ -104,6 +106,88 @@ class LlamaIndexVertexCorpusManager:
 
         return response
     
+    def list_files(self, corpus_display_name:str):
+        corpus = self.find_corpus_from_list(corpus_display_name)
+        files = rag.list_files(corpus_name=corpus.name)
+
+        log.info(f"--Files in {corpus.name}:\n{files}")
+        
+        return files
+
+    def find_file_from_list(self, display_name: str, corpus_display_name:str):
+        """
+        Finds a file from the list of files by its display name.
+
+        Args:
+            display_name (str): The display name of the file.
+            corpus_display_name (str): The display name of the corpus to look within
+
+        Returns:
+            The found file object if it exists, otherwise None.
+        """
+        files = self.list_files(corpus_display_name)
+        for file in files:
+            if display_name == file.display_name:
+                log.info(f"Found existing file with display name: {display_name}")
+
+                return file
+        
+        return None
+    
+    def get_file(self, file_display_name:str=None, file_name:str=None, corpus_display_name:str=None):
+        
+        if file_display_name:
+            rag_file = self.find_file_from_list(file_display_name, corpus_display_name)
+            log.info(f"Found {rag_file} via display name: {file_display_name}")
+            
+            return rag_file
+        
+        if not file_name:
+            raise ValueError("Need to supply one of file_display_name or file_name")
+
+        corpus = self.find_corpus_from_list(corpus_display_name)
+        if file_name.startswith("projects/"):
+            rag_file = rag.get_file(name=file_name)
+        else:
+            if not corpus_display_name:
+                raise ValueError("Must supply corpus_display_name if not a full file_name")
+            rag_file = rag.get_file(name=file_name, corpus_name=corpus.name)
+        
+        log.info(f"Found {rag_file}")
+
+        return rag_file
+    
+    def delete_file(self, file_name, corpus_display_name:str):
+
+        corpus = self.find_corpus_from_list(corpus_display_name)
+        if file_name.startswith("projects/"):
+            rag.delete_file(name=file_name)
+        else:
+            if not corpus_display_name:
+                raise ValueError("Must supply corpus_display_name if not a full file_name")
+            rag.delete_file(name=file_name, corpus_name=corpus.name)
+        
+        log.info(f"File {file_name} deleted.")
+
+        return True
+    
+    def query_corpus(self, query:str, corpus_disply_name:str):
+        corpus = self.find_corpus_from_list(corpus_disply_name)
+        response = rag.retrieval_query(
+            rag_resources=[
+                rag.RagResource(
+                    rag_corpus=corpus.name,
+                    # Supply IDs from `rag.list_files()`.
+                    # rag_file_ids=["rag-file-1", "rag-file-2", ...],
+                )
+            ],
+            text=query,
+            similarity_top_k=10,  # Optional
+            vector_distance_threshold=0.5,  # Optional
+        )
+
+        return response
+
     def list_corpora(self):
         """
         List all VertexAI Corpus for the project/location
@@ -120,10 +204,13 @@ class LlamaIndexVertexCorpusManager:
         Returns:
             The found corpus object if it exists, otherwise None.
         """
+        if display_name == self.corpus_display_name:
+            return self.corpus
         corpora = self.list_corpora()
         for corp in corpora:
             if display_name == corp.display_name:
                 log.info(f"Found existing corpus with display name: {display_name}")
+                self.corpus = corp
                 return corp
         return None
 
@@ -211,6 +298,29 @@ def llamaindex_command(args):
         manager.upload_file(filename=args.filename, corpus_display_name=args.display_name, description=args.description)
     elif args.action == "upload_text":
         manager.upload_text(text=args.text, corpus_display_name=args.display_name, description=args.description)
+    elif args.action == "list_files":
+        files = manager.list_files(corpus_display_name=args.display_name)
+        if files:
+            console.print(files)
+        else:
+            console.print("No files found for {args.display_name}")
+    elif args.action == "get_file":
+        file = manager.get_file(file_display_name=args.file_name, corpus_display_name=args.display_name)
+        console.print(file)
+        return file
+    elif args.action == "delete_file":
+        deleted = manager.delete_file(args.file_name, corpus_display_name=args.display_name)
+        if deleted:
+            console.print(f"Deleted {args.file_name}")
+        else:
+            console.print(f"ERROR: Could not delete {args.file_name}")
+
+    elif args.action == "query":
+        answer = manager.query_corpus(args.query, corpus_disply_name=args.display_name)
+        if answer:
+            console.print(answer)
+        else:
+            console.print(f"No answer found for {args.query} in {args.display_name}")
     else:
         console.print(f"Unknown action: {args.action}")
 
@@ -270,5 +380,27 @@ def setup_llamaindex_subparser(subparsers):
     upload_text_parser.add_argument('text', help='The text content to upload')
     upload_text_parser.add_argument('--description', help='Description of the text upload', default=None)
 
+    # LlamaIndex list_files command
+    list_files_parser = llamaindex_subparsers.add_parser('list_files', help='List all files in a corpus')
+    list_files_parser.add_argument('display_name', help='The name of the corpus')
+    list_files_parser.add_argument('vac', nargs='?', default="global", help='The VAC config to set it up for')
+
+    # LlamaIndex get_file command
+    get_file_parser = llamaindex_subparsers.add_parser('get_file', help='Get a file from a corpus')
+    get_file_parser.add_argument('display_name', help='The name of the corpus')
+    get_file_parser.add_argument('file_name', help='The name of the file to get')
+    get_file_parser.add_argument('vac', nargs='?', default="global", help='The VAC config to set it up for')
+
+    # LlamaIndex delete_file command
+    delete_file_parser = llamaindex_subparsers.add_parser('delete_file', help='Delete a file from a corpus')
+    delete_file_parser.add_argument('display_name', help='The name of the corpus')
+    delete_file_parser.add_argument('file_name', help='The name of the file to delete')
+    delete_file_parser.add_argument('vac', nargs='?', default="global", help='The VAC config to set it up for')
+
+    # LlamaIndex query command
+    query_parser = llamaindex_subparsers.add_parser('query', help='Query a corpus')
+    query_parser.add_argument('display_name', help='The name of the corpus')
+    query_parser.add_argument('query', help='The query string')
+    query_parser.add_argument('vac', nargs='?', default="global", help='The VAC config to set it up for')
+
     llamaindex_parser.set_defaults(func=llamaindex_command)
-    
