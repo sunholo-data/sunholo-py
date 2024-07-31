@@ -86,6 +86,7 @@ class ConfigManager:
                 continue
             if filename.endswith(('.yaml', '.yml', '.json')):
                 config_file = os.path.join(folder, filename)
+                log.info("Checking config file: {config_file}")
                 if filename in self.config_cache:
                     cached_config, cache_time = self.config_cache[filename]
                     time_to_recache = (current_time - cache_time)
@@ -159,7 +160,7 @@ class ConfigManager:
             if isinstance(value, dict) and key in dict1 and isinstance(dict1[key], dict):
                 dict1[key] = self._merge_dicts(dict1[key], value)
             else:
-                print(f"Merging '{key}' to new '{value}'")
+                print(f"Merging '{key}' to new '{value[:20]}'")
                 dict1[key] = value
         return dict1
 
