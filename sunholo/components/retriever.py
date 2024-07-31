@@ -34,7 +34,7 @@ def load_memories(vector_name:str=None, config:ConfigManager=None):
 
     memories = config.vacConfig("memory")
     
-    log.info(f"Found memory settings for {vector_name}: {memories}")
+    log.info(f"Found memory settings for {config.vector_name}: {memories}")
     if not memories or len(memories) == 0:
         log.info(f"No memory settings found for {vector_name}")
         return None
@@ -66,12 +66,13 @@ def pick_retriever(vector_name:str=None, config:ConfigManager=None, embeddings=N
                 embeddings = embeddings or get_embeddings(config=config)
                 read_only = value.get('read_only')
                 try:
-                    vectorstore = pick_vectorstore(vectorstore, 
-                                                vector_name=vector_name, 
-                                                embeddings=embeddings, 
-                                                read_only=read_only)
+                    vectorstore = pick_vectorstore(
+                        vectorstore, 
+                        config=config,
+                        embeddings=embeddings, 
+                        read_only=read_only)
                 except Exception as e:
-                    log.error(f"Failed to pick_vectorstore {vectorstore} for {vector_name} - {str(e)} - skipping")
+                    log.error(f"Failed to pick_vectorstore {vectorstore} for {config.vector_name} - {str(e)} - skipping")
                     continue
                 
                 k_override = value.get('k', 3)
