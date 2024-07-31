@@ -97,7 +97,7 @@ def pick_retriever(vector_name:str=None, config:ConfigManager=None, embeddings=N
                 
                 k_override = value.get('k', 3)
                 if vectorstore_obj:
-                    vs_retriever = vectorstore.as_retriever(search_kwargs=dict(k=k_override))
+                    vs_retriever = vectorstore_obj.as_retriever(search_kwargs=dict(k=k_override))
                     retriever_list.append(vs_retriever)
                 else:
                     log.warning(f"No vectorstore found despite being in config: {key=}")
