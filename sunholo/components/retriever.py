@@ -64,7 +64,7 @@ def pick_retriever(vector_name:str=None, config:ConfigManager=None, embeddings=N
                     gcp_config = config.vacConfig('gcp_config')
                     try:
                         gcp_retriever = GoogleVertexAISearchRetriever(
-                            data_store_id=None if value.get("search_engine_id") else vector_name,
+                            data_store_id=None if value.get("search_engine_id") else config.vector_name,
                             max_documents=value.get('max_documents', 5),
                             project_id=gcp_config.get('project_id') or get_gcp_project(),
                             search_engine_id=value.get("search_engine_id"),
