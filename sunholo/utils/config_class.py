@@ -86,7 +86,7 @@ class ConfigManager:
                 continue
             if filename.endswith(('.yaml', '.yml', '.json')):
                 config_file = os.path.join(folder, filename)
-                log.info("Checking config file: {config_file}")
+                log.debug(f"Checking config file: {config_file}")
                 if filename in self.config_cache:
                     cached_config, cache_time = self.config_cache[filename]
                     time_to_recache = (current_time - cache_time)

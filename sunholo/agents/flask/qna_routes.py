@@ -535,6 +535,7 @@ def prep_vac(request, vector_name):
     chat_history = data.pop('chat_history', None)
     vector_name = data.pop('vector_name', vector_name)
 
+    log.info("Turning chat_history into paired tuples")
     paired_messages = extract_chat_history(chat_history)
 
     all_input = {'user_input': user_input, 
