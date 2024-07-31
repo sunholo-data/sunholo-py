@@ -57,6 +57,26 @@ def pick_retriever(vector_name:str=None, config:ConfigManager=None, embeddings=N
             vectorstore = value.get('vectorstore')
             if vectorstore:
                 log.info(f"Found vectorstore {vectorstore}")
+
+                if vectorstore == "vertex_ai_search" or vectorstore == "discovery_engine":
+                    # use direct retriever
+                    from langchain.retrievers import GoogleVertexAISearchRetriever
+                    gcp_config = config.vacConfig('gcp_config')
+                    try:
+                        gcp_retriever = GoogleVertexAISearchRetriever(
+                            data_store_id=None if value.get("search_engine_id") else vector_name,
+                            max_documents=value.get('max_documents', 5),
+                            project_id=gcp_config.get('project_id') or get_gcp_project(),
+                            search_engine_id=value.get("search_engine_id"),
+                            location_id=gcp_config.get("location", "global"),
+                            engine_data_type=value.get("engine_data_type",0)
+                        )
+                    except Exception as err:
+                        log.error(f"Could not init GoogleVertexAISearchRetriever - {str(err)}")
+                        continue
+                    
+                    retriever_list.append(gcp_retriever)
+
                 from_metadata_id = value.get('from_metadata_id')
                 if from_metadata_id:
                     # this entry needs to be fetched via metadata key
@@ -66,7 +86,7 @@ def pick_retriever(vector_name:str=None, config:ConfigManager=None, embeddings=N
                 embeddings = embeddings or get_embeddings(config=config)
                 read_only = value.get('read_only')
                 try:
-                    vectorstore = pick_vectorstore(
+                    vectorstore_obj = pick_vectorstore(
                         vectorstore, 
                         config=config,
                         embeddings=embeddings, 
@@ -76,22 +96,11 @@ def pick_retriever(vector_name:str=None, config:ConfigManager=None, embeddings=N
                     continue
                 
                 k_override = value.get('k', 3)
-                if vectorstore:
+                if vectorstore_obj:
                     vs_retriever = vectorstore.as_retriever(search_kwargs=dict(k=k_override))
                     retriever_list.append(vs_retriever)
                 else:
                     log.warning(f"No vectorstore found despite being in config: {key=}")
-            
-            if value.get('provider') == "GoogleCloudEnterpriseSearchRetriever":
-                log.info(f"Found GoogleCloudEnterpriseSearchRetriever {value['provider']}")
-                gcp_retriever = GoogleCloudEnterpriseSearchRetriever(
-                    project_id=get_gcp_project(),
-                    search_engine_id=value["db_id"],
-                    location_id=value.get("location", "global"),
-                    engine_data_type=1 if value.get("type","unstructured") == "structured" else 0,
-                    query_expansion_condition=2
-                )
-                retriever_list.append(gcp_retriever)
             
             #TODO: more memory stores here
 

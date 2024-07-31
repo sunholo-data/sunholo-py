@@ -160,7 +160,6 @@ class ConfigManager:
             if isinstance(value, dict) and key in dict1 and isinstance(dict1[key], dict):
                 dict1[key] = self._merge_dicts(dict1[key], value)
             else:
-                print(f"Merging '{key}' to new '{value[:20]}'")
                 dict1[key] = value
         return dict1
 
