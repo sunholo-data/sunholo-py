@@ -15,6 +15,7 @@ from ..discovery_engine.chunker_handler import discovery_engine_chunker_check
 from .publish import process_docs_chunks_vector_name
 from .splitter import chunk_doc_to_docs
 from ..azure.blobs import is_azure_blob
+from ..utils import ConfigManager
 
 from ..custom_logging import log
 
@@ -29,13 +30,15 @@ def process_chunker_data(message_data, metadata, vector_name):
 
     log.debug(f"Found metadata in pubsub: {metadata=}")
 
+    config=ConfigManager(vector_name)
+
     # checks if only a llamaindex chunking/embedder, return early as no other processing needed
     llamacheck = llamaindex_chunker_check(message_data, metadata, vector_name)
     if llamacheck:
         return llamacheck
     
     # if only a discovery engine memory, return early as no other processing needed
-    discovery_check = discovery_engine_chunker_check(message_data, metadata, vector_name)
+    discovery_check = discovery_engine_chunker_check(message_data, metadata, config=config)
     if discovery_check:
         return discovery_check
 

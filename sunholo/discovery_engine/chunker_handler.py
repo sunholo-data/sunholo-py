@@ -1,5 +1,5 @@
 from ..custom_logging import log
-from ..utils import load_config_key, ConfigManager
+from ..utils import ConfigManager
 from ..utils.gcp_project import get_gcp_project
 from ..components import load_memories
 
@@ -7,7 +7,7 @@ from .discovery_engine_client import DiscoveryEngineClient
 from .create_new import create_new_discovery_engine
     
 
-def do_discovery_engine(message_data, metadata, vector_name):
+def do_discovery_engine(message_data:str, metadata:dict, config:ConfigManager=None):
     """
 
     Example:
@@ -15,13 +15,13 @@ def do_discovery_engine(message_data, metadata, vector_name):
     message_data = "gs://bucket_name/path_to_file.txt"
     metadata = {"user": "admin"}
     vector_name = "example_vector"
-    response = do_discovery_engine(message_data, metadata, vector_name)
+    response = do_discovery_engine(message_data, metadata, config=config)
     print(response)
     # Imported file to corpus: {'status': 'success'}
     ```
     """
 
-    memories = load_memories(vector_name)
+    memories = load_memories(config=config)
     tools = []
 
     if not memories:
@@ -38,7 +38,7 @@ def do_discovery_engine(message_data, metadata, vector_name):
                     continue
                 #location = gcp_config.get('location') 
                 corpus = DiscoveryEngineClient(
-                    data_store_id=vector_name, 
+                    data_store_id=config.vector_name, 
                     project_id=get_gcp_project(),
                     # location needs to be 'eu' or 'us' which doesn't work with other configurations
                     #location=location or global_location
@@ -65,14 +65,14 @@ def do_discovery_engine(message_data, metadata, vector_name):
                 log.error(f"Error importing {message_data} - {corp=} - {str(err)}")
 
                 if str(err).startswith("404"):
-                    log.info(f"Attempting to create a new DiscoveryEngine corpus: {vector_name}")
+                    log.info(f"Attempting to create a new DiscoveryEngine corpus: {config.vector_name}")
                     try:
-                        new_corp = create_new_discovery_engine(vector_name)
+                        new_corp = create_new_discovery_engine(config)
                     except Exception as err:
-                        log.error(f"Failed to create new DiscoveryEngine {vector_name} - {str(err)}")
+                        log.error(f"Failed to create new DiscoveryEngine {config.vector_name} - {str(err)}")
                         continue
                     if new_corp:
-                        log.info(f"Found new DiscoveryEngine {vector_name=} - {new_corp=}")
+                        log.info(f"Found new DiscoveryEngine {config.vector_name=} - {new_corp=}")
                         response = corp.import_documents(
                             gcs_uri=message_data
                         )
@@ -126,7 +126,7 @@ def discovery_engine_chunker_check(message_data, metadata, vector_name:str=None,
     total_memories = len(check_write_memories(config))
     llama = None
     if check_discovery_engine_in_memory(config):
-        llama = do_discovery_engine(message_data, metadata, vector_name)
+        llama = do_discovery_engine(message_data, metadata, config=config)
         log.info(f"Processed discovery engine: {llama}")
 
     # If discovery engine is the only entry, return

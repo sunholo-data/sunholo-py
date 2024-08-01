@@ -1,10 +1,10 @@
 from .discovery_engine_client import DiscoveryEngineClient
-from ..utils.config import load_config_key
+from ..utils import ConfigManager
 from ..utils.gcp_project import get_gcp_project
 
-def create_new_discovery_engine(vector_name):
+def create_new_discovery_engine(config:ConfigManager):
 
-    chunker_config = load_config_key("chunker", vector_name=vector_name, kind="vacConfig")
+    chunker_config = config.vacConfig("chunker")
 
     chunk_size = 500
     if chunker_config:
@@ -18,7 +18,7 @@ def create_new_discovery_engine(vector_name):
     #location = gcp_config.get('location')
 
     de = DiscoveryEngineClient(
-                    data_store_id=vector_name, 
+                    data_store_id=config.vector_name, 
                     project_id=project_id,
                     # location needs to be 'eu' or 'us' which doesn't work with other configurations
                     #location=location
