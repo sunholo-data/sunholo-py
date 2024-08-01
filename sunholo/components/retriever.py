@@ -60,6 +60,9 @@ def pick_retriever(vector_name:str=None, config:ConfigManager=None, embeddings=N
 
                 if vectorstore == "vertex_ai_search" or vectorstore == "discovery_engine":
                     # use direct retriever
+                    if value.get('chunks'):
+                        log.warning(f"{config.vector_name} will not be using GoogleVertexAISearchRetriever with chunks vertex AI search as not supported yet")
+                        continue
                     from langchain.retrievers import GoogleVertexAISearchRetriever
                     gcp_config = config.vacConfig('gcp_config')
                     try:
@@ -76,6 +79,7 @@ def pick_retriever(vector_name:str=None, config:ConfigManager=None, embeddings=N
                         continue
                     
                     retriever_list.append(gcp_retriever)
+                    continue
 
                 from_metadata_id = value.get('from_metadata_id')
                 if from_metadata_id:

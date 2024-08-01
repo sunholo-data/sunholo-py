@@ -1,5 +1,5 @@
 from ..custom_logging import log
-from ..utils.config import load_config_key
+from ..utils import load_config_key, ConfigManager
 from ..utils.gcp_project import get_gcp_project
 from ..components import load_memories
 
@@ -86,8 +86,9 @@ def do_discovery_engine(message_data, metadata, vector_name):
         log.warning("Only gs:// data is supported for Discovery Engine")
 
 
-def check_discovery_engine_in_memory(vector_name):
-    memories = load_config_key("memory", vector_name=vector_name, kind="vacConfig")
+def check_discovery_engine_in_memory(config:ConfigManager):
+    memories = config.vacConfig("memory")
+
     for memory in memories:  # Iterate over the list
         for key, value in memory.items():  # Now iterate over the dictionary
             log.info(f"Found memory {key}")
@@ -99,15 +100,32 @@ def check_discovery_engine_in_memory(vector_name):
     
     return False
 
-def discovery_engine_chunker_check(message_data, metadata, vector_name):
+def check_write_memories(config:ConfigManager):
+    write_mem = []
+    memories = config.vacConfig("memory")
+    for memory in memories:
+        for key, value in memory.items():
+            if value.get('read_only'):
+                continue
+            write_mem.append(memory)
+    
+    return write_mem
+
+def discovery_engine_chunker_check(message_data, metadata, vector_name:str=None, config:ConfigManager=None):
+
+    if config is None:
+        if vector_name is None:
+            raise ValueError("Must provide config or vector_name")
+        config = ConfigManager(vector_name=vector_name)
+
     # discovery engine handles its own chunking/embedding
-    memories = load_config_key("memory", vector_name=vector_name, kind="vacConfig")
+    memories = config.vacConfig("memory")
     if not memories:
         return None
     
-    total_memories = len(memories)
+    total_memories = len(check_write_memories(config))
     llama = None
-    if check_discovery_engine_in_memory(vector_name):
+    if check_discovery_engine_in_memory(config):
         llama = do_discovery_engine(message_data, metadata, vector_name)
         log.info(f"Processed discovery engine: {llama}")
 

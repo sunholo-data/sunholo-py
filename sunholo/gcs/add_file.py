@@ -118,12 +118,13 @@ def add_file_to_gcs(filename: str,
     if os.getenv('EXTENSIONS_BUCKET'):
         bucket_filepath = os.path.basename(filename)
 
-    if vector_name is None:
-            vector_name = "global"
+    if not vector_name:
+        vector_name = "global"
     
     if not bucket_filepath:
         
         bucket_filepath = f"{vector_name}/{year}/{month}/{day}/{hour}/{os.path.basename(filename)}"
+    
     bucket_filepath_prev = f"{vector_name}/{year}/{month}/{day}/{hour_prev}/{os.path.basename(filename)}"
 
     blob = bucket.blob(bucket_filepath)
