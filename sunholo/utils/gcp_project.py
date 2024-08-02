@@ -24,6 +24,7 @@ def get_gcp_project(include_config=False):
         gcp_config = load_config_key("gcp_config", "global", "vacConfig")
         if gcp_config:
             if gcp_config.get('project_id'):
+                logging.info("Using project_id from vacConfig.gcp_config.project_id")
                 return gcp_config.get('project_id')
 
     project_id = get_env_project_id()

@@ -43,7 +43,7 @@ def get_all_chunks(question:str, config:ConfigManager):
     return None
 
 def get_chunks(question, vector_name, num_chunks):
-    de = DiscoveryEngineClient(vector_name, project_id=get_gcp_project())
+    de = DiscoveryEngineClient(vector_name, project_id=get_gcp_project(include_config=True))
     try:
         return de.get_chunks(question, num_previous_chunks=num_chunks, num_next_chunks=num_chunks)
     except Exception as err:

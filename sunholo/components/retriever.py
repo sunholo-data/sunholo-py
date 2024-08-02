@@ -170,4 +170,5 @@ def process_retrieval(retriever_list: list, config: ConfigManager):
         base_compressor=pipeline, base_retriever=lotr, 
         k=k_override)
     
+    log.info(f"Returning Langchain retrieval object: {retriever}")
     return retriever
