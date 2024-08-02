@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.2.1">
 <title data-rh="true">content_buffer.py | Sunholo Dev Portal</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://dev.sunholo.com/docs/sunholo/streaming/content_buffer"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="content_buffer.py | Sunholo Dev Portal"><meta data-rh="true" name="description" content="Source: sunholo/streaming/contentbuffer.py"><meta data-rh="true" property="og:description" content="Source: sunholo/streaming/contentbuffer.py"><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://dev.sunholo.com/docs/sunholo/streaming/content_buffer"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/streaming/content_buffer" hreflang="en"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/streaming/content_buffer" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.f6c7f565.css">
-<script src="/assets/js/runtime~main.dbe99eae.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.174b1e37.js" defer="defer"></script>
 <script src="/assets/js/main.d407c894.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -175,20 +175,31 @@ serialized (Dict[str, Any]): The serialized LLM.
 prompts (List[str]): The prompts to run.
 **kwargs (Any): Additional keyword arguments.</p>
 <ul>
-<li>
-<p>on_retriever_end(self, documents: &#x27;Sequence[Document]&#x27;, *, run_id: &#x27;UUID&#x27;, parent_run_id: &#x27;Optional[UUID]&#x27; = None, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;Any&#x27;</p>
+<li>on_retriever_end(self, documents: &#x27;Sequence[Document]&#x27;, *, run_id: &#x27;UUID&#x27;, parent_run_id: &#x27;Optional[UUID]&#x27; = None, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;Any&#x27;<!-- -->
 <ul>
 <li>Run when Retriever ends running.</li>
 </ul>
 </li>
-<li>
-<p>on_retriever_error(self, error: &#x27;BaseException&#x27;, *, run_id: &#x27;UUID&#x27;, parent_run_id: &#x27;Optional[UUID]&#x27; = None, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;Any&#x27;</p>
+</ul>
+<p>Args:
+documents (Sequence[Document]): The documents retrieved.
+run_id (UUID): The run ID. This is the ID of the current run.
+parent_run_id (UUID): The parent run ID. This is the ID of the parent run.
+kwargs (Any): Additional keyword arguments.</p>
+<ul>
+<li>on_retriever_error(self, error: &#x27;BaseException&#x27;, *, run_id: &#x27;UUID&#x27;, parent_run_id: &#x27;Optional[UUID]&#x27; = None, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;Any&#x27;<!-- -->
 <ul>
 <li>Run when Retriever errors.</li>
 </ul>
 </li>
-<li>
-<p>on_retriever_start(self, serialized: &#x27;Dict[str, Any]&#x27;, query: &#x27;str&#x27;, *, run_id: &#x27;UUID&#x27;, parent_run_id: &#x27;Optional[UUID]&#x27; = None, tags: &#x27;Optional[List[str]]&#x27; = None, metadata: &#x27;Optional[Dict[str, Any]]&#x27; = None, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;Any&#x27;</p>
+</ul>
+<p>Args:
+error (BaseException): The error that occurred.
+run_id (UUID): The run ID. This is the ID of the current run.
+parent_run_id (UUID): The parent run ID. This is the ID of the parent run.
+kwargs (Any): Additional keyword arguments.</p>
+<ul>
+<li>on_retriever_start(self, serialized: &#x27;Dict[str, Any]&#x27;, query: &#x27;str&#x27;, *, run_id: &#x27;UUID&#x27;, parent_run_id: &#x27;Optional[UUID]&#x27; = None, tags: &#x27;Optional[List[str]]&#x27; = None, metadata: &#x27;Optional[Dict[str, Any]]&#x27; = None, **kwargs: &#x27;Any&#x27;) -&gt; &#x27;Any&#x27;<!-- -->
 <ul>
 <li>Run when the Retriever starts running.</li>
 </ul>
