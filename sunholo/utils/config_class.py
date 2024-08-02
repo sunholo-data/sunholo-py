@@ -37,9 +37,10 @@ class ConfigManager:
         self.config_folder = os.getenv("VAC_CONFIG_FOLDER", os.getcwd())
         self.local_config_folder = local_config_folder
         self.configs_by_kind = self.load_all_configs()
+        self.validate = validate
 
         test_agent = self.vacConfig("agent")
-        if not test_agent and self.vector_name != "global" and validate:
+        if not test_agent and self.vector_name != "global" and self.validate:
             print(f"WARNING: No vacConfig.agent found for {self.vector_name} - are you in right folder? {local_config_folder=} {self.config_folder=}")
 
     def load_all_configs(self):
@@ -52,7 +53,8 @@ class ConfigManager:
         """
         from ..custom_logging import log
 
-        log.debug(f"Loading all configs from folder: {self.config_folder} and local folder: {self.local_config_folder}")
+        if self.validate:
+            log.debug(f"Loading all configs from folder: {self.config_folder} and local folder: {self.local_config_folder}")
         global_configs_by_kind = self._load_configs_from_folder(self.config_folder)
 
         if self.local_config_folder:
@@ -125,7 +127,8 @@ class ConfigManager:
             else:
                 config = yaml.safe_load(file)
         self.config_cache[filename] = (config, datetime.now())
-        log.debug(f"Loaded and cached {config_file}")
+        if self.validate:
+            log.debug(f"Loaded and cached {config_file}")
         if is_local:
             log.warning(f"Local configuration override for {filename} via {self.local_config_folder}")
         return config
