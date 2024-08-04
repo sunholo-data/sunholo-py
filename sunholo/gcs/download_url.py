@@ -123,8 +123,8 @@ def sign_gcs_url(bucket_name:str, object_name:str, expiry_secs:int = 86400) -> O
         return url
     except RefreshError:
         log.info("Refreshing gcs_credentials due to token expiration.")
-        refreshed = refresh_credentials()
-        if refreshed:
+        credentials, token = refresh_credentials()
+        if credentials:
             return sign_gcs_url(bucket_name, object_name, expiry_secs)
         log.error("Failed to refresh gcs credentials")
         return None
@@ -161,9 +161,9 @@ def construct_download_link_simple(bucket_name:str, object_name:str) -> Tuple[st
     """
 
     if object_name.startswith("gs://"):
-        object_name = object_name.replace("gs://", "https://storage.cloud.google.com")
-
-    public_url = f"https://storage.cloud.google.com/{bucket_name}/{quote(object_name)}"
+        public_url = object_name.replace("gs://", "https://storage.cloud.google.com")
+    else:
+        public_url = f"https://storage.cloud.google.com/{bucket_name}/{quote(object_name)}"
     filename = os.path.basename(object_name)
     return public_url, filename, False
 

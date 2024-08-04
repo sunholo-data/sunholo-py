@@ -7,12 +7,14 @@ from ..utils.gcp import is_running_on_gcp
 from ..custom_logging import log
 
 def get_default_email():
-    if not refresh_credentials():
-        log.error("Could not refresh the credentials properly.")
-        return None
+
     # https://stackoverflow.com/questions/64234214/how-to-generate-a-blob-signed-url-in-google-cloud-run
 
-    gcs_credentials, project_id = get_default_creds()
+    gcs_credentials, project_id = refresh_credentials()
+
+    if gcs_credentials is None:
+        log.error("Could not refresh the credentials properly.")
+        return None
 
     service_account_email = getattr(gcs_credentials, 'service_account_email', None)
     # If you use a service account credential, you can use the embedded email
@@ -34,20 +36,24 @@ def get_default_creds():
     return gcs_credentials, project_id
 
 def refresh_credentials():
+    """
+    Need to refresh to get a valid email/token for signing URLs from a default service account
+    """
     if not is_running_on_gcp():
         log.debug("Not running on Google Cloud so no credentials available for GCS.")
-        return False
+        return None, None
     
     gcs_credentials, project_id = get_default_creds()
 
     if not gcs_credentials.token or gcs_credentials.expired or not gcs_credentials.valid:
         try:
-            gcs_credentials.refresh(requests.Request())
+            r = requests.Request()
+            gcs_credentials.refresh(r)
 
-            return True
+            return gcs_credentials, project_id
         
         except Exception as e:
             log.error(f"Failed to refresh gcs credentials: {e}")
 
-            return False
+            return None, None
     
