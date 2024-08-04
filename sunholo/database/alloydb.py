@@ -14,6 +14,8 @@ from .alloydb_client import AlloyDBClient
 from ..custom_logging import log
 from ..utils.config import load_config_key
 
+from typing import List
+
 
 def create_alloydb_engine(vector_name):
 
@@ -231,8 +233,11 @@ async def load_alloydb_sql_async(sql, vector_name):
     
     return documents
 
-def and_or_ilike(sources, search_type="OR", operator="ILIKE"):
-    unique_sources = set(sources.split())
+def and_or_ilike(sources:List[str], search_type:str="OR", operator:str="ILIKE"):
+    if not isinstance(sources, list) or not all(isinstance(source, str) for source in sources):
+        raise TypeError("The `sources` argument must be a list of strings.")
+    
+    unique_sources = set(sources)
     # Choose the delimiter based on the search_type argument
     delimiter = ' AND ' if search_type.upper() == "AND" else ' OR '
 

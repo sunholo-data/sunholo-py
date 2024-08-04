@@ -53,8 +53,7 @@ class ConfigManager:
         """
         from ..custom_logging import log
 
-        if self.validate:
-            log.debug(f"Loading all configs from folder: {self.config_folder} and local folder: {self.local_config_folder}")
+        log.debug(f"Loading all configs from folder: {self.config_folder} and local folder: {self.local_config_folder}")
         global_configs_by_kind = self._load_configs_from_folder(self.config_folder)
 
         if self.local_config_folder:
@@ -127,8 +126,6 @@ class ConfigManager:
             else:
                 config = yaml.safe_load(file)
         self.config_cache[filename] = (config, datetime.now())
-        if self.validate:
-            log.debug(f"Loaded and cached {config_file}")
         if is_local:
             log.warning(f"Local configuration override for {filename} via {self.local_config_folder}")
         return config

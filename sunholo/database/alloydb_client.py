@@ -1,3 +1,4 @@
+import os
 try:
     import pg8000
     import sqlalchemy
@@ -9,6 +10,7 @@ except ImportError:
 
 from .database import get_vector_size
 from ..custom_logging import log
+from ..utils import ConfigManager
 
 class AlloyDBClient:
     """
@@ -35,11 +37,12 @@ class AlloyDBClient:
     """
 
     def __init__(self, 
-                 project_id: str, 
-                 region: str, 
-                 cluster_name:str, 
-                 instance_name:str, 
-                 user:str, 
+                 config:ConfigManager,
+                 project_id: str=None, 
+                 region: str=None, 
+                 cluster_name:str=None, 
+                 instance_name:str=None, 
+                 user:str=None, 
                  password=None, 
                  db="postgres"):
         """Initializes the AlloyDB client.
@@ -51,6 +54,23 @@ class AlloyDBClient:
          - password (str): The database user's password.
          - db_name (str): The name of the database.
         """
+        if config is None:
+            if project_id is None or region is None or cluster_name is None or instance_name is None:
+                raise ValueError("Must specify config or project_id, region, cluster_name, instance_name")
+        if config:
+            alloydb_config = config.vacConfig("alloydb_config")
+            if not alloydb_config:
+                raise ValueError("Must specify vac.alloydb_config")
+            project_id = alloydb_config["project_id"]
+            region = alloydb_config["region"]
+            cluster_name = alloydb_config["cluster"]
+            instance_name = alloydb_config["instance"]
+
+        ALLOYDB_DB = os.environ.get("ALLOYDB_DB")
+        if ALLOYDB_DB is None and alloydb_config.get("database") is None:
+            log.warning("Could not locate ALLOYDB_DB environment variable or 'alloydb_config.database'")
+        
+        self.database = alloydb_config.get("database") or ALLOYDB_DB,
         self.connector = Connector()
         self.inst_uri = self._build_instance_uri(project_id, region, cluster_name, instance_name)
         self.engine = self._create_engine(self.inst_uri, user, password, db)
@@ -100,6 +120,80 @@ class AlloyDBClient:
                 conn.close()
 
         return result
+    
+    async def execute_sql_async(self, sql_statement):
+        """Executes a given SQL statement asynchronously with error handling."""
+        sql_ = sqlalchemy.text(sql_statement)
+        result = None
+        async with self.engine.connect() as conn:
+            try:
+                log.info(f"Executing SQL statement asynchronously: {sql_}")
+                result = await conn.execute(sql_)
+            except DatabaseError as e:
+                if "already exists" in str(e):
+                    log.warning(f"Error ignored: {str(e)}. Assuming object already exists.")
+                else:
+                    raise
+            finally:
+                await conn.close()
+
+        return result
+
+    async def get_sources_from_docstore_async(self, sources, vector_name, search_type="OR", just_source_name=False):
+        """Fetches sources from the docstore asynchronously."""
+        if just_source_name:
+            query = self._list_sources_from_docstore(sources, vector_name=vector_name, search_type=search_type)
+        else:
+            query = self._get_sources_from_docstore(sources, vector_name=vector_name, search_type=search_type)
+
+        if not query:
+            return []
+
+        documents = await self.execute_sql_async(query)
+        return documents
+
+    def _get_sources_from_docstore(self, sources, vector_name, search_type="OR"):
+        """Helper function to build the SQL query for fetching sources."""
+        if not sources:
+            log.warning("No sources found for alloydb fetch")
+            return ""
+
+        table_name = f"{vector_name}_docstore"
+
+        conditions = self._and_or_ilike(sources, search_type=search_type)
+
+        query = f"""
+            SELECT * 
+            FROM {table_name}
+            WHERE {conditions}
+            ORDER BY langchain_metadata->>'objectId' ASC
+            LIMIT 500;
+        """
+
+        return query
+
+    def _list_sources_from_docstore(self, sources, vector_name, search_type="OR"):
+        """Helper function to build the SQL query for listing sources."""
+        table_name = f"{vector_name}_docstore"
+
+        if sources:
+            conditions = self._and_or_ilike(sources, search_type=search_type)
+            query = f"""
+                SELECT DISTINCT langchain_metadata->>'objectId' AS objectId
+                FROM {table_name}
+                WHERE {conditions}
+                ORDER BY langchain_metadata->>'objectId' ASC
+                LIMIT 500;
+            """
+        else:
+            query = f"""
+                SELECT DISTINCT langchain_metadata->>'objectId' AS objectId
+                FROM {table_name}
+                ORDER BY langchain_metadata->>'objectId' ASC
+                LIMIT 500;
+            """
+
+        return query
 
     @staticmethod
     def _and_or_ilike(sources, search_type="OR", operator="ILIKE"):
