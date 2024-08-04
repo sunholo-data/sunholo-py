@@ -3,6 +3,8 @@ import json
 import yaml
 from datetime import datetime, timedelta
 from collections import defaultdict
+from yaml.constructor import SafeConstructor, ConstructorError
+
 from .timedelta import format_timedelta
 
 class ConfigManager:
@@ -120,11 +122,30 @@ class ConfigManager:
             dict: The loaded configuration.
         """
         from ..custom_logging import log
+
+        class NoDuplicateKeyConstructor(SafeConstructor):
+            def construct_mapping(self, node, deep=False):
+                mapping = {}
+                for key_node, value_node in node.value:
+                    key = self.construct_object(key_node, deep=deep)
+                    if key in mapping:
+                        raise ConstructorError(f"Duplicate key found: {key_node.start_mark}")
+                    value = self.construct_object(value_node, deep=deep)
+                    mapping[key] = value
+                return mapping
+
+        NoDuplicateKeyLoader = yaml.Loader
+        NoDuplicateKeyLoader.add_constructor(
+            yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+            NoDuplicateKeyConstructor.construct_mapping
+        )
+
         with open(config_file, 'r') as file:
             if filename.endswith('.json'):
                 config = json.load(file)
             else:
-                config = yaml.safe_load(file)
+                config = yaml.load(file, Loader=NoDuplicateKeyLoader)
+
         self.config_cache[filename] = (config, datetime.now())
         if is_local:
             log.warning(f"Local configuration override for {filename} via {self.local_config_folder}")
