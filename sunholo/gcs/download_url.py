@@ -110,6 +110,9 @@ def sign_gcs_url(bucket_name:str, object_name:str, expiry_secs:int = 86400) -> O
 
     expires = datetime.now() + timedelta(seconds=expiry_secs)
 
+    if object_name.startswith("gs://"):
+        object_name = object_name.replace(f"gs://{bucket_name}/","")
+
     try:
         bucket = get_bucket(bucket_name)
         blob = bucket.blob(object_name)
@@ -136,9 +139,10 @@ def sign_gcs_url(bucket_name:str, object_name:str, expiry_secs:int = 86400) -> O
 def construct_download_link(source_uri: str) -> Tuple[str, str, bool]:
     """Creates a viewable Cloud Storage web browser link from a gs:// URI.""" 
     if not source_uri.startswith("gs://"):
-        return source_uri, source_uri, False  # Return the URI as is if it doesn't start with gs://
-
+        return source_uri, source_uri, False  # Return the URI if it doesn't start with gs://
+    
     bucket_name, object_name = parse_gs_uri(source_uri)
+    log.info(f"Source URL: {source_uri} parsed to {bucket_name=} - {object_name=}")
 
     signed_url = sign_gcs_url(bucket_name, object_name)
     if signed_url:
