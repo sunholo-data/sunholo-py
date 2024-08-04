@@ -173,7 +173,7 @@ def generate_swagger(vac_config, agent_config):
             'description': 'Multivac (Multi-VAC) Cloud. Generate API keys (MULTIVAC_API_KEY) to enable access to private services. See more at https://dev.sunholo.com/',
             'version': '0.1.0'
         },
-        'host': '"${_ENDPOINTS_HOST}"',
+        'host': '${_ENDPOINTS_HOST}',
         'basePath': '/v1',
         'schemes': ['https'],
         'produces': ['application/json'],
