@@ -4,8 +4,6 @@ import os
 import google.auth 
 from google.auth.transport import requests
 from ..utils.gcp import is_running_on_gcp
-
-
 from ..custom_logging import log
 
 def get_default_email():
@@ -26,7 +24,7 @@ def get_default_email():
             return None
     
     log.info(f"Found default email: {service_account_email=} for {project_id=}")
-    return service_account_email
+    return service_account_email, gcs_credentials
 
 def get_default_creds():
     gcs_credentials = None

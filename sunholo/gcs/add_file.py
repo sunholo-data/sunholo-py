@@ -22,7 +22,7 @@ except ImportError:
     storage = None
 
 from ..custom_logging import log
-from ..utils import load_config_key, ConfigManager
+from ..utils import ConfigManager
 
 
 def handle_base64_image(base64_data: str, vector_name: str, extension: str):

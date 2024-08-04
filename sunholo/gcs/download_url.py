@@ -1,3 +1,9 @@
+from __future__ import annotations
+from typing import Optional, Tuple, TYPE_CHECKING
+if TYPE_CHECKING:
+    from PIL import Image
+    from google.cloud.storage.bucket import Bucket
+
 import os
 from urllib.parse import quote
 from datetime import datetime, timedelta
@@ -6,25 +12,20 @@ from datetime import datetime, timedelta
 from google.auth.exceptions import RefreshError
 
 try:
-    from google.cloud import storage 
+    from google.cloud import storage
 except ImportError:
     storage = None
 
 from ..custom_logging import log
-from ..utils.gcp import is_running_on_gcp
-from ..auth.refresh import refresh_credentials, get_default_creds, get_default_email
+from ..auth.refresh import refresh_credentials, get_default_email
 from io import BytesIO
 try:
     from PIL import Image
 except ImportError:
     Image = None
 
-gcs_credentials = None
-project_id = None
-gcs_client = None
-gcs_bucket_cache = {}
 
-def get_image_from_gcs(gs_uri: str):
+def get_image_from_gcs(gs_uri: str) -> Image.Image: # type: ignore
     """Converts image bytes from GCS to a PIL Image object."""
     image_bytes = get_bytes_from_gcs(gs_uri)
     if not Image:
@@ -35,7 +36,7 @@ def get_image_from_gcs(gs_uri: str):
     except IOError as e:
         raise ValueError("Unable to open image from bytes:", e)
 
-def get_bytes_from_gcs(gs_uri):
+def get_bytes_from_gcs(gs_uri) -> Optional[bytes]:
     """
     Downloads a file from Google Cloud Storage and returns its bytes.
 
@@ -73,22 +74,39 @@ def get_bytes_from_gcs(gs_uri):
         log.error(f"Error downloading file from GCS: {str(err)}")
         return None
 
+gcs_bucket_cache = {}
+def get_bucket(bucket_name: str) -> Optional[Bucket]:
+    """
+    Gets a Cloud Storage bucket and initialised GCS client
 
-if is_running_on_gcp():
-    # Perform a refresh request to get the access token of the current credentials (Else, it's None)
-    gcs_credentials, project_id = get_default_creds()
-    # Prepare global variables for client reuse
+    Args:
+        bucket_name: Name of the bucket 
+
+    Returns:
+
+    """
     if storage:
         gcs_client = storage.Client()
+    else:
+        raise ImportError("google storage pip required - install via `pip install sunholo[gcp]`")
 
-def get_bucket(bucket_name):
     if bucket_name not in gcs_bucket_cache:
         gcs_bucket_cache[bucket_name] = gcs_client.get_bucket(bucket_name)
     return gcs_bucket_cache[bucket_name]
 
-def sign_gcs_url(bucket_name:str, object_name:str, expiry_secs = 86400):
+def sign_gcs_url(bucket_name:str, object_name:str, expiry_secs:int = 86400) -> Optional[str]:
+    """
+    Creates a signed URL so that users can download a file from Google Cloud Storage without authentication
+
+    Args:
+        bucket_name: Name of the bucket where the object lies
+        object_name: Object within the bucket
+        expiry_secs: How long the link will be valid - default 24hrs
     
-    service_account_email = get_default_email()
+    Returns:
+        str: The signed URL or None if not avialable
+    """
+    service_account_email, gcs_credentials = get_default_email()
 
     expires = datetime.now() + timedelta(seconds=expiry_secs)
 
@@ -115,7 +133,7 @@ def sign_gcs_url(bucket_name:str, object_name:str, expiry_secs = 86400):
         return None
 
 
-def construct_download_link(source_uri: str) -> tuple[str, str, bool]:
+def construct_download_link(source_uri: str) -> Tuple[str, str, bool]:
     """Creates a viewable Cloud Storage web browser link from a gs:// URI.""" 
     if not source_uri.startswith("gs://"):
         return source_uri, source_uri, False  # Return the URI as is if it doesn't start with gs://
@@ -132,7 +150,7 @@ def construct_download_link(source_uri: str) -> tuple[str, str, bool]:
     return construct_download_link_simple(bucket_name, object_name)
 
 
-def construct_download_link_simple(bucket_name:str, object_name:str) -> tuple[str, str, bool]:
+def construct_download_link_simple(bucket_name:str, object_name:str) -> Tuple[str, str, bool]:
     """Creates a viewable Cloud Storage web browser link from a gs:// URI.
 
     Args:
@@ -142,12 +160,14 @@ def construct_download_link_simple(bucket_name:str, object_name:str) -> tuple[st
         A URL that directly access the object in the Cloud Storage web browser.
     """
 
+    if object_name.startswith("gs://"):
+        object_name = object_name.replace("gs://", "https://storage.cloud.google.com")
+
     public_url = f"https://storage.cloud.google.com/{bucket_name}/{quote(object_name)}"
     filename = os.path.basename(object_name)
-    signed = False
-    return public_url, filename, signed
+    return public_url, filename, False
 
-def parse_gs_uri(gs_uri: str) -> tuple[str, str]:
+def parse_gs_uri(gs_uri: str) -> Tuple[str, str]:
     """Parses a gs:// URI into the bucket name and object name.
 
     Args:
