@@ -16,8 +16,7 @@ from ..custom_logging import log
 from ..gcs.metadata import get_object_metadata
 
 
-
-def process_pubsub_message(data: dict) -> tuple:
+def decode_pubsub_message(data: dict):
     """Extracts message data and metadata from a Pub/Sub message.
 
     Args:
@@ -26,7 +25,6 @@ def process_pubsub_message(data: dict) -> tuple:
     Returns:
         tuple: A tuple containing the message data and attributes as metadata.
     """
-    # Decode the message data
     message_data = base64.b64decode(data['message']['data']).decode('utf-8')
     attributes = data['message'].get('attributes', {})
     messageId = data['message'].get('messageId')
@@ -37,6 +35,20 @@ def process_pubsub_message(data: dict) -> tuple:
 
     log.info(f"Process Pub/Sub was triggered by messageId {messageId} published at {publishTime}")
     log.debug(f"Process Pub/Sub data: {message_data}")
+
+    return message_data, attributes, vector_name
+
+def process_pubsub_message(data: dict) -> tuple:
+    """Extracts message data and metadata from a Pub/Sub message for a Cloud Storage event.
+
+    Args:
+        data (dict): The Pub/Sub message data.
+
+    Returns:
+        tuple: A tuple containing the message data and attributes as metadata.
+    """
+    # Decode the message data
+    message_data, attributes, vector_name = decode_pubsub_message(data)
 
     # Check for a valid GCS event type and payload format
     if attributes.get("eventType") == "OBJECT_FINALIZE" and attributes.get("payloadFormat") == "JSON_API_V1":
