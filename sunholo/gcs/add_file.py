@@ -15,6 +15,7 @@ import datetime
 import os
 import base64
 import uuid
+import time
 
 try:
     from google.cloud import storage
@@ -89,6 +90,33 @@ def resolve_bucket(vector_name):
     
     return bucket_name
 
+def add_folder_to_gcs(
+        source_folder:str, 
+        vector_name:str=None, 
+        bucket_name:str=None, 
+        metadata:dict=None, 
+        bucket_folderpath:str=None):
+    """Uploads a folder and all its contents to a specified GCS bucket."""
+
+    uris = []
+    for root, dirs, files in os.walk(source_folder):
+        for file in files:
+            local_path = os.path.join(root, file)
+            # Create the relative path in the destination folder
+            relative_path = os.path.relpath(local_path, source_folder)
+            bucket_filepath = os.path.join(bucket_folderpath, relative_path)
+
+            uri = add_file_to_gcs(local_path, 
+                            vector_name=vector_name, 
+                            bucket_name=bucket_name, 
+                            metadata=metadata, 
+                            bucket_filepath=bucket_filepath)
+            uris.append(uri)
+            
+    log.info(f"uploaded [{len(files)}] to GCS bucket")
+
+    return uris
+
 def add_file_to_gcs(filename: str, 
                     vector_name:str=None, 
                     bucket_name: str=None, 
@@ -148,7 +176,7 @@ def add_file_to_gcs(filename: str,
 
     blob.metadata = the_metadata
     
-    import time
+
 
     max_retries = 5
     base_delay = 1  # 1 second

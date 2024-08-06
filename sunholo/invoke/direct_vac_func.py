@@ -41,7 +41,7 @@ def direct_vac(vac_input: dict, vac_name: str, chat_history=[]):
     override_endpoint = agent_url or override_endpoint
 
     print(f"Using {override_endpoint=}")
-    log.warning(f'Batch invoke_vac_qa with {vac_input=}')
+    log.warning(f'Batch invoke_vac_qa {vac_name} with {vac_input=}')
     vac_response = send_to_qa(
         vac_input["user_input"],
         vector_name=vac_name,

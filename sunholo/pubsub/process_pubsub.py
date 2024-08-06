@@ -16,7 +16,7 @@ from ..custom_logging import log
 from ..gcs.metadata import get_object_metadata
 
 
-def decode_pubsub_message(data: dict):
+def decode_pubsub_message(data: dict) -> tuple:
     """Extracts message data and metadata from a Pub/Sub message.
 
     Args:

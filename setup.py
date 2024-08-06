@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.82.0'
+version = '0.82.1'
 
 setup(
     name='sunholo',
@@ -31,9 +31,9 @@ setup(
         "google-auth", # to check if on gcp
         #"tenacity==8.3.0", #TODO: remove soon
         "ruamel.yaml",
-        "langchain>=0.2.5",
+        "langchain>=0.2.12",
         "langchain_experimental>0.0.60",
-        "langchain-community",
+        "langchain-community>=0.2.11",
     ],
     extras_require={
         # Define optional dependencies with feature names
