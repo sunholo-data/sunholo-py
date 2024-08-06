@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 # Define your base version
-version = '0.82.1'
+version = '0.82.2'
 
 setup(
     name='sunholo',
@@ -32,7 +32,7 @@ setup(
         #"tenacity==8.3.0", #TODO: remove soon
         "ruamel.yaml",
         "langchain>=0.2.12",
-        "langchain_experimental>0.0.60",
+        "langchain_experimental>=0.0.61",
         "langchain-community>=0.2.11",
     ],
     extras_require={
@@ -46,7 +46,7 @@ setup(
             "google-auth",
             "google-auth-httplib2",
             "google-auth-oauthlib",
-            "google-cloud-aiplatform",
+            "google-cloud-aiplatform>=1.58.0",
             "google-api-python-client",
             "google-cloud-alloydb-connector[pg8000]",
             "google-cloud-bigquery",
@@ -62,11 +62,11 @@ setup(
             "httpx",
             "jsonschema",
             "lancedb",
-            "langchain",
-            "langchain_experimental",
-            "langchain-community",
-            "langchain-openai",
-            "langchain-google-genai",
+            "langchain>=0.2.12",
+            "llangchain-experimental>=0.0.61",
+            "langchain-community>=0.2.11",
+            "langchain-openai>=0.1.20",
+            "langchain-google-genai>=1.0.5",
             "langchain_google_alloydb_pg",
             "langchain-anthropic>=0.1.13",
             "langchain-google-vertexai",
