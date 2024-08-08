@@ -23,6 +23,7 @@ from ...streaming import start_streaming_chat
 from ...archive import archive_qa
 from ...custom_logging import log
 from ...utils.config import load_config
+from ...utils import ConfigManager
 from ...utils.version import sunholo_version
 import os
 from ...gcs.add_file import add_file_to_gcs, handle_base64_image
@@ -183,6 +184,15 @@ def register_qna_routes(app, stream_interpreter, vac_interpreter):
             generation.end(output=response)
             span.end(output=response)
             trace.update(output=response)
+        
+        #if 'user_id' in all_input["kwargs"]:
+        #    kwargs = all_input["kwargs"]
+        #    config = ConfigManager(vector_name)
+        #    add_user_history_rag(kwargs.pop('user_id'), 
+        #                         config, 
+        #                         question=all_input.pop("user_input"), 
+        #                         answer=response.get('answer'), 
+        #                         metadata=all_input)
 
         return response
 

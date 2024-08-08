@@ -22,7 +22,7 @@ from .content_buffer import ContentBuffer, BufferStreamingStdOutCallbackHandler
 from ..qna.parsers import parse_output
 
 from ..custom_logging import log
-from ..utils import load_config_key
+from ..utils import load_config_key, ConfigManager
 from ..utils.parsers import check_kwargs_support
 
 from .langserve import parse_langserve_token, parse_langserve_token_async
@@ -248,8 +248,9 @@ def generate_proxy_stream(stream_to_f, user_input, vector_name, chat_history, ge
         ):
             print(output)  # Process each streaming output chunk
     """
-    agent = load_config_key("agent", vector_name=vector_name, kind="vacConfig")
-    agent_type = load_config_key("agent_type", vector_name=vector_name, kind="vacConfig")
+    config = ConfigManager(vector_name)
+    agent = config.vacConfig("agent")
+    agent_type = config.vacConfig("agent_type")
 
     def generate():
         json_buffer = ""
@@ -306,9 +307,10 @@ async def generate_proxy_stream_async(stream_to_f, user_input, vector_name, chat
         ):
             print(output)  # Process each streaming output chunk
     """
-    agent = load_config_key("agent", vector_name=vector_name, kind="vacConfig")
-    agent_type = load_config_key("agent_type", vector_name=vector_name, kind="vacConfig")
-
+    config = ConfigManager(vector_name)
+    agent = config.vacConfig("agent")
+    agent_type = config.vacConfig("agent_type")
+    
     async def generate():
         json_buffer = ""
         inside_json = False

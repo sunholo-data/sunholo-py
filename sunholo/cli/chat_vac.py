@@ -411,7 +411,7 @@ def resolve_service_url(args, no_config=False):
 
 def vac_command(args):
 
-    config = ConfigManager(args.vac_name)
+    
 
     if args.action == 'list':
 
@@ -426,6 +426,7 @@ def vac_command(args):
         return
     
     elif args.action == 'chat':
+        config = ConfigManager(args.vac_name)
         service_url = resolve_service_url(args)
         agent_name   = config.vacConfig("agent")
 
@@ -465,7 +466,6 @@ def vac_command(args):
         service_url = resolve_service_url(args, no_config=True)
 
         invoke_vac(service_url, args.data, is_file=args.is_file)
-
 
 def list_cloud_run_services(project, region):
     """
@@ -583,4 +583,5 @@ def setup_vac_subparser(subparsers):
     invoke_parser.add_argument('data', help='Data to send to the VAC service (as JSON string).')
     invoke_parser.add_argument('--is-file', action='store_true', help='Indicate if the data argument is a file path')
 
-    vac_parser.set_defaults(func=vac_command)
+    # If no subcommand is provided, print the help message
+    vac_parser.set_defaults(func=lambda args: vac_parser.print_help() if args.action is None else vac_command(args))

@@ -13,6 +13,7 @@ from .vertex import setup_vertex_subparser
 from ..llamaindex import setup_llamaindex_subparser
 
 from ..utils import ConfigManager
+from ..utils.version import sunholo_version
 
 from ..custom_logging import log
 
@@ -63,7 +64,8 @@ def main(args=None):
     parser.add_argument('--debug', action='store_true', help='Enable debug output')
     parser.add_argument('--project', default=default_project, help='GCP project to list Cloud Run services from.')
     parser.add_argument('--region', default=default_region, help='Region to list Cloud Run services from.')
-    
+    parser.add_argument('--version', action='store_true', help='Show the version and exit') 
+
     subparsers = parser.add_subparsers(title='commands', 
                                        description='Valid commands', 
                                        help='Commands', 
@@ -101,6 +103,10 @@ def main(args=None):
     else:
         log.setLevel(logging.WARNING)
         logging.getLogger().setLevel(logging.WARNING)
+
+    if args.version:
+        sunholo_version()
+        return
 
     if hasattr(args, 'func'):
         args.func(args)

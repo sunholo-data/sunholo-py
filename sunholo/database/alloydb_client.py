@@ -152,6 +152,20 @@ class AlloyDBClient:
         documents = await self.execute_sql_async(query)
         return documents
 
+    def get_sources_from_docstore(self, sources, vector_name, search_type="OR", just_source_name=False):
+        """Fetches sources from the docstore asynchronously."""
+        if just_source_name:
+            query = self._list_sources_from_docstore(sources, vector_name=vector_name, search_type=search_type)
+        else:
+            query = self._get_sources_from_docstore(sources, vector_name=vector_name, search_type=search_type)
+
+        if not query:
+            return []
+
+        documents = self.execute_sql(query)
+        
+        return documents
+
     def _get_sources_from_docstore(self, sources, vector_name, search_type="OR"):
         """Helper function to build the SQL query for fetching sources."""
         if not sources:
