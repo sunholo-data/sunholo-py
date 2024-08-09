@@ -9,6 +9,7 @@ except ImportError:
     pass
 
 from .database import get_vector_size
+from .uuid import generate_uuid_from_object_id
 from ..custom_logging import log
 from ..utils import ConfigManager
 
@@ -122,10 +123,10 @@ class AlloyDBClient:
             region=self.config["region"],
             cluster=self.config["cluster"],
             instance=self.config["instance"],
-            password=self.password,
             database=self.database,
             ip_type=self.config.get("ip_type") or IPTypes.PRIVATE
         )
+        self._loop = engine._loop
 
         log.info(f"Created AlloyDB engine for {engine}")
 
@@ -190,6 +191,34 @@ class AlloyDBClient:
                 await conn.close()
 
         return result
+    
+    def get_document_from_docstore(self, source:str, vector_name):
+        query = self._get_document_from_docstore(source, vector_name)
+
+        return self.execute_sql(query)
+
+    async def get_document_from_docstore_async(self, source:str, vector_name:str):
+        query = self._get_document_from_docstore(source, vector_name)
+
+        document = await self.execute_sql_async(query)
+
+        return document
+    
+    def _get_document_from_docstore(self, source:str, vector_name:str):
+        if not isinstance(source, str):
+            raise ValueError("The 'source' parameter must be a single string, not a list of strings or other iterable.")
+
+        table_name = f"{vector_name}_docstore"
+        doc_id = generate_uuid_from_object_id(source)
+
+        query = f"""
+            SELECT * 
+            FROM {table_name}
+            WHERE doc_id = {doc_id}
+            LIMIT 1;
+        """
+
+        return query
 
     async def get_sources_from_docstore_async(self, sources, vector_name, search_type="OR", just_source_name=False):
         """Fetches sources from the docstore asynchronously."""
@@ -233,7 +262,7 @@ class AlloyDBClient:
             FROM {table_name}
             WHERE {conditions}
             ORDER BY langchain_metadata->>'objectId' ASC
-            LIMIT 500;
+            LIMIT 50;
         """
 
         return query
