@@ -79,9 +79,11 @@ class AlloyDBClient:
             log.info("User specified {user} - using pg8000 engine")
             self.inst_url = self._build_instance_uri(project_id, region, cluster_name, instance_name)
             self.engine = self._create_engine_from_pg8000()
+            self.engine_type = "pg8000"
         else:
             log.info("Build with Langchain engine - will use default service account for auth")
             self.engine = self._create_engine()
+            self.engine_type = "langchain"
 
     def _build_instance_uri(self, project_id, region, cluster_name, instance_name):
         return f"projects/{project_id}/locations/{region}/clusters/{cluster_name}/instances/{instance_name}"
@@ -128,8 +130,17 @@ class AlloyDBClient:
         log.info(f"Created AlloyDB engine for {engine}")
 
         return engine
-
+    
     def execute_sql(self, sql_statement):
+        if self.engine_type == "pg8000":
+            return self._execute_sql_pg8000(sql_statement)
+        elif self.engine_type == "langchain":
+            return self._execute_sql_langchain(sql_statement)
+    
+    def _execute_sql_langchain(self, sql_statement):
+        return self.engine._fetch(query = sql_statement)
+
+    def _execute_sql_pg8000(self, sql_statement):
         """Executes a given SQL statement with error handling.
 
          - sql_statement (str): The SQL statement to execute.
@@ -152,6 +163,17 @@ class AlloyDBClient:
         return result
     
     async def execute_sql_async(self, sql_statement):
+        if self.engine_type == "pg8000":
+            result = await self._execute_sql_async_pg8000(sql_statement)
+        elif self.engine_type == "langchain":
+            result = await self._execute_sql_async_langchain(sql_statement)
+        
+        return result
+
+    async def _execute_sql_async_langchain(self, sql_statement):
+        return await self.engine._afetch(query = sql_statement)
+        
+    async def _execute_sql_async_pg8000(self, sql_statement):
         """Executes a given SQL statement asynchronously with error handling."""
         sql_ = sqlalchemy.text(sql_statement)
         result = None
