@@ -32,7 +32,7 @@ setup(
         #"tenacity==8.3.0", #TODO: remove soon
         "ruamel.yaml",
         "langchain>=0.2.12",
-        "langchain_experimental>=0.0.61",
+        "langchain_experimental==0.0.63",
         "langchain-community>=0.2.11",
     ],
     extras_require={
