@@ -72,10 +72,11 @@ class AlloyDBClient:
         
         self.database = alloydb_config.get("database") or ALLOYDB_DB
 
+        self.user = user
+        self.password = password
+        self.inst_url = ""
         if user:
             log.info("User specified {user} - using pg8000 engine")
-            self.user = user
-            self.password = password
             self.inst_url = self._build_instance_uri(project_id, region, cluster_name, instance_name)
             self.engine = self._create_engine_from_pg8000()
         else:
@@ -119,7 +120,6 @@ class AlloyDBClient:
             region=self.config["region"],
             cluster=self.config["cluster"],
             instance=self.config["instance"],
-            user=self.user,
             password=self.password,
             database=self.database,
             ip_type=self.config.get("ip_type") or IPTypes.PRIVATE
