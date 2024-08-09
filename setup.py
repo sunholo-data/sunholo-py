@@ -32,7 +32,7 @@ setup(
         #"tenacity==8.3.0", #TODO: remove soon
         "ruamel.yaml",
         "langchain>=0.2.12",
-        "langchain_experimental==0.0.63",
+        "langchain_experimental>=0.0.61",
         "langchain-community>=0.2.11",
     ],
     extras_require={
@@ -63,7 +63,7 @@ setup(
             "jsonschema",
             "lancedb",
             "langchain>=0.2.12",
-            "llangchain-experimental>=0.0.61",
+            "langchain-experimental>=0.0.61",
             "langchain-community>=0.2.11",
             "langchain-openai>=0.1.20",
             "langchain-google-genai>=1.0.5",
