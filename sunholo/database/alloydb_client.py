@@ -43,6 +43,7 @@ class AlloyDBClient:
                  cluster_name:str=None, 
                  instance_name:str=None, 
                  user:str=None,
+                 password:str=None,
                  db="postgres"):
         """Initializes the AlloyDB client.
          - project_id (str): GCP project ID where the AlloyDB instance resides.
@@ -71,11 +72,39 @@ class AlloyDBClient:
         
         self.database = alloydb_config.get("database") or ALLOYDB_DB
 
-        if user and not user.endswith(".iam"):
-            raise ValueError("If you supply an IAM user it must end with .iam e.g. 'sa-cloudbuild@multivac-deploy.iam'")
-        
-        self.user = user
-        self.engine = self._create_engine()
+        if user:
+            log.info("User specified {user} - using pg8000 engine")
+            self.user = user
+            self.password = password
+            self.inst_url = self._build_instance_uri(project_id, region, cluster_name, instance_name)
+            self.engine = self._create_engine_from_pg8000()
+        else:
+            log.info("Build with Langchain engine - will use default service account for auth")
+            self.engine = self._create_engine()
+
+    def _build_instance_uri(self, project_id, region, cluster_name, instance_name):
+        return f"projects/{project_id}/locations/{region}/clusters/{cluster_name}/instances/{instance_name}"
+    
+    def _create_engine_from_pg8000(self, user, password, db):
+        def getconn() -> pg8000.dbapi.Connection:
+            conn = self.connector.connect(
+                self.inst_uri,
+                "pg8000",
+                user=user,
+                password=password,
+                db=db,
+                enable_iam_auth=True,
+            )
+            return conn
+
+        engine = sqlalchemy.create_engine(
+            "postgresql+pg8000://", 
+            isolation_level="AUTOCOMMIT", 
+            creator=getconn)
+        engine.dialect.description_encoding = None
+
+        log.info(f"Created AlloyDB engine for {self.inst_uri} and user: {user}")
+        return engine
 
     def _create_engine(self):
         if not AlloyDBEngine:
@@ -91,6 +120,7 @@ class AlloyDBClient:
             cluster=self.config["cluster"],
             instance=self.config["instance"],
             user=self.user,
+            password=self.password,
             database=self.database,
             ip_type=self.config.get("ip_type") or IPTypes.PRIVATE
         )
