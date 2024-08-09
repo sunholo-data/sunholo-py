@@ -133,8 +133,8 @@ def get_google_search_grounding(vector_name:str=None, config:ConfigManager=None)
         config = ConfigManager(vector_name)
 
     # can't have this and llamaindex memories?
-    ground = config.vacConfig("grounding")
-    if ground and ground.get("google_search"):
+    tools = config.vacConfig("tools")
+    if tools and tools.get("google_search"):
         gs_tool = Tool.from_google_search_retrieval(grounding.GoogleSearchRetrieval())
         log.info(f"Got Search Tool: {gs_tool}")
         return gs_tool

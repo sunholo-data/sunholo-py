@@ -3,7 +3,7 @@ try:
     import pg8000
     import sqlalchemy
     from sqlalchemy.exc import DatabaseError, ProgrammingError
-    from google.cloud.alloydb.connector import Connector
+    from langchain_google_alloydb_pg import AlloyDBEngine
 except ImportError:
     AlloyDBEngine = None
     pass
@@ -42,16 +42,14 @@ class AlloyDBClient:
                  region: str=None, 
                  cluster_name:str=None, 
                  instance_name:str=None, 
-                 user:str=None, 
-                 password=None, 
+                 user:str=None,
                  db="postgres"):
         """Initializes the AlloyDB client.
          - project_id (str): GCP project ID where the AlloyDB instance resides.
          - region (str): The region where the AlloyDB instance is located.
          - cluster_name (str): The name of the AlloyDB cluster.
          - instance_name (str): The name of the AlloyDB instance.
-         - user (str): The database user name.
-         - password (str): The database user's password.
+         - user (str): If user is None will use the default service email
          - db_name (str): The name of the database.
         """
         if config is None:
@@ -61,6 +59,7 @@ class AlloyDBClient:
             alloydb_config = config.vacConfig("alloydb_config")
             if not alloydb_config:
                 raise ValueError("Must specify vac.alloydb_config")
+            self.config = alloydb_config
             project_id = alloydb_config["project_id"]
             region = alloydb_config["region"]
             cluster_name = alloydb_config["cluster"]
@@ -70,33 +69,34 @@ class AlloyDBClient:
         if ALLOYDB_DB is None and alloydb_config.get("database") is None:
             log.warning("Could not locate ALLOYDB_DB environment variable or 'alloydb_config.database'")
         
-        self.database = alloydb_config.get("database") or ALLOYDB_DB,
-        self.connector = Connector()
-        self.inst_uri = self._build_instance_uri(project_id, region, cluster_name, instance_name)
-        self.engine = self._create_engine(self.inst_uri, user, password, db)
+        self.database = alloydb_config.get("database") or ALLOYDB_DB
 
-    def _build_instance_uri(self, project_id, region, cluster_name, instance_name):
-        return f"projects/{project_id}/locations/{region}/clusters/{cluster_name}/instances/{instance_name}"
+        if user and not user.endswith(".iam"):
+            raise ValueError("If you supply an IAM user it must end with .iam e.g. 'sa-cloudbuild@multivac-deploy.iam'")
+        
+        self.user = user
+        self.engine = self._create_engine()
 
-    def _create_engine(self, inst_uri, user, password, db):
-        def getconn() -> pg8000.dbapi.Connection:
-            conn = self.connector.connect(
-                inst_uri,
-                "pg8000",
-                user=user,
-                password=password,
-                db=db,
-                enable_iam_auth=True,
-            )
-            return conn
+    def _create_engine(self):
+        if not AlloyDBEngine:
+                log.error("Can't create AlloyDBEngine - install via `pip install sunholo[gcp,database]`")
+                raise ValueError("Can't import AlloyDBEngine")
 
-        engine = sqlalchemy.create_engine(
-            "postgresql+pg8000://", 
-            isolation_level="AUTOCOMMIT", 
-            creator=getconn
+        log.info("Inititaing AlloyDB Langchain engine for database: {self.database}")
+
+        from google.cloud.alloydb.connector import IPTypes
+        engine = AlloyDBEngine.from_instance(
+            project_id=self.config["project_id"],
+            region=self.config["region"],
+            cluster=self.config["cluster"],
+            instance=self.config["instance"],
+            user=self.user,
+            database=self.database,
+            ip_type=self.config.get("ip_type") or IPTypes.PRIVATE
         )
-        engine.dialect.description_encoding = None
-        log.info(f"Created AlloyDB engine for {inst_uri} and user: {user}")
+
+        log.info(f"Created AlloyDB engine for {engine}")
+
         return engine
 
     def execute_sql(self, sql_statement):
@@ -153,7 +153,7 @@ class AlloyDBClient:
         return documents
 
     def get_sources_from_docstore(self, sources, vector_name, search_type="OR", just_source_name=False):
-        """Fetches sources from the docstore asynchronously."""
+        """Fetches sources from the docstore."""
         if just_source_name:
             query = self._list_sources_from_docstore(sources, vector_name=vector_name, search_type=search_type)
         else:
@@ -163,7 +163,7 @@ class AlloyDBClient:
             return []
 
         documents = self.execute_sql(query)
-        
+
         return documents
 
     def _get_sources_from_docstore(self, sources, vector_name, search_type="OR"):
