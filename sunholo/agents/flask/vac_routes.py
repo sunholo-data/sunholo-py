@@ -13,7 +13,7 @@ from ...utils.version import sunholo_version
 import os
 from ...gcs.add_file import add_file_to_gcs, handle_base64_image
 from ..swagger import validate_api_key
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 try:
     from flask import request, jsonify, Response
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         openai_response = {
             "id": response_id,
             "object": "chat.completion",
-            "created": str(int(datetime.now().timestamp())),
+            "created": str(int(datetime.datetime.now().timestamp())),
             "model": vector_name,
             "system_fingerprint": sunholo_version(),
             "choices": [{
@@ -137,7 +137,7 @@ if __name__ == "__main__":
                 name="start_streaming_chat",
                 metadata=vac_config,
                 input = all_input,
-                completion_start_time=datetime.datetime.now(),
+                completion_start_time=str(int(datetime.datetime.now().timestamp())),
                 model=vac_config.get("model") or vac_config.get("llm")
             )
 
@@ -247,7 +247,7 @@ if __name__ == "__main__":
                     return jsonify({'error': '_ENDPOINTS_HOST environment variable not found'}), 401
                 
                 # Check cache first
-                current_time = datetime.now()
+                current_time = datetime.datetime.now()
                 if api_key in api_key_cache:
                     cached_result, cache_time = api_key_cache[api_key]
                     if current_time - cache_time < cache_duration:
@@ -340,7 +340,7 @@ if __name__ == "__main__":
                     openai_chunk = {
                         "id": response_id,
                         "object": "chat.completion.chunk",
-                        "created": str(int(datetime.now().timestamp())),
+                        "created": str(int(datetime.datetime.now().timestamp())),
                         "model": vector_name,
                         "system_fingerprint": sunholo_version(),
                         "choices": [{
@@ -357,7 +357,7 @@ if __name__ == "__main__":
             final_chunk = {
                 "id": response_id,
                 "object": "chat.completion.chunk",
-                "created": str(int(datetime.now().timestamp())),
+                "created": str(int(datetime.datetime.now().timestamp())),
                 "model": vector_name,
                 "system_fingerprint": sunholo_version(),
                 "choices": [{
