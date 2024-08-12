@@ -71,7 +71,7 @@ class AlloyDBClient:
         if ALLOYDB_DB is None and alloydb_config.get("database") is None:
             log.warning("Could not locate ALLOYDB_DB environment variable or 'alloydb_config.database'")
         
-        self.database = alloydb_config.get("database") or ALLOYDB_DB
+        self.database = db or alloydb_config.get("database") or ALLOYDB_DB
 
         self.user = user
         self.password = password
@@ -212,7 +212,7 @@ class AlloyDBClient:
         doc_id = generate_uuid_from_object_id(source)
 
         query = f"""
-            SELECT * 
+            SELECT page_content, source, langchain_metadata, images_gsurls, doc_id::text as doc_id
             FROM {table_name}
             WHERE doc_id = '{doc_id}'
             LIMIT 1;
