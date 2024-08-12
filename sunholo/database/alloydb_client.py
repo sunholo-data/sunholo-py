@@ -115,7 +115,7 @@ class AlloyDBClient:
                 log.error("Can't create AlloyDBEngine - install via `pip install sunholo[gcp,database]`")
                 raise ValueError("Can't import AlloyDBEngine")
 
-        log.info("Inititaing AlloyDB Langchain engine for database: {self.database}")
+        log.info(f"Inititaing AlloyDB Langchain engine for database: {self.database}")
 
         from google.cloud.alloydb.connector import IPTypes
         engine = AlloyDBEngine.from_instance(
@@ -214,7 +214,7 @@ class AlloyDBClient:
         query = f"""
             SELECT * 
             FROM {table_name}
-            WHERE doc_id = {doc_id}
+            WHERE doc_id = '{doc_id}'
             LIMIT 1;
         """
 
