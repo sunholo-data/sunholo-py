@@ -49,13 +49,21 @@ def add_user_history_rag(
 
 def get_user_history_chunks(user_id:str, config:ConfigManager, query):
 
-    manager = LlamaIndexVertexCorpusManager(config)
+    try:
+        manager = LlamaIndexVertexCorpusManager(config)
 
-    manager.create_corpus(user_id)
+        manager.create_corpus(user_id)
 
-    response = manager.query_corpus(query, user_id)
-    user_history_memory = []
-    for chunk in response.contexts.contexts:
-        user_history_memory.append(chunk.text)
-    
-    return "\n".join(user_history_memory)
+        response = manager.query_corpus(query, user_id)
+        log.info(f"User history got: {response=}")
+        user_history_memory = []
+        for chunk in response.contexts.contexts:
+            user_history_memory.append(chunk.text)
+        
+        log.info(f"User history chunks: {user_history_memory}")
+
+        return "\n".join(user_history_memory)
+    except Exception as err:
+        log.error(f"Could not find user history due to error: {str(err)}")
+
+        return f"No user history available due to error: {str(err)}"

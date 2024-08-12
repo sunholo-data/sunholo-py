@@ -198,7 +198,12 @@ class LlamaIndexVertexCorpusManager:
         """
         List all VertexAI Corpus for the project/location
         """
-        return rag.list_corpora()
+        try:
+            return rag.list_corpora()
+        except Exception as err:
+            log.error(f"Could not list corpora: {str(err)}")
+            return []
+
     
     def find_corpus_from_list(self, display_name: str):
         """
@@ -410,3 +415,6 @@ def setup_llamaindex_subparser(subparsers):
     query_parser.add_argument('vac', nargs='?', default="global", help='The VAC config to set it up for')
 
     llamaindex_parser.set_defaults(func=llamaindex_command)
+
+    # If no subcommand is provided, print the help message
+    llamaindex_parser.set_defaults(func=lambda args: llamaindex_parser.print_help() if args.action is None else llamaindex_command)
