@@ -28,24 +28,21 @@ class GenAIFunctionProcessor:
         funcs (dict): A dictionary of function names mapped to their implementations.
 
     Example usage:
-        # Subclassing GenAIFunctionProcessor for a specific application (e.g., AlloyDB)
-        class AlloyDBFunctionProcessor(GenAIFunctionProcessor):
-            def construct_tools(self) -> dict:
-                # Implement function mapping specific to AlloyDB
-                ...
+    ```python
+    class AlloyDBFunctionProcessor(GenAIFunctionProcessor):
+        def construct_tools(self) -> dict:
+            ...
 
-        # Creating an instance of the subclass and using it
-        config = ConfigManager()
-        alloydb_processor = AlloyDBFunctionProcessor(config)
+    config = ConfigManager()
+    alloydb_processor = AlloyDBFunctionProcessor(config)
 
-        # Processing functions based on a generative AI response
-        results = alloydb_processor.process_funcs(full_response)
+    results = alloydb_processor.process_funcs(full_response)
 
-        # Getting the configured model
-        alloydb_model = alloydb_processor.get_model(
-            model_name="gemini-1.5-pro",
-            system_instruction="You are a helpful AlloyDB agent that helps users search and extract documents from the database."
-        )
+    alloydb_model = alloydb_processor.get_model(
+        model_name="gemini-1.5-pro",
+        system_instruction="You are a helpful AlloyDB agent that helps users search and extract documents from the database."
+    )
+    ```
     """
 
     def __init__(self, config: ConfigManager):
@@ -110,7 +107,9 @@ class GenAIFunctionProcessor:
             list[Part] | str: A list of Part objects or a formatted string with the results.
 
         Example usage:
-            results = alloydb_processor.process_funcs(full_response)
+        ```python
+        results = alloydb_processor.process_funcs(full_response)
+        ```
         """
         api_requests_and_responses = []
 
@@ -181,10 +180,12 @@ class GenAIFunctionProcessor:
             GenerativeModel: An instance of the GenerativeModel configured with the provided tools.
 
         Example usage:
-            alloydb_model = alloydb_processor.get_model(
-                model_name="gemini-1.5-pro",
-                system_instruction="You are a helpful AlloyDB agent that helps users search and extract documents from the database."
-            )
+        ```python
+        alloydb_model = alloydb_processor.get_model(
+            model_name="gemini-1.5-pro",
+            system_instruction="You are a helpful AlloyDB agent that helps users search and extract documents from the database."
+        )
+        ```
         """
         if generation_config is None:
             generation_config = {
