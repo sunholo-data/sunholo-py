@@ -28,10 +28,11 @@ class GenAIFunctionProcessor:
         funcs (dict): A dictionary of function names mapped to their implementations.
 
     Example usage:
+
     ```python
     class AlloyDBFunctionProcessor(GenAIFunctionProcessor):
         def construct_tools(self) -> dict:
-            ...
+            pass
 
     config = ConfigManager()
     alloydb_processor = AlloyDBFunctionProcessor(config)
@@ -68,7 +69,7 @@ class GenAIFunctionProcessor:
         function implementations required for the application.
 
         Returns:
-            dict: A dictionary where keys are function names and values are function objects. e.g. {"my_func": my_func}
+            dict: A dictionary where keys are function names and values are function objects
 
         Raises:
             NotImplementedError: If the method is not overridden in a subclass.
@@ -180,6 +181,7 @@ class GenAIFunctionProcessor:
             GenerativeModel: An instance of the GenerativeModel configured with the provided tools.
 
         Example usage:
+        
         ```python
         alloydb_model = alloydb_processor.get_model(
             model_name="gemini-1.5-pro",
