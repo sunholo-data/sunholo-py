@@ -60,6 +60,7 @@ class GenAIFunctionProcessor:
         
         self.config = config
         self.funcs = self.construct_tools()
+        self.model_name = config.vacConfig("model") or "gemini-1.5-flash"
         self._validate_functions()
 
     def construct_tools(self) -> dict:
@@ -164,7 +165,7 @@ class GenAIFunctionProcessor:
 
         return strings
 
-    def get_model(self, model_name: str, system_instruction: str, generation_config=None):
+    def get_model(self, system_instruction: str, generation_config=None, model_name: str=None):
         """
         Constructs and returns the generative AI model configured with the tools.
 
@@ -196,7 +197,7 @@ class GenAIFunctionProcessor:
 
         try:
             model = genai.GenerativeModel(
-                model_name=model_name,
+                model_name=model_name or self.model_name,
                 tools=tools,
                 generation_config=generation_config,
                 safety_settings=genai_safety(),
