@@ -59,6 +59,7 @@ class GenAIFunctionProcessor:
         self.config = config
         self.funcs = self.construct_tools()
         self.model_name = config.vacConfig("model") or "gemini-1.5-flash"
+        self.last_api_requests_and_responses = []
         self._validate_functions()
 
     def construct_tools(self) -> dict:
@@ -91,6 +92,84 @@ class GenAIFunctionProcessor:
             if not func.__doc__:
                 log.error(f"Function {func_name} is missing a docstring.")
                 raise ValueError(f"Function {func_name} must have a docstring to be used as a genai tool.")
+    
+
+    def parse_as_parts(self, api_requests_and_responses=[]):
+        if not api_requests_and_responses and not self.last_api_requests_and_responses:
+            log.info("No api_requests_and_responses found to parse to parts")
+            return None
+
+        if api_requests_and_responses:
+            self.last_api_requests_and_responses = api_requests_and_responses
+        
+        from google.generativeai.protos import Part
+
+        work_on = api_requests_and_responses or self.last_api_requests_and_responses
+        parts = []
+        for part in work_on:
+            parts.append(
+                Part(
+                    function_response=genai.protos.FunctionResponse(
+                        name=part[0],
+                        response={"result": part[2]}
+                    )
+                )
+            )
+
+        return parts
+
+    def check_function_result(self, function_name, target_value, api_requests_and_responses=[]):
+        """
+        Checks if a specific function result in the api_requests_and_responses contains a certain value.
+
+        Args:
+            function_name (str): The name of the function to check.
+            target_value: The value to look for in the function result.
+            api_requests_and_responses (list, optional): List of function call results to check. 
+                                                        If not provided, the method will use `self.last_api_requests_and_responses`.
+
+        Returns:
+            bool: True if the target_value is found in the specified function's result, otherwise False.
+        """
+        if not api_requests_and_responses:
+            api_requests_and_responses = self.last_api_requests_and_responses
+
+        if not api_requests_and_responses:
+            log.info("No api_requests_and_responses found to check.")
+            return False
+
+        for part in api_requests_and_responses:
+            func_name = part[0]
+            result = part[2]
+
+            if func_name == function_name:
+                if isinstance(result, list) and target_value in result:
+                    log.info(f"Target value '{target_value}' found in the result of function '{function_name}'.")
+                    return True
+                elif result == target_value:
+                    log.info(f"Target value '{target_value}' found in the result of function '{function_name}'.")
+                    return True
+
+        log.info(f"Target value '{target_value}' not found in the result of function '{function_name}'.")
+        return False
+    
+    def parse_as_string(self, api_requests_and_responses=[]):
+        if not api_requests_and_responses and not self.last_api_requests_and_responses:
+            log.info("No api_requests_and_response found to parse to string")
+            return None
+        
+        if api_requests_and_responses:
+            self.last_api_requests_and_responses = api_requests_and_responses
+        
+        work_on = api_requests_and_responses or self.last_api_requests_and_responses
+        strings = []
+        for part in work_on:
+            strings.append(
+                f"function tool {part[0]} was called with arguments: {part[1]} and got this result:\n"
+                f"<{part[0]}_result>{part[2]}</{part[0]}_result>"
+            )
+
+        return strings
 
     def process_funcs(self, full_response, output_parts=True) -> Union[list['Part'], str]:
         """
@@ -112,8 +191,6 @@ class GenAIFunctionProcessor:
         results = alloydb_processor.process_funcs(full_response)
         ```
         """
-        from google.generativeai.protos import Part
-        
         api_requests_and_responses = []
 
         # Loop through each part in the response to handle multiple function calls
@@ -144,30 +221,28 @@ class GenAIFunctionProcessor:
                     log.error(f"Function {function_name} is not recognized")
 
         log.info(f"{api_requests_and_responses=}")
+        self.last_api_requests_and_responses = api_requests_and_responses
 
         if output_parts:
-            parts = []
-            for part in api_requests_and_responses:
-                parts.append(
-                    Part(
-                        function_response=genai.protos.FunctionResponse(
-                            name=part[0],
-                            response={"result": part[2]}
-                        )
-                    )
-                )
-            return parts
+            return self.parse_as_parts()
+        
+        return self.parse_as_string()
+    
+    def tool_config_setting(self, mode:str):
+        from google.generativeai.types import content_types
 
-        strings = []
-        for part in api_requests_and_responses:
-            strings.append(
-                f"function tool {part[0]} was called with arguments: {part[1]} and got this result:\n"
-                f"<{part[0]}_result>{part[2]}</{part[0]}_result>"
+        fns = list(self.funcs.keys())
+
+        return content_types.to_tool_config(
+                {"function_calling_config": {"mode": mode, "allowed_function_names": fns}}
             )
 
-        return strings
-
-    def get_model(self, system_instruction: str, generation_config=None, model_name: str=None):
+    def get_model(
+            self, 
+            system_instruction: str, 
+            generation_config=None, 
+            model_name: str=None,
+            tool_config: str="auto"):
         """
         Constructs and returns the generative AI model configured with the tools.
 
@@ -178,6 +253,7 @@ class GenAIFunctionProcessor:
             model_name (str): The name of the model to use.
             system_instruction (str): Instructions for the AI system.
             generation_config (dict, optional): Configuration for generation, such as temperature.
+            tool_config (str, optional): Configuration for tool behaviour: 'auto' it decides, 'none' no tools, 'any' always use tools
 
         Returns:
             GenerativeModel: An instance of the GenerativeModel configured with the provided tools.
@@ -204,6 +280,7 @@ class GenAIFunctionProcessor:
             model = genai.GenerativeModel(
                 model_name=model_name or self.model_name,
                 tools=tools,
+                tool_config=self.tool_config_setting(tool_config),
                 generation_config=generation_config,
                 safety_settings=genai_safety(),
                 system_instruction=system_instruction,
