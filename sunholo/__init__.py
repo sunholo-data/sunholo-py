@@ -9,6 +9,7 @@ from . import database
 from . import discovery_engine
 from . import embedder
 from . import gcs
+from . import genai
 from . import invoke
 from . import langfuse
 from . import llamaindex
@@ -34,6 +35,7 @@ __all__ = ['agents',
            'discovery_engine',
            'embedder', 
            'gcs', 
+           'genai',
            'invoke',
            'langfuse', 
            'llamaindex',
