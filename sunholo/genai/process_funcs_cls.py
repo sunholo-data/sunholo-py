@@ -280,7 +280,7 @@ class GenAIFunctionProcessor:
             model = genai.GenerativeModel(
                 model_name=model_name or self.model_name,
                 tools=tools,
-                tool_config=self.tool_config_setting(tool_config),
+                tool_config=self.tool_config_setting(tool_config) if tool_config == "any" else tool_config,
                 generation_config=generation_config,
                 safety_settings=genai_safety(),
                 system_instruction=system_instruction,
