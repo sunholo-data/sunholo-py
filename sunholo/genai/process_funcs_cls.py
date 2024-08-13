@@ -24,7 +24,7 @@ class GenAIFunctionProcessor:
     of function names mapped to their implementations.
 
     Attributes:
-        config (ConfigManager): Configuration manager instance.
+        config (ConfigManager): Configuration manager instance. Reach values via self.config within your own construct_tools() method
         funcs (dict): A dictionary of function names mapped to their implementations.
 
     Example usage:
@@ -112,6 +112,8 @@ class GenAIFunctionProcessor:
         results = alloydb_processor.process_funcs(full_response)
         ```
         """
+        from google.generativeai.protos import Part
+        
         api_requests_and_responses = []
 
         # Loop through each part in the response to handle multiple function calls
