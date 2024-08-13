@@ -94,7 +94,7 @@ class GenAIFunctionProcessor:
                 log.error(f"Function {func_name} is missing a docstring.")
                 raise ValueError(f"Function {func_name} must have a docstring to be used as a genai tool.")
 
-    def process_funcs(self, full_response, output_parts=True) -> list[Part] | str:
+    def process_funcs(self, full_response, output_parts=True) -> list['Part'] | str:
         """
         Processes the functions based on the full_response from the generative model.
 
