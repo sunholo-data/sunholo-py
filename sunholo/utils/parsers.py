@@ -181,9 +181,14 @@ def escape_braces(text):
     Returns:
         str: The modified string with single braces converted to double braces.
     """
-    # Replace single braces with double braces
-    text = re.sub(r'(?<!{){(?!{)', '{{', text)  # Replace '{' with '{{' if not already double braced
-    text = re.sub(r'(?<!})}(?!})', '}}', text)  # Replace '}' with '}}' if not already double braced
+    # First, handle cases where there might be a mix of braces
+    # Replace all `{` that are not followed by another `{` with `{{`
+    text = re.sub(r'(?<!{){(?!{)', '{{', text)
+    
+    # Replace all `}` that are not preceded by another `}` with `}}`
+    text = re.sub(r'(?<!})}(?!})', '}}', text)
+
+    # After escaping single braces, return the modified text
     return text
 
 def get_clean_website_name(url: str):
