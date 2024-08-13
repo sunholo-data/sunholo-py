@@ -4,7 +4,7 @@ from ..custom_logging import log
 from ..utils import ConfigManager
 from .safety import genai_safety
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 try:
     import google.generativeai as genai
@@ -92,7 +92,7 @@ class GenAIFunctionProcessor:
                 log.error(f"Function {func_name} is missing a docstring.")
                 raise ValueError(f"Function {func_name} must have a docstring to be used as a genai tool.")
 
-    def process_funcs(self, full_response, output_parts=True) -> list['Part'] | str:
+    def process_funcs(self, full_response, output_parts=True) -> Union[list['Part'], str]:
         """
         Processes the functions based on the full_response from the generative model.
 
@@ -181,7 +181,7 @@ class GenAIFunctionProcessor:
             GenerativeModel: An instance of the GenerativeModel configured with the provided tools.
 
         Example usage:
-        
+
         ```python
         alloydb_model = alloydb_processor.get_model(
             model_name="gemini-1.5-pro",
