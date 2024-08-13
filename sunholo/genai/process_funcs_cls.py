@@ -233,8 +233,13 @@ class GenAIFunctionProcessor:
 
         fns = list(self.funcs.keys())
 
-        return content_types.to_tool_config(
-                {"function_calling_config": {"mode": mode, "allowed_function_names": fns}}
+        if fns and mode == "any":
+            return content_types.to_tool_config(
+                    {"function_calling_config": {"mode": mode, "allowed_function_names": fns}}
+                )
+        else:
+            return content_types.to_tool_config(
+                {"function_calling_config": {"mode": mode}}
             )
 
     def get_model(
@@ -280,7 +285,7 @@ class GenAIFunctionProcessor:
             model = genai.GenerativeModel(
                 model_name=model_name or self.model_name,
                 tools=tools,
-                tool_config=self.tool_config_setting(tool_config) if tool_config == "any" else tool_config,
+                tool_config=self.tool_config_setting(tool_config),
                 generation_config=generation_config,
                 safety_settings=genai_safety(),
                 system_instruction=system_instruction,
