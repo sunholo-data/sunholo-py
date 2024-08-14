@@ -94,7 +94,7 @@ class GenAIFunctionProcessor:
                 raise ValueError(f"Function {func_name} must have a docstring to be used as a genai tool.")
     
 
-    def parse_as_parts(self, api_requests_and_responses=[], all=False):
+    def parse_as_parts(self, api_requests_and_responses=[]):
         if not api_requests_and_responses and not self.last_api_requests_and_responses:
             log.info("No api_requests_and_responses found to parse to parts")
             return None
@@ -105,9 +105,6 @@ class GenAIFunctionProcessor:
         from google.generativeai.protos import Part
 
         work_on = api_requests_and_responses or self.last_api_requests_and_responses
-        if not all:
-            work_on = work_on[-1]
-
         parts = []
         for part in work_on:
             parts.append(
@@ -156,7 +153,7 @@ class GenAIFunctionProcessor:
         log.info(f"Target value '{target_value}' not found in the result of function '{function_name}'.")
         return False
     
-    def parse_as_string(self, api_requests_and_responses=[], all=False):
+    def parse_as_string(self, api_requests_and_responses=[]):
         if not api_requests_and_responses and not self.last_api_requests_and_responses:
             log.info("No api_requests_and_response found to parse to string")
             return None
@@ -165,9 +162,6 @@ class GenAIFunctionProcessor:
             self.last_api_requests_and_responses = api_requests_and_responses
         
         work_on = api_requests_and_responses or self.last_api_requests_and_responses
-        if not all:
-            work_on = work_on[-1]
-
         strings = []
         for part in work_on:
             strings.append(
@@ -200,7 +194,7 @@ class GenAIFunctionProcessor:
         api_requests_and_responses = []
 
         # Loop through each part in the response to handle multiple function calls
-        #TODO: async - fix as not caling 2nd function
+        #TODO: async
         for part in full_response.candidates[0].content.parts:
             if fn := part.function_call:
                 # Extract parameters for the function call
