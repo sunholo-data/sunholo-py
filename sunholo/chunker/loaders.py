@@ -185,7 +185,7 @@ def read_file_to_documents(gs_file: pathlib.Path, metadata: dict = None):
             return []
 
     log.info(f"Sending {pdf_path} to UnstructuredAPIFileLoader")
-    UNSTRUCTURED_URL = os.getenv("UNSTRUCTURED_URL", None)
+    UNSTRUCTURED_URL = os.getenv("UNSTRUCTURED_URL")
     unstructured_kwargs = {"pdf_infer_table_structure": True,
                             "extract_image_block_types":  ["Image", "Table"]
                             }

@@ -26,6 +26,8 @@ class ConfigManager:
         agent = config.vacConfig("agent")
         ```
         """
+        if os.getenv("VAC_CONFIG_FOLDER") is None:
+            print("WARNING: No VAC_CONFIG_FOLDER environment variable was specified")
         local_config_folder = os.path.join(os.getcwd(), "config")
         if os.path.isdir(local_config_folder):
             print(f"Found local config folder {local_config_folder} - will overwrite any global configurations")

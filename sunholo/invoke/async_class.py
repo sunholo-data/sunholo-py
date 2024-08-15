@@ -8,7 +8,8 @@ logger = logging.getLogger(__name__)
 
 class AsyncTaskRunner:
     """
-    # Example async functions for testing
+    Example async functions for testing
+    ```python
     async def api_call_1(url, params):
         await asyncio.sleep(1)
         if "fail" in params:
@@ -44,6 +45,64 @@ class AsyncTaskRunner:
         results = runner.run_sync()
         for result in results:
             print(result)
+    ```
+
+    Example streaming fast and slow
+    
+    ```python
+    import asyncio
+    from typing import AsyncGenerator
+
+    # Example streaming function that simulates yielding chunks of data
+    async def stream_chunks(url: str, params: dict) -> AsyncGenerator[str, None]:
+        # Simulate streaming with a series of chunks
+        for i in range(5):
+            await asyncio.sleep(1)  # Simulate delay between chunks
+            yield f"Chunk {i+1} from {url} with params {params}"
+
+    # Example slow API call function
+    async def slow_api_call(url: str, params: dict) -> str:
+        await asyncio.sleep(5)  # Simulate a slow API response
+        return f"Slow API response from {url} with params {params}"
+
+    # Function to manage streaming and slow API call
+    async def process_api_calls(stream_url: str, stream_params: dict, slow_url: str, slow_params: dict) -> AsyncGenerator[str, None]:
+        # Create the AsyncTaskRunner instance
+        runner = AsyncTaskRunner()
+
+        # Add the slow API call as a task
+        runner.add_task(slow_api_call, slow_url, slow_params)
+
+        # Run the slow API call concurrently with the streaming
+        slow_api_result_task = asyncio.create_task(runner.run_async())
+
+        # Process the streaming chunks and yield them
+        async for chunk in stream_chunks(stream_url, stream_params):
+            yield chunk
+
+        # Wait for the slow API call to complete and get the result
+        slow_api_results = await slow_api_result_task
+
+        # Yield the slow API response after streaming is finished
+        for result in slow_api_results:
+            yield result
+
+    # Example usage in an existing async function
+    async def example_usage():
+        # Define the URLs and parameters for the calls
+        stream_url = "http://streaming.example.com"
+        stream_params = {"key": "stream_value"}
+        slow_url = "http://slowapi.example.com"
+        slow_params = {"key": "slow_value"}
+
+        # Process the API calls and stream the results
+        async for output in process_api_calls(stream_url, stream_params, slow_url, slow_params):
+            print(output)
+
+    # Running the example usage
+    if __name__ == "__main__":
+        asyncio.run(example_usage())
+    ```
     """
     def __init__(self):
         self.tasks = []
