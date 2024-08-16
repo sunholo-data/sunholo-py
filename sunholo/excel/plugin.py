@@ -6,8 +6,10 @@ from ..custom_logging import log
 from ..invoke import direct_vac
 from ..cli.sun_rich import console
 
-from rich.panel import Panel
-
+try:
+    from rich.panel import Panel
+except ImportError:
+    Panel = None
 
 def setup_excel_plugin(args):
     """
