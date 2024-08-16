@@ -1,0 +1,28 @@
+Option Explicit
+
+' Custom Excel function to call a Python command directly via xlwings
+' The function takes two arguments: cell content and vac_name (API endpoint identifier)
+' If vac_name is not provided, it defaults to "aitana"
+Function MULTIVAC(inputCell As Range, Optional vac_name As String = "") As String
+    Dim result As Variant
+    Dim envPath As String
+    Dim defaultVacName As String
+    
+    ' Set the default vac_name if not provided
+    If vac_name = "" Then
+        defaultVacName = "aitana"
+    Else
+        defaultVacName = vac_name
+    End If
+    
+    ' Build the Python code as a string
+    Dim pythonCode As String
+    pythonCode = "from sunholo.excel import excel_plugin;" & _
+                 "result = excel_plugin('" & inputCell.Value & "', '" & defaultVacName & "')"
+    
+    ' Execute the Python code using xlwings
+    result = RunPython(pythonCode)
+    
+    ' Return the result to the Excel cell
+    MULTIVAC = result
+End Function

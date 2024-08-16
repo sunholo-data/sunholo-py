@@ -11,6 +11,7 @@ from .embedder import setup_embedder_subparser
 from .swagger import setup_swagger_subparser
 from .vertex import setup_vertex_subparser
 from ..llamaindex import setup_llamaindex_subparser
+from ..excel import setup_excel_subparser
 
 from ..utils import ConfigManager
 from ..utils.version import sunholo_version
@@ -92,6 +93,8 @@ def main(args=None):
     setup_vertex_subparser(subparsers)
     # llamaindex
     setup_llamaindex_subparser(subparsers)
+    # excel
+    setup_excel_subparser(subparsers)
 
     #TODO: add database setup commands: alloydb and supabase
 

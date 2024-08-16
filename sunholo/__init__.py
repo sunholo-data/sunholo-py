@@ -8,6 +8,7 @@ from . import components
 from . import database
 from . import discovery_engine
 from . import embedder
+from . import excel
 from . import gcs
 from . import genai
 from . import invoke
@@ -34,6 +35,7 @@ __all__ = ['agents',
            'database', 
            'discovery_engine',
            'embedder', 
+           'excel',
            'gcs', 
            'genai',
            'invoke',

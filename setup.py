@@ -86,7 +86,7 @@ setup(
             "tantivy",
             "tiktoken",
             "unstructured[local-inference]==0.14.9",
-
+            "xlwings"
         ],
         'azure': [
             "azure-identity",
@@ -155,7 +155,13 @@ setup(
             "langfuse",
             "python-socketio",
             "requests"
+        ],
+        'excel': [
+            'xlwings',
+            'requests',
+            'rich'
         ]
+
     },
     classifiers=[
         'Development Status :: 3 - Alpha',      # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as the current state of your package
