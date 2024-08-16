@@ -13,7 +13,7 @@ def direct_vac(vac_input: dict, vac_name: str, chat_history=[]):
     log.info(f"Invoking VAC Q&A endpoints for {vac_name}")
 
     if 'user_input' not in vac_input:
-        raise ValueError('vac_input must contain at least "user_input" key - got {vac_input}')
+        raise ValueError(f'vac_input must contain at least "user_input" key - got {vac_input}')
 
     user_id = vac_input.get('user_id')
     session_id = vac_input.get('session_id')

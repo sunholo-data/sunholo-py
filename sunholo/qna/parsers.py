@@ -44,6 +44,14 @@ def parse_output(bot_output):
 
         return bot_output
     
+    elif isinstance(bot_output, dict) and 'output' in bot_output and isinstance(bot_output['output'], dict) and 'content' in bot_output['output']:
+        the_output = bot_output['output']
+
+        return {
+            'answer': the_output.get('content'),
+            'metadata': the_output.get('metadata')
+        }
+    
     elif isinstance(bot_output, dict):
         if not bot_output.get("answer"):
             raise ValueError(f"VAC output was not a string or a dict with the key 'answer' - got: {bot_output}")
