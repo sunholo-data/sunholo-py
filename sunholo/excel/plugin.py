@@ -4,18 +4,15 @@ import subprocess
 import shutil
 from ..custom_logging import log
 from ..invoke import direct_vac
-from ..cli.sun_rich import console
-
-try:
-    from rich.panel import Panel
-except ImportError:
-    Panel = None
 
 def setup_excel_plugin(args):
     """
     Sets up the Excel plugin by copying the VBA file and creating the xlwings.conf file 
     with the correct Python interpreter path.
     """
+    from rich.panel import Panel
+    from ..cli.sun_rich import console
+
     # Define the source directory (where the sunholo.excel package is located)
     library_folder = os.path.dirname(__file__)
     
