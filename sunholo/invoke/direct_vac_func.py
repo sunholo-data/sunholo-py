@@ -56,10 +56,7 @@ def direct_vac(vac_input: dict, vac_name: str, chat_history=[]):
 
     log.info(f'Batch invoke_vac_qa {vac_name} with {qa_kwargs=}')
 
-    vac_response = send_to_qa(
-        vac_input["user_input"],
-        **qa_kwargs
-    )
+    vac_response = send_to_qa(**qa_kwargs)
         
     # ensures {'answer': answer}
     answer = parse_output(vac_response)
