@@ -15,10 +15,6 @@ def direct_vac(vac_input: dict, vac_name: str, chat_history=[]):
     if 'user_input' not in vac_input:
         raise ValueError(f'vac_input must contain at least "user_input" key - got {vac_input}')
 
-    user_id = vac_input.get('user_id')
-    session_id = vac_input.get('session_id')
-    image_uri = vac_input.get('image_url') or vac_input.get('image_uri')
-
     global_config = ConfigManager('global')
     config = ConfigManager(vac_name)
 
@@ -41,28 +37,29 @@ def direct_vac(vac_input: dict, vac_name: str, chat_history=[]):
     override_endpoint = agent_url or override_endpoint
 
     print(f"Using {override_endpoint=}")
-    log.info(f'Batch invoke_vac_qa {vac_name} with {vac_input=}')
-    vac_response = send_to_qa(
-        vac_input["user_input"],
-        vector_name=vac_name,
-        chat_history=chat_history,
-        message_author=user_id,
-        #TODO: populate these
-        image_url=image_uri,
-        source_filters=None,
-        search_kwargs=None,
-        private_docs=None,
-        whole_document=False,
-        source_filters_and_or=False,
-        # system kwargs
-        configurable={
+    
+    # Prepare the kwargs for send_to_qa by copying vac_input and adding more values
+    qa_kwargs = vac_input.copy()
+
+    # Add additional arguments
+    qa_kwargs.update({
+        'vector_name': vac_name,
+        'chat_history': chat_history,
+        'image_url': vac_input.get('image_url') or vac_input.get('image_uri'),
+        'override_endpoint': override_endpoint,
+        'message_source': "sunholo.invoke_vac_qa.invoke",
+        'stream': False,
+        'configurable': {
             "vector_name": vac_name,
         },
-        user_id=user_id,
-        session_id=session_id, 
-        message_source="sunholo.invoke_vac_qa.invoke",
-        override_endpoint=override_endpoint,
-        stream=False)
+    })
+
+    log.info(f'Batch invoke_vac_qa {vac_name} with {qa_kwargs=}')
+
+    vac_response = send_to_qa(
+        vac_input["user_input"],
+        **qa_kwargs
+    )
         
     # ensures {'answer': answer}
     answer = parse_output(vac_response)
