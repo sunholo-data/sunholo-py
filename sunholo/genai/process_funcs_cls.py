@@ -58,7 +58,7 @@ class GenAIFunctionProcessor:
         
         self.config = config
         self.funcs = self.construct_tools()
-        self.model_name = config.vacConfig("model") or "gemini-1.5-flash"
+        self.model_name = config.vacConfig("model") if config.vacConfig("llm") == "vertex" else "gemini-1.5-flash"
         self.last_api_requests_and_responses = []
         self._validate_functions()
 
