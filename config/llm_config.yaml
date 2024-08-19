@@ -168,3 +168,8 @@ vac:
     chunker:
       chunk_size: 1000
       overlap: 200
+  quarto:
+    llm: vertex
+    model: gemini-1.5-pro
+    agent: quarto
+    display_name: Quarto Agent

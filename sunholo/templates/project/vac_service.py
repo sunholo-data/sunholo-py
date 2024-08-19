@@ -32,15 +32,27 @@ def vac_stream(question: str, vector_name, chat_history=[], callback=None, **kwa
 
 
 #TODO: change this to a batch VAC function
-def vac(question: str, vector_name, chat_history=[], **kwargs):
+def vac(question: str, vector_name: str, chat_history=[], **kwargs):
+    # Create a callback that does nothing for streaming if you don't want intermediate outputs
+    class NoOpCallback:
+        def on_llm_new_token(self, token):
+            pass
+        def on_llm_end(self, response):
+            pass
 
-    rag_model = create_model(vector_name)
+    # Use the NoOpCallback for non-streaming behavior
+    callback = NoOpCallback()
 
-    response = rag_model.generate_content(question)
+    # Pass all arguments to vac_stream and use the final return
+    result = vac_stream(
+        question=question, 
+        vector_name=vector_name, 
+        chat_history=chat_history, 
+        callback=callback, 
+        **kwargs
+    )
 
-    log.info(f"Got response: {response}")
-
-    return {"answer": response.text}
+    return result
 
 
 # TODO: common model setup to both batching and streaming

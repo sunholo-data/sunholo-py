@@ -6,6 +6,8 @@ from .safety import genai_safety
 
 from typing import TYPE_CHECKING, Union
 
+import json
+
 try:
     import google.generativeai as genai
 except ImportError:
@@ -111,7 +113,7 @@ class GenAIFunctionProcessor:
                 Part(
                     function_response=genai.protos.FunctionResponse(
                         name=part[0],
-                        response={"result": part[2]}
+                        response={"result": part[2], "args": json.dumps(part[1])}
                     )
                 )
             )
@@ -146,6 +148,13 @@ class GenAIFunctionProcessor:
                 if isinstance(result, list) and target_value in result:
                     log.info(f"Target value '{target_value}' found in the result of function '{function_name}'.")
                     return True
+                elif isinstance(result, dict) and isinstance(target_value, dict):
+                    for key, expected_value in target_value.items():
+                        if key in result:
+                            if result[key] == expected_value:
+                                log.info(f"The key '{key}' has the same value in both dictionaries.")
+                                return True
+                    return False
                 elif result == target_value:
                     log.info(f"Target value '{target_value}' found in the result of function '{function_name}'.")
                     return True
