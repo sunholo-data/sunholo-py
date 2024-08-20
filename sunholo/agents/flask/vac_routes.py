@@ -121,7 +121,7 @@ if __name__ == "__main__":
     def handle_stream_vac(self, vector_name):
         observed_stream_interpreter = observe()(self.stream_interpreter)
         prep = self.prep_vac(request, vector_name)
-        log.debug(f"Processing prep: {prep}")
+        log.info(f"Processing prep: {prep}")
         trace = prep["trace"]
         span = prep["span"]
         command_response = prep["command_response"]
@@ -438,8 +438,10 @@ if __name__ == "__main__":
                         data["image_uri"] = image_uri
                         data["mime"] = mime_type
                     except Exception as e:
+                        log.error(traceback.format_exc())
                         return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
                 else:
+                    log.error("No file selected")
                     return jsonify({"error": "No file selected"}), 400
         else:
             return jsonify({"error": "Unsupported content type"}), 400

@@ -70,6 +70,8 @@ def handle_base64_image(base64_data: str, vector_name: str, extension: str):
 
 
 def resolve_bucket(vector_name):
+    bucket_name = None
+
     if os.getenv('EXTENSIONS_BUCKET'):
         log.warning('Resolving to EXTENSIONS_BUCKET environment variable')
         return os.getenv('EXTENSIONS_BUCKET')
@@ -144,6 +146,7 @@ def add_file_to_gcs(filename: str,
     hour_prev = (now - datetime.timedelta(hours=1)).strftime("%H")
 
     if os.getenv('EXTENSIONS_BUCKET'):
+        log.warning(f"setting {bucket_filepath=} to {os.path.basename(filename)} basename due to EXTENSIONS_BUCKET setting")
         bucket_filepath = os.path.basename(filename)
 
     if not vector_name:
