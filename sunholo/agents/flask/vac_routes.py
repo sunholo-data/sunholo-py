@@ -53,10 +53,11 @@ if __name__ == "__main__":
 ```
     
     """
-    def __init__(self, app, stream_interpreter, vac_interpreter):
+    def __init__(self, app, stream_interpreter, vac_interpreter, additional_routes=None):
         self.app = app
         self.stream_interpreter = stream_interpreter
         self.vac_interpreter = vac_interpreter
+        self.additional_routes = additional_routes if additional_routes is not None else []
         self.register_routes()
 
     def register_routes(self):
@@ -82,6 +83,47 @@ if __name__ == "__main__":
         # OpenAI compatible endpoint
         self.app.route('/openai/v1/chat/completions', methods=['POST'])(self.handle_openai_compatible_endpoint)
         self.app.route('/openai/v1/chat/completions/<vector_name>', methods=['POST'])(self.handle_openai_compatible_endpoint)
+        # Register additional routes
+        self.register_additional_routes()
+
+    def register_additional_routes(self):
+        """
+        Registers additional custom routes provided during initialization.
+
+        Example:
+        ```python
+        from flask import Flask, jsonify
+        from agents.flask import VACRoutes
+
+        app = Flask(__name__)
+
+        def stream_interpreter(question, vector_name, chat_history, **kwargs):
+            # Implement your streaming logic
+            ...
+
+        def vac_interpreter(question, vector_name, chat_history, **kwargs):
+            # Implement your static VAC logic
+            ...
+
+        def custom_handler():
+            return jsonify({"message": "Custom route!"})
+
+        custom_routes = [
+            {
+                "rule": "/custom",
+                "methods": ["GET"],
+                "handler": custom_handler
+            }
+        ]
+
+        vac_routes = VACRoutes(app, stream_interpreter, vac_interpreter, additional_routes=custom_routes)
+
+        if __name__ == "__main__":
+            app.run(debug=True)
+        ```
+        """
+        for route in self.additional_routes:
+            self.app.route(route["rule"], methods=route["methods"])(route["handler"])
 
     def home(self):
         return jsonify("OK")

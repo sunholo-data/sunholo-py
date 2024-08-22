@@ -202,6 +202,10 @@ class GenAIFunctionProcessor:
         """
         api_requests_and_responses = []
 
+        if not full_response:
+            log.info("No response was found to process")
+            return api_requests_and_responses
+
         # Loop through each part in the response to handle multiple function calls
         #TODO: async
         for part in full_response.candidates[0].content.parts:
@@ -284,7 +288,7 @@ class GenAIFunctionProcessor:
         if generation_config is None:
             generation_config = {
                 "temperature": 0.1,
-                "max_output_tokens": 4000,
+                "max_output_tokens": 8000,
             }
 
         # Extract the functions from the dictionary to pass into the model
