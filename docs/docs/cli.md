@@ -866,10 +866,10 @@ optional arguments:
   -h, --help  show this help message and exit
 ```
 
-Usage example, assuming you have a `terraform.tfvars` file to edit with a new Cloud Run instance called `new_service`:
+Usage example, assuming you have a `terraform.tfvars` file to edit with a new Cloud Run instance called `new_service` with a json spec in `new_service.json` that looks something like:
 
-```sh
-sunholo tfvars add terraform.tfvars cloud_run new_service '{
+```json
+{
   "cpu": "1",
   "memory": "2Gi",
   "max_instance_count": 3,
@@ -884,5 +884,10 @@ sunholo tfvars add terraform.tfvars cloud_run new_service '{
     "repo_name": "",
     "repo_owner": ""
   }
-}' --terraform-dir=/path/to/terraform/config
+}
+
+```
+
+```sh
+sunholo tfvars add terraform.tfvars cloud_run new_service --json-file=new_service.json --terraform-dir=/path/to/terraform/config
 ```

@@ -144,8 +144,10 @@ class TerraformVarsEditor:
             The dictionary containing the instance data.
 
         Example:
-        -------
-        editor.update_or_add_instance('cloud_run', 'new_service', {'cpu': '1', 'memory': '2Gi'})
+        
+        ```python
+        editor.update_or_add_instance('cloud_run', 'new_service', (your dict))
+        ```
         """
         if main_key not in self.tfvars_data:
             self.tfvars_data[main_key] = {}
@@ -162,9 +164,10 @@ class TerraformVarsEditor:
             True if validation passes, False otherwise.
 
         Example:
-        -------
+        ```python
         if self.validate_terraform():
             print("Validation passed.")
+        ```
         """
         result = subprocess.run(['terraform', 'validate'], cwd=self.terraform_dir, capture_output=True, text=True)
         
@@ -225,11 +228,15 @@ def tfvars_command(args):
     if console is None:
         raise ImportError("Need cli tools to use `sunholo tfvars` - install via `pip install sunholo[cli]`")
     
-    # Parse the JSON string to a dictionary
+    # Load JSON data from the specified file
     try:
-        instance_data: Dict[str, Any] = json.loads(args.json_data)
+        with open(args.json_file, 'r') as f:
+            instance_data = json.load(f)
+    except FileNotFoundError:
+        console.print(f"Error: The JSON file '{args.json_file}' was not found.")
+        return
     except json.JSONDecodeError as e:
-        console.print(f"[bold red]Error parsing JSON data: {e}[/bold red]")
+        console.print(f"Error parsing JSON data: {e}")
         return
 
     # Create an instance of TerraformVarsEditor
@@ -260,7 +267,7 @@ def setup_tfvarseditor_subparser(subparsers):
     add_parser.add_argument('tfvars_file', help='Path to the .tfvars file')
     add_parser.add_argument('main_key', help='The main key under which the instance is added (e.g., "cloud_run")')
     add_parser.add_argument('instance_name', help='The name of the instance to add or update')
-    add_parser.add_argument('json_data', help='JSON string representing the instance data')
+    add_parser.add_argument('--json-file', help='Path to a JSON file with the instance data', required=True)
     add_parser.add_argument('--terraform-dir', default='.', help='The directory where Terraform is initialized')
 
     tfvars_parser.set_defaults(func=tfvars_command)
