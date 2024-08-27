@@ -839,3 +839,50 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
 ```
+
+## sunholo excel-init
+
+Sets up Python files for use within a Excel Addon
+
+#TODO - document how to set up in Excel
+
+```shell
+usage: sunholo excel-init [-h]
+```
+
+## sunholo tfvars
+
+Edit `.tfvars` (or any HCL) files to help aid project init.
+
+```sh
+sunholo tfvars -h  
+usage: sunholo tfvars [-h] {add} ...
+
+positional arguments:
+  {add}       TFVars subcommands
+    add       Add or update an instance in a .tfvars file
+
+optional arguments:
+  -h, --help  show this help message and exit
+```
+
+Usage example, assuming you have a `terraform.tfvars` file to edit with a new Cloud Run instance called `new_service`:
+
+```sh
+sunholo tfvars add terraform.tfvars cloud_run new_service '{
+  "cpu": "1",
+  "memory": "2Gi",
+  "max_instance_count": 3,
+  "timeout_seconds": 1500,
+  "port": 8080,
+  "service_account": "sa-newservice",
+  "invokers": ["allUsers"],
+  "cloud_build": {
+    "included": ["application/new_service/**"],
+    "path": "application/new_service/cloudbuild.yaml",
+    "substitutions": {},
+    "repo_name": "",
+    "repo_owner": ""
+  }
+}' --terraform-dir=/path/to/terraform/config
+```

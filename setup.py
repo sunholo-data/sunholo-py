@@ -1,7 +1,6 @@
 from setuptools import setup, find_packages
 
-# Define your base version
-version = '0.87.0'
+version = '0.88.0'
 
 setup(
     name='sunholo',
@@ -29,7 +28,6 @@ setup(
     install_requires=[
         # Base dependencies
         "google-auth", # to check if on gcp
-        #"tenacity==8.3.0", #TODO: remove soon
         "ruamel.yaml",
         "langchain>=0.2.12",
         "langchain_experimental>=0.0.61",
@@ -78,6 +76,7 @@ setup(
             "psutil",
             "psycopg2-binary",
             "pypdf",
+            "python-hcl2",
             "python-socketio",
             "pytesseract",
             "rich",
@@ -160,6 +159,9 @@ setup(
             'xlwings',
             'requests',
             'rich'
+        ],
+        'iac':[
+            'python-hcl2'
         ]
 
     },

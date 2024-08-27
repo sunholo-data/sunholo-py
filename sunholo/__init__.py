@@ -19,6 +19,7 @@ from . import patches
 from . import pubsub
 from . import qna
 from . import streaming
+from . import terraform
 from . import tools
 from . import utils
 from . import vertex
@@ -46,6 +47,7 @@ __all__ = ['agents',
            'pubsub',
            'qna', 
            'streaming', 
+           'terraform',
            'tools',
            'utils', 
            'vertex',

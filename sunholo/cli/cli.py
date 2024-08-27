@@ -12,6 +12,7 @@ from .swagger import setup_swagger_subparser
 from .vertex import setup_vertex_subparser
 from ..llamaindex import setup_llamaindex_subparser
 from ..excel import setup_excel_subparser
+from ..terraform import setup_tfvarseditor_subparser
 
 from ..utils import ConfigManager
 from ..utils.version import sunholo_version
@@ -65,13 +66,13 @@ def main(args=None):
     parser.add_argument('--debug', action='store_true', help='Enable debug output')
     parser.add_argument('--project', default=default_project, help='GCP project to list Cloud Run services from.')
     parser.add_argument('--region', default=default_region, help='Region to list Cloud Run services from.')
-    parser.add_argument('--version', action='store_true', help='Show the version and exit') 
+    parser.add_argument('-v', '--version', action='store_true', help='Show the version and exit')
 
     subparsers = parser.add_subparsers(title='commands', 
                                        description='Valid commands', 
                                        help='Commands', 
                                        dest='command', 
-                                       required=True)
+                                       required=False)
 
     # deploy command
     setup_deploy_subparser(subparsers)
@@ -95,10 +96,17 @@ def main(args=None):
     setup_llamaindex_subparser(subparsers)
     # excel
     setup_excel_subparser(subparsers)
+    # terraform
+    setup_tfvarseditor_subparser(subparsers)
 
     #TODO: add database setup commands: alloydb and supabase
 
     args = parser.parse_args(args)
+
+    # Handle global flags
+    if args.version:
+        console.print(sunholo_version())
+        return
 
     if args.debug:
         log.setLevel(logging.DEBUG)
@@ -107,14 +115,9 @@ def main(args=None):
         log.setLevel(logging.WARNING)
         logging.getLogger().setLevel(logging.WARNING)
 
-    if args.version:
-        sunholo_version()
-        return
-
+    # Handle subcommand
     if hasattr(args, 'func'):
         args.func(args)
     else:
         parser.print_help()
 
-if __name__ == "__main__":
-    main()
