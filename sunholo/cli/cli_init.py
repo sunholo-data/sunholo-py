@@ -26,15 +26,18 @@ sunholo init my_genai_project
 
 This will create a new directory named `my_genai_project` with the template files, allowing users to start building their GenAI application.
     """
+    from .sun_rich import console
+
     project_name = args.project_name
     current_dir = os.getcwd()  # This captures the current directory where the command is run
     project_dir = os.path.join(current_dir, project_name)
 
-    print(f"Initializing project: {project_name} in directory: {project_dir}")
+    console.rule(project_name)
+    console.print(f"Initializing in directory: {project_dir}")
 
     # Create project directory
     if os.path.exists(project_dir):
-        print(f"Directory {project_dir} already exists. Please choose a different project name.")
+        console.print(f"[bold red]ERROR: Directory {project_dir} already exists. Please choose a different project name.[/bold red]")
         return
 
     os.makedirs(project_dir)
@@ -98,12 +101,23 @@ This will create a new directory named `my_genai_project` with the template file
         from ..terraform import TerraformVarsEditor
         editor = TerraformVarsEditor(tfvars_file, terraform_dir)
         editor.update_from_dict(cloud_run_config, 'cloud_run')
-        print(f"{tfvars_file} file initialized and updated successfully.")
     except ImportError as e:
-        print(f"Error initializing TerraformVarsEditor: {e}")
+        console.print(f"Error initializing TerraformVarsEditor: {e}")
 
-    print(f"Project {project_name} initialized successfully.")
-    print(f"Navigate to {project_dir} and customize the configuration files in the 'config' directory.")
+    from rich.panel import Panel
+
+    console.print(
+        Panel((
+            "Next steps: \n"
+            f" - Navigate to [orange]{project_dir}/config[/orange] and customize VAC configuration files.\n"
+            f" - Add your own GenAI app logic to [orange]{project_dir}/vac_service.py[/orange]\n"
+            f" - Check terraform [orange]{terraform_dir}/generated.tfvars[/orange] for Multivac deployment"
+            ), 
+            title=f"Project [bold orange]{project_name}[/bold orange] initialized successfully.",
+            subtitle=project_dir),
+            )
+    console.rule()
+
 
 def setup_init_subparser(subparsers):
     """
