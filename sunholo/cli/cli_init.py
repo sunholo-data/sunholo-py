@@ -1,6 +1,8 @@
 import os
+import yaml
 import shutil
 from ..utils.config import get_module_filepath
+from ..utils.parsers import sanitize_cloudrun_name
 
 def init_project(args):
     """
@@ -28,7 +30,7 @@ This will create a new directory named `my_genai_project` with the template file
     """
     from .sun_rich import console
 
-    project_name = args.project_name
+    project_name = sanitize_cloudrun_name(args.project_name)
     current_dir = os.getcwd()  # This captures the current directory where the command is run
     project_dir = os.path.join(current_dir, project_name)
 
@@ -51,6 +53,8 @@ This will create a new directory named `my_genai_project` with the template file
             shutil.copy(src_path, dest_path)
         elif os.path.isdir(src_path):
             shutil.copytree(src_path, dest_path)
+    
+
 
     # Determine the location of the generated.tfvars file
     terraform_dir = args.terraform_dir or os.getenv('MULTIVAC_TERRAFORM_DIR')
@@ -62,18 +66,14 @@ This will create a new directory named `my_genai_project` with the template file
     # Get the service account, either from the CLI argument or default
     service_account = args.service_account or "sa-llmops"  # Default service account
 
-    # Determine the relative path for the cloud build included directories
-    def get_relative_application_path(full_path: str, base_dir: str) -> str:
-        application_base_index = full_path.find("application/")
-        if application_base_index != -1:
-            return full_path[application_base_index:]
-        return os.path.relpath(full_path, base_dir)
-
     # Paths to be included in the cloud build (based on the current working directory)
     # We want paths to start from 'application/system_services/{project_name}'
     relative_base = os.path.relpath(current_dir, os.path.join(current_dir, "..", ".."))
     included_path = os.path.join(relative_base, project_name, "**")
     cloud_build_path = os.path.join(relative_base, project_name, "cloudbuild.yaml")
+
+    update_cloudbuild_template(project_dir, project_name, os.path.join(relative_base, project_name))
+    write_vac_config(project_dir, project_name)
 
     # Define the cloud_run configuration for 'discord-server' with the correct project_dir path
     cloud_run_config = {
@@ -117,6 +117,91 @@ This will create a new directory named `my_genai_project` with the template file
             subtitle=project_dir),
             )
     console.rule()
+
+def update_cloudbuild_template(project_dir: str, service_name: str, build_folder: str):
+    """
+    Updates the cloudbuild.yaml template file by replacing the `CHANGE_ME` placeholders with actual values.
+
+    Args:
+    -----
+    project_dir : str
+        The directory where the project and cloudbuild.yaml are located.
+    service_name : str
+        The name of the service to be used in Cloud Run.
+    build_folder : str
+        The build folder where the Docker build will take place.
+
+    Example:
+    -------
+    update_cloudbuild_template('/path/to/project', 'my_service', 'src')
+    """
+    cloudbuild_path = os.path.join(project_dir, "cloudbuild.yaml")
+
+    # Define the substitutions to replace CHANGE_ME
+    substitutions = {
+        "_SERVICE_NAME": service_name,
+        "_BUILD_FOLDER": build_folder,
+    }
+
+    # Read the cloudbuild.yaml template
+    with open(cloudbuild_path, 'r') as file:
+        content = file.read()
+
+    # Replace each placeholder with its corresponding value
+    for placeholder, value in substitutions.items():
+        content = content.replace(f"{placeholder}: CHANGE_ME", f"{placeholder}: {value}")
+
+
+    # Write the updated content back to cloudbuild.yaml
+    with open(cloudbuild_path, 'w') as file:
+        file.write(content)
+
+    print(f"cloudbuild.yaml updated successfully with service name '{service_name}' and build folder '{build_folder}'.")
+
+def write_vac_config(project_dir: str, service_name: str):
+    """
+    Writes the vac_config.yaml file with the provided service name as the key.
+    """
+    vac_config_content = {
+        'kind': 'vacConfig',
+        'apiVersion': 'v1',
+        'vac': {
+            service_name: {  # Use the service name here
+                'llm': 'vertex',
+                'model': 'gemini-1.5-pro-preview-0514',
+                'agent': 'vertex-genai',
+                'display_name': 'Template VAC',
+                'memory': [
+                    {
+                        'llamaindex-native': {
+                            'vectorstore': 'llamaindex'
+                        }
+                    }
+                ],
+                'gcp_config': {
+                    'project_id': 'llamaindex_project',
+                    'location': 'europe-west1',
+                    'rag_id': '1234544343434'  # Replace with actual RAG ID
+                },
+                'chunker': {
+                    'chunk_size': 1000,
+                    'overlap': 200
+                }
+            }
+        }
+    }
+
+    config_dir = os.path.join(project_dir, 'config')
+    if not os.path.exists(config_dir):
+        os.makedirs(config_dir)
+
+    vac_config_path = os.path.join(config_dir, 'vac_config.yaml')
+
+    # Write the YAML configuration to the file
+    with open(vac_config_path, 'w') as file:
+        yaml.dump(vac_config_content, file, default_flow_style=False)
+
+    print(f"vac_config.yaml written successfully with service name '{service_name}'.")
 
 
 def setup_init_subparser(subparsers):

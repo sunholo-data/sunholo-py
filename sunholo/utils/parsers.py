@@ -15,6 +15,40 @@ import re
 import hashlib
 import urllib.parse
 
+def sanitize_cloudrun_name(name: str) -> str:
+    """
+    Sanitizes the project name to be a valid Cloud Run service name.
+    
+    - Converts to lowercase.
+    - Replaces invalid characters with hyphens.
+    - Ensures the name starts with a letter.
+    - Trims the name to be less than 64 characters.
+    - Removes trailing hyphens.
+    
+    Args:
+        name (str): The original project name.
+    
+    Returns:
+        str: The sanitized project name.
+    """
+    # Convert to lowercase
+    name = name.lower()
+    
+    # Replace invalid characters with hyphens
+    name = re.sub(r'[^a-z0-9-]', '-', name)
+    
+    # Ensure the name starts with a letter
+    if not name[0].isalpha():
+        name = 'a' + name
+    
+    # Trim to 63 characters to leave room for suffixes if needed
+    name = name[:63]
+    
+    # Remove trailing hyphens
+    name = name.rstrip('-')
+    
+    return name
+
 def validate_extension_id(ext_id):
     """
     Ensures the passed string fits the criteria for an extension ID.
