@@ -5,6 +5,8 @@ except ImportError:
 
 import json
 import subprocess
+from datetime import datetime
+import shutil
 import os
 import io
 from typing import Dict, Any
@@ -75,6 +77,13 @@ class TerraformVarsEditor:
         
         self.tfvars_file = tfvars_file
         self.terraform_dir = terraform_dir
+
+        # Ensure the tfvars file exists, if not, create it
+        if not os.path.exists(self.tfvars_file):
+            log.info(f"{self.tfvars_file} does not exist. Creating a new file.")
+            with open(self.tfvars_file, 'w') as file:
+                file.write("")  # Create an empty tfvars file
+                
         self.tfvars_data = self._load_tfvars()
 
     def _load_tfvars(self) -> Dict[str, Any]:
@@ -118,8 +127,9 @@ class TerraformVarsEditor:
         -------
         backup_file = self._backup_tfvars()
         """
-        backup_file = f"{self.tfvars_file}.bak"
-        os.rename(self.tfvars_file, backup_file)
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        backup_file = f"{self.tfvars_file}.{timestamp}.bak"
+        shutil.copy2(self.tfvars_file, backup_file)
         return backup_file
 
     def _restore_tfvars(self, backup_file: str) -> None:
@@ -231,8 +241,10 @@ class TerraformVarsEditor:
         # Attempt to validate the changes with Terraform
         if not self.validate_terraform():
             # If validation fails, restore the original file from the backup
+            failed_file = f"{self.tfvars_file}.failed"
+            shutil.copy2(self.tfvars_file, failed_file)
             self._restore_tfvars(backup_file)
-            log.error(f"Changes aborted, original {self.tfvars_file} restored.")
+            print(f"Changes aborted, original {self.tfvars_file} restored. Failed file: {failed_file}")
         else:
             log.info(f"Terraform validation passed, changes saved to {self.tfvars_file}.")
             os.remove(backup_file)  # Remove the backup if validation passes
@@ -273,8 +285,11 @@ class TerraformVarsEditor:
         # Attempt to validate the changes with Terraform
         if not self.validate_terraform():
             # If validation fails, restore the original file from the backup
+            failed_file = f"{self.tfvars_file}.failed"
+            shutil.copy2(self.tfvars_file, failed_file)
             self._restore_tfvars(backup_file)
-            console.print(f"Changes aborted, original {self.tfvars_file} restored.")
+
+            print(f"Changes aborted, original {self.tfvars_file} restored. Failed file: {failed_file}")
         else:
             console.print(f"Terraform validation passed, changes saved to {self.tfvars_file}.")
             os.remove(backup_file)  # Remove the backup if validation passes

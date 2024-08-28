@@ -201,7 +201,7 @@ def write_vac_config(project_dir: str, service_name: str):
     with open(vac_config_path, 'w') as file:
         yaml.dump(vac_config_content, file, default_flow_style=False)
 
-    print(f"vac_config.yaml written successfully with service name '{service_name}'.")
+    print(f"{vac_config_path} written successfully with service name '{service_name}'.")
 
 
 def setup_init_subparser(subparsers):
