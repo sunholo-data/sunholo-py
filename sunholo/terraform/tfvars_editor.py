@@ -6,6 +6,7 @@ except ImportError:
 import json
 import subprocess
 import os
+import io
 from typing import Dict, Any
 from ..custom_logging import log
 
@@ -57,7 +58,7 @@ class TerraformVarsEditor:
         tfvars_file : str
             The path to the .tfvars file to be edited.
         terraform_dir : str
-            The directory where Terraform commands will be executed (default is current directory).
+            The directory where Terraform commands will be executed (default is current directory). Will use MULTIVAC_TERRAFORM_DIR env var if present.
 
         Example:
         -------
@@ -65,6 +66,12 @@ class TerraformVarsEditor:
         """
         if hcl2 is None:
             raise ImportError('hcl2 is required for parsing terraform files, install via `pip install sunholo[iac]`')
+
+        # Check for the MULTIVAC_TERRAFORM_DIR environment variable
+        if terraform_dir == '.' and 'MULTIVAC_TERRAFORM_DIR' in os.environ:
+            terraform_dir = os.environ['MULTIVAC_TERRAFORM_DIR']
+        
+        log.info(f'MULTIVAC_TERRAFORM_DIR environment variable is set to {terraform_dir}')
         
         self.tfvars_file = tfvars_file
         self.terraform_dir = terraform_dir
@@ -156,7 +163,7 @@ class TerraformVarsEditor:
 
     def validate_terraform(self) -> bool:
         """
-        Runs `terraform validate` in the specified directory.
+        Runs `terraform init` followed by `terraform validate` in the specified directory.
 
         Returns:
         -------
@@ -164,20 +171,33 @@ class TerraformVarsEditor:
             True if validation passes, False otherwise.
 
         Example:
+        -------
         ```python
         if self.validate_terraform():
             print("Validation passed.")
         ```
         """
-        result = subprocess.run(['terraform', 'validate'], cwd=self.terraform_dir, capture_output=True, text=True)
+        # Step 1: Run `terraform init` to ensure the directory is initialized
+        init_process = subprocess.run(['terraform', 'init'], cwd=self.terraform_dir, capture_output=True, text=True)
         
-        if result.returncode == 0:
+        if init_process.returncode != 0:
+            log.error("Terraform initialization failed.")
+            print(init_process.stdout)
+            print(init_process.stderr)
+            return False
+        
+        log.info("Terraform initialized successfully.")
+
+        # Step 2: Run `terraform validate`
+        validate_process = subprocess.run(['terraform', 'validate'], cwd=self.terraform_dir, capture_output=True, text=True)
+        
+        if validate_process.returncode == 0:
             log.info("Terraform validation passed.")
             return True
         else:
             log.error("Terraform validation failed.")
-            print(result.stdout)
-            print(result.stderr)
+            print(validate_process.stdout)
+            print(validate_process.stderr)
             return False
 
     def update_from_json(self, json_file: str, main_key: str) -> None:
@@ -215,6 +235,48 @@ class TerraformVarsEditor:
             log.error(f"Changes aborted, original {self.tfvars_file} restored.")
         else:
             log.info(f"Terraform validation passed, changes saved to {self.tfvars_file}.")
+            os.remove(backup_file)  # Remove the backup if validation passes
+
+    def update_from_dict(self, data: Dict[str, Any], main_key: str) -> None:
+        """
+        Updates the .tfvars file based on the content of a Python dictionary and validates the changes.
+
+        Parameters:
+        ----------
+        data : dict
+            The dictionary with the new instance data.
+        main_key : str
+            The top-level key under which the instance is added (e.g., "cloud_run").
+
+        Example:
+        -------
+        editor.update_from_dict(data, 'cloud_run')
+        """
+        # Create an in-memory file-like object from the dictionary by converting it to JSON
+        json_data = json.dumps({main_key: data})
+        json_file = io.StringIO(json_data)
+
+        # Load the JSON data from the StringIO object
+        parsed_data = json.load(json_file)
+
+        # Update the tfvars data in memory
+        for instance_name, instance_data in parsed_data.get(main_key, {}).items():
+            self.update_or_add_instance(main_key, instance_name, instance_data)
+
+        # Now that the data is updated in memory, proceed to validate and write it back to the file
+        # Backup the original .tfvars file
+        backup_file = self._backup_tfvars()
+
+        # Temporarily save the updated data to the original file location
+        self._save_tfvars()
+
+        # Attempt to validate the changes with Terraform
+        if not self.validate_terraform():
+            # If validation fails, restore the original file from the backup
+            self._restore_tfvars(backup_file)
+            console.print(f"Changes aborted, original {self.tfvars_file} restored.")
+        else:
+            console.print(f"Terraform validation passed, changes saved to {self.tfvars_file}.")
             os.remove(backup_file)  # Remove the backup if validation passes
 
 def tfvars_command(args):
