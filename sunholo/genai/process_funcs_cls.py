@@ -109,14 +109,24 @@ class GenAIFunctionProcessor:
         work_on = api_requests_and_responses or self.last_api_requests_and_responses
         parts = []
         for part in work_on:
-            parts.append(
-                Part(
-                    function_response=genai.protos.FunctionResponse(
-                        name=part[0],
-                        response={"result": part[2], "args": json.dumps(part[1])}
+            try:
+                parts.append(
+                    Part(
+                        function_response=genai.protos.FunctionResponse(
+                            name=part[0],
+                            response={"result": part[2], "args": json.dumps(part[1])}
+                        )
                     )
                 )
-            )
+            except Exception as err:
+                parts.append(
+                    Part(
+                        function_response=genai.protos.FunctionResponse(
+                            name=part[0],
+                            response={"result": f"ERROR: {str(err)}"}
+                        )
+                    )
+                )                
 
         return parts
 
@@ -212,14 +222,15 @@ class GenAIFunctionProcessor:
             if fn := part.function_call:
                 # Extract parameters for the function call
                 function_name = fn.name
-                params = {key: val for key, val in fn.args.items()}
+                params_obj = {key: val for key, val in fn.args.items()}
+                params = ', '.join(f'{key}={val}' for key, val in params_obj.items())
                 log.info(f"Executing {function_name} with params {params}")
 
                 # Check if the function is in our dictionary of available functions
                 if function_name in self.funcs:
                     try:
                         # Execute the function with the provided parameters
-                        result = self.funcs[function_name](**params)
+                        result = self.funcs[function_name](**params_obj)
                         log.info(f"Got result from {function_name}: {result}")
                     except Exception as err:
                         error_message = f"Error in {function_name}: {str(err)}"
