@@ -59,11 +59,7 @@ def vac(question: str, vector_name: str, chat_history=[], **kwargs):
 def create_model(vac):
     config = ConfigManager(vac)
 
-    gcp_config = config.vacConfig("gcp_config")
-    if not gcp_config:
-        raise ValueError(f"Need config.{vac}.gcp_config to configure XXXX on VertexAI")
-
-    init_vertex(gcp_config)
+    init_vertex()
     corpus_tools = get_vertex_memories(config)
 
     model = config.vacConfig("model")
@@ -71,7 +67,7 @@ def create_model(vac):
     # Create a gemini-pro model instance
     # https://ai.google.dev/api/python/google/generativeai/GenerativeModel#streaming
     rag_model = GenerativeModel(
-        model_name=model or "gemini-1.0-pro-002", tools=[corpus_tools]
+        model_name=model or "gemini-1.5-flash", tools=[corpus_tools]
     )
 
     return rag_model
