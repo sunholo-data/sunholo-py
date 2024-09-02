@@ -222,11 +222,11 @@ if __name__ == "__main__":
             generation.end(output=response)
             span.end(output=response)
             trace.update(output=response)
-            self.langfuse_eval_response(trace.id, all_input.get('eval_percent', 0.01))
+            self.langfuse_eval_response(trace_id=trace.id, eval_percent=all_input.get('eval_percent'))
 
         return response
     
-    def langfuse_eval_response(trace_id, eval_percent=0.01):
+    def langfuse_eval_response(self, trace_id, eval_percent=0.01):
         """
         Sends an evaluation message based on a probability defined by eval_percent.
         
@@ -299,7 +299,7 @@ if __name__ == "__main__":
         if trace:
             span.end(output=jsonify(bot_output))
             trace.update(output=jsonify(bot_output)) 
-            self.langfuse_eval_response(trace.id, all_input.get('eval_percent', 0.01))
+            self.langfuse_eval_response(trace_id=trace.id, eval_percent=all_input.get('eval_percent'))
 
         # {'answer': 'output'}
         return jsonify(bot_output)
