@@ -22,7 +22,7 @@ except ImportError:
     pass 
 
 try:
-    from ..pubsub import PubSubManager
+    from ...pubsub import PubSubManager
 except ImportError:
     PubSubManager = None
 
@@ -242,11 +242,12 @@ if __name__ == "__main__":
 
         # Generate a random float between 0 and 1
         random_value = random.random()
-        
+        log.info(f"Eval: {trace_id=} {eval_percent=} / {random_value=}")
         # Check if evaluation should be triggered
         if random_value < eval_percent:
             if PubSubManager:
                 try:
+                    log.info(f"Publishing for eval {trace_id=}")
                     pubsub_manager = PubSubManager("langfuse_evals", pubsub_topic="topicid-to-langfuse-eval")
                     the_data = {"trace_id": trace_id}
                     pubsub_manager.publish_message(the_data)
