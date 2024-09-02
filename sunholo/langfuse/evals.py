@@ -40,7 +40,7 @@ def pubsub_to_evals(data: dict, eval_funcs: list=[eval_length]) -> dict:
 
     trace_id = the_json.pop('trace_id', None)
 
-    return do_evals(trace_id, eval_funcs, **message_data)
+    return do_evals(trace_id, eval_funcs, **the_json)
 
 
 def direct_langfuse_evals(data, eval_funcs: list=[eval_length]):
