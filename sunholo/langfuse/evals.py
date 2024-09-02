@@ -38,8 +38,9 @@ def pubsub_to_evals(data: dict, eval_funcs: list=[eval_length]) -> dict:
 def direct_langfuse_evals(data, eval_funcs: list=[eval_length]):
     if 'trace_id' not in data:
         raise ValueError('No trace_id found in data')
-    
-    return do_evals(data['trace_id'], eval_funcs, **data)
+    trace_id = data.pop('trace_id', None)
+
+    return do_evals(trace_id, eval_funcs, **data)
 
 
 def do_evals(trace_id, eval_funcs: list=[eval_length], **kwargs) -> dict:
@@ -51,7 +52,7 @@ def do_evals(trace_id, eval_funcs: list=[eval_length], **kwargs) -> dict:
     )
  
     # Fetch the latest trace (or modify as needed to fetch a specific trace)
-    trace = langfuse.fetch_trace(id=trace_id)
+    trace = langfuse.get_trace(id=trace_id)
 
     if trace.output is None:
         raise ValueError("Trace {trace.name} had no generated output, it was skipped")
@@ -64,7 +65,7 @@ def do_evals(trace_id, eval_funcs: list=[eval_length], **kwargs) -> dict:
 
         eval_name = eval_func.__name__
 
-        if 'score' or 'reason' not in eval_result:
+        if 'score' and 'reason' not in eval_result:
             raise ValueError(f"Trace {trace.name} using {eval_name=} did not return a dict with 'score' and 'reason': {eval_result=}")
         
         log.info(f"TraceId {trace.id} with name {trace.name} had {eval_name=} with score {eval_result=}")

@@ -2,6 +2,7 @@ import json
 import traceback
 import datetime
 import uuid
+import random
 
 from ...agents import extract_chat_history, handle_special_commands
 from ...qna.parsers import parse_output
@@ -18,12 +19,12 @@ from datetime import timedelta
 try:
     from flask import request, jsonify, Response
 except ImportError:
-    pass
+    pass 
 
 try:
-    from langfuse.decorators import langfuse_context, observe
+    from ..pubsub import PubSubManager
 except ImportError:
-    pass    
+    PubSubManager = None
 
 # Cache dictionary to store validated API keys
 api_key_cache = {}
@@ -221,8 +222,38 @@ if __name__ == "__main__":
             generation.end(output=response)
             span.end(output=response)
             trace.update(output=response)
+            self.langfuse_eval_response(trace.id, all_input.get('eval_percent', 0.01))
 
         return response
+    
+    def langfuse_eval_response(trace_id, eval_percent=0.01):
+        """
+        Sends an evaluation message based on a probability defined by eval_percent.
+        
+        Args:
+            eval_percent (float): The probability (0 to 1) of triggering the evaluation.
+            trace_id (str): The trace identifier for the evaluation.
+        
+        Returns:
+            None
+        """
+        if eval_percent > 1 or eval_percent < 0:
+            raise ValueError("eval_percent must be a float between 0 and 1.")
+
+        # Generate a random float between 0 and 1
+        random_value = random.random()
+        
+        # Check if evaluation should be triggered
+        if random_value < eval_percent:
+            if PubSubManager:
+                try:
+                    pubsub_manager = PubSubManager("langfuse_evals", pubsub_topic="topicid-to-langfuse-eval")
+                    the_data = {"trace_id": trace_id}
+                    pubsub_manager.publish_message(the_data)
+                except Exception as e:
+                    log.warning(f"Could not publish message for 'langfuse_evals' to topicid-to-langfuse-eval - {str(e)}")
+        else:
+            log.info(f"Did not do Langfuse eval due to random sampling not passed: {eval_percent=}")
 
     def handle_process_vac(self, vector_name):
         observed_vac_interpreter = self.vac_interpreter
@@ -268,6 +299,7 @@ if __name__ == "__main__":
         if trace:
             span.end(output=jsonify(bot_output))
             trace.update(output=jsonify(bot_output)) 
+            self.langfuse_eval_response(trace.id, all_input.get('eval_percent', 0.01))
 
         # {'answer': 'output'}
         return jsonify(bot_output)
