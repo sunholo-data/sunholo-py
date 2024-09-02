@@ -1,4 +1,6 @@
 import os
+import json
+
 from ..pubsub import decode_pubsub_message
 from langfuse import Langfuse
 from ..custom_logging import log
@@ -27,10 +29,16 @@ def pubsub_to_evals(data: dict, eval_funcs: list=[eval_length]) -> dict:
     # Decode the message
     message_data, metadata, vector_name = decode_pubsub_message(data)
 
-    if 'trace_id' not in message_data:
-        raise ValueError('No trace_id found in message data')
+    try:
+        the_json = json.loads(message_data)
+    except Exception as e:
+        log.error(f"Could not load message {message_data} as JSON - {str(e)}")
+        return None, {"metadata": f"Could not load message as JSON - {str(e)}"}
 
-    trace_id = message_data.pop('trace_id', None)
+    if 'trace_id' not in the_json:
+        raise ValueError(f'No trace_id found in json data {the_json=}')
+
+    trace_id = the_json.pop('trace_id', None)
 
     return do_evals(trace_id, eval_funcs, **message_data)
 
