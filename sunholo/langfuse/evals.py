@@ -68,13 +68,17 @@ def do_evals(trace_id, eval_funcs: list=[eval_length], **kwargs) -> dict:
     # Run the evaluation functions
     eval_results = []
     for eval_func in eval_funcs:
-        eval_result = eval_func(trace)  # Assuming eval_func returns a dict with 'score' and 'reason'
+        try:
+            eval_result = eval_func(trace)  # Assuming eval_func returns a dict with 'score' and 'reason'
+        except Exception as e:
+            eval_result = {"score": 0, "reason":f"ERROR: {str(e)}"}
         eval_results.append(eval_result)
 
         eval_name = eval_func.__name__
 
         if 'score' and 'reason' not in eval_result:
-            raise ValueError(f"Trace {trace.name} using {eval_name=} did not return a dict with 'score' and 'reason': {eval_result=}")
+            log.error(f"Trace {trace.name} using {eval_name=} did not return a dict with 'score' and 'reason': {eval_result=}")
+            eval_result = {"score": 0, "reason": f"malformed eval_result: {eval_result}"}
         
         log.info(f"TraceId {trace.id} with name {trace.name} had {eval_name=} with score {eval_result=}")
         
