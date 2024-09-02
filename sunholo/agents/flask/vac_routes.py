@@ -537,6 +537,7 @@ if __name__ == "__main__":
         stream_wait_time = data.pop('stream_wait_time', 7)
         stream_timeout = data.pop('stream_timeout', 120)
         chat_history = data.pop('chat_history', None)
+        eval_percent = data.pop('eval_percent', 0.01)
         vector_name = data.pop('vector_name', vector_name)
 
         paired_messages = extract_chat_history(chat_history)
@@ -546,6 +547,7 @@ if __name__ == "__main__":
                      'chat_history': paired_messages, 
                      'stream_wait_time': stream_wait_time,
                      'stream_timeout': stream_timeout,
+                     'eval_percent': eval_percent,
                      'kwargs': data}
 
         if trace:
