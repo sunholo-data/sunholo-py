@@ -20,6 +20,12 @@ from .langserve import prepare_request_data
 
 from .route import route_endpoint
 
+try:
+    from langfuse import Langfuse
+    langfuse = Langfuse()
+except ImportError:
+    langfuse = None
+
 def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs):
     """
     Prepares the request payload for sending a query to the QA system.
@@ -79,8 +85,20 @@ def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs
 
         if 'vector_name' not in qna_data:
             qna_data['vector_name'] = vector_name
+    
+    qna_data['trace_id'] = add_langfuse_trace(qna_endpoint)
 
     return qna_endpoint, qna_data
+
+def add_langfuse_trace(qna_endpoint):
+    if not langfuse:
+        return None
+    
+    trace = langfuse.trace(name = f'auto/{qna_endpoint}')
+
+    log.info('Adding langfuse trace {trace.id}')
+
+    return trace.id
 
 def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
     """

@@ -29,15 +29,26 @@ def pubsub_to_evals(data: dict, eval_funcs: list=[eval_length]) -> dict:
 
     if 'trace_id' not in message_data:
         raise ValueError('No trace_id found in message data')
+
+    trace_id = message_data.pop('trace_id', None)
+
+    return do_evals(trace_id, eval_funcs, **message_data)
+
+
+def direct_langfuse_evals(data, eval_funcs: list=[eval_length]):
+    if 'trace_id' not in data:
+        raise ValueError('No trace_id found in data')
     
+    return do_evals(data['trace_id'], eval_funcs, **data)
+
+
+def do_evals(trace_id, eval_funcs: list=[eval_length], **kwargs) -> dict:
     # Initialize Langfuse with environment variables
     langfuse = Langfuse(
         secret_key=os.environ["LANGFUSE_SECRET_KEY"],
         public_key=os.environ["LANGFUSE_PUBLIC_KEY"],
         host=os.environ["LANGFUSE_HOST"]
     )
-
-    trace_id = message_data.pop('trace_id', None)
  
     # Fetch the latest trace (or modify as needed to fetch a specific trace)
     trace = langfuse.fetch_trace(id=trace_id)
@@ -64,7 +75,7 @@ def pubsub_to_evals(data: dict, eval_funcs: list=[eval_length]) -> dict:
             name=eval_name,  # Use the function name as the evaluation name
             value=eval_result["score"],
             comment=eval_result["reason"],
-            **message_data
+            **kwargs
         )
     
     return {"trace_id": trace.id, "eval_results": eval_results}

@@ -1,0 +1,11 @@
+kind: vacConfig
+apiVersion: v1
+vac:
+  template_vac: #TODO: update to your own vac configuration
+    llm: vertex
+    model: gemini-1.5-flash
+    agent: vertex-genai
+    display_name: Template VAC
+    memory:
+      - llamaindex-native:
+          vectorstore: llamaindex
