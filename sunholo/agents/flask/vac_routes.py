@@ -365,6 +365,8 @@ if __name__ == "__main__":
         image_uri = None
         mime_type = None
 
+
+
         for msg in reversed(messages):
             if msg['role'] == 'user':
                 if isinstance(msg['content'], list):
@@ -457,7 +459,6 @@ if __name__ == "__main__":
                 question=user_message,
                 vector_name=vector_name,
                 chat_history=all_input["chat_history"],
-                trace_id=all_input.get("trace_id"),
                 **all_input["kwargs"]
             )
             bot_output = parse_output(bot_output)
@@ -526,7 +527,7 @@ if __name__ == "__main__":
 
         log.info(f"vac/{vector_name} got data: {data}")
 
-        trace_id = data.get('trace_id')
+        trace_id = data.pop('trace_id')
         trace = self.create_langfuse_trace(request, vector_name, trace_id)
         span = None
 
