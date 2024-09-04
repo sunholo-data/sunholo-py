@@ -192,7 +192,7 @@ if __name__ == "__main__":
                                               chat_history=all_input["chat_history"],
                                               wait_time=all_input["stream_wait_time"],
                                               timeout=all_input["stream_timeout"],
-                                              trace_id=trace.id,
+                                              trace_id=trace.id if trace else None,
                                               #kwargs
                                               **all_input["kwargs"]
                                             ):
@@ -282,7 +282,7 @@ if __name__ == "__main__":
                 question=all_input["user_input"],
                 vector_name=vector_name,
                 chat_history=all_input["chat_history"],
-                trace_id=trace.id,
+                trace_id=trace.id if trace else None,
                 **all_input["kwargs"]
             )
             if span:
