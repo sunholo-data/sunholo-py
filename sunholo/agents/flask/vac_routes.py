@@ -187,19 +187,20 @@ if __name__ == "__main__":
         def generate_response_content():
 
             for chunk in start_streaming_chat(question=all_input["user_input"],
-                                                vector_name=vector_name,
-                                                qna_func=observed_stream_interpreter,
-                                                chat_history=all_input["chat_history"],
-                                                wait_time=all_input["stream_wait_time"],
-                                                timeout=all_input["stream_timeout"],
-                                                #kwargs
-                                                **all_input["kwargs"]
-                                                ):
+                                              vector_name=vector_name,
+                                              qna_func=observed_stream_interpreter,
+                                              chat_history=all_input["chat_history"],
+                                              wait_time=all_input["stream_wait_time"],
+                                              timeout=all_input["stream_timeout"],
+                                              trace_id=trace.id,
+                                              #kwargs
+                                              **all_input["kwargs"]
+                                            ):
                 if isinstance(chunk, dict) and 'answer' in chunk:
                     # When we encounter the dictionary, we yield it as a JSON string
                     # and stop the generator.
                     if trace:
-                        chunk["trace"] = trace.id
+                        chunk["trace_id"] = trace.id
                         chunk["trace_url"] = trace.get_trace_url()
                     archive_qa(chunk, vector_name)
                     if trace:
@@ -281,6 +282,7 @@ if __name__ == "__main__":
                 question=all_input["user_input"],
                 vector_name=vector_name,
                 chat_history=all_input["chat_history"],
+                trace_id=trace.id,
                 **all_input["kwargs"]
             )
             if span:
@@ -288,7 +290,7 @@ if __name__ == "__main__":
             # {"answer": "The answer", "source_documents": [{"page_content": "The page content", "metadata": "The metadata"}]}
             bot_output = parse_output(bot_output)
             if trace:
-                bot_output["trace"] = trace.id
+                bot_output["trace_id"] = trace.id
                 bot_output["trace_url"] = trace.get_trace_url()
             archive_qa(bot_output, vector_name)
             log.info(f'==LLM Q:{all_input["user_input"]} - A:{bot_output}')
@@ -409,6 +411,7 @@ if __name__ == "__main__":
                                             chat_history=all_input["chat_history"],
                                             wait_time=all_input.get("stream_wait_time", 1),
                                             timeout=all_input.get("stream_timeout", 60),
+                                            trace_id=all_input.get("trace_id"),
                                             **all_input["kwargs"]
                                             ):
                 if isinstance(chunk, dict) and 'answer' in chunk:
@@ -454,6 +457,7 @@ if __name__ == "__main__":
                 question=user_message,
                 vector_name=vector_name,
                 chat_history=all_input["chat_history"],
+                trace_id=all_input.get("trace_id"),
                 **all_input["kwargs"]
             )
             bot_output = parse_output(bot_output)

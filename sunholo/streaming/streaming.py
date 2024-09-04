@@ -22,7 +22,7 @@ from .content_buffer import ContentBuffer, BufferStreamingStdOutCallbackHandler
 from ..qna.parsers import parse_output
 
 from ..custom_logging import log
-from ..utils import load_config_key, ConfigManager
+from ..utils import ConfigManager
 from ..utils.parsers import check_kwargs_support
 
 from .langserve import parse_langserve_token, parse_langserve_token_async

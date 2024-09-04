@@ -217,10 +217,10 @@ def escape_braces(text):
     """
     # First, handle cases where there might be a mix of braces
     # Replace all `{` that are not followed by another `{` with `{{`
-    text = re.sub(r'(?<!{){(?!{)', '{{', text)
+    text = re.sub(r'(?<!{){(?!{)', '<<', text)
     
     # Replace all `}` that are not preceded by another `}` with `}}`
-    text = re.sub(r'(?<!})}(?!})', '}}', text)
+    text = re.sub(r'(?<!})}(?!})', '>>', text)
 
     # After escaping single braces, return the modified text
     return text
