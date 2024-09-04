@@ -527,10 +527,12 @@ if __name__ == "__main__":
 
         log.info(f"vac/{vector_name} got data: {data}")
 
-        trace_id = data.pop('trace_id')
-        trace = self.create_langfuse_trace(request, vector_name, trace_id)
+        trace = None
         span = None
-
+        if 'trace_id' in data:
+            trace_id = data.pop('trace_id')
+            trace = self.create_langfuse_trace(request, vector_name, trace_id)
+        
         config, _ = load_config("config/llm_config.yaml")
         vac_configs = config.get("vac")
         if vac_configs:
