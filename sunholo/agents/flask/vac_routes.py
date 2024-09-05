@@ -532,6 +532,9 @@ if __name__ == "__main__":
         if 'trace_id' in data:
             trace_id = data.pop('trace_id')
             trace = self.create_langfuse_trace(request, vector_name, trace_id)
+            log.info(f"Using existing langfuse trace: {trace_id}")
+        else:
+            trace = self.create_langfuse_trace(request, vector_name)
         
         config, _ = load_config("config/llm_config.yaml")
         vac_configs = config.get("vac")
