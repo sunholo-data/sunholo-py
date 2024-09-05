@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.90.5'
+version = '0.90.6'
 
 setup(
     name='sunholo',
@@ -36,6 +36,7 @@ setup(
     extras_require={
         # Define optional dependencies with feature names
         'all': [
+            "anthropic[vertex]",
             "asyncpg",
             "azure-identity",
             "azure-storage-blob",
@@ -115,6 +116,7 @@ setup(
             "unstructured[local-inference]==0.14.9",
         ],
         'gcp': [
+            "anthropic[vertex]",
             "google-api-python-client",
             "google-cloud-alloydb-connector[pg8000]",
             "google-auth-httplib2",
@@ -139,7 +141,7 @@ setup(
             "tiktoken"
         ],
         'anthropic': [
-            "langchain-anthropic>=0.1.13",        
+            "langchain-anthropic>=0.1.13"   
         ],
         'tools' : [
             'openapi-spec-validator',

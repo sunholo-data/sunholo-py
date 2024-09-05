@@ -114,9 +114,18 @@ def llm_str_to_llm(llm_str, model=None, vector_name=None, config=None):
     elif llm_str == 'anthropic':
         from langchain_anthropic import ChatAnthropic
         if model is None:
-            model = 'claude-3-opus-20240229'
+            model = 'claude-3-5-sonnet-20240620'
             log.info(f"No 'model' value in config file - selecting default {model}")
         return ChatAnthropic(model_name = model, temperature=0)
+    elif llm_str == 'anthropic-vertex':
+        from langchain_google_vertexai.model_garden import ChatAnthropicVertex
+        if model is None:
+            model = "claude-3-5-sonnet@20240620"
+            log.info(f"No 'model' value in config file - selecting default {model}")
+        gcp_config = config.vacConfig("gcp_config")
+        return ChatAnthropicVertex(model_name=model, 
+                                   project=gcp_config.get('project_id'), 
+                                   location=gcp_config.get('location'))
 
     if llm_str is None:
         raise NotImplementedError(f'No llm implemented for {llm_str}') 

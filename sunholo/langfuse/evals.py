@@ -3,6 +3,7 @@ import json
 
 from ..pubsub import decode_pubsub_message
 from langfuse import Langfuse
+import traceback
 from ..custom_logging import log
 
 # Example of how eval_funcs might be structured
@@ -71,7 +72,7 @@ def do_evals(trace_id, eval_funcs: list=[eval_length], **kwargs) -> dict:
         try:
             eval_result = eval_func(trace)  # Assuming eval_func returns a dict with 'score' and 'reason'
         except Exception as e:
-            eval_result = {"score": 0, "reason":f"ERROR: {str(e)}"}
+            eval_result = {"score": 0, "reason":f"ERROR: {str(e)} traceback: {traceback.format_exc()}"}
         eval_results.append(eval_result)
 
         eval_name = eval_func.__name__
