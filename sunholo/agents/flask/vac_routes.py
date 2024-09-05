@@ -529,12 +529,10 @@ if __name__ == "__main__":
 
         trace = None
         span = None
-        if 'trace_id' in data:
-            trace_id = data.pop('trace_id')
-            trace = self.create_langfuse_trace(request, vector_name, trace_id)
-            log.info(f"Using existing langfuse trace: {trace_id}")
-        else:
-            trace = self.create_langfuse_trace(request, vector_name)
+
+        trace_id = data.get('trace_id')
+        trace = self.create_langfuse_trace(request, vector_name, trace_id)
+        log.info(f"Using existing langfuse trace: {trace_id}")
         
         config, _ = load_config("config/llm_config.yaml")
         vac_configs = config.get("vac")
@@ -550,6 +548,7 @@ if __name__ == "__main__":
         chat_history = data.pop('chat_history', None)
         eval_percent = data.pop('eval_percent', 0.01)
         vector_name = data.pop('vector_name', vector_name)
+        data.pop('trace_id', None) # to ensure not in kwargs
 
         paired_messages = extract_chat_history(chat_history)
 
