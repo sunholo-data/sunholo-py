@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.2.1">
 <title data-rh="true">qna_routes.py | Sunholo Dev Portal</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://dev.sunholo.com/docs/sunholo/agents/fastapi/qna_routes"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="qna_routes.py | Sunholo Dev Portal"><meta data-rh="true" name="description" content="Source: sunholo/agents/fastapi/qnaroutes.py"><meta data-rh="true" property="og:description" content="Source: sunholo/agents/fastapi/qnaroutes.py"><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://dev.sunholo.com/docs/sunholo/agents/fastapi/qna_routes"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/agents/fastapi/qna_routes" hreflang="en"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/agents/fastapi/qna_routes" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.f6c7f565.css">
-<script src="/assets/js/runtime~main.b4eb1bb4.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.9be5058d.js" defer="defer"></script>
 <script src="/assets/js/main.58d52168.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -19,14 +19,14 @@
 <p>No docstring available.</p>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="classes">Classes<a href="#classes" class="hash-link" aria-label="Direct link to Classes" title="Direct link to Classes">​</a></h2>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="vacrequest">VACRequest<a href="#vacrequest" class="hash-link" aria-label="Direct link to VACRequest" title="Direct link to VACRequest">​</a></h3>
-<p>Usage docs: <a href="https://docs.pydantic.dev/2.8/concepts/models/" target="_blank" rel="noopener noreferrer">https://docs.pydantic.dev/2.8/concepts/models/</a></p>
+<p>Usage docs: <a href="https://docs.pydantic.dev/2.9/concepts/models/" target="_blank" rel="noopener noreferrer">https://docs.pydantic.dev/2.9/concepts/models/</a></p>
 <p>A base class for creating Pydantic models.</p>
 <p>Attributes:
-<strong>class_vars</strong>: The names of classvars defined on the model.
+<strong>class_vars</strong>: The names of the class variables defined on the model.
 <strong>private_attributes</strong>: Metadata about the private attributes of the model.
-<strong>signature</strong>: The signature for instantiating the model.</p>
+<strong>signature</strong>: The synthesized <code>__init__</code> [<code>Signature</code>][inspect.Signature] of the model.</p>
 <p><strong>pydantic_complete</strong>: Whether model building is completed, or if there are still undefined fields.
-<strong>pydantic_core_schema</strong>: The pydantic-core schema used to build the SchemaValidator and SchemaSerializer.
+<strong>pydantic_core_schema</strong>: The core schema of the model.
 <strong>pydantic_custom_init</strong>: Whether the model has a custom <code>__init__</code> function.
 <strong>pydantic_decorators</strong>: Metadata containing the decorators defined on the model.
 This replaces <code>Model.__validators__</code> and <code>Model.__root_validators__</code> from Pydantic V1.
@@ -34,13 +34,13 @@ This replaces <code>Model.__validators__</code> and <code>Model.__root_validator
 <strong>args</strong>, <strong>origin</strong>, <strong>parameters</strong> in typing-module generics. May eventually be replaced by these.
 <strong>pydantic_parent_namespace</strong>: Parent namespace of the model, used for automatic rebuilding of models.
 <strong>pydantic_post_init</strong>: The name of the post-init method for the model, if defined.
-<strong>pydantic_root_model</strong>: Whether the model is a <code>RootModel</code>.
-<strong>pydantic_serializer</strong>: The pydantic-core SchemaSerializer used to dump instances of the model.
-<strong>pydantic_validator</strong>: The pydantic-core SchemaValidator used to validate instances of the model.</p>
-<p><strong>pydantic_extra</strong>: An instance attribute with the values of extra fields from validation when
-<code>model_config[&#x27;extra&#x27;] == &#x27;allow&#x27;</code>.
-<strong>pydantic_fields_set</strong>: An instance attribute with the names of fields explicitly set.
-<strong>pydantic_private</strong>: Instance attribute with the values of private attributes set on the model instance.</p>
+<strong>pydantic_root_model</strong>: Whether the model is a [<code>RootModel</code>][pydantic.root_model.RootModel].
+<strong>pydantic_serializer</strong>: The <code>pydantic-core</code> <code>SchemaSerializer</code> used to dump instances of the model.
+<strong>pydantic_validator</strong>: The <code>pydantic-core</code> <code>SchemaValidator</code> used to validate instances of the model.</p>
+<p><strong>pydantic_extra</strong>: A dictionary containing extra values, if [<code>extra</code>][pydantic.config.ConfigDict.extra]
+is set to <code>&#x27;allow&#x27;</code>.
+<strong>pydantic_fields_set</strong>: The names of fields explicitly set during instantiation.
+<strong>pydantic_private</strong>: Values of private attributes set on the model instance.</p>
 <ul>
 <li>
 <p><strong>copy</strong>(self) -&gt; &#x27;Self&#x27;</p>
@@ -207,7 +207,7 @@ A copy of the model with included, excluded and updated fields as specified.</p>
 <li>
 <p>model_copy(self, *, update: &#x27;dict[str, Any] | None&#x27; = None, deep: &#x27;bool&#x27; = False) -&gt; &#x27;Self&#x27;</p>
 <ul>
-<li>Usage docs: <a href="https://docs.pydantic.dev/2.8/concepts/serialization/#model_copy" target="_blank" rel="noopener noreferrer">https://docs.pydantic.dev/2.8/concepts/serialization/#model_copy</a></li>
+<li>Usage docs: <a href="https://docs.pydantic.dev/2.9/concepts/serialization/#model_copy" target="_blank" rel="noopener noreferrer">https://docs.pydantic.dev/2.9/concepts/serialization/#model_copy</a></li>
 </ul>
 </li>
 </ul>
@@ -221,7 +221,7 @@ New model instance.</p>
 <ul>
 <li>model_dump(self, *, mode: &quot;Literal[&#x27;json&#x27;, &#x27;python&#x27;] | str&quot; = &#x27;python&#x27;, include: &#x27;IncEx&#x27; = None, exclude: &#x27;IncEx&#x27; = None, context: &#x27;Any | None&#x27; = None, by_alias: &#x27;bool&#x27; = False, exclude_unset: &#x27;bool&#x27; = False, exclude_defaults: &#x27;bool&#x27; = False, exclude_none: &#x27;bool&#x27; = False, round_trip: &#x27;bool&#x27; = False, warnings: &quot;bool | Literal[&#x27;none&#x27;, &#x27;warn&#x27;, &#x27;error&#x27;]&quot; = True, serialize_as_any: &#x27;bool&#x27; = False) -&gt; &#x27;dict[str, Any]&#x27;<!-- -->
 <ul>
-<li>Usage docs: <a href="https://docs.pydantic.dev/2.8/concepts/serialization/#modelmodel_dump" target="_blank" rel="noopener noreferrer">https://docs.pydantic.dev/2.8/concepts/serialization/#modelmodel_dump</a></li>
+<li>Usage docs: <a href="https://docs.pydantic.dev/2.9/concepts/serialization/#modelmodel_dump" target="_blank" rel="noopener noreferrer">https://docs.pydantic.dev/2.9/concepts/serialization/#modelmodel_dump</a></li>
 </ul>
 </li>
 </ul>
@@ -246,7 +246,7 @@ A dictionary representation of the model.</p>
 <ul>
 <li>model_dump_json(self, *, indent: &#x27;int | None&#x27; = None, include: &#x27;IncEx&#x27; = None, exclude: &#x27;IncEx&#x27; = None, context: &#x27;Any | None&#x27; = None, by_alias: &#x27;bool&#x27; = False, exclude_unset: &#x27;bool&#x27; = False, exclude_defaults: &#x27;bool&#x27; = False, exclude_none: &#x27;bool&#x27; = False, round_trip: &#x27;bool&#x27; = False, warnings: &quot;bool | Literal[&#x27;none&#x27;, &#x27;warn&#x27;, &#x27;error&#x27;]&quot; = True, serialize_as_any: &#x27;bool&#x27; = False) -&gt; &#x27;str&#x27;<!-- -->
 <ul>
-<li>Usage docs: <a href="https://docs.pydantic.dev/2.8/concepts/serialization/#modelmodel_dump_json" target="_blank" rel="noopener noreferrer">https://docs.pydantic.dev/2.8/concepts/serialization/#modelmodel_dump_json</a></li>
+<li>Usage docs: <a href="https://docs.pydantic.dev/2.9/concepts/serialization/#modelmodel_dump_json" target="_blank" rel="noopener noreferrer">https://docs.pydantic.dev/2.9/concepts/serialization/#modelmodel_dump_json</a></li>
 </ul>
 </li>
 </ul>
