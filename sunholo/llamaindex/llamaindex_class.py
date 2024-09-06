@@ -178,6 +178,8 @@ class LlamaIndexVertexCorpusManager:
     
     def query_corpus(self, query:str, corpus_disply_name:str):
         corpus = self.find_corpus_from_list(corpus_disply_name)
+
+        log.info(f"Querying {corpus.name=} with {query=}")
         
         response:RetrieveContextsResponse = rag.retrieval_query(
             rag_resources=[
