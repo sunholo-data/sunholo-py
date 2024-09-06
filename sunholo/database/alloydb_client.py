@@ -3,7 +3,7 @@ try:
     import pg8000
     import sqlalchemy
     from sqlalchemy.exc import DatabaseError, ProgrammingError
-    from langchain_google_alloydb_pg import AlloyDBEngine
+    from langchain_google_alloydb_pg import AlloyDBEngine, AlloyDBVectorStore
 except ImportError:
     AlloyDBEngine = None
     pass
@@ -12,6 +12,7 @@ from .database import get_vector_size
 from .uuid import generate_uuid_from_object_id
 from ..custom_logging import log
 from ..utils import ConfigManager
+from ..components import get_embeddings
 
 class AlloyDBClient:
     """
@@ -62,6 +63,7 @@ class AlloyDBClient:
             if not alloydb_config:
                 raise ValueError("Must specify vac.alloydb_config")
             self.config = alloydb_config
+            self.vector_name = self.config.vector_name
             project_id = alloydb_config["project_id"]
             region = alloydb_config["region"]
             cluster_name = alloydb_config["cluster"]
@@ -87,6 +89,11 @@ class AlloyDBClient:
             log.info("Build with Langchain engine - will use default service account for auth")
             self.engine = self._create_engine()
             self.engine_type = "langchain"
+        
+        if self.engine_type == "langchain":
+            self.vectorstore = self.get_vectorstore()
+        else:        
+            self.vectorstore = None
 
     def _build_instance_uri(self, project_id, region, cluster_name, instance_name):
         return f"projects/{project_id}/locations/{region}/clusters/{cluster_name}/instances/{instance_name}"
@@ -134,6 +141,52 @@ class AlloyDBClient:
 
         return engine
     
+    def _get_embedder(self, vector_name):
+        return get_embeddings(vector_name)
+    
+    def get_vectorstore(self):
+        if self.engine_type != "langchain":
+            raise ValueError("Not available using pg8000 engine")
+        
+        if self.vector_name is None:
+            raise ValueError("No vectorname found - init with ConfigManager?")
+        
+        vector_size = get_vector_size(self.vector_name)
+        table_name = f"{self.vector_name}_vectorstore_{vector_size}"
+
+        log.info(f"Initialised AlloyDBClient with AlloyDBVectorStore: {table_name}")
+        self.vectorstore = AlloyDBVectorStore.create_sync(
+                engine=self.engine,
+                table_name=table_name,
+                embedding_service=self._get_embedder(self.vector_name),
+                metadata_columns=["source", "docstore_doc_id"]
+                #metadata_columns=["source", "eventTime"]
+            )
+        
+        return self.vectorstore
+    
+    def _similarity_search(self, query, source_filter:str="", free_filter:str=None):
+
+        if free_filter is None:
+            source_filter_cmd = f"source %LIKE% {source_filter}" if source_filter else None
+        else:
+            source_filter_cmd = free_filter
+
+        log.info(f"Similarity search for {query} and {source_filter_cmd}")       
+
+        return query, source_filter_cmd
+
+    def similarity_search(self, query, source_filter:str="", free_filter:str=None, k:int=5):
+
+        query, source_filter_cmd = self._similarity_search(query, source_filter, free_filter)     
+
+        return self.vectorstore.similarity_search(query, filter=source_filter_cmd, k=k)
+
+    async def asimilarity_search(self, query, source_filter:str="", free_filter:str=None, k:int=5):
+        query, source_filter_cmd = self._similarity_search(query, source_filter, free_filter)     
+
+        return await self.vectorstore.asimilarity_search(query, filter=source_filter_cmd, k=k)
+
     def execute_sql(self, sql_statement):
         if self.engine_type == "pg8000":
             return self._execute_sql_pg8000(sql_statement)
