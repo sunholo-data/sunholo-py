@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.2.1">
 <title data-rh="true">alloydb_client.py | Sunholo Dev Portal</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://dev.sunholo.com/docs/sunholo/database/alloydb_client"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="alloydb_client.py | Sunholo Dev Portal"><meta data-rh="true" name="description" content="Source: sunholo/database/alloydbclient.py"><meta data-rh="true" property="og:description" content="Source: sunholo/database/alloydbclient.py"><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://dev.sunholo.com/docs/sunholo/database/alloydb_client"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/database/alloydb_client" hreflang="en"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/database/alloydb_client" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.f6c7f565.css">
-<script src="/assets/js/runtime~main.9be5058d.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.67fecfd1.js" defer="defer"></script>
 <script src="/assets/js/main.58d52168.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -92,6 +92,12 @@
 </ul>
 </li>
 <li>
+<p>_get_embedder(self, vector_name)</p>
+<ul>
+<li>No docstring available.</li>
+</ul>
+</li>
+<li>
 <p>_get_sources_from_docstore(self, sources, vector_name, search_type=&#x27;OR&#x27;)</p>
 <ul>
 <li>Helper function to build the SQL query for fetching sources.</li>
@@ -101,6 +107,18 @@
 <p>_list_sources_from_docstore(self, sources, vector_name, search_type=&#x27;OR&#x27;)</p>
 <ul>
 <li>Helper function to build the SQL query for listing sources.</li>
+</ul>
+</li>
+<li>
+<p>_similarity_search(self, query, source_filter: str = &#x27;&#x27;, free_filter: str = None)</p>
+<ul>
+<li>No docstring available.</li>
+</ul>
+</li>
+<li>
+<p>asimilarity_search(self, query, source_filter: str = &#x27;&#x27;, free_filter: str = None, k: int = 5)</p>
+<ul>
+<li>No docstring available.</li>
 </ul>
 </li>
 <li>
@@ -182,6 +200,12 @@
 </ul>
 </li>
 <li>
+<p>get_vectorstore(self)</p>
+<ul>
+<li>No docstring available.</li>
+</ul>
+</li>
+<li>
 <p>grant_schema_permissions(self, schema_name, users)</p>
 <ul>
 <li>No docstring available.</li>
@@ -189,6 +213,12 @@
 </li>
 <li>
 <p>grant_table_permissions(self, table_name, users)</p>
+<ul>
+<li>No docstring available.</li>
+</ul>
+</li>
+<li>
+<p>similarity_search(self, query, source_filter: str = &#x27;&#x27;, free_filter: str = None, k: int = 5)</p>
 <ul>
 <li>No docstring available.</li>
 </ul>
