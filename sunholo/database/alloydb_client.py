@@ -63,7 +63,7 @@ class AlloyDBClient:
             if not alloydb_config:
                 raise ValueError("Must specify vac.alloydb_config")
             self.config = alloydb_config
-            self.vector_name = self.config.vector_name
+            self.vector_name = self.config.get("vac")
             project_id = alloydb_config["project_id"]
             region = alloydb_config["region"]
             cluster_name = alloydb_config["cluster"]
@@ -141,8 +141,8 @@ class AlloyDBClient:
 
         return engine
     
-    def _get_embedder(self, vector_name):
-        return get_embeddings(vector_name)
+    def _get_embedder(self):
+        return get_embeddings(self.vector_name)
     
     def get_vectorstore(self):
         if self.engine_type != "langchain":
@@ -158,7 +158,7 @@ class AlloyDBClient:
         self.vectorstore = AlloyDBVectorStore.create_sync(
                 engine=self.engine,
                 table_name=table_name,
-                embedding_service=self._get_embedder(self.vector_name),
+                embedding_service=self._get_embedder(),
                 metadata_columns=["source", "docstore_doc_id"]
                 #metadata_columns=["source", "eventTime"]
             )
@@ -176,13 +176,13 @@ class AlloyDBClient:
 
         return query, source_filter_cmd
 
-    def similarity_search(self, query, source_filter:str="", free_filter:str=None, k:int=5):
+    def similarity_search(self, query:str, source_filter:str="", free_filter:str=None, k:int=5):
 
         query, source_filter_cmd = self._similarity_search(query, source_filter, free_filter)     
 
         return self.vectorstore.similarity_search(query, filter=source_filter_cmd, k=k)
 
-    async def asimilarity_search(self, query, source_filter:str="", free_filter:str=None, k:int=5):
+    async def asimilarity_search(self, query:str, source_filter:str="", free_filter:str=None, k:int=5):
         query, source_filter_cmd = self._similarity_search(query, source_filter, free_filter)     
 
         return await self.vectorstore.asimilarity_search(query, filter=source_filter_cmd, k=k)
