@@ -89,11 +89,8 @@ class AlloyDBClient:
             log.info("Build with Langchain engine - will use default service account for auth")
             self.engine = self._create_engine()
             self.engine_type = "langchain"
-        
-        if self.engine_type == "langchain":
-            self.vectorstore = self.get_vectorstore()
-        else:        
-            self.vectorstore = None
+               
+        self.vectorstore = None
 
     def _build_instance_uri(self, project_id, region, cluster_name, instance_name):
         return f"projects/{project_id}/locations/{region}/clusters/{cluster_name}/instances/{instance_name}"
