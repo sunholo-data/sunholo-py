@@ -144,10 +144,13 @@ class AlloyDBClient:
     def _get_embedder(self):
         return get_embeddings(self.vector_name)
     
-    def get_vectorstore(self):
+    def get_vectorstore(self, vector_name:str=None):
         if self.engine_type != "langchain":
             raise ValueError("Not available using pg8000 engine")
         
+        if vector_name:
+            self.vector_name = vector_name
+
         if self.vector_name is None:
             raise ValueError("No vectorname found - init with ConfigManager?")
         
@@ -165,7 +168,9 @@ class AlloyDBClient:
         
         return self.vectorstore
     
-    def _similarity_search(self, query, source_filter:str="", free_filter:str=None):
+    def _similarity_search(self, query, source_filter:str="", free_filter:str=None, vector_name:str=None):
+
+        self.get_vectorstore(vector_name) 
 
         if free_filter is None:
             source_filter_cmd = f"source %LIKE% {source_filter}" if source_filter else None
@@ -176,14 +181,21 @@ class AlloyDBClient:
 
         return query, source_filter_cmd
 
-    def similarity_search(self, query:str, source_filter:str="", free_filter:str=None, k:int=5):
+    def similarity_search(self, query:str, source_filter:str="", free_filter:str=None, k:int=5, vector_name:str=None):
 
-        query, source_filter_cmd = self._similarity_search(query, source_filter, free_filter)     
+        query, source_filter_cmd = self._similarity_search(query, 
+                                                           source_filter=source_filter, 
+                                                           free_filter=free_filter, 
+                                                           vector_name=vector_name)    
 
         return self.vectorstore.similarity_search(query, filter=source_filter_cmd, k=k)
 
-    async def asimilarity_search(self, query:str, source_filter:str="", free_filter:str=None, k:int=5):
-        query, source_filter_cmd = self._similarity_search(query, source_filter, free_filter)     
+    async def asimilarity_search(self, query:str, source_filter:str="", free_filter:str=None, k:int=5, vector_name:str=None):
+
+        query, source_filter_cmd = self._similarity_search(query, 
+                                                           source_filter=source_filter, 
+                                                           free_filter=free_filter, 
+                                                           vector_name=vector_name)     
 
         return await self.vectorstore.asimilarity_search(query, filter=source_filter_cmd, k=k)
 
