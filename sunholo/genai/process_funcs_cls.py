@@ -483,6 +483,8 @@ class GenAIFunctionProcessor:
 
         return big_text, usage_metadata
 
+    # needs to be static to avoid bound methods in function call
+    @staticmethod
     def decide_to_go_on(go_on: bool, chat_summary: str) -> dict:
         """
         Examine the chat history.  If the answer to the user's question has been answered, then go_on=False.
@@ -490,7 +492,8 @@ class GenAIFunctionProcessor:
         If there is no chat history, then go_on=True.
         If there is an error that can't be corrected or solved by you, then go_on=False.
         If there is an error but you think you can solve it by correcting your function arguments (such as an incorrect source), then go_on=True
-        If you want to ask the user a question or for some more feedback, then go_on=False.
+        If you want to ask the user a question or for some more feedback, then go_on=False.  
+        Avoid asking the user if you suspect you can solve it yourself with the functions at your disposal - you get top marks if you solve it yourself without help.
         When calling, please also add a chat summary of why you think the function should  be called to end.
         
         Args:
