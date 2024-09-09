@@ -350,7 +350,7 @@ class GenAIFunctionProcessor:
         while guardrail < guardrail_max:
 
             callback.on_llm_new_token(
-                token=f"\n----Loop [{guardrail}] Start------\nFunctions:\n{self.funcs.keys()}\n"
+                token=f"\n----Loop [{guardrail}] Start------\nFunctions: {list(self.funcs.keys())}\n"
             )
 
             content_parse = ""
@@ -444,9 +444,9 @@ class GenAIFunctionProcessor:
                                 text = fn_result_json.get('stdout').encode('utf-8').decode('unicode_escape')
                                 token += text
                             if not fn_result_json.get('stdout') and fn_result_json.get('stderr'):
-                                token += f" - result:\n{fn_result}\n"
+                                token += f"{fn_result}\n"
                         else:
-                            token += f" - result:\n{fn_result}\n"
+                            token += f"{fn_result}\n"
                     
                     big_text += token
                     this_text += token
