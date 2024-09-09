@@ -342,16 +342,23 @@ class GenAIFunctionProcessor:
         usage_metadata = {
             "prompt_token_count": 0,
             "candidates_token_count": 0,
-            "total_token_count": 0,
+            "total_token_count": 0
         }
+        functions_called =[]
+        function_results = []
 
         while guardrail < guardrail_max:
 
             callback.on_llm_new_token(
-                token=f"\n----Loop [{guardrail}] Start------\n"
+                token=f"\n----Loop [{guardrail}] Start------\nFunctions:\n{self.funcs.keys()}\n"
             )
 
-            log.info(f"# Loop [{guardrail}] - {content=}")
+            content_parse = ""
+            for i, chunk in enumerate(content):
+                content_parse += f"\n - {i}) {chunk}"
+                content_parse += f"\n== End input content for loop [{guardrail}] =="
+
+            log.info(f"== Start input content for loop [{guardrail}]\n ## Content: {content_parse}")
             this_text = ""  # reset for this loop
             response = []
 
@@ -392,7 +399,7 @@ class GenAIFunctionProcessor:
                         big_text += token
                         this_text += token
                     else:
-                        log.info(f"skipping {chunk}")
+                        log.info("skipping chunk with no text")
                     
                 except ValueError as err:
                     callback.on_llm_new_token(token=f"{str(err)} for {chunk=}")
@@ -407,7 +414,11 @@ class GenAIFunctionProcessor:
                     fn = executed_response.function_response.name
                     fn_args = executed_response.function_response.response.get("args")
                     fn_result = executed_response.function_response.response["result"]
-                    log.info(f"{fn=}({fn_args}) {fn_result}]")
+                    fn_log = f"{fn}({fn_args})"
+                    log.info(fn_log)
+                    functions_called.append(fn_log)
+                    function_results.append(fn_result)
+                    callback.on_llm_new_token(token=f"\n--- function calling: {fn_log} ...\n")
 
                     try:
                         fn_result_json = json.loads(fn_result)
@@ -424,7 +435,7 @@ class GenAIFunctionProcessor:
                     if fn == "decide_to_go_on":
                         token = f"\n\n{'STOPPING' if not fn_result.get('go_on') else 'CONTINUE'}: {fn_result.get('chat_summary')}"
                     else:
-                        token = f"--- function call: {fn}({fn_args}) ---"
+                        token = f"--- function call result: {fn_log} ---"
                         if fn_result_json:
                             if fn_result_json.get('stdout'):
                                 text = fn_result_json.get('stdout').encode('utf-8').decode('unicode_escape')
@@ -466,6 +477,9 @@ class GenAIFunctionProcessor:
             if guardrail > guardrail_max:
                 log.warning("Guardrail kicked in, more than 10 loops")
                 break
+        
+        usage_metadata["functions_called"] = functions_called
+        usage_metadata["function_results"] = function_results
 
         return big_text, usage_metadata
 
