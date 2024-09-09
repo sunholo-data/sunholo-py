@@ -60,6 +60,11 @@ class GenAIFunctionProcessor:
         
         self.config = config
         self.funcs = self.construct_tools()
+
+        # Add default 'decide_to_go_on' if not provided in construct_tools
+        if 'decide_to_go_on' not in self.funcs:
+            self.funcs['decide_to_go_on'] = self.decide_to_go_on
+
         self.model_name = config.vacConfig("model") if config.vacConfig("llm") == "vertex" else "gemini-1.5-flash"
         self.last_api_requests_and_responses = []
         self._validate_functions()
@@ -318,3 +323,167 @@ class GenAIFunctionProcessor:
         except Exception as err:
             log.error(f"Error initializing model: {str(err)}")
             return None
+
+    def run_agent_loop(self, chat, content, callback, guardrail_max=10):
+        """
+        Runs the agent loop, sending messages to the orchestrator, processing responses, and executing functions.
+
+        Args:
+            chat: The chat object for interaction with the orchestrator.
+            content: The initial content to send to the agent.
+            callback: The callback object for handling intermediate responses.
+            guardrail_max (int): The maximum number of iterations for the loop.
+
+        Returns:
+            tuple: (big_text, usage_metadata) from the loop execution.
+        """
+        guardrail = 0
+        big_text = ""
+        usage_metadata = {
+            "prompt_token_count": 0,
+            "candidates_token_count": 0,
+            "total_token_count": 0,
+        }
+
+        while guardrail < guardrail_max:
+
+            callback.on_llm_new_token(
+                token=f"\n----Loop [{guardrail}] Start------\n"
+            )
+
+            log.info(f"# Loop [{guardrail}] - {content=}")
+            this_text = ""  # reset for this loop
+            response = []
+
+            try:
+                callback.on_llm_new_token(token="\n= Calling Agent\n")
+                response = chat.send_message(content, stream=True)
+                
+            except Exception as e:
+                msg = f"Error sending {content} to model: {str(e)}"
+                log.info(msg)
+                callback.on_llm_new_token(token=msg)
+                break
+
+            loop_metadata = response.usage_metadata
+            if loop_metadata:
+                usage_metadata = {
+                    "prompt_token_count": usage_metadata["prompt_token_count"] + (loop_metadata.prompt_token_count or 0),
+                    "candidates_token_count": usage_metadata["candidates_token_count"] + (loop_metadata.candidates_token_count or 0),
+                    "total_token_count": usage_metadata["total_token_count"] + (loop_metadata.total_token_count or 0),
+                }
+                callback.on_llm_new_token(token=(
+                    "\n-- Agent response\n" 
+                    f"prompt_token_count: [{loop_metadata.prompt_token_count}]/[{usage_metadata['prompt_token_count']}] "
+                    f"candidates_token_count: [{loop_metadata.candidates_token_count}]/[{usage_metadata['candidates_token_count']}] "
+                    f"total_token_count: [{loop_metadata.total_token_count}]/[{usage_metadata['total_token_count']}] \n"
+                ))
+            loop_metadata = None
+
+            for chunk in response:
+                if not chunk:
+                    continue
+
+                log.debug(f"[{guardrail}] {chunk=}")
+                try:
+                    if hasattr(chunk, 'text') and isinstance(chunk.text, str):
+                        token = chunk.text
+                        callback.on_llm_new_token(token=token)
+                        big_text += token
+                        this_text += token
+                    else:
+                        log.info(f"skipping {chunk}")
+                    
+                except ValueError as err:
+                    callback.on_llm_new_token(token=f"{str(err)} for {chunk=}")
+            
+            executed_responses = self.process_funcs(response) 
+            log.info(f"[{guardrail}] {executed_responses=}")
+
+            if executed_responses:  
+                callback.on_llm_new_token(token="\nAgent function execution:\n")
+                for executed_response in executed_responses:
+                    token = ""
+                    fn = executed_response.function_response.name
+                    fn_args = executed_response.function_response.response.get("args")
+                    fn_result = executed_response.function_response.response["result"]
+                    log.info(f"{fn=}({fn_args}) {fn_result}]")
+
+                    try:
+                        fn_result_json = json.loads(fn_result)
+                        if not isinstance(fn_result_json, dict):
+                            log.warning(f"{fn_result} was loaded but is not a dictionary")
+                            fn_result_json = None
+                    except json.JSONDecodeError:
+                        log.warning(f"{fn_result} was not JSON decoded")
+                        fn_result_json = None
+                    except Exception as err:
+                        log.warning(f"{fn_result} was not json decoded due to unknown exception: {str(err)}")
+                        fn_result_json = None
+
+                    if fn == "decide_to_go_on":
+                        token = f"\n\n{'STOPPING' if not fn_result.get('go_on') else 'CONTINUE'}: {fn_result.get('chat_summary')}"
+                    else:
+                        token = f"--- function call: {fn}({fn_args}) ---"
+                        if fn_result_json:
+                            if fn_result_json.get('stdout'):
+                                text = fn_result_json.get('stdout').encode('utf-8').decode('unicode_escape')
+                                token += text
+                            if fn_result_json.get('stderr'):
+                                text = fn_result_json.get('stdout').encode('utf-8').decode('unicode_escape')
+                                token += text
+                            if not fn_result_json.get('stdout') and fn_result_json.get('stderr'):
+                                token += f" - result:\n{fn_result}\n"
+                        else:
+                            token += f" - result:\n{fn_result}\n"
+                    
+                    big_text += token
+                    this_text += token
+                    callback.on_llm_new_token(token=token)
+            else:
+                token = "\nNo function executions were found\n"
+                callback.on_llm_new_token(token=token)
+                big_text += token
+                this_text += token
+
+            if this_text:
+                content.append(f"Agent: {this_text}")    
+                log.info(f"[{guardrail}] Updated content:\n{this_text}")
+            else:
+                log.warning(f"[{guardrail}] No content created this loop")
+                content.append(f"Agent: No response was found for loop [{guardrail}]")
+
+            callback.on_llm_new_token(
+                token=f"\n----Loop [{guardrail}] End------\n{usage_metadata}\n----------------------"
+            )
+
+            go_on_check = self.check_function_result("decide_to_go_on", {"go_on": False})
+            if go_on_check:
+                log.info("Breaking agent loop")
+                break
+            
+            guardrail += 1
+            if guardrail > guardrail_max:
+                log.warning("Guardrail kicked in, more than 10 loops")
+                break
+
+        return big_text, usage_metadata
+
+    def decide_to_go_on(go_on: bool, chat_summary: str) -> dict:
+        """
+        Examine the chat history.  If the answer to the user's question has been answered, then go_on=False.
+        If the chat history indicates the answer is still being looked for, then go_on=True.
+        If there is no chat history, then go_on=True.
+        If there is an error that can't be corrected or solved by you, then go_on=False.
+        If there is an error but you think you can solve it by correcting your function arguments (such as an incorrect source), then go_on=True
+        If you want to ask the user a question or for some more feedback, then go_on=False.
+        When calling, please also add a chat summary of why you think the function should  be called to end.
+        
+        Args:
+            go_on: boolean Whether to continue searching for an answer
+            chat_summary: string A brief explanation on why go_on is TRUE or FALSE
+        
+        Returns:
+            boolean: True to carry on, False to continue
+        """
+        return {"go_on": go_on, "chat_summary": chat_summary}
