@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.2.1">
 <title data-rh="true">qna_routes.py | Sunholo Dev Portal</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://dev.sunholo.com/docs/sunholo/agents/fastapi/qna_routes"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="qna_routes.py | Sunholo Dev Portal"><meta data-rh="true" name="description" content="Source: sunholo/agents/fastapi/qnaroutes.py"><meta data-rh="true" property="og:description" content="Source: sunholo/agents/fastapi/qnaroutes.py"><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://dev.sunholo.com/docs/sunholo/agents/fastapi/qna_routes"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/agents/fastapi/qna_routes" hreflang="en"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/agents/fastapi/qna_routes" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.f6c7f565.css">
-<script src="/assets/js/runtime~main.f11a4486.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.12545897.js" defer="defer"></script>
 <script src="/assets/js/main.58d52168.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -193,13 +193,13 @@ deep: If True, the values of fields that are Pydantic models will be deep-copied
 A copy of the model with included, excluded and updated fields as specified.</p>
 <ul>
 <li>
-<p>dict(self, *, include: &#x27;IncEx&#x27; = None, exclude: &#x27;IncEx&#x27; = None, by_alias: &#x27;bool&#x27; = False, exclude_unset: &#x27;bool&#x27; = False, exclude_defaults: &#x27;bool&#x27; = False, exclude_none: &#x27;bool&#x27; = False) -&gt; &#x27;Dict[str, Any]&#x27;</p>
+<p>dict(self, *, include: &#x27;IncEx | None&#x27; = None, exclude: &#x27;IncEx | None&#x27; = None, by_alias: &#x27;bool&#x27; = False, exclude_unset: &#x27;bool&#x27; = False, exclude_defaults: &#x27;bool&#x27; = False, exclude_none: &#x27;bool&#x27; = False) -&gt; &#x27;Dict[str, Any]&#x27;</p>
 <ul>
 <li>No docstring available.</li>
 </ul>
 </li>
 <li>
-<p>json(self, *, include: &#x27;IncEx&#x27; = None, exclude: &#x27;IncEx&#x27; = None, by_alias: &#x27;bool&#x27; = False, exclude_unset: &#x27;bool&#x27; = False, exclude_defaults: &#x27;bool&#x27; = False, exclude_none: &#x27;bool&#x27; = False, encoder: &#x27;Callable[[Any], Any] | None&#x27; = PydanticUndefined, models_as_dict: &#x27;bool&#x27; = PydanticUndefined, **dumps_kwargs: &#x27;Any&#x27;) -&gt; &#x27;str&#x27;</p>
+<p>json(self, *, include: &#x27;IncEx | None&#x27; = None, exclude: &#x27;IncEx | None&#x27; = None, by_alias: &#x27;bool&#x27; = False, exclude_unset: &#x27;bool&#x27; = False, exclude_defaults: &#x27;bool&#x27; = False, exclude_none: &#x27;bool&#x27; = False, encoder: &#x27;Callable[[Any], Any] | None&#x27; = PydanticUndefined, models_as_dict: &#x27;bool&#x27; = PydanticUndefined, **dumps_kwargs: &#x27;Any&#x27;) -&gt; &#x27;str&#x27;</p>
 <ul>
 <li>No docstring available.</li>
 </ul>
@@ -219,7 +219,7 @@ deep: Set to <code>True</code> to make a deep copy of the model.</p>
 <p>Returns:
 New model instance.</p>
 <ul>
-<li>model_dump(self, *, mode: &quot;Literal[&#x27;json&#x27;, &#x27;python&#x27;] | str&quot; = &#x27;python&#x27;, include: &#x27;IncEx&#x27; = None, exclude: &#x27;IncEx&#x27; = None, context: &#x27;Any | None&#x27; = None, by_alias: &#x27;bool&#x27; = False, exclude_unset: &#x27;bool&#x27; = False, exclude_defaults: &#x27;bool&#x27; = False, exclude_none: &#x27;bool&#x27; = False, round_trip: &#x27;bool&#x27; = False, warnings: &quot;bool | Literal[&#x27;none&#x27;, &#x27;warn&#x27;, &#x27;error&#x27;]&quot; = True, serialize_as_any: &#x27;bool&#x27; = False) -&gt; &#x27;dict[str, Any]&#x27;<!-- -->
+<li>model_dump(self, *, mode: &quot;Literal[&#x27;json&#x27;, &#x27;python&#x27;] | str&quot; = &#x27;python&#x27;, include: &#x27;IncEx | None&#x27; = None, exclude: &#x27;IncEx | None&#x27; = None, context: &#x27;Any | None&#x27; = None, by_alias: &#x27;bool&#x27; = False, exclude_unset: &#x27;bool&#x27; = False, exclude_defaults: &#x27;bool&#x27; = False, exclude_none: &#x27;bool&#x27; = False, round_trip: &#x27;bool&#x27; = False, warnings: &quot;bool | Literal[&#x27;none&#x27;, &#x27;warn&#x27;, &#x27;error&#x27;]&quot; = True, serialize_as_any: &#x27;bool&#x27; = False) -&gt; &#x27;dict[str, Any]&#x27;<!-- -->
 <ul>
 <li>Usage docs: <a href="https://docs.pydantic.dev/2.9/concepts/serialization/#modelmodel_dump" target="_blank" rel="noopener noreferrer">https://docs.pydantic.dev/2.9/concepts/serialization/#modelmodel_dump</a></li>
 </ul>
@@ -244,7 +244,7 @@ serialize_as_any: Whether to serialize fields with duck-typing serialization beh
 <p>Returns:
 A dictionary representation of the model.</p>
 <ul>
-<li>model_dump_json(self, *, indent: &#x27;int | None&#x27; = None, include: &#x27;IncEx&#x27; = None, exclude: &#x27;IncEx&#x27; = None, context: &#x27;Any | None&#x27; = None, by_alias: &#x27;bool&#x27; = False, exclude_unset: &#x27;bool&#x27; = False, exclude_defaults: &#x27;bool&#x27; = False, exclude_none: &#x27;bool&#x27; = False, round_trip: &#x27;bool&#x27; = False, warnings: &quot;bool | Literal[&#x27;none&#x27;, &#x27;warn&#x27;, &#x27;error&#x27;]&quot; = True, serialize_as_any: &#x27;bool&#x27; = False) -&gt; &#x27;str&#x27;<!-- -->
+<li>model_dump_json(self, *, indent: &#x27;int | None&#x27; = None, include: &#x27;IncEx | None&#x27; = None, exclude: &#x27;IncEx | None&#x27; = None, context: &#x27;Any | None&#x27; = None, by_alias: &#x27;bool&#x27; = False, exclude_unset: &#x27;bool&#x27; = False, exclude_defaults: &#x27;bool&#x27; = False, exclude_none: &#x27;bool&#x27; = False, round_trip: &#x27;bool&#x27; = False, warnings: &quot;bool | Literal[&#x27;none&#x27;, &#x27;warn&#x27;, &#x27;error&#x27;]&quot; = True, serialize_as_any: &#x27;bool&#x27; = False) -&gt; &#x27;str&#x27;<!-- -->
 <ul>
 <li>Usage docs: <a href="https://docs.pydantic.dev/2.9/concepts/serialization/#modelmodel_dump_json" target="_blank" rel="noopener noreferrer">https://docs.pydantic.dev/2.9/concepts/serialization/#modelmodel_dump_json</a></li>
 </ul>
