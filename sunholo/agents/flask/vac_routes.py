@@ -181,7 +181,7 @@ if __name__ == "__main__":
                 metadata=vac_config.configs_by_kind,
                 input = all_input,
                 completion_start_time=str(int(datetime.datetime.now().timestamp())),
-                model=vac_config.get("model") or vac_config.get("llm")
+                model=vac_config.vacConfig("model") or vac_config.vacConfig("llm")
             )
 
         def generate_response_content():
