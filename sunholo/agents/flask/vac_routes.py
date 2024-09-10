@@ -9,7 +9,7 @@ from ...qna.parsers import parse_output
 from ...streaming import start_streaming_chat
 from ...archive import archive_qa
 from ...custom_logging import log
-from ...utils.config import load_config
+from ...utils import ConfigManager
 from ...utils.version import sunholo_version
 import os
 from ...gcs.add_file import add_file_to_gcs, handle_base64_image
@@ -178,7 +178,7 @@ if __name__ == "__main__":
         if span:
             generation = span.generation(
                 name="start_streaming_chat",
-                metadata=vac_config,
+                metadata=vac_config.configs_by_kind,
                 input = all_input,
                 completion_start_time=str(int(datetime.datetime.now().timestamp())),
                 model=vac_config.get("model") or vac_config.get("llm")
@@ -264,7 +264,7 @@ if __name__ == "__main__":
         trace = prep["trace"]
         span = prep["span"]
         command_response = prep["command_response"]
-        vac_config = prep["vac_config"]
+        vac_config: ConfigManager = prep["vac_config"]
         all_input = prep["all_input"]
 
         if command_response:
@@ -274,9 +274,9 @@ if __name__ == "__main__":
             if span:
                 generation = span.generation(
                     name="vac_interpreter",
-                    metadata=vac_config,
+                    metadata=vac_config.configs_by_kind,
                     input = all_input,
-                    model=vac_config.get("model") or vac_config.get("llm")
+                    model=vac_config.vacConfig("model") or vac_config.vacConfig("llm")
                 )
             bot_output = observed_vac_interpreter(
                 question=all_input["user_input"],
@@ -534,13 +534,14 @@ if __name__ == "__main__":
         trace = self.create_langfuse_trace(request, vector_name, trace_id)
         log.info(f"Using existing langfuse trace: {trace_id}")
         
-        config, _ = load_config("config/llm_config.yaml")
-        vac_configs = config.get("vac")
-        if vac_configs:
-            vac_config = vac_configs[vector_name]
+        #config, _ = load_config("config/llm_config.yaml")
+        try:
+            vac_config = ConfigManager(vector_name)
+        except Exception as e:
+            raise ValueError(f"Unable to find vac_config for {vector_name} - {str(e)}")
 
         if trace:
-            trace.update(input=data, metadata=vac_config)
+            trace.update(input=data, metadata=vac_config.configs_by_kind)
 
         user_input = data.pop('user_input').strip()
         stream_wait_time = data.pop('stream_wait_time', 7)
@@ -563,7 +564,7 @@ if __name__ == "__main__":
         if trace:
             span = trace.span(
                 name="VAC",
-                metadata=vac_config,
+                metadata=vac_config.configs_by_kind,
                 input = all_input
             )
         command_response = handle_special_commands(user_input, vector_name, paired_messages)

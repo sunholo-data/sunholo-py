@@ -7,6 +7,7 @@ from .safety import genai_safety
 from typing import TYPE_CHECKING, Union
 
 import json
+import proto 
 
 try:
     import google.generativeai as genai
@@ -75,6 +76,8 @@ class GenAIFunctionProcessor:
 
         This method should be overridden in subclasses to provide the specific
         function implementations required for the application.
+        
+        Note: All functions need arguments to avoid errors.
 
         Returns:
             dict: A dictionary where keys are function names and values are function objects
@@ -160,17 +163,24 @@ class GenAIFunctionProcessor:
             result = part[2]
 
             if func_name == function_name:
-                if isinstance(result, list) and target_value in result:
-                    log.info(f"Target value '{target_value}' found in the result of function '{function_name}'.")
-                    return True
-                elif isinstance(result, dict) and isinstance(target_value, dict):
-                    for key, expected_value in target_value.items():
-                        if key in result:
-                            if result[key] == expected_value:
-                                log.info(f"The key '{key}' has the same value in both dictionaries.")
-                                return True
+                # Try to decode the result if it's a string
+                if isinstance(result, str):
+                    try:
+                        result = json.loads(result)
+                    except json.JSONDecodeError:
+                        log.warning(f"Failed to decode JSON result for function {function_name}: {result}")
+                        continue  # Skip this result if decoding fails
+
+                normalized_target_value = {k: v for k, v in target_value.items()} if isinstance(target_value, dict) else target_value
+                log.info(f"{normalized_target_value=} {result=}") 
+
+                if isinstance(result, dict) and isinstance(normalized_target_value, dict):
+                    for key, expected_value in normalized_target_value.items():
+                        if key in result and result[key] == expected_value:
+                            log.info(f"The key '{key}' has the expected value in both dictionaries.")
+                            return True
                     return False
-                elif result == target_value:
+                elif result == normalized_target_value:
                     log.info(f"Target value '{target_value}' found in the result of function '{function_name}'.")
                     return True
 
@@ -227,16 +237,30 @@ class GenAIFunctionProcessor:
             if fn := part.function_call:
                 # Extract parameters for the function call
                 function_name = fn.name
-                params_obj = {key: val for key, val in fn.args.items()}
+                
+                # Handle empty parameters
+                if fn.args is None or not fn.args:
+                    params_obj = {}
+                else:
+                    params_obj = {key: val for key, val in fn.args.items()}
+
                 params = ', '.join(f'{key}={val}' for key, val in params_obj.items())
                 log.info(f"Executing {function_name} with params {params}")
 
                 # Check if the function is in our dictionary of available functions
                 if function_name in self.funcs:
+                    fn_exec = self.funcs[function_name]
                     try:
-                        # Execute the function with the provided parameters
-                        result = self.funcs[function_name](**params_obj)
-                        log.info(f"Got result from {function_name}: {result}")
+                        if not isinstance(fn_exec, genai.protos.FunctionDeclaration):
+                            # Execute the function with the provided parameters
+                            result = fn_exec(**params_obj)
+                            log.info(f"Got result from {function_name}: {result}")
+                        else:
+                            fn_result = type(fn).to_dict(fn)
+                            result = fn_result.get("result")
+                            if not result:
+                                log.warning("No result found for {function_name}")
+                            log.info(f"No execution of {function_name} as a FunctionDeclatation object, just returning args {result}")
                     except Exception as err:
                         error_message = f"Error in {function_name}: {str(err)}"
                         traceback_details = traceback.format_exc()
@@ -356,7 +380,7 @@ class GenAIFunctionProcessor:
             content_parse = ""
             for i, chunk in enumerate(content):
                 content_parse += f"\n - {i}) {chunk}"
-                content_parse += f"\n== End input content for loop [{guardrail}] =="
+            content_parse += f"\n== End input content for loop [{guardrail}] =="
 
             log.info(f"== Start input content for loop [{guardrail}]\n ## Content: {content_parse}")
             this_text = ""  # reset for this loop
@@ -367,7 +391,7 @@ class GenAIFunctionProcessor:
                 response = chat.send_message(content, stream=True)
                 
             except Exception as e:
-                msg = f"Error sending {content} to model: {str(e)}"
+                msg = f"Error sending {content} to model: {str(e)} - {traceback.format_exc()}"
                 log.info(msg)
                 callback.on_llm_new_token(token=msg)
                 break
@@ -421,6 +445,9 @@ class GenAIFunctionProcessor:
                     callback.on_llm_new_token(token=f"\n--- function calling: {fn_log} ...\n")
 
                     try:
+                            # Convert MapComposite to a standard Python dictionary
+                        if isinstance(fn_result, proto.marshal.collections.maps.MapComposite):
+                            fn_result = dict(fn_result)
                         fn_result_json = json.loads(fn_result)
                         if not isinstance(fn_result_json, dict):
                             log.warning(f"{fn_result} was loaded but is not a dictionary")
@@ -433,9 +460,15 @@ class GenAIFunctionProcessor:
                         fn_result_json = None
 
                     if fn == "decide_to_go_on":
-                        token = f"\n\n{'STOPPING' if not fn_result.get('go_on') else 'CONTINUE'}: {fn_result.get('chat_summary')}"
+                        log.info(f"{fn_result_json} {fn_result=} {type(fn_result)}")
+                        go_on_args = fn_result_json
+                        if go_on_args:
+                            token = f"\n\n{'STOPPING' if not go_on_args.get('go_on') else 'CONTINUE'}: {go_on_args.get('chat_summary')}"
+                        else:
+                            log.warning(f"{fn_result_json} did not work for decide_to_go_on")
+                            token = f"Error calling decide_to_go_on with {fn_result_json}\n"
                     else:
-                        token = f"--- function call result: {fn_log} ---"
+                        token = f"--- {fn} call result: \n"
                         if fn_result_json:
                             if fn_result_json.get('stdout'):
                                 text = fn_result_json.get('stdout').encode('utf-8').decode('unicode_escape')
@@ -446,7 +479,7 @@ class GenAIFunctionProcessor:
                             if not fn_result_json.get('stdout') and fn_result_json.get('stderr'):
                                 token += f"{fn_result}\n"
                         else:
-                            token += f"{fn_result}\n"
+                            token += f"{fn_result}\n--- {fn} result end ---\n"
                     
                     big_text += token
                     this_text += token
@@ -479,11 +512,10 @@ class GenAIFunctionProcessor:
                 break
         
         usage_metadata["functions_called"] = functions_called
-        usage_metadata["function_results"] = function_results
+        #usage_metadata["function_results"] = function_results
 
         return big_text, usage_metadata
 
-    # needs to be static to avoid bound methods in function call
     @staticmethod
     def decide_to_go_on(go_on: bool, chat_summary: str) -> dict:
         """
@@ -503,4 +535,4 @@ class GenAIFunctionProcessor:
         Returns:
             boolean: True to carry on, False to continue
         """
-        return {"go_on": go_on, "chat_summary": chat_summary}
+        return json.dumps({"go_on": go_on, "chat_summary": chat_summary})
