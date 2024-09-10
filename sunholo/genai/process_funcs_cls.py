@@ -7,10 +7,10 @@ from .safety import genai_safety
 from typing import TYPE_CHECKING, Union
 
 import json
-import proto 
 
 try:
     import google.generativeai as genai
+    import proto
 except ImportError:
     genai = None
 
