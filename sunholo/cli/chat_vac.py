@@ -533,6 +533,14 @@ def get_cloud_run_service_url(project, region, service_name):
     Returns:
         str: The URL of the Cloud Run service, or an error message if not found.
     """
+        # Try to load existing data from the file, or initialize an empty dict
+    file_path = "config/cloud_run_urls.json"
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as file:
+            services_dict = json.load(file)
+    else:
+        services_dict = {}
+
     try:
         result = subprocess.run(
             ["gcloud", "run", "services", "describe", service_name, "--project", project, "--region", region, "--format=json"],
@@ -544,6 +552,14 @@ def get_cloud_run_service_url(project, region, service_name):
 
         service = json.loads(result.stdout.decode())
         service_url = service['status']['url']
+
+        # Update the services dictionary
+        services_dict[service_name] = service_url
+
+        # Write the updated dictionary back to the file
+        with open(file_path, 'w') as file:
+            json.dump(services_dict, file, indent=4)
+            
         return service_url
     except Exception as e:
         console.print(f"[bold red]ERROR: An unexpected error occurred: {e}[/bold red]")

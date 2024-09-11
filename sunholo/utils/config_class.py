@@ -26,14 +26,12 @@ class ConfigManager:
         agent = config.vacConfig("agent")
         ```
         """
-        print(f"Current working directory: {os.getcwd()}")
         if os.getenv("VAC_CONFIG_FOLDER") is None:
             print("WARNING: No VAC_CONFIG_FOLDER environment variable was specified")
         local_config_folder = os.path.join(os.getcwd(), "config")
-        if os.path.isdir(local_config_folder):
-            print(f"Found local config folder {local_config_folder} - will overwrite any global configurations")
-        else:
+        if not os.path.isdir(local_config_folder):
             local_config_folder = None
+            
         if os.getenv("VAC_CONFIG_FOLDER") is None and local_config_folder is None:
             raise ValueError(f"Must have either a local config/ folder in this dir ({os.getcwd()}/config/) or a folder specified via the VAC_CONFIG_FOLDER environment variable, or both.")
 
@@ -151,7 +149,7 @@ class ConfigManager:
 
         self.config_cache[filename] = (config, datetime.now())
         if is_local:
-            log.warning(f"Local configuration override for {filename} via {self.local_config_folder}")
+            log.info(f"Local configuration override for {filename} via {self.local_config_folder}")
         return config
 
     def _check_and_reload_configs(self):

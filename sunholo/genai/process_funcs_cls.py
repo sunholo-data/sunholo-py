@@ -7,6 +7,7 @@ from .safety import genai_safety
 from typing import TYPE_CHECKING, Union
 
 import json
+from collections import deque
 
 try:
     import google.generativeai as genai
@@ -370,12 +371,12 @@ class GenAIFunctionProcessor:
         }
         functions_called =[]
         function_results = []
+        # Initialize token queue to ensure sequential processing
+        token_queue = deque()
 
         while guardrail < guardrail_max:
 
-            callback.on_llm_new_token(
-                token=f"\n----Loop [{guardrail}] Start------\nFunctions: {list(self.funcs.keys())}\n"
-            )
+            token_queue.append(f"\n----Loop [{guardrail}] Start------\nFunctions: {list(self.funcs.keys())}\n")
 
             content_parse = ""
             for i, chunk in enumerate(content):
@@ -387,13 +388,13 @@ class GenAIFunctionProcessor:
             response = []
 
             try:
-                callback.on_llm_new_token(token="\n= Calling Agent\n")
+                token_queue.append("\n= Calling Agent =\n")
                 response = chat.send_message(content, stream=True)
                 
             except Exception as e:
                 msg = f"Error sending {content} to model: {str(e)} - {traceback.format_exc()}"
                 log.info(msg)
-                callback.on_llm_new_token(token=msg)
+                token_queue.append(msg)
                 break
 
             loop_metadata = response.usage_metadata
@@ -403,11 +404,10 @@ class GenAIFunctionProcessor:
                     "candidates_token_count": usage_metadata["candidates_token_count"] + (loop_metadata.candidates_token_count or 0),
                     "total_token_count": usage_metadata["total_token_count"] + (loop_metadata.total_token_count or 0),
                 }
-                callback.on_llm_new_token(token=(
-                    "\n-- Agent response\n" 
-                    f"prompt_token_count: [{loop_metadata.prompt_token_count}]/[{usage_metadata['prompt_token_count']}] "
-                    f"candidates_token_count: [{loop_metadata.candidates_token_count}]/[{usage_metadata['candidates_token_count']}] "
-                    f"total_token_count: [{loop_metadata.total_token_count}]/[{usage_metadata['total_token_count']}] \n"
+                token_queue.append((
+                    "\n-- Agent response -- " 
+                    f"Loop tokens: [{loop_metadata.prompt_token_count}]/[{usage_metadata['prompt_token_count']}] "
+                    f"Session tokens: [{loop_metadata.total_token_count}]/[{usage_metadata['total_token_count']}] \n"
                 ))
             loop_metadata = None
 
@@ -419,20 +419,20 @@ class GenAIFunctionProcessor:
                 try:
                     if hasattr(chunk, 'text') and isinstance(chunk.text, str):
                         token = chunk.text
-                        callback.on_llm_new_token(token=token)
+                        token_queue.append(token)
                         big_text += token
                         this_text += token
                     else:
                         log.info("skipping chunk with no text")
                     
                 except ValueError as err:
-                    callback.on_llm_new_token(token=f"{str(err)} for {chunk=}")
+                    token_queue.append(f"{str(err)} for {chunk=}")
             
             executed_responses = self.process_funcs(response) 
             log.info(f"[{guardrail}] {executed_responses=}")
 
             if executed_responses:  
-                callback.on_llm_new_token(token="\nAgent function execution:\n")
+                token_queue.append("\n-- Agent Actions:\n")
                 for executed_response in executed_responses:
                     token = ""
                     fn = executed_response.function_response.name
@@ -442,7 +442,10 @@ class GenAIFunctionProcessor:
                     log.info(fn_log)
                     functions_called.append(fn_log)
                     function_results.append(fn_result)
-                    callback.on_llm_new_token(token=f"\n--- function calling: {fn_log} ...\n")
+                    token_queue.append(f"\n-- {fn_log} ...executing...\n") if fn != "decide_to_go_on" else ""
+                    while token_queue:
+                        token = token_queue.popleft()
+                        callback.on_llm_new_token(token=token)
 
                     try:
                             # Convert MapComposite to a standard Python dictionary
@@ -463,12 +466,12 @@ class GenAIFunctionProcessor:
                         log.info(f"{fn_result_json} {fn_result=} {type(fn_result)}")
                         go_on_args = fn_result_json
                         if go_on_args:
-                            token = f"\n\n{'STOPPING' if not go_on_args.get('go_on') else 'CONTINUE'}: {go_on_args.get('chat_summary')}"
+                            token = f"\n{'STOPPING' if not go_on_args.get('go_on') else 'CONTINUE'}: {go_on_args.get('chat_summary')}\n"
                         else:
                             log.warning(f"{fn_result_json} did not work for decide_to_go_on")
                             token = f"Error calling decide_to_go_on with {fn_result_json}\n"
                     else:
-                        token = f"--- {fn} call result: \n"
+                        token = f"--- {fn_log} result: \n"
                         if fn_result_json:
                             if fn_result_json.get('stdout'):
                                 text = fn_result_json.get('stdout').encode('utf-8').decode('unicode_escape')
@@ -479,14 +482,14 @@ class GenAIFunctionProcessor:
                             if not fn_result_json.get('stdout') and fn_result_json.get('stderr'):
                                 token += f"{fn_result}\n"
                         else:
-                            token += f"{fn_result}\n--- {fn} result end ---\n"
+                            token += f"{fn_result}\n--- end ---\n"
                     
                     big_text += token
                     this_text += token
-                    callback.on_llm_new_token(token=token)
+                    token_queue.append(token)
             else:
                 token = "\nNo function executions were found\n"
-                callback.on_llm_new_token(token=token)
+                token_queue.append(token)
                 big_text += token
                 this_text += token
 
@@ -497,19 +500,25 @@ class GenAIFunctionProcessor:
                 log.warning(f"[{guardrail}] No content created this loop")
                 content.append(f"Agent: No response was found for loop [{guardrail}]")
 
-            callback.on_llm_new_token(
-                token=f"\n----Loop [{guardrail}] End------\n{usage_metadata}\n----------------------"
-            )
+            token_queue.append(f"\n----Loop [{guardrail}] End------\n{usage_metadata}\n----------------------")
 
             go_on_check = self.check_function_result("decide_to_go_on", {"go_on": False})
             if go_on_check:
                 log.info("Breaking agent loop")
                 break
             
+            while token_queue:
+                token = token_queue.popleft()
+                callback.on_llm_new_token(token=token)
+            
             guardrail += 1
             if guardrail > guardrail_max:
-                log.warning("Guardrail kicked in, more than 10 loops")
+                log.warning(f"Guardrail kicked in, more than {guardrail_max} loops")
                 break
+        
+        while token_queue:
+            token = token_queue.popleft()
+            callback.on_llm_new_token(token=token)
         
         usage_metadata["functions_called"] = functions_called
         #usage_metadata["function_results"] = function_results
