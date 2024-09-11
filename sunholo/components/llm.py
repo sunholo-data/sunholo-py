@@ -87,18 +87,25 @@ def llm_str_to_llm(llm_str, model=None, vector_name=None, config=None):
     elif llm_str == 'genai':
         from langchain_google_genai import ChatGoogleGenerativeAI
         if model is None:
-            model = "gemini-pro"
+            model = "gemini-1.5-pro"
             log.info(f"No 'model' value in config file - selecting default {model}")
         
         return ChatGoogleGenerativeAI(model=model)
 
     elif llm_str == 'vertex':
         # Setup for Vertex LLM
-        from langchain_google_vertexai import VertexAI
+        
         if model is None:
-            model = 'text-unicorn'
+            model = 'gemini-1.5-pro'
             log.info(f"No 'model' value in config file - selecting default {model}")
+        if model.startswith('claude'):
+            from langchain_google_vertexai.model_garden import ChatAnthropicVertex
+            gcp_config = config.vacConfig("gcp_config")
+            return ChatAnthropicVertex(model_name=model, 
+                                    project=gcp_config.get('project_id'), 
+                                    location=gcp_config.get('location'))
             
+        from langchain_google_vertexai import VertexAI
         return VertexAI(model_name = model, temperature=0, max_output_tokens=1024)
 
     elif llm_str == 'model_garden':
@@ -116,13 +123,16 @@ def llm_str_to_llm(llm_str, model=None, vector_name=None, config=None):
         if model is None:
             model = 'claude-3-5-sonnet-20240620'
             log.info(f"No 'model' value in config file - selecting default {model}")
+
         return ChatAnthropic(model_name = model, temperature=0)
+    
     elif llm_str == 'anthropic-vertex':
         from langchain_google_vertexai.model_garden import ChatAnthropicVertex
         if model is None:
             model = "claude-3-5-sonnet@20240620"
             log.info(f"No 'model' value in config file - selecting default {model}")
         gcp_config = config.vacConfig("gcp_config")
+
         return ChatAnthropicVertex(model_name=model, 
                                    project=gcp_config.get('project_id'), 
                                    location=gcp_config.get('location'))
@@ -171,7 +181,13 @@ def get_llm_chat(vector_name:str=None, model=None, config:ConfigManager=None):
         if model is None:
             model = 'gemini-1.0-pro'
             log.info(f"No 'model' value in config file - selecting default {model}")
-            
+        if model.startswith('claude'):
+            from langchain_google_vertexai.model_garden import ChatAnthropicVertex
+            gcp_config = config.vacConfig("gcp_config")
+            return ChatAnthropicVertex(model_name=model, 
+                                    project=gcp_config.get('project_id'), 
+                                    location=gcp_config.get('location'))
+        
         return ChatVertexAI(model_name = model, temperature=0, max_output_tokens=1024)
     
     elif llm_str == 'gemini':
@@ -189,6 +205,7 @@ def get_llm_chat(vector_name:str=None, model=None, config:ConfigManager=None):
             log.info(f"No 'model' value in config file - selecting default {model}")
 
         return ChatAnthropic(model_name = model, temperature=0)
+    
     elif llm_str == 'azure':
         from langchain_openai import AzureChatOpenAI
         azure_config = config.vacConfig("azure")
