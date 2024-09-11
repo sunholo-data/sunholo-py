@@ -255,7 +255,9 @@ class GenAIFunctionProcessor:
                         if not isinstance(fn_exec, genai.protos.FunctionDeclaration):
                             # Execute the function with the provided parameters
                             result = fn_exec(**params_obj)
-                            log.info(f"Got result from {function_name}: {result}")
+                            log.info(f"Got result from {function_name}: {result} of type: {type(result)}")
+                            if not isinstance(result, str):
+                                log.warning(f"Tool functions should return strings: {function_name} returned type: {type(result)}")
                         else:
                             fn_result = type(fn).to_dict(fn)
                             result = fn_result.get("result")
@@ -448,7 +450,7 @@ class GenAIFunctionProcessor:
                         callback.on_llm_new_token(token=token)
 
                     try:
-                            # Convert MapComposite to a standard Python dictionary
+                        # Convert MapComposite to a standard Python dictionary
                         if isinstance(fn_result, proto.marshal.collections.maps.MapComposite):
                             fn_result = dict(fn_result)
                         fn_result_json = json.loads(fn_result)
@@ -471,7 +473,7 @@ class GenAIFunctionProcessor:
                             log.warning(f"{fn_result_json} did not work for decide_to_go_on")
                             token = f"Error calling decide_to_go_on with {fn_result_json}\n"
                     else:
-                        token = f"--- {fn_log} result: \n"
+                        token = f"--- {fn}() result --- \n"
                         if fn_result_json:
                             if fn_result_json.get('stdout'):
                                 text = fn_result_json.get('stdout').encode('utf-8').decode('unicode_escape')
