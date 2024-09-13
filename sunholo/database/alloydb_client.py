@@ -197,6 +197,7 @@ class AlloyDBClient:
         return await self.vectorstore.asimilarity_search(query, filter=source_filter_cmd, k=k)
 
     def execute_sql(self, sql_statement):
+        log.info(f"Executing sync SQL statement: {sql_statement}")
         if self.engine_type == "pg8000":
             return self._execute_sql_pg8000(sql_statement)
         elif self.engine_type == "langchain":
@@ -228,6 +229,7 @@ class AlloyDBClient:
         return result
     
     async def execute_sql_async(self, sql_statement):
+        log.info(f"Executing async SQL statement: {sql_statement}")
         if self.engine_type == "pg8000":
             result = await self._execute_sql_async_pg8000(sql_statement)
         elif self.engine_type == "langchain":
@@ -273,13 +275,30 @@ class AlloyDBClient:
             raise ValueError("The 'source' parameter must be a single string, not a list of strings or other iterable.")
 
         table_name = f"{vector_name}_docstore"
-        doc_id = generate_uuid_from_object_id(source)
+        #doc_id = generate_uuid_from_object_id(source)
+
+        query = f"""
+            SELECT page_content, source, langchain_metadata, images_gsurls, doc_id::text as doc_id
+            FROM "{table_name}"
+            WHERE source = '{source}'
+            LIMIT 50;
+        """
+
+        return query
+
+    def _get_document_via_docid(self, source:str, vector_name:str, doc_id: str):
+        if not isinstance(source, str):
+            raise ValueError("The 'source' parameter must be a single string, not a list of strings or other iterable.")
+
+        table_name = f"{vector_name}_docstore"
+        if not doc_id:
+            doc_id = generate_uuid_from_object_id(source)
 
         query = f"""
             SELECT page_content, source, langchain_metadata, images_gsurls, doc_id::text as doc_id
             FROM "{table_name}"
             WHERE doc_id = '{doc_id}'
-            LIMIT 1;
+            LIMIT 50;
         """
 
         return query
