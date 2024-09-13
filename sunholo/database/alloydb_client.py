@@ -281,7 +281,7 @@ class AlloyDBClient:
             SELECT page_content, source, langchain_metadata, images_gsurls, doc_id::text as doc_id
             FROM "{table_name}"
             WHERE source = '{source}'
-            LIMIT 50;
+            LIMIT 500;
         """
 
         return query
