@@ -3,6 +3,7 @@ import traceback
 import datetime
 import uuid
 import random
+from functools import partial
 
 from ...agents import extract_chat_history, handle_special_commands
 from ...qna.parsers import parse_output
@@ -54,12 +55,35 @@ if __name__ == "__main__":
 ```
     
     """
-    def __init__(self, app, stream_interpreter, vac_interpreter, additional_routes=None):
+    def __init__(self, app, stream_interpreter, vac_interpreter=None, additional_routes=None):
         self.app = app
         self.stream_interpreter = stream_interpreter
-        self.vac_interpreter = vac_interpreter
+        self.vac_interpreter = vac_interpreter or partial(self.vac_interpreter_default)
         self.additional_routes = additional_routes if additional_routes is not None else []
         self.register_routes()
+
+
+    def vac_interpreter_default(self, question: str, vector_name: str, chat_history=[], **kwargs):
+        # Create a callback that does nothing for streaming if you don't want intermediate outputs
+        class NoOpCallback:
+            def on_llm_new_token(self, token):
+                pass
+            def on_llm_end(self, response):
+                pass
+
+        # Use the NoOpCallback for non-streaming behavior
+        callback = NoOpCallback()
+
+        # Pass all arguments to vac_stream and use the final return
+        result = self.stream_interpreter(
+            question=question, 
+            vector_name=vector_name, 
+            chat_history=chat_history, 
+            callback=callback, 
+            **kwargs
+        )
+
+        return result
 
     def register_routes(self):
         """
