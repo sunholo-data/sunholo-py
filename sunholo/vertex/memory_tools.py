@@ -153,42 +153,44 @@ def print_grounding_response(response):
     prev_index = 0
     markdown_text = ""
 
-    sources: dict[str, str] = {}
-    footnote = 1
-    for attribution in grounding_metadata.grounding_attributions:
-        context = attribution.web or attribution.retrieved_context
-        if not context:
-            log.info(f"Skipping Grounding Attribution {attribution}")
-            continue
+    for grounding_support in grounding_metadata.grounding_supports:
+        text_segment = text_bytes[
+            prev_index : grounding_support.segment.end_index
+        ].decode(ENCODING)
 
-        title = context.title
-        uri = context.uri
-        end_index = int(attribution.segment.end_index)
+        footnotes_text = ""
+        for grounding_chunk_index in grounding_support.grounding_chunk_indices:
+            footnotes_text += f"[{grounding_chunk_index + 1}]"
 
-        if uri not in sources:
-            sources[uri] = {"title": title, "footnote": footnote}
-            footnote += 1
-
-        text_segment = text_bytes[prev_index:end_index].decode(ENCODING)
-        markdown_text += f"{text_segment} [[{sources[uri]['footnote']}]]({uri})"
-        prev_index = end_index
+        markdown_text += f"{text_segment} {footnotes_text}\n"
+        prev_index = grounding_support.segment.end_index
 
     if prev_index < len(text_bytes):
         markdown_text += str(text_bytes[prev_index:], encoding=ENCODING)
 
-    markdown_text += "\n## Grounding Sources\n"
+    markdown_text += "\n----\n## Grounding Sources\n"
 
     if grounding_metadata.web_search_queries:
         markdown_text += (
             f"\n**Web Search Queries:** {grounding_metadata.web_search_queries}\n"
         )
+        if grounding_metadata.search_entry_point:
+            markdown_text += f"\n**Search Entry Point:**\n {grounding_metadata.search_entry_point.rendered_content}\n"
     elif grounding_metadata.retrieval_queries:
         markdown_text += (
             f"\n**Retrieval Queries:** {grounding_metadata.retrieval_queries}\n"
         )
 
-    for uri, source in sources.items():
-        markdown_text += f"{source['footnote']}. [{source['title']}]({uri})\n"
-    
-    log.info(markdown_text)
+    markdown_text += "### Grounding Chunks\n"
+
+    for index, grounding_chunk in enumerate(
+        grounding_metadata.grounding_chunks, start=1
+    ):
+        context = grounding_chunk.web or grounding_chunk.retrieved_context
+        if not context:
+            print(f"Skipping Grounding Chunk {grounding_chunk}")
+            continue
+
+        markdown_text += f"{index}. [{context.title}]({context.uri})\n"
+
     return markdown_text
