@@ -4,7 +4,7 @@ from sunholo.utils import ConfigManager
 # VAC specific imports 
 
 #TODO: Developer to update to their own implementation
-from sunholo.vertex import init_vertex
+from sunholo.vertex import init_vertex, vertex_safety
 from vertexai.preview.generative_models import GenerativeModel
 
 #TODO: change this to a streaming VAC function for your use case
@@ -46,6 +46,7 @@ def create_model(vac):
     # https://ai.google.dev/api/python/google/generativeai/GenerativeModel#streaming
     rag_model = GenerativeModel(
         model_name=model or "gemini-1.5-flash",
+         safety_settings=vertex_safety()
     )
 
     return rag_model

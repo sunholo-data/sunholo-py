@@ -4,10 +4,12 @@ import datetime
 import uuid
 import random
 from functools import partial
+import inspect
+import asyncio
 
 from ...agents import extract_chat_history, handle_special_commands
 from ...qna.parsers import parse_output
-from ...streaming import start_streaming_chat
+from ...streaming import start_streaming_chat, start_streaming_chat_async
 from ...archive import archive_qa
 from ...custom_logging import log
 from ...utils import ConfigManager
@@ -183,10 +185,16 @@ if __name__ == "__main__":
 
         log.info(f"OpenAI response: {openai_response}")
         return jsonify(openai_response)
-
-
+    
     def handle_stream_vac(self, vector_name):
         observed_stream_interpreter = self.stream_interpreter
+
+        # Determine if the stream interpreter is async or sync
+        is_async = inspect.iscoroutinefunction(self.stream_interpreter)
+
+        if is_async:
+            log.info(f"Stream interpreter is async: {observed_stream_interpreter}")
+
         prep = self.prep_vac(request, vector_name)
         log.info(f"Processing prep: {prep}")
         trace = prep["trace"]
@@ -203,41 +211,88 @@ if __name__ == "__main__":
             generation = span.generation(
                 name="start_streaming_chat",
                 metadata=vac_config.configs_by_kind,
-                input = all_input,
+                input=all_input,
                 completion_start_time=str(int(datetime.datetime.now().timestamp())),
                 model=vac_config.vacConfig("model") or vac_config.vacConfig("llm")
             )
 
         def generate_response_content():
+            try:
+                if is_async:
+                    # Run the async version
+                    async def process_async():
+                        async_gen = start_streaming_chat_async(
+                            question=all_input["user_input"],
+                            vector_name=vector_name,
+                            qna_func_async=observed_stream_interpreter,
+                            chat_history=all_input["chat_history"],
+                            wait_time=all_input["stream_wait_time"],
+                            timeout=all_input["stream_timeout"],
+                            trace_id=trace.id if trace else None,
+                            **all_input["kwargs"]
+                        )
+                        log.info(f"{async_gen=}")
+                        # Yield intermediate results as they become available
+                        async for chunk in async_gen:
+                            if isinstance(chunk, dict) and 'answer' in chunk:
+                                if trace:
+                                    chunk["trace_id"] = trace.id
+                                    chunk["trace_url"] = trace.get_trace_url()
+                                    generation.end(output=json.dumps(chunk))
+                                    span.end(output=json.dumps(chunk))
+                                    trace.update(output=json.dumps(chunk))
+                                
+                                archive_qa(chunk, vector_name)
+                                
+                                yield json.dumps(chunk)
+                            else:
+                                yield chunk
 
-            for chunk in start_streaming_chat(question=all_input["user_input"],
-                                              vector_name=vector_name,
-                                              qna_func=observed_stream_interpreter,
-                                              chat_history=all_input["chat_history"],
-                                              wait_time=all_input["stream_wait_time"],
-                                              timeout=all_input["stream_timeout"],
-                                              trace_id=trace.id if trace else None,
-                                              #kwargs
-                                              **all_input["kwargs"]
-                                            ):
-                if isinstance(chunk, dict) and 'answer' in chunk:
-                    # When we encounter the dictionary, we yield it as a JSON string
-                    # and stop the generator.
-                    if trace:
-                        chunk["trace_id"] = trace.id
-                        chunk["trace_url"] = trace.get_trace_url()
-                    archive_qa(chunk, vector_name)
-                    if trace:
-                        generation.end(output=json.dumps(chunk))
-                        span.end(output=json.dumps(chunk))
-                        trace.update(output=json.dumps(chunk))
+                    try:
+                        loop = asyncio.get_running_loop()
+                        # Use the event loop to consume the async generator and yield results
+                        return [chunk for chunk in loop.run_until_complete(self._async_generator_to_list(process_async()))]
+                    except RuntimeError:
+                        # No running event loop, create a new one
+                        log.info("Creating new event loop")
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        try:
+                            log.info(f"Run until complete loop for {process_async}")
+                            chunks = loop.run_until_complete(self._async_generator_to_list(process_async()))
+                            for chunk in chunks:
+                                yield chunk
+                        finally:
+                            loop.close()
 
-                    return json.dumps(chunk)
-            
                 else:
-                    # Otherwise, we yield the plain text chunks as they come in.
-                    yield chunk
-        
+                    log.info("sync streaming response")
+                    for chunk in start_streaming_chat(
+                        question=all_input["user_input"],
+                        vector_name=vector_name,
+                        qna_func=observed_stream_interpreter,
+                        chat_history=all_input["chat_history"],
+                        wait_time=all_input["stream_wait_time"],
+                        timeout=all_input["stream_timeout"],
+                        trace_id=trace.id if trace else None,
+                        **all_input["kwargs"]
+                    ):
+                        if isinstance(chunk, dict) and 'answer' in chunk:
+                            if trace:
+                                chunk["trace_id"] = trace.id
+                                chunk["trace_url"] = trace.get_trace_url()
+                            archive_qa(chunk, vector_name)
+                            if trace:
+                                generation.end(output=json.dumps(chunk))
+                                span.end(output=json.dumps(chunk))
+                                trace.update(output=json.dumps(chunk))
+                            return json.dumps(chunk)
+                        else:
+                            yield chunk
+
+            except Exception as e:
+                yield f"Streaming Error: {str(e)} {traceback.format_exc()}"
+            
         # Here, the generator function will handle streaming the content to the client.
         response = Response(generate_response_content(), content_type='text/plain; charset=utf-8')
         response.headers['Transfer-Encoding'] = 'chunked'  
@@ -250,6 +305,14 @@ if __name__ == "__main__":
             self.langfuse_eval_response(trace_id=trace.id, eval_percent=all_input.get('eval_percent'))
 
         return response
+
+    @staticmethod
+    async def _async_generator_to_list(async_gen):
+        """Helper function to collect an async generator's values into a list."""
+        result = []
+        async for item in async_gen:
+            result.append(item)
+        return result
     
     def langfuse_eval_response(self, trace_id, eval_percent=0.01):
         """
@@ -282,6 +345,7 @@ if __name__ == "__main__":
             log.info(f"Did not do Langfuse eval due to random sampling not passed: {eval_percent=}")
 
     def handle_process_vac(self, vector_name):
+        #TODO: handle async
         observed_vac_interpreter = self.vac_interpreter
         prep = self.prep_vac(request, vector_name)
         log.debug(f"Processing prep: {prep}")

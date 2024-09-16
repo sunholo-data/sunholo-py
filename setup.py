@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.94.0'
+version = '0.95.0'
 
 setup(
     name='sunholo',
@@ -84,6 +84,7 @@ setup(
             "supabase",
             "tabulate",
             "tantivy",
+            "tenacity",
             "tiktoken",
             "unstructured[local-inference]==0.14.9",
             "xlwings"
@@ -155,7 +156,8 @@ setup(
             "httpx",
             "langfuse",
             "python-socketio",
-            "requests"
+            "requests",
+            "tenacity"
         ],
         'excel': [
             'xlwings',

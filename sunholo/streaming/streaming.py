@@ -107,7 +107,7 @@ def start_streaming_chat(question,
     # parses out source_documents if not present etc.
     yield parse_output(final_result)
 
-async def start_streaming_chat_async(question, vector_name, qna_func, chat_history=[], wait_time=2, timeout=120, **kwargs): 
+async def start_streaming_chat_async(question, vector_name, qna_func_async, chat_history=[], wait_time=2, timeout=120, **kwargs): 
     """
     Asynchronously initiates a chat session that streams responses back to the caller in real-time. 
     This function manages the chat by starting a separate thread to handle the chat interaction, 
@@ -116,7 +116,7 @@ async def start_streaming_chat_async(question, vector_name, qna_func, chat_histo
     Parameters:
     - question (str): The initial question to start the chat with.
     - vector_name (str): The vector configuration that determines the behavior of the AI in the chat.
-    - qna_func (callable): The function that processes the chat and generates responses.
+    - qna_func_async (callable): The async function that processes the chat and generates responses.
     - chat_history (list, optional): A list of previous messages in the chat session to maintain context.
     - wait_time (int, optional): The interval in seconds between checking for new chat responses.
     - timeout (int, optional): The maximum time in seconds to wait for a new response before timing out.
@@ -154,9 +154,9 @@ async def start_streaming_chat_async(question, vector_name, qna_func, chat_histo
     The `start_streaming_chat_async` function is used in a coroutine that prints messages as they are generated.
     """
     
-    log.info(f"Streaming chat with wait time {wait_time} seconds and timeout {timeout} seconds and kwargs {kwargs}")
-    if not check_kwargs_support(qna_func):
-        yield "No **kwargs in qna_func - please add it"
+    log.info(f"Async Streaming chat with wait time {wait_time} seconds and timeout {timeout} seconds and kwargs {kwargs}")
+    if not check_kwargs_support(qna_func_async):
+        yield "No **kwargs in qna_func_async - please add it"
         
     content_buffer = ContentBuffer()
     chat_callback_handler = BufferStreamingStdOutCallbackHandler(content_buffer=content_buffer, tokens=".!?\n")
@@ -165,21 +165,21 @@ async def start_streaming_chat_async(question, vector_name, qna_func, chat_histo
     exception_queue = Queue()
     stop_event = Event()
 
-    def start_chat():
+    async def start_chat():
         try:
-            final_result = qna_func(question, vector_name, chat_history, callback=chat_callback_handler, **kwargs)
+            final_result = await qna_func_async(question, vector_name, chat_history, callback=chat_callback_handler, **kwargs)
             result_queue.put(final_result)
         except Exception as e:
             exception_queue.put(e)
 
-    chat_thread = Thread(target=start_chat)
-    chat_thread.start()
+    # Run start_chat asynchronously
+    chat_task = asyncio.create_task(start_chat())
 
     start = time.time()
 
     while not chat_callback_handler.stream_finished.is_set() and not stop_event.is_set():
         await asyncio.sleep(wait_time)  # Use asyncio.sleep for async compatibility
-        log.info(f"heartbeat - {round(time.time() - start, 2)} seconds")
+        log.info(f"async heartbeat - {round(time.time() - start, 2)} seconds")
         
         while not exception_queue.empty():
             exception = exception_queue.get_nowait()
@@ -197,15 +197,14 @@ async def start_streaming_chat_async(question, vector_name, qna_func, chat_histo
                 break
 
     stop_event.set()
-    chat_thread.join()
+    await chat_task  # Ensure the async task is awaited
 
     # Handle final result
     if not result_queue.empty():
         final_result = result_queue.get()
-        # Ensure parse_output is called outside of the async generator context if needed
-        parsed_final_result = parse_output(final_result)  # Assuming parse_output can handle final_result structure
-        if 'answer' in parsed_final_result:  # Yield final structured result if needed
-            yield f"###JSON_START###{json.dumps(parsed_final_result)}###JSON_END###"
+        parsed_final_result = parse_output(final_result)
+        if 'answer' in parsed_final_result:
+            yield json.dumps(parsed_final_result)
 
 
 
