@@ -174,14 +174,10 @@ def print_grounding_response(response):
         markdown_text += (
             f"\n**Web Search Queries:** {grounding_metadata.web_search_queries}\n"
         )
-        if grounding_metadata.search_entry_point:
-            markdown_text += f"\n**Search Entry Point:**\n {grounding_metadata.search_entry_point.rendered_content}\n"
     elif grounding_metadata.retrieval_queries:
         markdown_text += (
             f"\n**Retrieval Queries:** {grounding_metadata.retrieval_queries}\n"
         )
-
-    markdown_text += "### Grounding Chunks\n"
 
     for index, grounding_chunk in enumerate(
         grounding_metadata.grounding_chunks, start=1
@@ -190,7 +186,9 @@ def print_grounding_response(response):
         if not context:
             print(f"Skipping Grounding Chunk {grounding_chunk}")
             continue
+        markdown_text += "### Grounding Chunks\n"
 
         markdown_text += f"{index}. [{context.title}]({context.uri})\n"
 
-    return markdown_text
+    return {"markdown_text": markdown_text, 
+            "search_entry_point": grounding_metadata.search_entry_point.rendered_content if grounding_metadata.search_entry_point else ""}

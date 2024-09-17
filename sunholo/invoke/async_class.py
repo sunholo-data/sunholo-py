@@ -39,17 +39,13 @@ class AsyncTaskRunner:
     async def _task_wrapper(self, name: str, func: Callable[..., Any], args: Any) -> Any:
         """Wraps the task function to process its output and handle retries."""
         async def run_func():
-            gen = func(*args)
-            if hasattr(gen, '__aiter__'):
-                # If it's an async generator, consume it completely
-                output = ''
-                async for chunk in gen:
-                    output += chunk
-                return output
+            if asyncio.iscoroutinefunction(func):
+                # If the function is async, await it
+                return await func(*args)
             else:
-                # If it's a coroutine, await the result
-                return await gen
-
+                # If the function is sync, run it in a thread to prevent blocking
+                return await asyncio.to_thread(func, *args)
+    
         if self.retry_enabled:
             retry_kwargs = {
                 'wait': wait_random_exponential(multiplier=1, max=60),
@@ -66,11 +62,3 @@ class AsyncTaskRunner:
             except Exception as e:
                 log.error(f"Error in task {name}: {e}\n{traceback.format_exc()}")
                 raise
-
-    def _log_results(self, results: List[Any]):
-        """Logs the results of the task executions."""
-        for result in results:
-            if isinstance(result, Exception):
-                log.error(f"Task resulted in an error: {result}")
-            else:
-                log.info(f"Task completed successfully: {result}")
