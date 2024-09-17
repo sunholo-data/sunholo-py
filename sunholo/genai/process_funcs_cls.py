@@ -523,7 +523,7 @@ class GenAIFunctionProcessor:
         
         usage_metadata["functions_called"] = functions_called
 
-        big_text = "\n".join(big_result[loop_return:])
+        big_text = "\n".join(big_result[-loop_return:])
 
         return big_text, usage_metadata
 
