@@ -351,7 +351,7 @@ class GenAIFunctionProcessor:
             log.error(f"Error initializing model: {str(err)}")
             return None
 
-    def run_agent_loop(self, chat, content, callback, guardrail_max=10):
+    def run_agent_loop(self, chat, content, callback, guardrail_max=10, loop_return=3):
         """
         Runs the agent loop, sending messages to the orchestrator, processing responses, and executing functions.
 
@@ -360,12 +360,13 @@ class GenAIFunctionProcessor:
             content: The initial content to send to the agent.
             callback: The callback object for handling intermediate responses.
             guardrail_max (int): The maximum number of iterations for the loop.
+            loop_return (int): The number of last loop iterations to return. Default 3 will return last 3 iterations. If loop_return > guardrail_max then all iterations are returned.
 
         Returns:
             tuple: (big_text, usage_metadata) from the loop execution.
         """
         guardrail = 0
-        big_text = ""
+        big_result = []
         usage_metadata = {
             "prompt_token_count": 0,
             "candidates_token_count": 0,
@@ -422,7 +423,6 @@ class GenAIFunctionProcessor:
                     if hasattr(chunk, 'text') and isinstance(chunk.text, str):
                         token = chunk.text
                         token_queue.append(token)
-                        big_text += token
                         this_text += token
                     else:
                         log.info("skipping chunk with no text")
@@ -486,18 +486,17 @@ class GenAIFunctionProcessor:
                         else:
                             token += f"{fn_result}\n--- end ---\n"
                     
-                    big_text += token
                     this_text += token
                     token_queue.append(token)
             else:
                 token = "\nNo function executions were found\n"
                 token_queue.append(token)
-                big_text += token
                 this_text += token
 
             if this_text:
                 content.append(f"Agent: {this_text}")    
                 log.info(f"[{guardrail}] Updated content:\n{this_text}")
+                big_result.append(this_text)
             else:
                 log.warning(f"[{guardrail}] No content created this loop")
                 content.append(f"Agent: No response was found for loop [{guardrail}]")
@@ -523,7 +522,8 @@ class GenAIFunctionProcessor:
             callback.on_llm_new_token(token=token)
         
         usage_metadata["functions_called"] = functions_called
-        #usage_metadata["function_results"] = function_results
+
+        big_text = "\n".join(big_result[loop_return:])
 
         return big_text, usage_metadata
 

@@ -65,14 +65,14 @@ def route_endpoint(vector_name=None, method = 'post', override_endpoint=None, co
     
     agents_config = config.agentConfig(agent_type)
     
-    log.info(f"agents_config: {agents_config}")
+    log.debug(f"agents_config: {agents_config}")
     if method not in agents_config:
         raise ValueError(f"Invalid method '{method}' for agent configuration.")
 
     # 'post' or 'get'
     endpoints_config = agents_config[method]
 
-    log.info(f"endpoints_config: {endpoints_config}")
+    log.debug(f"endpoints_config: {endpoints_config}")
     # Replace placeholders in the config
     endpoints = {}
     for key, value in endpoints_config.items():

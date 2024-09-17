@@ -175,6 +175,16 @@ async def start_streaming_chat_async(question, vector_name, qna_func_async, chat
     # Run start_chat asynchronously
     chat_task = asyncio.create_task(start_chat())
 
+     # Allow the event loop to process the scheduled tasks
+    await asyncio.sleep(0)
+
+    # Read and yield any initial content from the content buffer
+    content_to_send = content_buffer.read()
+    if content_to_send:
+        log.info(f"Initial content: {content_to_send}")
+        yield content_to_send
+        content_buffer.clear()
+
     start = time.time()
 
     while not chat_callback_handler.stream_finished.is_set() and not stop_event.is_set():
