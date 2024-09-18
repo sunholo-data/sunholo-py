@@ -280,7 +280,7 @@ class AlloyDBClient:
         query = f"""
             SELECT page_content, source, langchain_metadata, images_gsurls, doc_id::text as doc_id
             FROM "{table_name}"
-            WHERE source = '{source}'
+            WHERE source ILIKE '%{source}%'
             LIMIT 500;
         """
 
