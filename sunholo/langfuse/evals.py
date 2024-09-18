@@ -97,7 +97,7 @@ def do_evals(trace_id, eval_funcs: list=[eval_length], **kwargs) -> dict:
             # Submit the evaluation to Langfuse
             langfuse.score(
                 trace_id=trace.id,
-                name=eval_name,  # Use the function name as the evaluation name
+                name=eval_result.get("name") or eval_name,  # Use the function name as the evaluation name or 'name' key if present
                 value=eval_result["score"],
                 comment=eval_result["reason"],
                 **kwargs
