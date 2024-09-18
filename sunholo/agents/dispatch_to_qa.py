@@ -17,7 +17,7 @@ from ..auth import get_header
 import requests
 import aiohttp
 from .langserve import prepare_request_data
-
+import traceback
 from .route import route_endpoint
 
 try:
@@ -149,7 +149,7 @@ def send_to_qa(user_input, vector_name, chat_history, stream=False, **kwargs):
             return {"answer": error_message}
 
     except Exception as err:
-        log.error(f"Other error occurred: {str(err)}")
+        log.error(f"Other error occurred: {str(err)} {traceback.format_exc()}")
         error_message = f"Something went wrong. {str(err)}"
         if stream:
             return iter([error_message])
