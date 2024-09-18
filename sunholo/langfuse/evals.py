@@ -4,6 +4,8 @@ import json
 from ..pubsub import decode_pubsub_message
 from langfuse import Langfuse
 import traceback
+
+
 from ..custom_logging import log
 
 # Example of how eval_funcs might be structured
@@ -60,6 +62,7 @@ def do_evals(trace_id, eval_funcs: list=[eval_length], **kwargs) -> dict:
         host=os.environ["LANGFUSE_HOST"]
     )
  
+    log.info(f"do_evals langfuse with {kwargs=}")
     # Fetch the latest trace (or modify as needed to fetch a specific trace)
     trace = langfuse.get_trace(id=trace_id)
 
@@ -67,31 +70,39 @@ def do_evals(trace_id, eval_funcs: list=[eval_length], **kwargs) -> dict:
         raise ValueError("Trace {trace.name} had no generated output, it was skipped")
 
     # Run the evaluation functions
-    eval_results = []
+    # an eval_response can have multiple eval_results
+    eval_responses = []
     for eval_func in eval_funcs:
         try:
-            eval_result = eval_func(trace)  # Assuming eval_func returns a dict with 'score' and 'reason'
+            eval_response = eval_func(trace, **kwargs)  # Assuming eval_func returns a dict with 'score' and 'reason'
         except Exception as e:
-            eval_result = {"score": 0, "reason":f"ERROR: {str(e)} traceback: {traceback.format_exc()}"}
-        eval_results.append(eval_result)
+            eval_response = {"score": 0, "reason":f"ERROR: {str(e)} traceback: {traceback.format_exc()}"}
+        eval_responses.append(eval_response)
 
         eval_name = eval_func.__name__
 
-        if 'score' and 'reason' not in eval_result:
-            log.error(f"Trace {trace.name} using {eval_name=} did not return a dict with 'score' and 'reason': {eval_result=}")
-            eval_result = {"score": 0, "reason": f"malformed eval_result: {eval_result}"}
+        if isinstance(eval_response, list):
+            eval_results = eval_response
+        else:
+            eval_results = [eval_response]
         
-        log.info(f"TraceId {trace.id} with name {trace.name} had {eval_name=} with score {eval_result=}")
-        
-        # Submit the evaluation to Langfuse
-        langfuse.score(
-            trace_id=trace.id,
-            name=eval_name,  # Use the function name as the evaluation name
-            value=eval_result["score"],
-            comment=eval_result["reason"],
-            **kwargs
-        )
+        for eval_result in eval_results:
+
+            if 'score' and 'reason' not in eval_result:
+                log.error(f"Trace {trace.name} using {eval_name=} did not return a dict with 'score' and 'reason': {eval_result=}")
+                eval_result = {"score": 0, "reason": f"malformed eval_result: {eval_result}"}
+            
+            log.info(f"TraceId {trace.id} with name {trace.name} had {eval_name=} with score {eval_result=}")
+            
+            # Submit the evaluation to Langfuse
+            langfuse.score(
+                trace_id=trace.id,
+                name=eval_name,  # Use the function name as the evaluation name
+                value=eval_result["score"],
+                comment=eval_result["reason"],
+                **kwargs
+            )
     
-    return {"trace_id": trace.id, "eval_results": eval_results}
+    return {"trace_id": trace.id, "eval_results": eval_responses}
 
 
