@@ -276,4 +276,4 @@ async def async_direct_vac_stream(vac_input: dict, vac_name: str, chat_history=[
         chat_history.append({"name": "Human", "content": vac_input})
         chat_history.append({"name": "AI", "content": answer})
 
-    return chat_history
+    yield chat_history
