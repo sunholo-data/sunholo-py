@@ -186,7 +186,6 @@ def print_grounding_response(response):
         if not context:
             print(f"Skipping Grounding Chunk {grounding_chunk}")
             continue
-        markdown_text += "### Grounding Chunks\n"
 
         markdown_text += f"{index}. [{context.title}]({context.uri})\n"
 
