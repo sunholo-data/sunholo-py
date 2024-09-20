@@ -23,3 +23,5 @@ jobs:
             Automated release for tag ${{ github.ref }}.
           draft: false
           prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
