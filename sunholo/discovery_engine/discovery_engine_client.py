@@ -69,7 +69,9 @@ class DiscoveryEngineClient:
         self.store_client  = discoveryengine.DataStoreServiceClient(client_options=client_options)
         self.doc_client    = discoveryengine.DocumentServiceClient(client_options=client_options)
         self.search_client = discoveryengine.SearchServiceClient(client_options=client_options)
+        self.async_search_client = discoveryengine.SearchServiceAsyncClient(client_options=client_options)
         self.engine_client = discoveryengine.EngineServiceClient(client_options=client_options)
+
 
     @classmethod
     def my_retry(cls):
@@ -221,6 +223,71 @@ class DiscoveryEngineClient:
         log.info(f"Discovery engine request: {search_request=}")
         search_response = self.search_client.search(search_request)
         
+        if parse_chunks_to_string:
+
+            big_string = self.process_chunks(search_response)
+            log.info(f"Discovery engine chunks string sample: {big_string[:100]}")
+
+            return big_string
+        
+        log.info("Discovery engine response object")
+        return search_response
+
+    async def async_get_chunks(
+        self,
+        query: str,
+        num_previous_chunks: int = 3,
+        num_next_chunks: int = 3,
+        page_size: int = 10,
+        parse_chunks_to_string: bool = True,
+        serving_config: str = "default_serving_config",
+    ):
+        """Retrieves chunks or documents based on a query.
+
+        Args:
+            query (str): The search query.
+            collection_id (str): The ID of the collection to search.
+            num_previous_chunks (int, optional): Number of previous chunks to return for context (default is 3).
+            num_next_chunks (int, optional): Number of next chunks to return for context (default is 3).
+            page_size (int, optional): The maximum number of results to return per page (default is 10).
+            parse_chunks_to_string: If True will put chunks in one big string, False will return object
+            serving_config: The resource name of the Search serving config 
+
+        Returns:
+            discoveryengine.SearchResponse: The search response object containing the search results.
+
+        Example:
+            ```python
+            search_response = client.get_chunks('your query', 'your_collection_id')
+            for result in search_response.results:
+                for chunk in result.document.chunks:
+                    print(f"Chunk: {chunk.snippet}, document name: {chunk.document_name}")
+            ```
+        """
+
+        serving_config_path = self.async_search_client.serving_config_path(
+            self.project_id,
+            self.location,
+            self.data_store_id,
+            serving_config
+        )
+
+
+        search_request = discoveryengine.SearchRequest(
+            serving_config=serving_config_path,
+            query=query,
+            page_size=page_size, 
+            content_search_spec=discoveryengine.SearchRequest.ContentSearchSpec(
+                search_result_mode="CHUNKS", 
+                chunk_spec=discoveryengine.SearchRequest.ContentSearchSpec.ChunkSpec(
+                    num_previous_chunks=num_previous_chunks,
+                    num_next_chunks=num_next_chunks,
+                ),
+            ),
+        )
+
+        log.info(f"Discovery engine async request: {search_request=}")
+        search_response = self.async_search_client.search(search_request)
 
         if parse_chunks_to_string:
 
@@ -232,7 +299,7 @@ class DiscoveryEngineClient:
         log.info("Discovery engine response object")
         return search_response
     
-    def chunk_format(self, chunk: Chunk):
+    def chunk_format(self, chunk):
         return (
                     f"# {chunk.id}\n"
                     f"{chunk.content}\n"
@@ -241,7 +308,7 @@ class DiscoveryEngineClient:
                     f"Document Title: {chunk.document_metadata.title}\n"
                 )        
 
-    def process_chunks(self, response: SearchResponse):
+    def process_chunks(self, response):
         all_chunks = []
 
         # Check if the response contains results
@@ -250,6 +317,35 @@ class DiscoveryEngineClient:
         
         # Iterate through each result in the response
         for result in response.results:
+            chunk = result.chunk
+            chunk_metadata = chunk.ChunkMetadata
+
+            if hasattr(chunk_metadata, 'previous_chunks'):
+                # Process previous chunks
+                for prev_chunk in chunk_metadata.previous_chunks:
+                    all_chunks.append(self.chunk_format(prev_chunk))
+
+            all_chunks.append(self.chunk_format(chunk))
+
+            # Process next chunks
+            if hasattr(chunk_metadata, 'next_chunks'):
+                for next_chunk in chunk_metadata.next_chunks:
+                    all_chunks.append(self.chunk_format(next_chunk))
+
+        # Combine all chunks into one long string
+        result_string = "\n".join(all_chunks)
+
+        return result_string
+
+    async def async_process_chunks(self, response):
+        all_chunks = []
+
+        # Check if the response contains results
+        if not hasattr(response, 'results') or not response.results:
+            raise ValueError(f'No results found in response: {response=}')
+        
+        # Iterate through each result in the response
+        async for result in response.results:
             chunk = result.chunk
             chunk_metadata = chunk.ChunkMetadata
 
