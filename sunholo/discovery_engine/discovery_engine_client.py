@@ -291,7 +291,7 @@ class DiscoveryEngineClient:
 
         if parse_chunks_to_string:
 
-            big_string = self.process_chunks(search_response)
+            big_string = await self.async_process_chunks(search_response)
             log.info(f"Discovery engine chunks string sample: {big_string[:100]}")
 
             return big_string
