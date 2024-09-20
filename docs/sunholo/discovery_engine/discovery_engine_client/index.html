@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.2.1">
 <title data-rh="true">discovery_engine_client.py | Sunholo Dev Portal</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://dev.sunholo.com/docs/sunholo/discovery_engine/discovery_engine_client"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="discovery_engine_client.py | Sunholo Dev Portal"><meta data-rh="true" name="description" content="Source: sunholo/discoveryengine/discoveryengineclient.py"><meta data-rh="true" property="og:description" content="Source: sunholo/discoveryengine/discoveryengineclient.py"><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://dev.sunholo.com/docs/sunholo/discovery_engine/discovery_engine_client"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/discovery_engine/discovery_engine_client" hreflang="en"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/discovery_engine/discovery_engine_client" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.f6c7f565.css">
-<script src="/assets/js/runtime~main.920f4cd6.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.d74739fe.js" defer="defer"></script>
 <script src="/assets/js/main.5e17288b.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -29,7 +29,33 @@ location (str, optional): The location of the data store (default is &#x27;eu&#x
 </ul>
 </li>
 <li>
-<p>chunk_format(self, chunk: google.cloud.discoveryengine_v1alpha.types.chunk.Chunk)</p>
+<p>async_get_chunks(self, query: str, num_previous_chunks: int = 3, num_next_chunks: int = 3, page_size: int = 10, parse_chunks_to_string: bool = True, serving_config: str = &#x27;default_serving_config&#x27;)</p>
+<ul>
+<li>Retrieves chunks or documents based on a query.</li>
+</ul>
+</li>
+</ul>
+<p>Args:
+query (str): The search query.
+collection_id (str): The ID of the collection to search.
+num_previous_chunks (int, optional): Number of previous chunks to return for context (default is 3).
+num_next_chunks (int, optional): Number of next chunks to return for context (default is 3).
+page_size (int, optional): The maximum number of results to return per page (default is 10).
+parse_chunks_to_string: If True will put chunks in one big string, False will return object
+serving_config: The resource name of the Search serving config</p>
+<p>Returns:
+discoveryengine.SearchResponse: The search response object containing the search results.</p>
+<p>Example:</p>
+<div class="language-python codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-python codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">search_response </span><span class="token operator" style="color:#393A34">=</span><span class="token plain"> client</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">get_chunks</span><span class="token punctuation" style="color:#393A34">(</span><span class="token string" style="color:#e3116c">&#x27;your query&#x27;</span><span class="token punctuation" style="color:#393A34">,</span><span class="token plain"> </span><span class="token string" style="color:#e3116c">&#x27;your_collection_id&#x27;</span><span class="token punctuation" style="color:#393A34">)</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token keyword" style="color:#00009f">for</span><span class="token plain"> result </span><span class="token keyword" style="color:#00009f">in</span><span class="token plain"> search_response</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">results</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token keyword" style="color:#00009f">for</span><span class="token plain"> chunk </span><span class="token keyword" style="color:#00009f">in</span><span class="token plain"> result</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">document</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">chunks</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">        </span><span class="token keyword" style="color:#00009f">print</span><span class="token punctuation" style="color:#393A34">(</span><span class="token string-interpolation string" style="color:#e3116c">f&quot;Chunk: </span><span class="token string-interpolation interpolation punctuation" style="color:#393A34">{</span><span class="token string-interpolation interpolation">chunk</span><span class="token string-interpolation interpolation punctuation" style="color:#393A34">.</span><span class="token string-interpolation interpolation">snippet</span><span class="token string-interpolation interpolation punctuation" style="color:#393A34">}</span><span class="token string-interpolation string" style="color:#e3116c">, document name: </span><span class="token string-interpolation interpolation punctuation" style="color:#393A34">{</span><span class="token string-interpolation interpolation">chunk</span><span class="token string-interpolation interpolation punctuation" style="color:#393A34">.</span><span class="token string-interpolation interpolation">document_name</span><span class="token string-interpolation interpolation punctuation" style="color:#393A34">}</span><span class="token string-interpolation string" style="color:#e3116c">&quot;</span><span class="token punctuation" style="color:#393A34">)</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<ul>
+<li>
+<p>async_process_chunks(self, response)</p>
+<ul>
+<li>No docstring available.</li>
+</ul>
+</li>
+<li>
+<p>chunk_format(self, chunk)</p>
 <ul>
 <li>No docstring available.</li>
 </ul>
@@ -95,7 +121,7 @@ discoveryengine.SearchResponse: The search response object containing the search
 <li>data_schema: Must be one of &#x27;user_event&#x27;, &#x27;custom&#x27; or &#x27;document&#x27; if using BigQuery. Default &#x27;content&#x27; only for GCS. The schema to use when parsing the data from the source. Supported values for document imports: - document (default): One JSON Document per line. Each document must have a valid Document.id. - content: Unstructured data (e.g. PDF, HTML). Each file matched by input_uris becomes a document, with the ID set to the first 128 bits of SHA256(URI) encoded as a hex string. - custom: One custom data JSON per row in arbitrary format that conforms to the defined Schema of the data store. This can only be used by the GENERIC Data Store vertical. - csv: A CSV file with header conforming to the defined Schema of the data store. Each entry after the header is imported as a Document. This can only be used by the GENERIC Data Store vertical. Supported values for user event imports: - user_event (default): One JSON UserEvent per line.</li>
 </ul>
 <ul>
-<li>process_chunks(self, response: google.cloud.discoveryengine_v1alpha.types.search_service.SearchResponse)<!-- -->
+<li>process_chunks(self, response)<!-- -->
 <ul>
 <li>No docstring available.</li>
 </ul>

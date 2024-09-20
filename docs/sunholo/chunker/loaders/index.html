@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.2.1">
 <title data-rh="true">loaders.py | Sunholo Dev Portal</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://dev.sunholo.com/docs/sunholo/chunker/loaders"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="loaders.py | Sunholo Dev Portal"><meta data-rh="true" name="description" content="Source: sunholo/chunker/loaders.py"><meta data-rh="true" property="og:description" content="Source: sunholo/chunker/loaders.py"><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://dev.sunholo.com/docs/sunholo/chunker/loaders"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/chunker/loaders" hreflang="en"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/chunker/loaders" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.f6c7f565.css">
-<script src="/assets/js/runtime~main.920f4cd6.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.d74739fe.js" defer="defer"></script>
 <script src="/assets/js/main.5e17288b.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -29,7 +29,7 @@ Returns False if not</p>
 <p>No docstring available.</p>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="classes">Classes<a href="#classes" class="hash-link" aria-label="Direct link to Classes" title="Direct link to Classes">​</a></h2>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="mygoogledriveloader">MyGoogleDriveLoader<a href="#mygoogledriveloader" class="hash-link" aria-label="Direct link to MyGoogleDriveLoader" title="Direct link to MyGoogleDriveLoader">​</a></h3>
-<p>.. deprecated:: 0.0.32 Use <code>langchain_google_community.GoogleDriveLoader</code> instead.</p>
+<p>.. deprecated:: 0.0.32 Use ``:class:`~langchain_google_community.GoogleDriveLoader``` instead.</p>
 <p>Load Google Docs from <code>Google Drive</code>.</p>
 <ul>
 <li>
@@ -233,7 +233,7 @@ The order of loading credentials:</li>
 </ul>
 </li>
 <li>
-<p>aload(self) -&gt; &#x27;List[Document]&#x27;</p>
+<p>aload(self) -&gt; &#x27;list[Document]&#x27;</p>
 <ul>
 <li>Load data into Document objects.</li>
 </ul>
@@ -282,7 +282,7 @@ A copy of the model with included, excluded and updated fields as specified.</p>
 </ul>
 </li>
 <li>
-<p>load_and_split(self, text_splitter: &#x27;Optional[TextSplitter]&#x27; = None) -&gt; &#x27;List[Document]&#x27;</p>
+<p>load_and_split(self, text_splitter: &#x27;Optional[TextSplitter]&#x27; = None) -&gt; &#x27;list[Document]&#x27;</p>
 <ul>
 <li>Load Documents and split into chunks. Chunks are returned as Documents.</li>
 </ul>
