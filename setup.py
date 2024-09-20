@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.96.9'
+version = '0.97.0'
 
 setup(
     name='sunholo',
@@ -29,7 +29,7 @@ setup(
         # Base dependencies
         "google-auth", # to check if on gcp
         "ruamel.yaml",
-        "langchain>=0.2.12",
+        "langchain==0.2.16",
         "langchain_experimental>=0.0.61",
         "langchain-community>=0.2.11",
     ],
@@ -64,10 +64,10 @@ setup(
             "langchain>=0.2.12",
             "langchain-experimental>=0.0.61",
             "langchain-community>=0.2.11",
-            "langchain-openai>=0.1.20",
-            "langchain-google-genai>=1.0.5",
+            "langchain-openai==0.1.25",
+            "langchain-google-genai==1.0.10",
             "langchain_google_alloydb_pg",
-            "langchain-anthropic>=0.1.13",
+            "langchain-anthropic==0.1.23"   
             "langchain-google-vertexai",
             "langfuse",
             "pg8000",
@@ -131,18 +131,18 @@ setup(
             "google-cloud-pubsub",
             "google-cloud-discoveryengine",
             "google-generativeai>=0.7.1",
-            "langchain-google-genai>=1.0.5",
+            "langchain-google-genai==1.0.10",
             "langchain_google_alloydb_pg>=0.2.2",
             "langchain-google-vertexai",
             "pillow",
 
         ],
         'openai': [
-            "langchain-openai",
+            "langchain-openai==0.1.25",
             "tiktoken"
         ],
         'anthropic': [
-            "langchain-anthropic>=0.1.13"   
+            "langchain-anthropic==0.1.23"   
         ],
         'tools' : [
             'openapi-spec-validator',
