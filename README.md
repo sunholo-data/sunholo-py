@@ -3,6 +3,19 @@ This is the Sunholo Python project, a comprehensive toolkit for working with lan
 
 Please refer to the website for full documentation at https://dev.sunholo.com/
 
+## Listen to the audio file:
+
+A [NotebookLM](https://notebooklm.google/) generated podcast of the codebase that may help give you an overview of what the library is capable of:
+
+<audio controls>
+  <source src="https://drive.google.com/uc?export=download&id=1GvwRmiYDjPjN2hXQ8plhnVDByu6TmgCQ" type="audio/wav">
+  Your browser does not support the audio element.
+</audio>
+
+[Alternatively, Download the audio file from Google Drive](https://drive.google.com/uc?export=download&id=1GvwRmiYDjPjN2hXQ8plhnVDByu6TmgCQ)
+
+
+
 ## Tests via pytest
 
 If loading from GitHub, run tests:
