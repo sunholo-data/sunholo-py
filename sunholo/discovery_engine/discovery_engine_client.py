@@ -287,7 +287,7 @@ class DiscoveryEngineClient:
         )
 
         log.info(f"Discovery engine async request: {search_request=}")
-        search_response = self.async_search_client.search(search_request)
+        search_response = await self.async_search_client.search(search_request)
 
         if parse_chunks_to_string:
 
