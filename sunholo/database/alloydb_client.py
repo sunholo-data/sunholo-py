@@ -170,7 +170,7 @@ class AlloyDBClient:
         self.get_vectorstore(vector_name) 
 
         if free_filter is None:
-            source_filter_cmd = f"source %LIKE% {source_filter}" if source_filter else None
+            source_filter_cmd = f"source ILIKE '%{source_filter}%'" if source_filter else None
         else:
             source_filter_cmd = free_filter
 
