@@ -1,2 +1,2 @@
 from .discovery_engine_client import DiscoveryEngineClient
-from .get_ai_search_chunks import get_all_chunks
+from .get_ai_search_chunks import get_all_chunks, async_get_all_chunks
