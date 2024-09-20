@@ -13,11 +13,6 @@ Welcome to the dev portal for the `sunholo` project, which is the open-source co
 
 A [NotebookLM](https://notebooklm.google/) generated podcast of the codebase that may help give you an overview of what the library is capable of:
 
-<audio controls>
-  <source src="https://drive.google.com/uc?export=download&id=1GvwRmiYDjPjN2hXQ8plhnVDByu6TmgCQ" type="audio/wav" />
-  Your browser does not support the audio element.
-</audio>
-
 <iframe
    frameborder="0"
    width="500"

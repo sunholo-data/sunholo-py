@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.97.0'
+version = '0.97.1'
 
 setup(
     name='sunholo',
@@ -67,7 +67,7 @@ setup(
             "langchain-openai==0.1.25",
             "langchain-google-genai==1.0.10",
             "langchain_google_alloydb_pg",
-            "langchain-anthropic==0.1.23"   
+            "langchain-anthropic==0.1.23",
             "langchain-google-vertexai",
             "langfuse",
             "pg8000",
