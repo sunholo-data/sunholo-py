@@ -18,6 +18,13 @@ A [NotebookLM](https://notebooklm.google/) generated podcast of the codebase tha
   Your browser does not support the audio element.
 </audio>
 
+<iframe
+   frameborder="0"
+   width="500"
+   height="100"
+   src="https://drive.google.com/file/d/1GvwRmiYDjPjN2hXQ8plhnVDByu6TmgCQ/preview?usp=drive_link">
+</iframe>
+
 [Alternatively, listen to the audio file on Google Drive](https://drive.google.com/file/d/1GvwRmiYDjPjN2hXQ8plhnVDByu6TmgCQ/view?usp=drive_link) 
 
 > "Ever wish you could build your own AI?..."
