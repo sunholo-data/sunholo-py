@@ -7,14 +7,9 @@ Please refer to the website for full documentation at https://dev.sunholo.com/
 
 A [NotebookLM](https://notebooklm.google/) generated podcast of the codebase that may help give you an overview of what the library is capable of:
 
-<audio controls>
-  <source src="https://drive.google.com/uc?export=download&id=1GvwRmiYDjPjN2hXQ8plhnVDByu6TmgCQ" type="audio/wav">
-  Your browser does not support the audio element.
-</audio>
+[Listen to the audio file from Google Drive](https://drive.google.com/file/d/1GvwRmiYDjPjN2hXQ8plhnVDByu6TmgCQ/view?usp=drive_link) or on the website at https://dev.sunholo.com/docs/ 
 
-[Alternatively, Download the audio file from Google Drive](https://drive.google.com/uc?export=download&id=1GvwRmiYDjPjN2hXQ8plhnVDByu6TmgCQ)
-
-
+> "Ever wish you could build your own AI?..."
 
 ## Tests via pytest
 

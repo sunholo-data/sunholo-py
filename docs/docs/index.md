@@ -14,12 +14,13 @@ Welcome to the dev portal for the `sunholo` project, which is the open-source co
 A [NotebookLM](https://notebooklm.google/) generated podcast of the codebase that may help give you an overview of what the library is capable of:
 
 <audio controls>
-  <source src="https://drive.google.com/uc?export=download&id=1GvwRmiYDjPjN2hXQ8plhnVDByu6TmgCQ" type="audio/wav">
+  <source src="https://drive.google.com/uc?export=download&id=1GvwRmiYDjPjN2hXQ8plhnVDByu6TmgCQ" type="audio/wav" />
   Your browser does not support the audio element.
 </audio>
 
-[Alternatively, Download the audio file from Google Drive](https://drive.google.com/uc?export=download&id=1GvwRmiYDjPjN2hXQ8plhnVDByu6TmgCQ)
+[Alternatively, listen to the audio file on Google Drive](https://drive.google.com/file/d/1GvwRmiYDjPjN2hXQ8plhnVDByu6TmgCQ/view?usp=drive_link) 
 
+> "Ever wish you could build your own AI?..."
 
 
 ## Skills needed
