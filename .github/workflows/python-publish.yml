@@ -11,6 +11,9 @@ name: Upload Python Package
 on:
   release:
     types: [published]
+  push:
+    tags:
+      - 'v*'  # Listen for any tag starting with 'v'
 
 permissions:
   contents: write
