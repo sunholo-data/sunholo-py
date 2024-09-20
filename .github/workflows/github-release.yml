@@ -1,0 +1,25 @@
+name: Create GitHub Release on Tag Push
+
+on:
+  push:
+    tags:
+      - 'v*'  # Listen for any tag starting with 'v'
+
+jobs:
+  create_release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref }}  # The tag that triggered the workflow
+          release_name: Release ${{ github.ref }}
+          body: |
+            Automated release for tag ${{ github.ref }}.
+          draft: false
+          prerelease: false
