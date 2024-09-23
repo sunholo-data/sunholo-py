@@ -119,7 +119,7 @@ class AlloyDBClient:
             creator=getconn)
         engine.dialect.description_encoding = None
 
-        log.info(f"Created AlloyDB engine for {self.inst_uri} and user: {user}")
+        log.info(f"Created AlloyDB engine for {self.inst_url} and user: {user}")
         return engine
 
     def _create_engine(self):
