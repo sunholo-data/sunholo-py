@@ -70,7 +70,7 @@ class AlloyDBClient:
             instance_name = alloydb_config["instance"]
 
         ALLOYDB_DB = os.environ.get("ALLOYDB_DB")
-        if ALLOYDB_DB is None and alloydb_config.get("database") is None:
+        if ALLOYDB_DB is None and alloydb_config and alloydb_config.get("database") is None:
             log.warning("Could not locate ALLOYDB_DB environment variable or 'alloydb_config.database'")
         
         self.database = alloydb_config.get("database") or ALLOYDB_DB or db
