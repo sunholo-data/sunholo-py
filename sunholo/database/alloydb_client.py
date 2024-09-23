@@ -91,6 +91,8 @@ class AlloyDBClient:
             self.inst_url = self._build_instance_uri(project_id, region, cluster_name, instance_name)
             self.engine = self._create_engine_from_pg8000(user, password, self.database)
             self.engine_type = "pg8000"
+            from google.cloud.alloydb.connector import Connector
+            self.connector = Connector()
         else:
             log.info("Build with Langchain engine - will use default service account for auth")
             self.engine = self._create_engine()
