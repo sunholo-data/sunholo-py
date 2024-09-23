@@ -103,8 +103,8 @@ def llm_str_to_llm(llm_str, model=None, vector_name=None, config=None):
             from langchain_google_vertexai.model_garden import ChatAnthropicVertex
             gcp_config = config.vacConfig("gcp_config")
             return ChatAnthropicVertex(model_name=model, 
-                                    project=gcp_config.get('project_id') or get_gcp_project(), 
-                                    location=gcp_config.get('location') or "europe-west1")
+                                    project=gcp_config.get('project_id') if gcp_config else get_gcp_project(), 
+                                    location=gcp_config.get('location') if gcp_config else "europe-west1")
             
         from langchain_google_vertexai import VertexAI
         return VertexAI(model_name = model, temperature=0, max_output_tokens=1024)
@@ -186,8 +186,8 @@ def get_llm_chat(vector_name:str=None, model=None, config:ConfigManager=None):
             from langchain_google_vertexai.model_garden import ChatAnthropicVertex
             gcp_config = config.vacConfig("gcp_config")
             return ChatAnthropicVertex(model_name=model, 
-                                    project=gcp_config.get('project_id') or get_gcp_project(), 
-                                    location=gcp_config.get('location') or "europe-west1")
+                                    project=gcp_config.get('project_id') if gcp_config else get_gcp_project(), 
+                                    location=gcp_config.get('location') if gcp_config else "europe-west1")
         
         return ChatVertexAI(model_name = model, temperature=0, max_output_tokens=1024)
     
