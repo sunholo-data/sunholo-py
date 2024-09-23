@@ -79,7 +79,7 @@ class AlloyDBClient:
             self.database = alloydb_config.get("database") or ALLOYDB_DB or db
         else:
             self.database = ALLOYDB_DB or db
-            
+
         if not self.database:
             raise ValueError("Could not derive a database to query")
 
@@ -89,7 +89,7 @@ class AlloyDBClient:
         if user:
             log.info("User specified {user} - using pg8000 engine")
             self.inst_url = self._build_instance_uri(project_id, region, cluster_name, instance_name)
-            self.engine = self._create_engine_from_pg8000()
+            self.engine = self._create_engine_from_pg8000(user, password, self.database)
             self.engine_type = "pg8000"
         else:
             log.info("Build with Langchain engine - will use default service account for auth")
