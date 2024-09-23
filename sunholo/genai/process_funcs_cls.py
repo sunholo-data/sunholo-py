@@ -473,7 +473,7 @@ class GenAIFunctionProcessor:
                             log.warning(f"{fn_result_json} did not work for decide_to_go_on")
                             token = f"Error calling decide_to_go_on with {fn_result_json}\n"
                     else:
-                        token = f"--- {fn}() result --- \n"
+                        token = f"--- {fn_log} result --- \n"
                         if fn_result_json:
                             if fn_result_json.get('stdout'):
                                 text = fn_result_json.get('stdout').encode('utf-8').decode('unicode_escape')
