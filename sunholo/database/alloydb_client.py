@@ -75,7 +75,11 @@ class AlloyDBClient:
         if ALLOYDB_DB is None and alloydb_config and alloydb_config.get("database") is None:
             log.warning("Could not locate ALLOYDB_DB environment variable or 'alloydb_config.database'")
         
-        self.database = alloydb_config.get("database") or ALLOYDB_DB or db
+        if alloydb_config:
+            self.database = alloydb_config.get("database") or ALLOYDB_DB or db
+        else:
+            self.database = ALLOYDB_DB or db
+            
         if not self.database:
             raise ValueError("Could not derive a database to query")
 
