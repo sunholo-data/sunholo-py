@@ -159,6 +159,7 @@ def embed_pubsub_chunk(data: dict):
         log.debug(f"Adding single document for {vector_name} to vector store {vector_store}")
         try:
             vector_store.add_documents([doc], ids = [doc_id])
+            ##TODO: add_images()
             log.info(f"Added doc for {vector_name} to {vector_store} - metadata: {metadata}")
             metadata_list.append(metadata)
         except Exception as err:

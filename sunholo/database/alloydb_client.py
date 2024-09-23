@@ -39,7 +39,7 @@ class AlloyDBClient:
     """
 
     def __init__(self, 
-                 config:ConfigManager,
+                 config:ConfigManager=None,
                  project_id: str=None, 
                  region: str=None, 
                  cluster_name:str=None, 
