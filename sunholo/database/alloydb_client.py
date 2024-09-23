@@ -58,6 +58,8 @@ class AlloyDBClient:
         if config is None:
             if project_id is None or region is None or cluster_name is None or instance_name is None:
                 raise ValueError("Must specify config or project_id, region, cluster_name, instance_name")
+        
+        alloydb_config = None
         if config:
             alloydb_config = config.vacConfig("alloydb_config")
             if not alloydb_config:
