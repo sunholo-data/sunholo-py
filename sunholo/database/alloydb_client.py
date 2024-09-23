@@ -195,6 +195,14 @@ class AlloyDBClient:
                                                            vector_name=vector_name)     
 
         return await self.vectorstore.asimilarity_search(query, filter=source_filter_cmd, k=k)
+    
+    def create_index(self, vectorstore=None):
+        from langchain_google_alloydb_pg.indexes import IVFFlatIndex
+        index = IVFFlatIndex()
+        vs = vectorstore or self.vectorstore
+
+        return vs.apply_vector_index(index)
+
 
     def execute_sql(self, sql_statement):
         log.info(f"Executing sync SQL statement: {sql_statement}")
