@@ -13,6 +13,7 @@
 #   limitations under the License.
 from ..custom_logging import log
 from ..utils import load_config_key, ConfigManager
+from ..utils.gcp_project import get_gcp_project
 
 import os
 
@@ -102,7 +103,7 @@ def llm_str_to_llm(llm_str, model=None, vector_name=None, config=None):
             from langchain_google_vertexai.model_garden import ChatAnthropicVertex
             gcp_config = config.vacConfig("gcp_config")
             return ChatAnthropicVertex(model_name=model, 
-                                    project=gcp_config.get('project_id'), 
+                                    project=gcp_config.get('project_id') or get_gcp_project(), 
                                     location=gcp_config.get('location'))
             
         from langchain_google_vertexai import VertexAI
@@ -185,7 +186,7 @@ def get_llm_chat(vector_name:str=None, model=None, config:ConfigManager=None):
             from langchain_google_vertexai.model_garden import ChatAnthropicVertex
             gcp_config = config.vacConfig("gcp_config")
             return ChatAnthropicVertex(model_name=model, 
-                                    project=gcp_config.get('project_id'), 
+                                    project=gcp_config.get('project_id') or get_gcp_project(), 
                                     location=gcp_config.get('location'))
         
         return ChatVertexAI(model_name = model, temperature=0, max_output_tokens=1024)
