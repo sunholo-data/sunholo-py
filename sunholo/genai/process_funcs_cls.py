@@ -450,10 +450,18 @@ class GenAIFunctionProcessor:
                         callback.on_llm_new_token(token=token)
 
                     try:
+                        log.info(f"{fn_log} created a result={type(fn_result)=}")
                         # Convert MapComposite to a standard Python dictionary
                         if isinstance(fn_result, proto.marshal.collections.maps.MapComposite):
                             fn_result = dict(fn_result)
-                        fn_result_json = json.loads(fn_result)
+                            if isinstance(fn_result, str):
+                                fn_result_json = json.loads(fn_result)
+                            else:
+                                fn_result_json = fn_result
+                        elif isinstance(fn_result, dict):
+                            fn_result_json = fn_result
+                        else:
+                            log.warning(f"Unrecognised result: {type(fn_result)}")
                         if not isinstance(fn_result_json, dict):
                             log.warning(f"{fn_result} was loaded but is not a dictionary")
                             fn_result_json = None
@@ -461,17 +469,17 @@ class GenAIFunctionProcessor:
                         log.warning(f"{fn_result} was not JSON decoded")
                         fn_result_json = None
                     except Exception as err:
-                        log.warning(f"{fn_result} was not json decoded due to unknown exception: {str(err)}")
+                        log.warning(f"{fn_result} was not json decoded due to unknown exception: {str(err)} {traceback.format_exc()}")
                         fn_result_json = None
 
                     if fn == "decide_to_go_on":
-                        log.info(f"{fn_result_json} {fn_result=} {type(fn_result)}")
-                        go_on_args = fn_result_json
+                        log.info(f"{fn_result=} {type(fn_result)}")
+                        go_on_args = fn_result
                         if go_on_args:
                             token = f"\n{'STOPPING' if not go_on_args.get('go_on') else 'CONTINUE'}: {go_on_args.get('chat_summary')}\n"
                         else:
                             log.warning(f"{fn_result_json} did not work for decide_to_go_on")
-                            token = f"Error calling decide_to_go_on with {fn_result_json}\n"
+                            token = f"Error calling decide_to_go_on with {fn_result}\n"
                     else:
                         token = f"--- {fn_log} result --- \n"
                         if fn_result_json:
@@ -546,4 +554,5 @@ class GenAIFunctionProcessor:
         Returns:
             boolean: True to carry on, False to continue
         """
-        return json.dumps({"go_on": go_on, "chat_summary": chat_summary})
+        return {"go_on": go_on, "chat_summary": chat_summary}
+    
