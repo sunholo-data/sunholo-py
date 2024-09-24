@@ -106,7 +106,7 @@ class AlloyDBClient:
     def _create_engine_from_pg8000(self, user, password, db):
         def getconn() -> pg8000.dbapi.Connection:
             conn = self.connector.connect(
-                self.inst_uri,
+                self.inst_url,
                 "pg8000",
                 user=user,
                 password=password,
