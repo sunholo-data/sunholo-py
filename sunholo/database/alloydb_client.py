@@ -87,7 +87,7 @@ class AlloyDBClient:
         self.password = password
         self.inst_url = ""
         if user:
-            log.info("User specified {user} - using pg8000 engine")
+            log.info(f"User specified {user} - using pg8000 engine")
             self.inst_url = self._build_instance_uri(project_id, region, cluster_name, instance_name)
             self.engine = self._create_engine_from_pg8000(user, password, self.database)
             self.engine_type = "pg8000"
@@ -204,23 +204,18 @@ class AlloyDBClient:
 
         return await self.vectorstore.asimilarity_search(query, filter=source_filter_cmd, k=k)
     
-    def create_index(self, vectorstore=None, vectorsize:int=None):
+    def create_index(self, vectorstore=None):
         from langchain_google_alloydb_pg.indexes import IVFFlatIndex
-
-        vector_size = vectorsize or get_vector_size(self.vector_name)
-        table_name = f"{self.vector_name}_vectorstore_{vector_size}"
-
-        vsize = f'''ALTER TABLE
-        "public"."{table_name}"
-        ALTER COLUMN "embedding" TYPE vector({vector_size});
-        '''
-        self.execute_sql(vsize)
 
         index = IVFFlatIndex()
         vs = vectorstore or self.vectorstore
 
         return vs.apply_vector_index(index)
+    
+    def refresh_index(self, vectorstore=None):
+        vs = vectorstore or self.vectorstore
 
+        return vs.reindex()
 
     def execute_sql(self, sql_statement):
         log.info(f"Executing sync SQL statement: {sql_statement}")
@@ -482,7 +477,7 @@ class AlloyDBClient:
         CREATE TABLE IF NOT EXISTS "{vectorstore_id}" (
         langchain_id UUID NOT NULL,
         content TEXT NOT NULL,
-        embedding vector NOT NULL,
+        embedding vector({vector_size}) NOT NULL,
         source TEXT,
         langchain_metadata JSONB,
         docstore_doc_id UUID,
