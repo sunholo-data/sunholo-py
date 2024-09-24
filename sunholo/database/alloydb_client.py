@@ -204,8 +204,18 @@ class AlloyDBClient:
 
         return await self.vectorstore.asimilarity_search(query, filter=source_filter_cmd, k=k)
     
-    def create_index(self, vectorstore=None):
+    def create_index(self, vectorstore=None, vectorsize:int=None):
         from langchain_google_alloydb_pg.indexes import IVFFlatIndex
+
+        vector_size = vectorsize or get_vector_size(self.vector_name)
+        table_name = f"{self.vector_name}_vectorstore_{vector_size}"
+
+        vsize = f'''ALTER TABLE
+        "public"."{table_name}"
+        ALTER COLUMN "embedding" TYPE vector({vector_size});
+        '''
+        self.execute_sql(vsize)
+
         index = IVFFlatIndex()
         vs = vectorstore or self.vectorstore
 
