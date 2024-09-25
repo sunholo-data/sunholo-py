@@ -482,17 +482,20 @@ class GenAIFunctionProcessor:
                         token = f"--- {fn_log} result --- \n"
                         # if json dict we look for keys to extract
                         if fn_result_json:
+                            log.info(f"{fn_result_json} dict parsing")
                             if fn_result_json.get('stdout'):
                                 text = fn_result_json.get('stdout').encode('utf-8').decode('unicode_escape')
                                 token += text
                             if fn_result_json.get('stderr'):
                                 text = fn_result_json.get('stdout').encode('utf-8').decode('unicode_escape')
                                 token += text
-                            if not fn_result_json.get('stdout') and fn_result_json.get('stderr'):
-                                log.info(f"No recognised keys in dict: {fn_result_json=} - dumping it all")
-                                token += f"{json.dumps(fn_result_json)}\n"
+                            # If neither 'stdout' nor 'stderr' is present, dump the entire JSON
+                            if 'stdout' not in fn_result_json and 'stderr' not in fn_result_json:
+                                log.info(f"No recognised keys ('stdout' or 'stderr') in dict: {fn_result_json=} - dumping it all")
+                                token += f"{json.dumps(fn_result_json, indent=2)}\n"  # Added `indent=2` for readability
                         else:
                             # probably a string, just return it
+                            log.info(f"{fn_result_json} non-dict (String?) parsing")
                             token += f"{fn_result}\n--- end ---\n"
                     
                     this_text += token
