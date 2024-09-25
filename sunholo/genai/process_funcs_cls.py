@@ -236,6 +236,10 @@ class GenAIFunctionProcessor:
 
         # Loop through each part in the response to handle multiple function calls
         #TODO: async
+        if not full_response.candidates or len(full_response.candidates) == 0:
+            log.error("No candidates found in the response. The response might have failed.")
+            return "No candidates available in the response. Please check your query or try again."
+
         for part in full_response.candidates[0].content.parts:
             if fn := part.function_call:
                 # Extract parameters for the function call
@@ -449,7 +453,13 @@ class GenAIFunctionProcessor:
                 except ValueError as err:
                     token_queue.append(f"{str(err)} for {chunk=}")
             
-            executed_responses = self.process_funcs(response) 
+            try:
+                executed_responses = self.process_funcs(response) 
+            except Exception as err:
+                log.error(f"Error in executions: {str(err)}")
+                executed_responses = []
+                token_queue.append(f"{str(err)} for {response=}")
+
             log.info(f"[{guardrail}] {executed_responses=}")
 
             if executed_responses:  
