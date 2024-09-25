@@ -78,8 +78,9 @@ class AsyncTaskRunner:
             # Stop the heartbeat task
             if heartbeat_task:
                 heartbeat_task.cancel()
+                # Let the heartbeat_task finish in the background without awaiting it
                 try:
-                    await heartbeat_task  # Ensure the heartbeat task is properly canceled
+                    await asyncio.shield(heartbeat_task)  # Ensure cancellation is handled cleanly
                 except asyncio.CancelledError:
                     pass
 
@@ -110,4 +111,7 @@ class AsyncTaskRunner:
 
         # Keep sending heartbeats until task completes
         while True:
-            await asyncio.sleep(interval)  # Sleep for the interval but do not send multiple messages
+            try:
+                await asyncio.sleep(interval)  # Sleep for the interval but do not send multiple messages
+            except asyncio.CancelledError:
+                break  # Exit the loop if the heartbeat task is canceled

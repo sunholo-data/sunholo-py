@@ -40,6 +40,9 @@ def handle_base64_image(base64_data: str, vector_name: str, extension: str):
     """
     
     model = ConfigManager(vector_name).vacConfig("llm")
+    if "," not in base64_data:
+        raise ValueError(f"Invalid Base64 image data: Missing metadata header {base64_data}")
+
     if model.startswith("openai"):  # pass it to gpt directly
         return base64_data, base64_data.split(",", 1)
 
