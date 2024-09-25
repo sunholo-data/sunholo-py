@@ -351,7 +351,11 @@ class GenAIFunctionProcessor:
             log.error(f"Error initializing model: {str(err)}")
             return None
     
-    def remove_invisible_characters(self, string:str):
+    def remove_invisible_characters(self, string):
+
+        if not isinstance(string, str):
+            return string
+        
         clean = string.encode('utf-8').decode('unicode_escape')
         log.info(f"Cleaning:\n{string}\n > to >\n{clean}")
         
