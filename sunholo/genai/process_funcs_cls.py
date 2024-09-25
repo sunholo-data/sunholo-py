@@ -12,6 +12,8 @@ from collections import deque
 try:
     import google.generativeai as genai
     import proto
+    from google.generativeai.types import RequestOptions
+    from google.api_core import retry
 except ImportError:
     genai = None
 
@@ -402,7 +404,14 @@ class GenAIFunctionProcessor:
 
             try:
                 token_queue.append("\n= Calling Agent =\n")
-                response = chat.send_message(content, stream=True)
+                response = chat.send_message(content, stream=True, request_options=RequestOptions(
+                                        retry=retry.Retry(
+                                            initial=10, 
+                                            multiplier=2, 
+                                            maximum=60, 
+                                            timeout=300
+                                        )
+                                       ))
                 
             except Exception as e:
                 msg = f"Error sending {content} to model: {str(e)} - {traceback.format_exc()}"
