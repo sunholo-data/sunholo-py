@@ -9,12 +9,12 @@ class AsyncTaskRunner:
         self.tasks = []
         self.retry_enabled = retry_enabled
         self.retry_kwargs = retry_kwargs or {}
-    
+
     def add_task(self, func: Callable[..., Any], *args: Any):
         """Adds a task to the list of tasks to be executed."""
         log.info(f"Adding task: {func.__name__} with args: {args}")
         self.tasks.append((func.__name__, func, args))
-    
+
     async def run_async_as_completed(self, callback=None) -> AsyncGenerator[Dict[str, Any], None]:
         """
         Runs all tasks concurrently and yields results as they complete, while periodically sending heartbeat messages.
@@ -29,7 +29,7 @@ class AsyncTaskRunner:
             coro = self._task_wrapper(name, func, args, callback)
             task = asyncio.create_task(coro)
             tasks[task] = name
-        
+
         log.info(f"Start async run with {len(self.tasks)} runners")
         while tasks:
             done, _ = await asyncio.wait(tasks.keys(), return_when=asyncio.FIRST_COMPLETED)
@@ -93,7 +93,7 @@ class AsyncTaskRunner:
 
     async def _send_heartbeat(self, callback, func_name, interval=2):
         """
-        Sends a single spinner at the start and keeps the task alive.
+        Sends a periodic heartbeat to keep the task alive and update the spinner with elapsed time.
 
         Args:
             callback: The callback to notify that the task is still working.
@@ -104,14 +104,26 @@ class AsyncTaskRunner:
         spinner_html = (
             f'<div id="{func_name}-spinner" class="spinner-container">'
             f'  <div class="spinner"></div>'
-            f'  <span class="completed">✔️ Task {func_name} completed!</span>'
+            f'  <span class="elapsed-time">Task {func_name} is still running... 0s elapsed</span>'
             f'</div>'
         )
         await callback.async_on_llm_new_token(token=spinner_html)
 
+        # Keep track of elapsed time
+        elapsed_time = 0
+
         # Keep sending heartbeats until task completes
         while True:
             try:
-                await asyncio.sleep(interval)  # Sleep for the interval but do not send multiple messages
+                await asyncio.sleep(interval)  # Sleep for the interval
+                elapsed_time += interval  # Increment elapsed time
+
+                # Update spinner with the elapsed time
+                update_html = (
+                    f'<div style="display: none;" data-update-id="{func_name}-spinner">'
+                    f'<span class="elapsed-time">Task {func_name} is still running... {elapsed_time}s elapsed</span>'
+                    f'</div>'
+                )
+                await callback.async_on_llm_new_token(token=update_html)
             except asyncio.CancelledError:
                 break  # Exit the loop if the heartbeat task is canceled
