@@ -489,7 +489,8 @@ class GenAIFunctionProcessor:
                                 text = fn_result_json.get('stdout').encode('utf-8').decode('unicode_escape')
                                 token += text
                             if not fn_result_json.get('stdout') and fn_result_json.get('stderr'):
-                                token += f"{fn_result}\n"
+                                log.info(f"No recognised keys in dict: {fn_result_json=} - dumping it all")
+                                token += f"{json.dumps(fn_result_json)}\n"
                         else:
                             # probably a string, just return it
                             token += f"{fn_result}\n--- end ---\n"
