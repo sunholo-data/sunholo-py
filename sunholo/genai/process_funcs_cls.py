@@ -269,9 +269,9 @@ class GenAIFunctionProcessor:
                         traceback_details = traceback.format_exc()
                         log.warning(f"{error_message}\nTraceback: {traceback_details}")
                         result = [f"{error_message}\n{traceback_details}"]
-
+                    clean_result = self.remove_invisible_characters(result)
                     api_requests_and_responses.append(
-                        [function_name, params, result]
+                        [function_name, params, clean_result]
                     )
                 else:
                     log.error(f"Function {function_name} is not recognized")
@@ -350,6 +350,12 @@ class GenAIFunctionProcessor:
         except Exception as err:
             log.error(f"Error initializing model: {str(err)}")
             return None
+    
+    def remove_invisible_characters(self, string:str):
+        clean = string.encode('utf-8').decode('unicode_escape')
+        log.info(f"Cleaning:\n{string}\n > to >\n{clean}")
+        
+        return clean
 
     def run_agent_loop(self, chat, content, callback, guardrail_max=10, loop_return=3):
         """
@@ -484,11 +490,11 @@ class GenAIFunctionProcessor:
                         if fn_result_json:
                             log.info(f"{fn_result_json} dict parsing")
                             if fn_result_json.get('stdout'):
-                                text = fn_result_json.get('stdout').encode('utf-8').decode('unicode_escape')
-                                token += text
+                                text = fn_result_json.get('stdout')
+                                token += self.remove_invisible_characters(text)
                             if fn_result_json.get('stderr'):
-                                text = fn_result_json.get('stdout').encode('utf-8').decode('unicode_escape')
-                                token += text
+                                text = fn_result_json.get('stdout')
+                                token += self.remove_invisible_characters(text)
                             # If neither 'stdout' nor 'stderr' is present, dump the entire JSON
                             if 'stdout' not in fn_result_json and 'stderr' not in fn_result_json:
                                 log.info(f"No recognised keys ('stdout' or 'stderr') in dict: {fn_result_json=} - dumping it all")
@@ -496,7 +502,7 @@ class GenAIFunctionProcessor:
                         else:
                             # probably a string, just return it
                             log.info(f"{fn_result_json} non-dict (String?) parsing")
-                            token += f"{fn_result}\n--- end ---\n"
+                            token += f"{self.remove_invisible_characters(fn_result)}\n--- end ---\n"
                     
                     this_text += token
                     token_queue.append(token)
