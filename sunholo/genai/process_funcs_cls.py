@@ -449,39 +449,38 @@ class GenAIFunctionProcessor:
                         token = token_queue.popleft()
                         callback.on_llm_new_token(token=token)
 
-                    try:
-                        log.info(f"{fn_log} created a result={type(fn_result)=}")
-                        # Convert MapComposite to a standard Python dictionary
-                        if isinstance(fn_result, proto.marshal.collections.maps.MapComposite):
-                            fn_result = dict(fn_result)
-                            if isinstance(fn_result, str):
-                                fn_result_json = json.loads(fn_result)
-                            else:
-                                fn_result_json = fn_result
-                        elif isinstance(fn_result, dict):
-                            fn_result_json = fn_result
-                        else:
-                            log.warning(f"Unrecognised result: {type(fn_result)}")
-                        if not isinstance(fn_result_json, dict):
-                            log.warning(f"{fn_result} was loaded but is not a dictionary")
-                            fn_result_json = None
-                    except json.JSONDecodeError:
-                        log.warning(f"{fn_result} was not JSON decoded")
-                        fn_result_json = None
-                    except Exception as err:
-                        log.warning(f"{fn_result} was not json decoded due to unknown exception: {str(err)} {traceback.format_exc()}")
-                        fn_result_json = None
-
+                    log.info(f"{fn_log} created a result={type(fn_result)=}")
+                    
+                    fn_result_json = None
+                    # Convert MapComposite to a standard Python dictionary
+                    if isinstance(fn_result, proto.marshal.collections.maps.MapComposite):
+                        fn_result_json = dict(fn_result)
+                    elif isinstance(fn_result, dict):
+                        fn_result_json = fn_result
+                    elif isinstance(fn_result, str):
+                        try:
+                            if isinstance(fn_result_json, str):
+                                fn_result_json = json.loads(fn_result_json)
+                        except json.JSONDecodeError:
+                            log.warning(f"{fn_result} was not JSON decoded")
+                        except Exception as err:
+                            log.warning(f"{fn_result} was not json decoded due to unknown exception: {str(err)} {traceback.format_exc()}")
+                    else:
+                        log.warning(f"Unrecognised type for {fn_log}: {type(fn_result)}")
+                    
+                    # should be a string or a dict by now
+                    log.info(f"Processed {fn_log} to {fn_result_json=} type: {type(fn_result_json)}")
+                    
                     if fn == "decide_to_go_on":
-                        log.info(f"{fn_result=} {type(fn_result)}")
-                        go_on_args = fn_result
-                        if go_on_args:
-                            token = f"\n{'STOPPING' if not go_on_args.get('go_on') else 'CONTINUE'}: {go_on_args.get('chat_summary')}\n"
+                        log.info(f"{fn_result_json=} {type(fn_result)}")
+                        if fn_result_json:
+                            token = f"\n{'STOPPING' if not fn_result_json.get('go_on') else 'CONTINUE'}: {fn_result_json.get('chat_summary')}\n"
                         else:
                             log.warning(f"{fn_result_json} did not work for decide_to_go_on")
-                            token = f"Error calling decide_to_go_on with {fn_result}\n"
+                            token = f"Error calling decide_to_go_on with {fn_result=}\n"
                     else:
                         token = f"--- {fn_log} result --- \n"
+                        # if json dict we look for keys to extract
                         if fn_result_json:
                             if fn_result_json.get('stdout'):
                                 text = fn_result_json.get('stdout').encode('utf-8').decode('unicode_escape')
@@ -492,6 +491,7 @@ class GenAIFunctionProcessor:
                             if not fn_result_json.get('stdout') and fn_result_json.get('stderr'):
                                 token += f"{fn_result}\n"
                         else:
+                            # probably a string, just return it
                             token += f"{fn_result}\n--- end ---\n"
                     
                     this_text += token
