@@ -288,7 +288,7 @@ class DiscoveryEngineClient:
 
         log.info(f"Discovery engine async request: {search_request=}")
         search_response = await self.async_search_client.search(search_request)
-
+        log.info(f"Discovery engine async response: {search_response=}")
         if parse_chunks_to_string:
 
             big_string = await self.async_process_chunks(search_response)
@@ -345,7 +345,7 @@ class DiscoveryEngineClient:
             raise ValueError(f'No results found in response: {response=}')
         
         # Iterate through each result in the response
-        async for result in response.results:
+        for result in response.results:
             chunk = result.chunk
             chunk_metadata = chunk.ChunkMetadata
 

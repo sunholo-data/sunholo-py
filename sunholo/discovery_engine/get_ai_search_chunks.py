@@ -3,6 +3,7 @@ from ..utils.gcp_project  import get_gcp_project
 from ..custom_logging import log
 from .discovery_engine_client import DiscoveryEngineClient
 from ..components import load_memories
+import traceback
 
 def get_all_chunks(question:str, config:ConfigManager):
     """
@@ -98,4 +99,4 @@ async def async_get_chunks(question, vector_name, num_chunks):
     try:
         return await de.async_get_chunks(question, num_previous_chunks=num_chunks, num_next_chunks=num_chunks)
     except Exception as err:
-        log.error(f"No discovery engine chunks found: {str(err)}")
+        log.error(f"No discovery engine chunks found: {str(err)} {traceback.format_exc()}")
