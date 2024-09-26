@@ -14,7 +14,7 @@ def get_default_email():
 
     if gcs_credentials is None:
         log.error("Could not refresh the credentials properly.")
-        return None
+        return None, None
 
     service_account_email = getattr(gcs_credentials, 'service_account_email', None)
     # If you use a service account credential, you can use the embedded email
@@ -23,7 +23,7 @@ def get_default_email():
         if not service_account_email:
             log.error("Could not create the credentials for signed requests - no credentials.service_account_email or GCS_MAIL_USER with roles/iam.serviceAccountTokenCreator")
             
-            return None
+            return None, None
     
     log.info(f"Found default email: {service_account_email=} for {project_id=}")
     return service_account_email, gcs_credentials

@@ -182,8 +182,6 @@ def add_file_to_gcs(filename: str,
 
     blob.metadata = the_metadata
     
-
-
     max_retries = 5
     base_delay = 1  # 1 second
     for attempt in range(max_retries):

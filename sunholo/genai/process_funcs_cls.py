@@ -262,8 +262,7 @@ class GenAIFunctionProcessor:
                             # Execute the function with the provided parameters
                             result = fn_exec(**params_obj)
                             log.info(f"Got result from {function_name}: {result} of type: {type(result)}")
-                            if not isinstance(result, str):
-                                log.warning(f"Tool functions should return strings: {function_name} returned type: {type(result)}")
+                            #TODO: return images
                         else:
                             fn_result = type(fn).to_dict(fn)
                             result = fn_result.get("result")

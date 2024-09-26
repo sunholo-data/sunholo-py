@@ -106,7 +106,14 @@ def sign_gcs_url(bucket_name:str, object_name:str, expiry_secs:int = 86400) -> O
     Returns:
         str: The signed URL or None if not avialable
     """
-    service_account_email, gcs_credentials = get_default_email()
+    result = get_default_email()
+    
+    # Check if the result is None
+    if result is None or any(item is None for item in result):
+        log.error("Failed to retrieve the service account email and credentials.")
+        return None
+
+    service_account_email, gcs_credentials = result
 
     expires = datetime.now() + timedelta(seconds=expiry_secs)
 
