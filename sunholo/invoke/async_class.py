@@ -28,40 +28,21 @@ class AsyncTaskRunner:
             coro = self._task_wrapper(name, func, args, queue)
             task = asyncio.create_task(coro)
             tasks[task] = name
+        
+        log.info(f"Start async run with {len(self.tasks)} runners")
+        while tasks:
+            done, _ = await asyncio.wait(tasks.keys(), return_when=asyncio.FIRST_COMPLETED)
+            for task in done:
+                name = tasks.pop(task)
+                try:
+                    # func_name = message['func_name']; result = message['result']
+                    result = await task
+                    yield {'type':'task_complete', 'func_name': name, 'result': result}
+                except Exception as e:
+                    log.error(f"Task {name} resulted in an error: {e}\n{traceback.format_exc()}")
+                    yield {'type':'task_error', 'func_name': name, 'error': f'{e}\n{traceback.format_exc()}'}
 
-        while tasks or not queue.empty():
-            if not queue.empty():
-                message = await queue.get()
-                log.info(f"Found queue message: {message}")
-                # Ignore heartbeats from completed tasks
-                if message['type'] == 'heartbeat' and message['func_name'] in completed_tasks:
-                    continue
-                yield message
-            else:
-                done, _ = await asyncio.wait(
-                    list(tasks.keys()),
-                    timeout=0.1,
-                    return_when=asyncio.FIRST_COMPLETED
-                )
-                for task in done:
-                    name = tasks.pop(task)
-                    completed_tasks.add(name)
-                    try:
-                        result = await task
-                        await queue.put({'type': 'task_complete', 'func_name': name, 'result': result})
-                    except Exception as e:
-                        log.error(f"Task {name} resulted in an error: {e}\n{traceback.format_exc()}")
-                        await queue.put({'type': 'task_error', 'func_name': name, 'error': e})
-
-        # Process any remaining messages in the queue
-        while not queue.empty():
-            message = await queue.get()
-            log.info(f"Found queue message: {message}")
-            if message['type'] == 'heartbeat' and message['func_name'] in completed_tasks:
-                continue
-            yield message
-
-    async def _task_wrapper(self, name: str, func: Callable[..., Any], args: Any, queue: asyncio.Queue) -> Any:
+    async def _task_wrapper(self, name: str, func: Callable[..., Any], args: Any, callback=None) -> Any:
         """Wraps the task function to process its output and handle retries, while managing heartbeat updates."""
         async def run_func():
             if asyncio.iscoroutinefunction(func):
