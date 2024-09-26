@@ -194,7 +194,7 @@ async def start_streaming_chat_async(question, vector_name, qna_func_async, chat
 
         content_to_send = await content_buffer.async_read()
         if content_to_send:
-            log.info(f"Content to send: {content_to_send}")
+            log.info(f"==Async\n{content_to_send}")
             yield content_to_send
             await content_buffer.async_clear()
         else:
