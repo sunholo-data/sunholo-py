@@ -36,11 +36,12 @@ class AsyncTaskRunner:
             for task in done:
                 name = tasks.pop(task)
                 try:
+                    # func_name = message['func_name']; result = message['result']
                     result = await task
-                    yield {name: result}
+                    yield {'type':'task_complete', 'func_name': name, 'result': result}
                 except Exception as e:
                     log.error(f"Task {name} resulted in an error: {e}\n{traceback.format_exc()}")
-                    yield {name: e}
+                    yield {'type':'task_error', 'func_name': name, 'error': f'{e}\n{traceback.format_exc()}'}
 
     async def _task_wrapper(self, name: str, func: Callable[..., Any], args: Any, callback=None) -> Any:
         """Wraps the task function to process its output and handle retries, while managing heartbeat updates."""
