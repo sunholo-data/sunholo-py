@@ -173,13 +173,13 @@ class BufferStreamingStdOutCallbackHandler(StreamingStdOutCallbackHandler):
         The buffer content is written to the content buffer when appropriate tokens or
         patterns are detected.
         """
-        log.debug(f"on_llm_new_token: {token}")
+        #log.debug(f"on_llm_new_token: {token}")
 
         # Check if the token is a heartbeat message
         if self._is_heartbeat_token(token):
             # Strip the [[HEARTBEAT]] markers and write immediately
             heartbeat_content = self._strip_heartbeat_markers(token)
-            log.info(f"Heartbeat token detected, writing immediately: {heartbeat_content}")
+            #log.info(f"Heartbeat token detected, writing immediately: {heartbeat_content}")
             self.content_buffer.write(heartbeat_content)
         else:
             self.buffer += token
@@ -268,13 +268,13 @@ class BufferStreamingStdOutCallbackHandlerAsync(StreamingStdOutCallbackHandler):
         log.info("Starting to stream LLM")
 
     async def async_on_llm_new_token(self, token: str, **kwargs: Any) -> None:
-        log.debug(f"async_on_llm_new_token: {token}")
+        #log.debug(f"async_on_llm_new_token: {token}")
 
         # Check if the token is a heartbeat message
         if self._is_heartbeat_token(token):
             # Strip the [[HEARTBEAT]] markers and write immediately
             heartbeat_content = self._strip_heartbeat_markers(token)
-            log.info(f"Heartbeat token detected, writing immediately: {heartbeat_content}")
+            #log.info(f"Heartbeat token detected, writing immediately: {heartbeat_content}")
             await self.content_buffer.async_write(heartbeat_content)
         else:
             self.buffer += token
