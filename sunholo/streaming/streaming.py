@@ -17,7 +17,7 @@ import json
 import time
 import asyncio
 
-from .content_buffer import ContentBuffer, BufferStreamingStdOutCallbackHandler
+from .content_buffer import ContentBuffer, BufferStreamingStdOutCallbackHandler, BufferStreamingStdOutCallbackHandlerAsync
 
 from ..qna.parsers import parse_output
 
@@ -159,7 +159,7 @@ async def start_streaming_chat_async(question, vector_name, qna_func_async, chat
         yield "No **kwargs in qna_func_async - please add it"
         
     content_buffer = ContentBuffer()
-    chat_callback_handler = BufferStreamingStdOutCallbackHandler(content_buffer=content_buffer, tokens=".!?\n")
+    chat_callback_handler = BufferStreamingStdOutCallbackHandlerAsync(content_buffer=content_buffer, tokens=".!?\n")
 
     result_queue = Queue()
     exception_queue = Queue()
@@ -179,32 +179,26 @@ async def start_streaming_chat_async(question, vector_name, qna_func_async, chat
     await asyncio.sleep(0)
 
     # Read and yield any initial content from the content buffer
-    content_to_send = content_buffer.read()
+    content_to_send = await content_buffer.async_read()
     if content_to_send:
         log.info(f"Initial content: {content_to_send}")
         yield content_to_send
-        content_buffer.clear()
-
-    start = time.time()
+        await content_buffer.async_clear()
 
     while not chat_callback_handler.stream_finished.is_set() and not stop_event.is_set():
-        await asyncio.sleep(wait_time)  # Use asyncio.sleep for async compatibility
-        log.info(f"async heartbeat - {round(time.time() - start, 2)} seconds")
-        
-        while not exception_queue.empty():
-            exception = exception_queue.get_nowait()
-            raise exception
+        try:
+            await asyncio.wait_for(content_buffer.content_available.wait(), timeout=timeout)
+        except asyncio.TimeoutError:
+            log.warning(f"Content production has timed out after {timeout} seconds")
+            break
 
-        content_to_send = content_buffer.read()
+        content_to_send = await content_buffer.async_read()
         if content_to_send:
-            log.info(f"==\n{content_to_send}")
+            log.info(f"Content to send: {content_to_send}")
             yield content_to_send
-            content_buffer.clear()
-            start = time.time()
+            await content_buffer.async_clear()
         else:
-            if time.time() - start > timeout:
-                log.warning(f"Content production has timed out after {timeout} seconds")
-                break
+            log.debug("Content available event set but no content found.")
 
     stop_event.set()
     await chat_task  # Ensure the async task is awaited
@@ -215,8 +209,6 @@ async def start_streaming_chat_async(question, vector_name, qna_func_async, chat
         parsed_final_result = parse_output(final_result)
         if 'answer' in parsed_final_result:
             yield json.dumps(parsed_final_result)
-
-
 
 
 def generate_proxy_stream(stream_to_f, user_input, vector_name, chat_history, generate_f_output, **kwargs):

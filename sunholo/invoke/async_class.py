@@ -15,34 +15,46 @@ class AsyncTaskRunner:
         log.info(f"Adding task: {func.__name__} with args: {args}")
         self.tasks.append((func.__name__, func, args))
 
-    async def run_async_as_completed(self, callback=None) -> AsyncGenerator[Dict[str, Any], None]:
+    async def run_async_as_completed(self) -> AsyncGenerator[Dict[str, Any], None]:
         """
-        Runs all tasks concurrently and yields results as they complete, while periodically sending heartbeat messages.
+        Runs all tasks concurrently and yields results and heartbeats as they are produced.
+        """
+        log.info("Running tasks asynchronously and yielding results and heartbeats as they occur")
+        queue = asyncio.Queue()
 
-        Args:
-            callback: The callback object that will receive heartbeat messages.
-        """
-        log.info("Running tasks asynchronously and yielding results as they complete")
         tasks = {}
         for name, func, args in self.tasks:
-            # Pass the callback down to _task_wrapper
-            coro = self._task_wrapper(name, func, args, callback)
+            coro = self._task_wrapper(name, func, args, queue)
             task = asyncio.create_task(coro)
             tasks[task] = name
 
-        log.info(f"Start async run with {len(self.tasks)} runners")
-        while tasks:
-            done, _ = await asyncio.wait(tasks.keys(), return_when=asyncio.FIRST_COMPLETED)
-            for task in done:
-                name = tasks.pop(task)
-                try:
-                    result = await task
-                    yield {name: result}
-                except Exception as e:
-                    log.error(f"Task {name} resulted in an error: {e}\n{traceback.format_exc()}")
-                    yield {name: e}
+        while tasks or not queue.empty():
+            if not queue.empty():
+                message = await queue.get()
+                log.info(f"Found queue message: {message}")
+                yield message
+            else:
+                # Wait for either a message in the queue or a task to complete
+                done, _ = await asyncio.wait(
+                    list(tasks.keys()),
+                    timeout=0.1,
+                    return_when=asyncio.FIRST_COMPLETED
+                )
+                for task in done:
+                    name = tasks.pop(task)
+                    try:
+                        result = await task
+                        await queue.put({'type': 'task_complete', 'func_name': name, 'result': result})
+                    except Exception as e:
+                        log.error(f"Task {name} resulted in an error: {e}\n{traceback.format_exc()}")
+                        await queue.put({'type': 'task_error', 'func_name': name, 'error': e})
 
-    async def _task_wrapper(self, name: str, func: Callable[..., Any], args: Any, callback=None) -> Any:
+        # After all tasks have completed, process any remaining messages in the queue
+        while not queue.empty():
+            message = await queue.get()
+            yield message
+
+    async def _task_wrapper(self, name: str, func: Callable[..., Any], args: Any, queue: asyncio.Queue) -> Any:
         """Wraps the task function to process its output and handle retries, while managing heartbeat updates."""
         async def run_func():
             if asyncio.iscoroutinefunction(func):
@@ -52,10 +64,8 @@ class AsyncTaskRunner:
                 # If the function is sync, run it in a thread to prevent blocking
                 return await asyncio.to_thread(func, *args)
 
-        # Start the heartbeat task if a callback is provided
-        heartbeat_task = None
-        if callback:
-            heartbeat_task = asyncio.create_task(self._send_heartbeat(callback, name))
+        # Start the heartbeat task
+        heartbeat_task = asyncio.create_task(self._send_heartbeat(queue, name))
 
         try:
             if self.retry_enabled:
@@ -76,29 +86,22 @@ class AsyncTaskRunner:
                     raise
         finally:
             # Stop the heartbeat task
-            if heartbeat_task:
-                heartbeat_task.cancel()
-                # Let the heartbeat_task finish in the background without awaiting it
-                try:
-                    await asyncio.shield(heartbeat_task)  # Ensure cancellation is handled cleanly
-                except asyncio.CancelledError:
-                    pass
+            heartbeat_task.cancel()
+            # Let the heartbeat_task finish in the background without awaiting it
+            try:
+                await asyncio.shield(heartbeat_task)  # Ensure cancellation is handled cleanly
+            except asyncio.CancelledError:
+                pass
 
             # Send a message indicating task completion to update the spinner's state
-            if callback:
-                completion_html = (
-                    f'<div style="display: none;" data-complete-id="{name}-spinner"></div>'
-                )
-                await callback.async_on_llm_new_token(token=completion_html)
+            completion_html = (
+                f'<div style="display: none;" data-complete-id="{name}-spinner"></div>'
+            )
+            await queue.put({'type': 'heartbeat', 'func_name': name, 'token': completion_html})
 
-    async def _send_heartbeat(self, callback, func_name, interval=2):
+    async def _send_heartbeat(self, queue: asyncio.Queue, func_name: str, interval=2):
         """
         Sends a periodic heartbeat to keep the task alive and update the spinner with elapsed time.
-
-        Args:
-            callback: The callback to notify that the task is still working.
-            func_name: The name of the task function.
-            interval: How frequently to send heartbeat messages (in seconds).
         """
         # Send the initial spinner HTML
         spinner_html = (
@@ -107,7 +110,9 @@ class AsyncTaskRunner:
             f'  <span class="elapsed-time">Task {func_name} is still running... 0s elapsed</span>'
             f'</div>'
         )
-        await callback.async_on_llm_new_token(token=spinner_html)
+        log.info(f"Heartbeat started for task {func_name}")
+
+        await queue.put({'type': 'heartbeat', 'func_name': func_name, 'token': spinner_html})
 
         # Keep track of elapsed time
         elapsed_time = 0
@@ -117,13 +122,13 @@ class AsyncTaskRunner:
             try:
                 await asyncio.sleep(interval)  # Sleep for the interval
                 elapsed_time += interval  # Increment elapsed time
-
+                log.info(f"Sending heartbeat for {func_name}: {elapsed_time}s elapsed")
                 # Update spinner with the elapsed time
                 update_html = (
                     f'<div style="display: none;" data-update-id="{func_name}-spinner">'
                     f'<span class="elapsed-time">Task {func_name} is still running... {elapsed_time}s elapsed</span>'
                     f'</div>'
                 )
-                await callback.async_on_llm_new_token(token=update_html)
+                await queue.put({'type': 'heartbeat', 'func_name': func_name, 'token': update_html})
             except asyncio.CancelledError:
                 break  # Exit the loop if the heartbeat task is canceled
