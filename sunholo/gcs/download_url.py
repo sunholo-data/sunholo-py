@@ -176,6 +176,7 @@ def construct_download_link_simple(bucket_name:str, object_name:str) -> Tuple[st
     else:
         public_url = f"https://storage.cloud.google.com/{bucket_name}/{quote(object_name)}"
     filename = os.path.basename(object_name)
+    log.info(f"Created simple download link: {public_url}")
     return public_url, filename, False
 
 def parse_gs_uri(gs_uri: str) -> Tuple[str, str]:

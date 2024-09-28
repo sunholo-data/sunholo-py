@@ -106,7 +106,6 @@ class ContentBuffer:
         """
         async with self.lock:
             self.content = ""
-            log.debug("Content buffer cleared")
             self.content_available.clear()
 
 
