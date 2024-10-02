@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.2.1">
 <title data-rh="true">process_funcs_cls.py | Sunholo Dev Portal</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://dev.sunholo.com/docs/sunholo/genai/process_funcs_cls"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="process_funcs_cls.py | Sunholo Dev Portal"><meta data-rh="true" name="description" content="Source: sunholo/genai/processfuncscls.py"><meta data-rh="true" property="og:description" content="Source: sunholo/genai/processfuncscls.py"><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://dev.sunholo.com/docs/sunholo/genai/process_funcs_cls"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/genai/process_funcs_cls" hreflang="en"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/genai/process_funcs_cls" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.f6c7f565.css">
-<script src="/assets/js/runtime~main.f4f6eb27.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.0186abea.js" defer="defer"></script>
 <script src="/assets/js/main.d33d81be.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -71,6 +71,17 @@ function implementations required for the application.</p>
 dict: A dictionary where keys are function names and values are function objects</p>
 <p>Raises:
 NotImplementedError: If the method is not overridden in a subclass.</p>
+<ul>
+<li>convert_composite_to_native(self, value)<!-- -->
+<ul>
+<li>Recursively converts a proto MapComposite or RepeatedComposite object to native Python types.</li>
+</ul>
+</li>
+</ul>
+<p>Args:
+value: The proto object, which could be a MapComposite, RepeatedComposite, or a primitive.</p>
+<p>Returns:
+The equivalent Python dictionary, list, or primitive type.</p>
 <ul>
 <li>decide_to_go_on(go_on: bool, chat_summary: str) -&gt; dict<!-- -->
 <ul>
@@ -146,7 +157,7 @@ list[Part] | str: A list of Part objects or a formatted string with the results.
 </ul>
 </li>
 <li>
-<p>run_agent_loop(self, chat, content, callback=None, guardrail_max=10, loop_return=3)</p>
+<p>run_agent_loop(self, chat: google.generativeai.generative_models.ChatSession, content: list, callback=None, guardrail_max=10, loop_return=3)</p>
 <ul>
 <li>Runs the agent loop, sending messages to the orchestrator, processing responses, and executing functions.</li>
 </ul>
