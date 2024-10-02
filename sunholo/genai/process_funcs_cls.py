@@ -14,6 +14,7 @@ try:
     import proto
     from google.generativeai.types import RequestOptions
     from google.api_core import retry
+    from google.generativeai import ChatSession
 except ImportError:
     genai = None
 
@@ -21,6 +22,7 @@ from .images import extract_gs_images_and_genai_upload
 
 if TYPE_CHECKING:
     from google.generativeai.protos import Part
+    from google.generativeai import ChatSession
 
 
 
@@ -369,8 +371,28 @@ class GenAIFunctionProcessor:
         log.info(f"Cleaning:\n{string}\n > to >\n{clean}")
         
         return clean
+    
+    def convert_composite_to_native(self, value):
+        """
+        Recursively converts a proto MapComposite or RepeatedComposite object to native Python types.
 
-    def run_agent_loop(self, chat, content, callback=None, guardrail_max=10, loop_return=3):
+        Args:
+            value: The proto object, which could be a MapComposite, RepeatedComposite, or a primitive.
+
+        Returns:
+            The equivalent Python dictionary, list, or primitive type.
+        """
+        if isinstance(value, proto.marshal.collections.maps.MapComposite):
+            # Convert MapComposite to a dictionary, recursively processing its values
+            return {key: self.convert_composite_to_native(val) for key, val in value.items()}
+        elif isinstance(value, proto.marshal.collections.repeated.RepeatedComposite):
+            # Convert RepeatedComposite to a list, recursively processing its elements
+            return [self.convert_composite_to_native(item) for item in value]
+        else:
+            # If it's a primitive value, return it as is
+            return value
+
+    def run_agent_loop(self, chat:ChatSession, content:list, callback=None, guardrail_max=10, loop_return=3):
         """
         Runs the agent loop, sending messages to the orchestrator, processing responses, and executing functions.
 
@@ -488,7 +510,9 @@ class GenAIFunctionProcessor:
                     fn_result_json = None
                     # Convert MapComposite to a standard Python dictionary
                     if isinstance(fn_result, proto.marshal.collections.maps.MapComposite):
-                        fn_result_json = dict(fn_result)
+                        fn_result_json = self.convert_composite_to_native(fn_result)
+                    elif isinstance(fn_result, proto.marshal.collections.repeated.RepeatedComposite):
+                        fn_result = self.convert_composite_to_native(fn_result)
                     elif isinstance(fn_result, dict):
                         fn_result_json = fn_result
                     elif isinstance(fn_result, str):
