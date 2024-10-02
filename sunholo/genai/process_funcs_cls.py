@@ -17,6 +17,7 @@ try:
     from google.generativeai import ChatSession
 except ImportError:
     genai = None
+    ChatSession = None
 
 from .images import extract_gs_images_and_genai_upload
 
