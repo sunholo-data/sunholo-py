@@ -6,17 +6,49 @@ def load_prompt_from_yaml(key, prefix="sunholo", load_from_file=False, f_string=
     """
     Returns a string you can use with prompts.
 
-    Will first try to load from the Langfuse prompt library, if unavailable will look in promptConfig type file.
+    If load_from_file=False, by default it will try to load from Langfuse, if fails (which is laggy so not ideal) then load from file.
+
+    Prompts on Langfuse should be specified with a name with {prefix}-{key} e.g. "sunholo-hello"
+    
+    Prompts in files will use yaml:
+
+    ```yaml
+    kind: promptConfig
+    apiVersion: v1
+    prompts:
+    sunholo:
+        hello: |
+            Say hello to {name} 
+    ```
+
+    And load via utils.ConfigManager:
+
+    ```python
+    # equivalent to load_prompt_from_yaml("hello", load_from_file=True)
+    config = ConfigManager("sunholo")
+    config.promptConfig("hello")
+    ```
 
     If f_string is True will be in a Langchain style prompt e.g. { one brace }
-    If f_string is False will be Langfuse style prompt e.g. {{ two braces }}
+    If f_string is False will be Langfuse style prompt e.g. {{ two braces }} - see https://langfuse.com/docs/prompts/get-started
 
     Example:
 
     ```python
     from sunholo.langfuse.prompts import load_prompt_from_yaml
-    from langchain_core.prompts import PromptTemplate
-    
+    # f_string
+    hello_template = load_prompt_from_yaml("hello")
+    hello_template.format(name="Bob")
+
+    #langfuse style
+    hello_template = load_prompt_from_yaml("hello", f_string=False)
+    hello_template.compile(name="Bob")
+
+    # if prompt not available on langfuse, will attempt to load from local promptConfig file
+    hello_template = load_prompt_from_yaml("hello", load_from_file=True)
+
+    ```
+
     """
     config = ConfigManager(prefix)
     if load_from_file:
