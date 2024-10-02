@@ -25,6 +25,40 @@ except ImportError:
 from ..custom_logging import log
 from ..utils import ConfigManager
 
+def guess_image_type(file_path: str) -> str:
+    """
+    Guess the image type based on the file extension.
+
+    Args:
+        file_path (str): The path or URL of the image file.
+
+    Returns:
+        str: The guessed image type (e.g., "jpeg", "png", "gif", etc.)
+             or None if the extension is not recognized.
+    """
+    # Extract the file extension
+    _, ext = os.path.splitext(file_path)
+    
+    # Normalize and remove the leading dot
+    ext = ext.lower().strip('.')
+
+    # Mapping of common file extensions to image types
+    extension_to_type = {
+        "jpg": "image/jpeg",
+        "jpeg": "image/jpeg",
+        "png": "image/png",
+        "gif": "image/gif",
+        "bmp": "image/bmp",
+        "tiff": "image/tiff",
+        "tif": "image/tiff",
+        "webp": "image/webp",
+        "ico": "image/ico",
+        "svg": "image/svg",
+        "pdf": "application/pdf",
+    }
+    
+    return extension_to_type.get(ext.lower(), None)
+
 
 def handle_base64_image(base64_data: str, vector_name: str, extension: str):
     """
@@ -58,14 +92,7 @@ def handle_base64_image(base64_data: str, vector_name: str, extension: str):
         os.remove(filename)  # Clean up the saved file
 
         # Determine MIME type based on extension
-        mime_type = {
-            ".jpg": "image/jpeg",
-            ".jpeg": "image/jpeg",
-            ".png": "image/png",
-            ".gif": "image/gif",
-            ".bmp": "image/bmp",
-            ".tiff": "image/tiff"
-        }.get(extension.lower(), "application/octet-stream")  # Default MIME type if unknown
+        mime_type = guess_image_type(extension) or "application/octet-stream"
 
         return image_uri, mime_type
     except Exception as e:

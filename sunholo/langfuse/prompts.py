@@ -2,13 +2,14 @@ from ..custom_logging import log
 from ..utils import ConfigManager
 
 # Load the YAML file
-def load_prompt_from_yaml(key, prefix="sunholo", load_from_file=False):
+def load_prompt_from_yaml(key, prefix="sunholo", load_from_file=False, f_string=True):
     """
-    Returns a string you can use with Langfuse PromptTemplate.from_template() 
+    Returns a string you can use with prompts.
 
     Will first try to load from the Langfuse prompt library, if unavailable will look in promptConfig type file.
 
-    Langfuse prompts have {{ two braces }}, Langchain prompts have { one brace }.
+    If f_string is True will be in a Langchain style prompt e.g. { one brace }
+    If f_string is False will be Langfuse style prompt e.g. {{ two braces }}
 
     Example:
 
@@ -36,7 +37,10 @@ def load_prompt_from_yaml(key, prefix="sunholo", load_from_file=False):
             
         langfuse_prompt = langfuse.get_prompt(langfuse_template, cache_ttl_seconds=300)
 
-        return langfuse_prompt.get_langchain_prompt()
+        if f_string:
+            return langfuse_prompt.get_langchain_prompt()
+        
+        return langfuse_prompt
     
     except Exception as err:
         log.warning(f"Could not find langfuse template: {langfuse_template} - {str(err)} - attempting to load from promptConfig")

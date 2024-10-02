@@ -17,8 +17,12 @@ try:
 except ImportError:
     genai = None
 
+from .images import extract_gs_images_and_genai_upload
+
 if TYPE_CHECKING:
     from google.generativeai.protos import Part
+
+
 
 class GenAIFunctionProcessor:
     """
@@ -366,20 +370,22 @@ class GenAIFunctionProcessor:
         
         return clean
 
-    def run_agent_loop(self, chat, content, callback, guardrail_max=10, loop_return=3):
+    def run_agent_loop(self, chat, content, callback=None, guardrail_max=10, loop_return=3):
         """
         Runs the agent loop, sending messages to the orchestrator, processing responses, and executing functions.
 
         Args:
             chat: The chat object for interaction with the orchestrator.
             content: The initial content to send to the agent.
-            callback: The callback object for handling intermediate responses.
+            callback: The callback object for handling intermediate responses. If not supplied will use self.IOCallback()
             guardrail_max (int): The maximum number of iterations for the loop.
             loop_return (int): The number of last loop iterations to return. Default 3 will return last 3 iterations. If loop_return > guardrail_max then all iterations are returned.
 
         Returns:
             tuple: (big_text, usage_metadata) from the loop execution.
         """
+        if not callback:
+            callback = self.IOCallback()
         guardrail = 0
         big_result = []
         usage_metadata = {
@@ -535,6 +541,13 @@ class GenAIFunctionProcessor:
 
             if this_text:
                 content.append(f"Agent: {this_text}")    
+                # if text includes gs:// try to download it
+                image_uploads = extract_gs_images_and_genai_upload(this_text)
+                if image_uploads:
+                    for img in image_uploads:
+                        log.info(f"Adding {img=}")
+                        content.append(img)
+                        content.append(f"{img.name} was created by agent and added")
                 log.info(f"[{guardrail}] Updated content:\n{this_text}")
                 big_result.append(this_text)
             else:
@@ -566,6 +579,15 @@ class GenAIFunctionProcessor:
         big_text = "\n".join(big_result[-loop_return:])
 
         return big_text, usage_metadata
+
+    class IOCallback:
+        """
+        This is a default callback that will print to console any tokens it recieves.
+        """
+        def on_llm_new_token(self, token:str):
+            print(token)
+        def on_llm_end(self, response):
+            print(f"\nFull response: \n{response}")
 
     @staticmethod
     def decide_to_go_on(go_on: bool, chat_summary: str) -> dict:
