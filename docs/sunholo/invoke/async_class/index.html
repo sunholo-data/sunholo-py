@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.2.1">
 <title data-rh="true">async_class.py | Sunholo Dev Portal</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://dev.sunholo.com/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://dev.sunholo.com/docs/sunholo/invoke/async_class"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="async_class.py | Sunholo Dev Portal"><meta data-rh="true" name="description" content="Source: sunholo/invoke/asyncclass.py"><meta data-rh="true" property="og:description" content="Source: sunholo/invoke/asyncclass.py"><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://dev.sunholo.com/docs/sunholo/invoke/async_class"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/invoke/async_class" hreflang="en"><link data-rh="true" rel="alternate" href="https://dev.sunholo.com/docs/sunholo/invoke/async_class" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.f6c7f565.css">
-<script src="/assets/js/runtime~main.0186abea.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.ff8881bf.js" defer="defer"></script>
 <script src="/assets/js/main.d33d81be.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -21,7 +21,7 @@
 </ul>
 </li>
 <li>
-<p>_execute_task(self, func: Callable[..., Any], *args: Any) -&gt; Any</p>
+<p>_execute_task(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -&gt; Any</p>
 <ul>
 <li>Executes the given task function and returns its result.</li>
 </ul>
@@ -29,7 +29,8 @@
 </ul>
 <p>Args:
 func (Callable): The callable to execute.
-*args: Arguments to pass to the callable.</p>
+*args: Positional arguments to pass to the callable.
+**kwargs: Keyword arguments to pass to the callable.</p>
 <p>Returns:
 Any: The result of the task.</p>
 <ul>
@@ -40,7 +41,7 @@ Any: The result of the task.</p>
 </ul>
 </li>
 <li>
-<p>_run_with_retries(self, name: str, func: Callable[..., Any], *args: Any, queue: asyncio.queues.Queue, completion_event: asyncio.locks.Event) -&gt; None</p>
+<p>_run_with_retries(self, name: str, func: Callable[..., Any], args: tuple, kwargs: dict, queue: asyncio.queues.Queue, completion_event: asyncio.locks.Event) -&gt; None</p>
 <ul>
 <li>Executes a task with optional retries and sends completion or error messages to the queue.</li>
 </ul>
@@ -58,14 +59,18 @@ completion_event (asyncio.Event): Event to signal when the task is completed.
 queue (asyncio.Queue): The queue to send heartbeat messages to.
 interval (int): How frequently to send heartbeat messages (in seconds).</p>
 <ul>
-<li>
-<p>add_task(self, func: Callable[..., Any], *args: Any)</p>
+<li>add_task(self, func: Callable[..., Any], *args: Any, **kwargs: Any)<!-- -->
 <ul>
-<li>Adds a task to the list of tasks to be executed.</li>
+<li>Adds a task to the list of tasks to be executed, supporting both positional and keyword arguments.</li>
 </ul>
 </li>
-<li>
-<p>run_async_as_completed(self) -&gt; AsyncGenerator[Dict[str, Any], NoneType]</p>
+</ul>
+<p>Args:
+func: The function to be executed.
+*args: Positional arguments for the function.
+**kwargs: Keyword arguments for the function.</p>
+<ul>
+<li>run_async_as_completed(self) -&gt; AsyncGenerator[Dict[str, Any], NoneType]<!-- -->
 <ul>
 <li>Runs all tasks concurrently and yields results as they complete,
 while periodically sending heartbeat messages.</li>
