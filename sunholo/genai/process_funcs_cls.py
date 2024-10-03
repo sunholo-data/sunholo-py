@@ -441,7 +441,7 @@ class GenAIFunctionProcessor:
                                             initial=10, 
                                             multiplier=2, 
                                             maximum=60, 
-                                            timeout=100
+                                            timeout=60
                                         )
                                        ))
                 
