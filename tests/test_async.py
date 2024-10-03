@@ -33,6 +33,10 @@ def format_token_output(func_name, tokens, result=None, error=None):
 async def count_tokens(result):
     return len(result.split())
 
+async def kwargs_function(required_arg, **kwargs):
+    await asyncio.sleep(3)  # Simulate a medium-running task
+    return f"Required arg: {required_arg}, Optional args: {kwargs}"
+
 # Example usage
 async def main():
     runner = AsyncTaskRunner(retry_enabled=True)
@@ -41,6 +45,7 @@ async def main():
     runner.add_task(google_search, "<original user question>...", "<config>")
     runner.add_task(use_pdfs, "<original user question>...", None, None)
     runner.add_task(process_urls, "please give me a forecast of ppas for spain using wind energy")
+    runner.add_task(kwargs_function, "required_value", optional_arg1="test", optional_arg2=42)
     
     callback = MockCallback()
     answers = {}

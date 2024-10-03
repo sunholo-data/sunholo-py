@@ -13,12 +13,18 @@ class AsyncTaskRunner:
         self.retry_enabled = retry_enabled
         self.retry_kwargs = retry_kwargs or {}
 
-    def add_task(self, func: Callable[..., Any], *args: Any):
+    def add_task(self, func: Callable[..., Any], *args: Any, **kwargs: Any):
         """
-        Adds a task to the list of tasks to be executed.
+        Adds a task to the list of tasks to be executed, supporting both positional and keyword arguments.
+
+        Args:
+            func: The function to be executed.
+            *args: Positional arguments for the function.
+            **kwargs: Keyword arguments for the function.
         """
-        log.info(f"Adding task: {func.__name__} with args: {args}")
-        self.tasks.append((func.__name__, func, args))
+        log.info(f"Adding task: {func.__name__} with args: {args}, kwargs: {kwargs}")
+        # Store the function name, function itself, args, and kwargs
+        self.tasks.append((func.__name__, func, args, kwargs))
 
     async def run_async_as_completed(self) -> AsyncGenerator[Dict[str, Any], None]:
         """
@@ -34,12 +40,13 @@ class AsyncTaskRunner:
         task_infos = []
 
         # Start all tasks and their corresponding heartbeats
-        for name, func, args in self.tasks:
+        for name, func, args, kwargs in self.tasks:
             # Create an event to signal task completion to the heartbeat
+            log.info(f"Executing task: {name=}, {func=} with args: {args}, kwargs: {kwargs}")
             completion_event = asyncio.Event()
 
             # Start the main task with retries
-            task_coro = self._run_with_retries(name, func, *args, queue=queue, completion_event=completion_event)
+            task_coro = self._run_with_retries(name, func, args, kwargs, queue, completion_event)            
             task = asyncio.create_task(task_coro)
 
             # Start the heartbeat coroutine
@@ -98,11 +105,18 @@ class AsyncTaskRunner:
         await queue.put(None)
         log.info("Monitor: Sent sentinel to queue")
 
-    async def _run_with_retries(self, name: str, func: Callable[..., Any], *args: Any, queue: asyncio.Queue, completion_event: asyncio.Event) -> None:
+    async def _run_with_retries(self, 
+                                name: str,
+                                func: Callable[..., Any], 
+                                args: tuple,
+                                kwargs: dict,
+                                queue: asyncio.Queue, 
+                                completion_event: asyncio.Event) -> None:
         """
         Executes a task with optional retries and sends completion or error messages to the queue.
         """
         try:
+            log.info(f"run_with_retries: {name=}, {func=} with args: {args}, kwargs: {kwargs}")
             if self.retry_enabled:
                 retry_kwargs = {
                     'wait': wait_random_exponential(multiplier=1, max=60),
@@ -113,13 +127,13 @@ class AsyncTaskRunner:
                 async for attempt in AsyncRetrying(**retry_kwargs):
                     with attempt:
                         log.info(f"Starting task '{name}' with retry")
-                        result = await self._execute_task(func, *args)
+                        result = await self._execute_task(func, *args, **kwargs)
                         await queue.put({'type': 'task_complete', 'func_name': name, 'result': result})
                         log.info(f"Sent 'task_complete' message for task '{name}'")
                         return
             else:
                 log.info(f"Starting task '{name}' with no retry")
-                result = await self._execute_task(func, *args)
+                result = await self._execute_task(func, *args, **kwargs)
                 await queue.put({'type': 'task_complete', 'func_name': name, 'result': result})
                 log.info(f"Sent 'task_complete' message for task '{name}'")
         except Exception as e:
@@ -128,24 +142,24 @@ class AsyncTaskRunner:
             log.info(f"Sent 'task_error' message for task '{name}'")
         finally:
             log.info(f"Task '{name}' completed.")
-            # Set the completion event after sending the message
             completion_event.set()
 
-    async def _execute_task(self, func: Callable[..., Any], *args: Any) -> Any:
+    async def _execute_task(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         """
         Executes the given task function and returns its result.
 
         Args:
             func (Callable): The callable to execute.
-            *args: Arguments to pass to the callable.
+            *args: Positional arguments to pass to the callable.
+            **kwargs: Keyword arguments to pass to the callable.
 
         Returns:
             Any: The result of the task.
         """
         if asyncio.iscoroutinefunction(func):
-            return await func(*args)
+            return await func(*args, **kwargs)
         else:
-            return await asyncio.to_thread(func, *args)
+            return await asyncio.to_thread(func, *args, **kwargs)
 
     async def _send_heartbeat(self, func_name: str, completion_event: asyncio.Event, queue: asyncio.Queue, interval: int = 2):
         """
@@ -175,4 +189,3 @@ class AsyncTaskRunner:
             log.info(f"Heartbeat for task '{func_name}' has been canceled")
         finally:
             log.info(f"Heartbeat for task '{func_name}' stopped")
-
