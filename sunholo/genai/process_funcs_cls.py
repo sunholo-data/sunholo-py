@@ -393,7 +393,7 @@ class GenAIFunctionProcessor:
             # If it's a primitive value, return it as is
             return value
 
-    def run_agent_loop(self, chat:ChatSession, content:list, callback=None, guardrail_max=10, loop_return=3):
+    def run_agent_loop(self, chat:ChatSession, content:list, callback=None, guardrail_max=10, loop_return=3): # type: ignore
         """
         Runs the agent loop, sending messages to the orchestrator, processing responses, and executing functions.
 
@@ -441,7 +441,7 @@ class GenAIFunctionProcessor:
                                             initial=10, 
                                             multiplier=2, 
                                             maximum=60, 
-                                            timeout=300
+                                            timeout=100
                                         )
                                        ))
                 
