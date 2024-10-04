@@ -368,8 +368,8 @@ class GenAIFunctionProcessor:
         if not isinstance(string, str):
             return string
         
-        clean = string.encode('utf-8').decode('unicode_escape')
-        log.info(f"Cleaning:\n{string}\n > to >\n{clean}")
+        clean = string.encode('utf-8', errors='replace').decode('unicode_escape')
+        log.info(f"Cleaning:\n{string[:100]}\n > to >\n{clean[:100]}")
         
         return clean
     
