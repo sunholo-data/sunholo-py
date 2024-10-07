@@ -455,7 +455,7 @@ class GenAIFunctionProcessor:
                 msg = f"Error sending {content} to model: {str(e)} - {traceback.format_exc()}"
                 log.info(msg)
                 token_queue.append(msg)
-                this_text += msg
+                break
 
             loop_metadata = response.usage_metadata
             if loop_metadata:
