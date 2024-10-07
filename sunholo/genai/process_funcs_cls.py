@@ -15,6 +15,7 @@ try:
     from google.generativeai.types import RequestOptions
     from google.api_core import retry
     from google.generativeai import ChatSession
+    from google.api_core.exceptions import RetryError
 except ImportError:
     genai = None
     ChatSession = None
@@ -441,15 +442,20 @@ class GenAIFunctionProcessor:
                                             initial=10, 
                                             multiplier=2, 
                                             maximum=60, 
-                                            timeout=60
+                                            timeout=90
                                         )
                                        ))
+            except RetryError as err:
+                msg = f"Retry error - lets try again if its occured less than twice: {str(err)}"
+                log.warning(msg)
+                token_queue.append(msg)
+                this_text += msg
                 
             except Exception as e:
                 msg = f"Error sending {content} to model: {str(e)} - {traceback.format_exc()}"
                 log.info(msg)
                 token_queue.append(msg)
-                break
+                this_text += msg
 
             loop_metadata = response.usage_metadata
             if loop_metadata:

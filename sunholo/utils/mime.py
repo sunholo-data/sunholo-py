@@ -1,4 +1,5 @@
 import os
+from ..custom_logging import log
 
 def guess_mime_type(file_path: str) -> str:
     """
@@ -18,6 +19,7 @@ def guess_mime_type(file_path: str) -> str:
     ext = ext.lower().strip('.')
 
     # Mapping of common file extensions to file types
+    log.info(f"Guessing {file_path} is {ext}")
     extension_to_type = {
         "jpg": "image/jpeg",
         "jpeg": "image/jpeg",
@@ -59,6 +61,8 @@ def guess_mime_type(file_path: str) -> str:
         "tsx": "text/tsx",
         "jsx": "text/jsx",
     }
-    
-    return extension_to_type.get(ext, "")
+    mime=extension_to_type.get(ext, "")
+    log.info(f"Guessing {file_path} with {ext=} is {mime=}")
+
+    return mime
 
