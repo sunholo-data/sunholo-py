@@ -7,7 +7,7 @@ from ..utils.api_key import has_multivac_api_key
 import asyncio
 from threading import Thread
 
-def direct_vac(vac_input: dict, vac_name: str, chat_history=[]):
+def direct_vac(vac_input: dict, vac_name: str, chat_history=None):
     """
     This lets VACs call other VAC Q&A endpoints within their code
     """
@@ -42,6 +42,8 @@ def direct_vac(vac_input: dict, vac_name: str, chat_history=[]):
     
     # Prepare the kwargs for send_to_qa by copying vac_input and adding more values
     qa_kwargs = vac_input.copy()
+    if not chat_history:
+        chat_history = []
 
     # Add additional arguments
     qa_kwargs.update({
@@ -68,7 +70,7 @@ def direct_vac(vac_input: dict, vac_name: str, chat_history=[]):
     
     return answer
 
-async def async_direct_vac(vac_input: dict, vac_name: str, chat_history=[]):
+async def async_direct_vac(vac_input: dict, vac_name: str, chat_history=None):
     """
     Asynchronous version of direct_vac using send_to_qa_async.
     Allows VACs to call other VAC Q&A endpoints without blocking the event loop.
@@ -105,6 +107,9 @@ async def async_direct_vac(vac_input: dict, vac_name: str, chat_history=[]):
     # Prepare the kwargs for send_to_qa_async by copying vac_input and adding more values
     qa_kwargs = vac_input.copy()
 
+    if not chat_history:
+        chat_history = []
+
     # Add additional arguments
     qa_kwargs.update({
         'vector_name': vac_name,
@@ -138,7 +143,7 @@ async def async_direct_vac(vac_input: dict, vac_name: str, chat_history=[]):
 
     return answer
 
-def direct_vac_stream(vac_input: dict, vac_name: str, chat_history=[]):
+def direct_vac_stream(vac_input: dict, vac_name: str, chat_history=None):
 
     if 'user_input' not in vac_input:
         raise ValueError('vac_input must contain at least "user_input" key - got {vac_input}')
@@ -146,6 +151,9 @@ def direct_vac_stream(vac_input: dict, vac_name: str, chat_history=[]):
     user_id = vac_input.get('user_id')
     session_id = vac_input.get('session_id')
     image_uri = vac_input.get('image_url') or vac_input.get('image_uri')
+
+    if not chat_history:
+        chat_history = []
     
     log.info(f"Streaming invoke_vac_qa with {vac_input=}")
     def stream_response():
@@ -196,7 +204,7 @@ def direct_vac_stream(vac_input: dict, vac_name: str, chat_history=[]):
 
 
 
-async def async_direct_vac_stream(vac_input: dict, vac_name: str, chat_history=[]):
+async def async_direct_vac_stream(vac_input: dict, vac_name: str, chat_history=None):
     """
     Asynchronous version of direct_vac_stream.
     Streams responses from VAC Q&A endpoints without blocking the event loop.
@@ -209,13 +217,15 @@ async def async_direct_vac_stream(vac_input: dict, vac_name: str, chat_history=[
     image_uri = vac_input.get('image_url') or vac_input.get('image_uri')
 
     log.info(f"Streaming invoke_vac_qa with vac_input={vac_input}")
+    if not chat_history:
+        chat_history = []
 
     def sync_stream_response():
         generate = generate_proxy_stream(
             send_to_qa,
             vac_input["user_input"],
             vector_name=vac_name,
-            chat_history=chat_history,
+            chat_history=chat_history or [],
             generate_f_output=lambda x: x,  # Replace with actual processing function
             stream_wait_time=0.5,
             stream_timeout=120,
