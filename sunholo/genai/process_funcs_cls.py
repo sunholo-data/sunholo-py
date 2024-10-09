@@ -60,12 +60,13 @@ class GenAIFunctionProcessor:
     ```
     """
 
-    def __init__(self, config: ConfigManager):
+    def __init__(self, config: ConfigManager=None, model_name=None):
         """
         Initializes the GenAIFunctionProcessor with the given configuration.
 
         Args:
             config (ConfigManager): The configuration manager instance.
+            model_name (str): The name of the model
         """
         if not genai:
             raise ImportError("import google.generativeai as genai is required, import via `pip install sunholo[gcp]`")
@@ -77,7 +78,12 @@ class GenAIFunctionProcessor:
         if 'decide_to_go_on' not in self.funcs:
             self.funcs['decide_to_go_on'] = self.decide_to_go_on
 
-        self.model_name = config.vacConfig("model") if config.vacConfig("llm") == "vertex" else "gemini-1.5-flash"
+        self.model_name = "gemini-1.5-flash"
+        if config:
+            self.model_name = config.vacConfig("model") if config.vacConfig("llm") == "vertex" else "gemini-1.5-flash"
+        elif model_name:
+            self.model_name = model_name
+        
         self.last_api_requests_and_responses = []
         self._validate_functions()
 
@@ -281,7 +287,7 @@ class GenAIFunctionProcessor:
                         error_message = f"Error in {function_name}: {str(err)}"
                         traceback_details = traceback.format_exc()
                         log.warning(f"{error_message}\nTraceback: {traceback_details}")
-                        result = [f"{error_message}\n{traceback_details}"]
+                        result = [error_message] #traceback uses too many tokens
                     clean_result = self.remove_invisible_characters(result)
                     api_requests_and_responses.append(
                         [function_name, params, clean_result]
