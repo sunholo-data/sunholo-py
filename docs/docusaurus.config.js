@@ -46,14 +46,14 @@ const config = {
           editUrl:
             'https://github.com/sunholo-data/sunholo-py/tree/main/docs/',
         },
-        blog: false,
-        //blog: {
+        //blog: true,
+        blog: {
         //  showReadingTime: true,
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
-        //  editUrl:
-        //    'https://github.com/sunholo-data/sunholo-py/tree/main/docs/',
-        //},
+          editUrl:
+            'https://github.com/sunholo-data/sunholo-py/tree/main/blog/',
+        },
         theme: {
           customCss: './src/css/custom.css',
         },
@@ -79,7 +79,7 @@ const config = {
             position: 'left',
             label: 'Documentation',
           },
-          //{to: '/blog', label: 'Blog', position: 'left'},
+          {to: '/blog', label: 'Blog', position: 'left'},
           {
             href: 'https://github.com/sunholo-data/sunholo-py',
             label: 'GitHub',

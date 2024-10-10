@@ -28,3 +28,22 @@
   --ifm-color-primary-lightest: #e6b3a2;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
+
+/* For inline code snippets */
+code {
+  font-size: 0.9em; /* Adjust to desired size, e.g., 90% of the default size */
+}
+
+/* Target PrismJS code blocks more directly */
+div[class*="language-"] pre code {
+  font-size: 0.85em !important; /* Force PrismJS blocks to respect your font size */
+}
+
+/* Job advert styling */
+.job-advert {
+  border: 2px solid #c94435;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  margin: 20px 0;
+}
