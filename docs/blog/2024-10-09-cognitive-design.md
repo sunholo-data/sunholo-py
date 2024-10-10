@@ -8,7 +8,7 @@ authors:
     socials:
       github: MarkEdmondson1234
 tags: [agents, bigquery, cognitive-design]
-image: img/cognitive-design.webp
+image: https://dev.sunholo.com/assets/images/cognitive-design-ec3719c6b00a22113dd45194210067fa.webp
 slug: /cognitive-design
 ---
 
