@@ -20,6 +20,22 @@ This blog post will take some of what I've learnt this past year within GenAI an
 
 <!-- truncate -->
 
+### Supporting links
+
+* *Bertha 2.0 code from this blog post is released under the MIT license and available here: https://github.com/sunholo-data/blog-examples/blob/dev/cognitive-design/bertha.py*
+* *A NotebookLM generated podcast about this blogpost and some of its sources is available here:*
+
+<iframe
+   frameborder="0"
+   width="500"
+   height="100"
+   src="https://drive.google.com/file/d/1_i96FTA37Fpkvw-ib7LNzSTpDa9o9-vD/preview?usp=drive_link">
+</iframe>
+
+[Alternatively, listen to the audio file on Google Drive](https://drive.google.com/file/d/1_i96FTA37Fpkvw-ib7LNzSTpDa9o9-vD/view?usp=drive_link) 
+
+
+
 ## Introduction to Bertha the BigQuery Agent
 
 If you were a 7-year old in the UK around 1986 then you may recall a lovely machine called [Bertha](https://www.imdb.com/title/tt0211240/), an anthropomorphised factory that could turn junk into any shiny object. 
@@ -660,6 +676,14 @@ Trying Bertha 2.0 for the same question as before we see a lot better SQL used:
  - decide_to_go_on("go_on=False, chat_summary=Reported the traffic per source. High confidence. The source field has null values, asked the user to confirm if this is expected. Ending dialog.")
  ```
 
+This is just an example of applying congitive design to an agent.  For Bertha 3.0+ a lot of more sophisticated steps can be applied, which I leave as an exercise for the reader.  A few directions you could take:
+
+* Add lots of examples on common GA4 BigQuery SQL to the generation agents
+* Add memory via a vector store to keep a chat history of the good responses
+* A lot more prompt engineering in the function docstrings and system instructions to encourage behaviour
+* Adding a python execution bot to generate plots and data analysis
+
+Enjoy your cognitive designing :)
 
 ## Poets talking to databases
 
