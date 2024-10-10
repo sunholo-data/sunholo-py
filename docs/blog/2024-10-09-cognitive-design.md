@@ -8,7 +8,7 @@ authors:
     socials:
       github: MarkEdmondson1234
 tags: [agents, bigquery, cognitive-design]
-image: https://i.imgur.com/mErPwqL.png
+image: img/cognitive-design.webp
 slug: /cognitive-design
 ---
 
@@ -92,7 +92,7 @@ Once added you can then use the method `run_agent_loop()` method that will perfo
 
 The `GenAIFunctionProcessor()` includes a pre-created function called `decide_to_do_on()` - if it sets it to `False` then it will return the chat history which should hopefully include the answer to the user's question.
 
-Its simple but effective and flexible enough you can add any functions you like, so for example I've used it to create AlloyDB database agents, pandas data analysis, and agent's for browsing the web for research.
+Its simple but effective and flexible enough you can add any functions you like, so for example I've used it to create AlloyDB database agents, panda data analysis, and web browsing research agents.
 
 One of the critical things in an agent loop is giving it enough (but not too much) information in the chat history that it can be intelligent guesses about what to do next.  Things like reporting back good errors and stack traces are a big help (just as they are for humans, right?).
 
@@ -695,8 +695,8 @@ The book was written before LLMs became a big deal so some of the forecasts are 
 
 1. *Very Smart* - is actively being worked on with cutting edge large language and multi-modal models.  I am skeptical they will ever be human beating in innovation for new unseen problems, but they are undoubtably going to be extremely useful by digesting all of human knowledge and presenting combinations of existing data in new and unique ways.
 2. *Very Fast* - we have this today.  A great strength of models is that they can digest text very quickly and produce convincing summaries etc. 
-3. *Very Parallel* - we can create this today via data engineering.  With models such as [Gemini Flash 1.5 8B](https://developers.googleblog.com/en/gemini-15-flash-8b-is-now-generally-available-for-use/) costing $10 for 1 billion tokens, including video and images, its possible to send 1000 parallel calls and get back smart responses.  
+3. *Very Parallel* - we can create this today via data engineering.  With models such as [Gemini Flash 1.5 8B](https://developers.googleblog.com/en/gemini-15-flash-8b-is-now-generally-available-for-use/) costing $10 for 1 billion tokens, including video and images, its possible to send 1000s of parallel calls and get back smart responses.  
 
 I argue that cognitive designers can work with the above three aspects to produce incredibly useful applications today, particularly with audio, images and video that are new enough to not have had their potential realised yet.  If the models are frozen in their abilities right now, we have 5-10 years of applications that can be created and be potentially ground breaking.
 
-But given recent trends, its reasonable to say that the models we will have in two years time are going to be at least 10 times faster, be able to complete 2-3 more difficult tasks possible and be 50 times cheaper.  In that environment and established frameworks for easy cognitive design, I hope to see great artists rise in their application. A soundbite I've used is that I think STEM students and engineers will not be the best placed to tease out performance from the models, and it will be more poets and philosophers who will be used to interact with data, once petty things such as SQL syntax is abstracted away.  I look forward to seeing what they come up with.
+But given recent trends, its reasonable to say that the models we will have in two years time are going to be at least 10 times faster, be able to complete 2-3 more difficult tasks and be 50 times cheaper.  In that environment and with established frameworks for easy cognitive design, I hope to see great artists rise in their application. A soundbite I've used is that I think STEM students and software engineers will not be the best placed to tease out performance from the latent space of these models, as its emergent properties that we are witnessing the birth of applications for. It will be more poets and philosophers who will be better placed to interact with data that constitutes all of human expression, once petty things such as code syntax is abstracted away.  I look forward to seeing what they come up with.
