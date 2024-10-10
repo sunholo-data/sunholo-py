@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[9112],{4174:s=>{s.exports=JSON.parse('{"label":"cognitive-design","permalink":"/blog/tags/cognitive-design","allTagsPath":"/blog/tags","count":1,"unlisted":false}')}}]);
