@@ -365,7 +365,7 @@ class AlloyDBClient:
             SELECT * 
             FROM {table_name}
             WHERE {conditions}
-            ORDER BY langchain_metadata->>'objectId' ASC
+            ORDER BY source ASC
             LIMIT 50;
         """
 
@@ -378,17 +378,17 @@ class AlloyDBClient:
         if sources:
             conditions = self._and_or_ilike(sources, search_type=search_type)
             query = f"""
-                SELECT DISTINCT langchain_metadata->>'objectId' AS objectId
+                SELECT source AS objectId
                 FROM {table_name}
                 WHERE {conditions}
-                ORDER BY langchain_metadata->>'objectId' ASC
+                ORDER BY source ASC
                 LIMIT 500;
             """
         else:
             query = f"""
-                SELECT DISTINCT langchain_metadata->>'objectId' AS objectId
+                SELECT DISTINCT source AS objectId
                 FROM {table_name}
-                ORDER BY langchain_metadata->>'objectId' ASC
+                ORDER BY source ASC
                 LIMIT 500;
             """
 
