@@ -357,7 +357,7 @@ if __name__ == "__main__":
 
         try:
             if span:
-                generation = span.generation(
+                gen = span.generation(
                     name="vac_interpreter",
                     metadata=vac_config.configs_by_kind,
                     input = all_input,
@@ -371,7 +371,7 @@ if __name__ == "__main__":
                 **all_input["kwargs"]
             )
             if span:
-                generation.end(output=bot_output)
+                gen.end(output=bot_output)
             # {"answer": "The answer", "source_documents": [{"page_content": "The page content", "metadata": "The metadata"}]}
             bot_output = parse_output(bot_output)
             if trace:
@@ -383,7 +383,9 @@ if __name__ == "__main__":
 
         except Exception as err: 
             bot_output = {'answer': f'QNA_ERROR: An error occurred while processing /vac/{vector_name}: {str(err)} traceback: {traceback.format_exc()}'}
-    
+            if span:
+                gen.end(output=bot_output)
+                
         if trace:
             span.end(output=jsonify(bot_output))
             trace.update(output=jsonify(bot_output)) 

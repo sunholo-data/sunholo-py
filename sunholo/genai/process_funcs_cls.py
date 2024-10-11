@@ -266,7 +266,9 @@ class GenAIFunctionProcessor:
                     params_obj = {key: val for key, val in fn.args.items()}
 
                 params = ', '.join(f'{key}={val}' for key, val in params_obj.items())
-                log.info(f"Executing {function_name} with params {params}")
+                log.info(f"Executing {function_name} with params {params} (Total Characters: {len(params)})")
+                if len(params)>8000:
+                    log.warning(f"Total parameters are over 8000 characters - it may not work properly: {params[:10000]}....[{len(params)}]")
 
                 # Check if the function is in our dictionary of available functions
                 if function_name in self.funcs:

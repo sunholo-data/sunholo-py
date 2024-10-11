@@ -19,6 +19,7 @@ import aiohttp
 from .langserve import prepare_request_data
 import traceback
 from .route import route_endpoint
+import os
 
 try:
     from langfuse import Langfuse
@@ -86,7 +87,8 @@ def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs
         if 'vector_name' not in qna_data:
             qna_data['vector_name'] = vector_name
     
-    qna_data['trace_id'] = add_langfuse_trace(qna_endpoint)
+    if not kwargs.get('trace_id'):
+        qna_data['trace_id'] = add_langfuse_trace(qna_endpoint)
 
     return qna_endpoint, qna_data
 
@@ -94,9 +96,9 @@ def add_langfuse_trace(qna_endpoint):
     if not langfuse:
         return None
     
-    trace = langfuse.trace(name = f'auto/{qna_endpoint}')
+    trace = langfuse.trace(name = f'dispatch/{os.path.basename(qna_endpoint)}')
 
-    log.info('Adding langfuse trace {trace.id}')
+    log.info(f'Adding langfuse trace {trace.id}')
 
     return trace.id
 
