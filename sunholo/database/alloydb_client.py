@@ -381,6 +381,7 @@ class AlloyDBClient:
                 SELECT source AS objectId
                 FROM {table_name}
                 WHERE {conditions}
+                GROUP BY source
                 ORDER BY source ASC
                 LIMIT 500;
             """
@@ -388,6 +389,7 @@ class AlloyDBClient:
             query = f"""
                 SELECT DISTINCT source AS objectId
                 FROM {table_name}
+                GROUP BY source
                 ORDER BY source ASC
                 LIMIT 500;
             """
