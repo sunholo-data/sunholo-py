@@ -9,12 +9,13 @@ try:
 except ImportError:
     genai = None
 
-def extract_gs_images_and_genai_upload(content: str):
+def extract_gs_images_and_genai_upload(content: str, limit:int=20):
     # Regular expression to find gs:// URLs 
     pattern = r'gs://[^ ]+\.(?:png|jpg|jpeg|pdf)'
 
     gs_matches = re.findall(pattern, content)
-    unique_gs_matches = set(gs_matches)
+    # only 20 images by default
+    unique_gs_matches = list(set(gs_matches))[:limit] 
     output_gs_images = []
     
     for gs_uri in unique_gs_matches:
