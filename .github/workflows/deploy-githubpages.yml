@@ -26,14 +26,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: npm
-          cache-dependency-path: docs/package-lock.json
+          cache: yarn
+          cache-dependency-path: docs/yarn.lock
 
       - name: Install dependencies
-        run: npm ci
+        run: yarn install
 
       - name: Set up Python
         uses: actions/setup-python@v3
@@ -43,9 +44,9 @@ jobs:
       - name: Export Docstrings
         run: pip install --upgrade pip && pip install setuptools && pip install -e .[all] && python build_scripts/export_docstrings.py
         working-directory: ${{ github.workspace }}
-      
+
       - name: Build website
-        run: npm run build
+        run: yarn build
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
