@@ -1,11 +1,15 @@
 import clsx from 'clsx';
 import Heading from '@theme/Heading';
 import styles from './styles.module.css';
+import IdealImage from '@theme/IdealImage';  // Import IdealImage component
+import multivacDeployments from '@site/static/img/multivac-deployments.png'; // Use ES module import
+import multivacVenn from '@site/static/img/multivac-venn.png';
+import multivacArch from '@site/static/img/multivac-arch.png';
 
 const FeatureList = [
   {
     title: 'GenAI Experimentation',
-    Img: require('@site/static/img/multivac-deployments.png').default,
+    Img: multivacDeployments, 
     description: (
       <>
         Update GenAI service dependencies via a config file. 
@@ -16,7 +20,7 @@ const FeatureList = [
   },
   {
     title: 'GenAI in the Cloud',
-    Img: require('@site/static/img/multivac-venn.png').default,
+    Img: multivacVenn,
     description: (
       <>
         The Sunholo Multivac system offers an abstraction between your GenAI application
@@ -27,7 +31,7 @@ const FeatureList = [
   },
   {
     title: 'Flexible and Scalable',
-    Img: require('@site/static/img/multivac-arch.png').default,
+    Img: multivacArch,
     description: (
       <>
         Develop Locally and deploy Globally by publishing to the Multivac SaaS, or your own Cloud PaaS.
@@ -42,7 +46,7 @@ function Feature({Img, title, description}) {
   return (
     <div className={clsx('col col--4')}>
       <div className="text--center">
-      <img src={Img} className={styles.featureImg} alt={title} /> 
+      <IdealImage img={Img} className={styles.featureImg} alt={title} />
       </div>
       <div className="text--center padding-horiz--md">
         <Heading as="h3">{title}</Heading>
