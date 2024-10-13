@@ -8,6 +8,12 @@ This website is built using [Docusaurus](https://docusaurus.io/), a modern stati
 $ yarn
 ```
 
+### Any dependencies
+
+```
+$ yarn add @docusaurus/plugin-google-tag-manager
+```
+
 ### Local Development
 
 ```

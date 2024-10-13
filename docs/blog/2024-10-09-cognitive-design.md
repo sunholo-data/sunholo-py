@@ -1,12 +1,6 @@
 ---
 title: "Using Cognitive Design to create a BigQuery Agent"
-authors:
-  - name: Mark Edmondson
-    title: Founder
-    url: https://www.linkedin.com/in/markpeteredmondson/
-    image_url: https://code.markedmondson.me/images/gde_avatar.jpg
-    socials:
-      github: MarkEdmondson1234
+authors: me
 tags: [agents, bigquery, cognitive-design]
 image: https://dev.sunholo.com/assets/images/cognitive-design-ec3719c6b00a22113dd45194210067fa.webp
 slug: /cognitive-design
