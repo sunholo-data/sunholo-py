@@ -63,8 +63,7 @@ if __name__ == "__main__":
         self.vac_interpreter = vac_interpreter or partial(self.vac_interpreter_default)
         self.additional_routes = additional_routes if additional_routes is not None else []
         self.register_routes()
-        self.register_additional_routes()
-        self.register_after_request()
+        
 
     def vac_interpreter_default(self, question: str, vector_name: str, chat_history=[], **kwargs):
         # Create a callback that does nothing for streaming if you don't want intermediate outputs
@@ -104,6 +103,7 @@ if __name__ == "__main__":
 
         # Authentication middleware
         self.app.before_request(self.check_authentication)
+        self.app.after_request(self.register_after_request)
 
         # OpenAI health endpoint
         self.app.route('/openai/health', methods=['GET', 'POST'])(self.openai_health_endpoint)
@@ -111,7 +111,24 @@ if __name__ == "__main__":
         # OpenAI compatible endpoint
         self.app.route('/openai/v1/chat/completions', methods=['POST'])(self.handle_openai_compatible_endpoint)
         self.app.route('/openai/v1/chat/completions/<vector_name>', methods=['POST'])(self.handle_openai_compatible_endpoint)
+    
+        # Register OPTIONS handler for CORS
+        self.app.route('/<path:path>', methods=['OPTIONS'])(self.handle_options)
         
+        self.register_additional_routes()
+
+    def handle_options(self):
+        response = Response(status=200)
+        response.headers.add('Access-Control-Allow-Origin', '*')
+
+        # Reflect the request's `Access-Control-Request-Headers`
+        request_headers = request.headers.get('Access-Control-Request-Headers', '')
+        response.headers.add('Access-Control-Allow-Headers', request_headers)
+
+        # Specify allowed methods
+        response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        
+        return response
 
     def register_additional_routes(self):
         """
@@ -152,16 +169,20 @@ if __name__ == "__main__":
         for route in self.additional_routes:
             self.app.route(route["rule"], methods=route["methods"])(route["handler"])
 
-    def register_after_request(self):
+    def register_after_request(self, response):
         """
         Register after_request to add CORS headers.
         """
-        @self.app.after_request
-        def add_cors_headers(response):
-            response.headers.add('Access-Control-Allow-Origin', '*')
-            response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key')
-            response.headers.add('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS')
-            return response
+        log.debug(f'Request headers: {request.headers}')
+        # the header forwarded
+
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key')
+        response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+
+        log.debug(f'Response headers: {response.headers}')
+
+        return response
 
     def home(self):
         return jsonify("OK")
