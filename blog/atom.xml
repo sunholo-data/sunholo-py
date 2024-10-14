@@ -12,16 +12,11 @@
         <id>https://dev.sunholo.com/blog/dynamic-output-mdx</id>
         <link href="https://dev.sunholo.com/blog/dynamic-output-mdx"/>
         <updated>2024-10-15T00:00:00.000Z</updated>
-        <summary type="html"><![CDATA[Every few years I feel the need to change my blogging platform, and each time I am compelled to write a blog post about the exciting new blog tech.]]></summary>
-        <content type="html"><![CDATA[<p>Every few years I feel the need to change my blogging platform, and each time I am compelled to write a blog post about the exciting new blog tech.<br>
-<!-- -->I've moved through Blogpost, Wordpress, Posterous, Jenkins, Hugo and today I'd like to introduce <a href="https://docusaurus.io/" target="_blank" rel="noopener noreferrer">Docusaurus</a>.</p>
-<p>And since this is a GenAI blog, it makes sense I selected a new blogging platform I feel will support GenAI.
-Its a little thought provoking that the current GenAI models work best when working with the most popular languages, frameworks or opinions.
-They are after all approximating the average of all of human expression.<br>
-<!-- -->This means they will do better at English, Python and React than more niche areas such as Danish, R or Vue.  I hope this does not destroy diversity.</p>
+        <summary type="html"><![CDATA[Every few years I feel the need to change my blogging platform, and each time I am compelled to write a blog post about the exciting new blog tech.  I've moved through Blogpost, Wordpress, Posterous, Jenkins, Hugo and today I'd like to introduce Docusaurus.]]></summary>
+        <content type="html"><![CDATA[<p>Every few years I feel the need to change my blogging platform, and each time I am compelled to write a blog post about the exciting new blog tech.  I've moved through Blogpost, Wordpress, Posterous, Jenkins, Hugo and today I'd like to introduce <a href="https://docusaurus.io/" target="_blank" rel="noopener noreferrer">Docusaurus</a>.</p>
+<p>And since this is a GenAI blog, it makes sense I selected a new blogging platform I feel will support GenAI.  Its a little thought provoking that the current GenAI models work best when working with the most popular languages, frameworks or opinions. They are after all approximating the average of all of human expression.  This means they will do better at English, Python and React than more niche areas such as Danish, R or Vue.  I hope this does not destroy diversity.</p>
 <p>But it also means that since it seems React is the most popular web frontend framework at the moment, it makes sense to investigate using React within GenAI applications.</p>
-<p>This Docusaurus blog is written in a flavour of Markdown that supports React Components which made me think: is this a good vessel for creating GenAI output that can dynamically adjust its output format beyond text to dynamic user experiences depending on what they need?
-Lets find out.</p>
+<p>This Docusaurus blog is written in a flavour of Markdown that supports React Components which made me think: is this a good vessel for creating GenAI output that can dynamically adjust its output format?  Can we go beyond text to dynamic user experiences depending on what they need?  Lets find out.</p>
 <!-- -->
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="introduction-to-mdx">Introduction to MDX<a href="https://dev.sunholo.com/blog/dynamic-output-mdx#introduction-to-mdx" class="hash-link" aria-label="Direct link to Introduction to MDX" title="Direct link to Introduction to MDX">​</a></h2>
 <p><a href="https://mdxjs.com/" target="_blank" rel="noopener noreferrer">MDX</a> allows you to write markdown and React javascript in the same file.<br>
@@ -49,9 +44,12 @@ To get around it, try using one of:</p><ul>
 <p>This then renders correctly at run and build time:</p>
 <p><code>&lt;CustomPlot /&gt;</code></p>
 <div>Loading Plot...</div>
+<p>This shows potential.  What other elements could be rendered, and how can GenAI render them on the fly?</p>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="mdx--genai--dynamic-ui">MDX + GenAI = Dynamic UI<a href="https://dev.sunholo.com/blog/dynamic-output-mdx#mdx--genai--dynamic-ui" class="hash-link" aria-label="Direct link to MDX + GenAI = Dynamic UI" title="Direct link to MDX + GenAI = Dynamic UI">​</a></h2>
-<p>If you hadn't guessed already, the above code was created by a GenAI model.  It then seems viable to request a model to output React components, and if that text is within an environment that supports its display, we will instead render the component instead of the text.
-I also like that we control what is rendered, by specifying the components by passing them in at runtime, and we can configure those components to not need many arguments, to make it as easy as possible for the model to render: we only need to ask nicely in its prompt.</p>
+<p>If you hadn't guessed already, the above code was already created by a GenAI model.  I am a data engineer, not a front-end software engineer (and from what I see, frontend UI is why more complex than data science!).  It does seems viable to request a model to output React components, and if that text is within an environment that supports its display, we will instead render the component instead of the text.
+I would also like to control what is rendered, by specifying the components at runtime, so we can configure those components to not need many arguments and make it as easy as possible for the model to render. We should only need to ask nicely.</p>
+<p>We know via <a href="https://www.anthropic.com/news/artifacts" target="_blank" rel="noopener noreferrer">Anthropic's Artifacts</a> or <a href="https://v0.dev/" target="_blank" rel="noopener noreferrer">v0 Chat</a>, dynamic rendering is very much possible.  We are looking to create a subset of that functionality: not looking for the ability to render <strong>any</strong> React, just the controlled Components we prompt the model to return.</p>
+<p>Another more "standard" solution is to have the chat bot use function calling, that return components.  Maybe that's better, who knows.</p>
 <p>For example, a GenAI prompt could include:</p>
 <blockquote>
 <p>...every time you output a colour, make sure to quote it in <code>&lt;Highlight&gt;</code> tags with the colour e.g. <code>&lt;Highlight color="#c94435"&gt;Sunholo Shades&lt;/Highlight&gt;</code>...</p>
@@ -62,16 +60,14 @@ I also like that we control what is rendered, by specifying the components by pa
 </blockquote>
 <p>...assuming we have created <code>&lt;CustomPlot&gt;</code> with some sensible defaults.</p>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="creating-dynamic-uis-in-markdown">Creating Dynamic UIs in Markdown<a href="https://dev.sunholo.com/blog/dynamic-output-mdx#creating-dynamic-uis-in-markdown" class="hash-link" aria-label="Direct link to Creating Dynamic UIs in Markdown" title="Direct link to Creating Dynamic UIs in Markdown">​</a></h2>
-<p>It just so happens, that I had a prototype GenAI Chat React Component lying around as one of <a href="https://dev.sunholo.com/docs/multivac/#user-interfaces">Multivac's UI options</a>, and can use it to stream custom GenAI APIs, so I'll attempt to host that Chat UI, ask it to output MDX format, and then render them within the blog.</p>
+<p>It just so happens, that I had a prototype Chat React Component lying around as one of <a href="https://dev.sunholo.com/docs/multivac/#user-interfaces">Multivac's UI options</a>, and I can use it to stream custom GenAI APIs, so I'll attempt to host that Chat UI within this blog post, ask it to output MDX format, and then render them within the blog using MDX.</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="build-vs-render">Build vs render<a href="https://dev.sunholo.com/blog/dynamic-output-mdx#build-vs-render" class="hash-link" aria-label="Direct link to Build vs render" title="Direct link to Build vs render">​</a></h3>
-<p>Lessons learnt whilst attempting this:</p>
+<p>Lessons learnt whilst attempting this were:</p>
 <ul>
 <li>Components will only respect the rules within that component, not outside.</li>
 <li>The MDX examples above are created during <code>yarn build</code>, not upon render.  Another approach is needed to render in real-time as the chat returns results e.g. the JSX Parser below.</li>
 <li>But it works the other way around too - not all Components that work at render time will work at build time, as they depend on website elements (e.g. Plot.ly).  You may need <code>&lt;BrowserOnly&gt;</code> to help here to avoid build time errors.</li>
 </ul>
-<p>We know via <a href="https://www.anthropic.com/news/artifacts" target="_blank" rel="noopener noreferrer">Anthropic's Artifacts</a> or <a href="https://v0.dev/" target="_blank" rel="noopener noreferrer">v0 Chat</a>, dynamic rendering is very much possible.  We are looking to create a subset of that functionality: not looking for the ability to render <strong>any</strong> React, just the controlled Components we prompt the model to return.</p>
-<p>Another more "standard" solution is to have the chat bot use function calling, that return components.  Maybe that's better, who knows.</p>
 <p>For now, to render React dynamically we're going to need at least the package <a href="https://github.com/TroyAlford/react-jsx-parser" target="_blank" rel="noopener noreferrer"><code>react-jsx-parser</code></a>, installed via:</p>
 <div class="language-sh codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-sh codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">yarn add react-jsx-parser</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
 <p>I can then use its <code>JXParser()</code> and send in the components from the .mdx file on which it will allow:</p>
