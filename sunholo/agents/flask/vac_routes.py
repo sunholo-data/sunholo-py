@@ -121,6 +121,8 @@ if __name__ == "__main__":
     
         self.register_additional_routes()
 
+        self.app.after_request(self.register_after_request)
+
     def handle_options(self, **kwargs):
         response = Response(status=200)
         response.headers.add('Access-Control-Allow-Origin', '*')
@@ -132,6 +134,14 @@ if __name__ == "__main__":
         # Specify allowed methods
         response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         log.info(f'OPTION Request headers: {request_headers}')
+
+        return response
+
+    def register_after_request(self, response):
+        # Add CORS headers for all responses
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key')
+        response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
 
         return response
 
