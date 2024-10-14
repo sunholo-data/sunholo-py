@@ -13,8 +13,20 @@
 #   limitations under the License.
 def create_app(name):
     from flask import Flask
-    # Initialize Flask app
+    from flask_cors import CORS
+
     app = Flask(name)
+
+    CORS(app, 
+         origins=["https://*.sunholo.com", "http://*.sunholo.com"],  # Allow all subdomains of sunholo.com
+         methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],  # Allow all necessary HTTP methods
+         allow_headers=["DNT", "User-Agent", "X-Requested-With", "If-Modified-Since", 
+                        "Cache-Control", "Content-Type", "Range", "Authorization", "x-api-key"],  # Add custom headers
+         expose_headers=["Content-Length", "Content-Range"],  # Optional: headers that are exposed to clients
+         supports_credentials=True, 
+         max_age=1728000  # Set max age of preflight request caching (in seconds)
+    )
+
     app.config['TRAP_HTTP_EXCEPTIONS'] = True
     app.config['PROPAGATE_EXCEPTIONS'] = True
    

@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.103.3'
+version = '0.104.0'
 
 setup(
     name='sunholo',
@@ -42,6 +42,7 @@ setup(
             "azure-storage-blob",
             "fastapi",
             "flask",
+            "flask-cors",
             "google-auth",
             "google-auth-httplib2",
             "google-auth-oauthlib",
@@ -151,6 +152,7 @@ setup(
         'http': [
             "fastapi",
             "flask",
+            "flask-cors",
             "gunicorn",
             "httpcore",
             "httpx",
