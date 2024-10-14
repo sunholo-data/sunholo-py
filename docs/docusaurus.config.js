@@ -5,12 +5,9 @@
 // See: https://docusaurus.io/docs/api/docusaurus-config
 
 import {themes as prismThemes} from 'prism-react-renderer';
-import proxyMiddleware from './src/plugins/proxy';
-
 import 'dotenv/config';
 
 /** @type {import('@docusaurus/types').Config} */
-
 const config = {
   customFields: {
     // Put your custom environment here

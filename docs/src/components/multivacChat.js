@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import JSXParser from 'react-jsx-parser';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import BrowserOnly from '@docusaurus/BrowserOnly';
 
 function MultivacChatMessage({ components, debug = false }) {
   const { siteConfig } = useDocusaurusContext();
@@ -108,35 +109,40 @@ function MultivacChatMessage({ components, debug = false }) {
     }
   };
 
+
   return (
-    <div className="multivac-chat-container">
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Ask a question..."
-          value={userInput}
-          onChange={(e) => setUserInput(e.target.value)}
-          className="multivac-input"
-        />
-        <button type="submit" disabled={loading} className="multivac-submit-btn">
-          {loading ? 'Loading...' : 'Submit'}
-        </button>
-      </form>
+    <BrowserOnly>
+      {() => (
+        <div className="multivac-chat-container">
+          <form onSubmit={handleSubmit}>
+            <input
+              type="text"
+              placeholder="Ask a question..."
+              value={userInput}
+              onChange={(e) => setUserInput(e.target.value)}
+              className="multivac-input"
+            />
+            <button type="submit" disabled={loading} className="multivac-submit-btn">
+              {loading ? 'Loading...' : 'Submit'}
+            </button>
+          </form>
 
-      {loading && <p>Fetching response...</p>}
+          {loading && <p>Fetching response...</p>}
 
-      {error && <p className="error-message">{error}</p>}
+          {error && <p className="error-message">{error}</p>}
 
-      <div className="multivac-message-output">
-        <JSXParser
-          jsx={message}
-          components={components} // Pass components dynamically
-          renderInWrapper={false}
-          allowUnknownElements={false}
-          blacklistedTags={['script', 'style', 'iframe', 'link', 'meta']}
-        />
-      </div>
-    </div>
+          <div className="multivac-message-output">
+            <JSXParser
+              jsx={message}
+              components={components} // Pass components dynamically
+              renderInWrapper={false}
+              allowUnknownElements={false}
+              blacklistedTags={['script', 'style', 'iframe', 'link', 'meta']}
+            />
+          </div>
+        </div>
+      )}
+    </BrowserOnly>
   );
 }
 

@@ -6,7 +6,6 @@ image: https://dev.sunholo.com/assets/images/cognitive-design-ec3719c6b00a22113d
 slug: /dynamic-output-mdx
 ---
 
-import Plot from 'react-plotly.js';
 import CustomPlot from '@site/src/components/mdxComponents'; 
 import MultivacChatMessage from '@site/src/components/multivacChat';
 
@@ -78,7 +77,7 @@ In this example I first installed plot.ly:
 yarn add react-plotly.js plotly.js
 ```
 
-Added this to the top of the blog markdown:
+Naively, I then added this to the top of the blog markdown:
 
 ```sh
 import Plot from 'react-plotly.js';
@@ -107,29 +106,66 @@ import Plot from 'react-plotly.js';
 />
 ```
 
-<Plot
-  data={[
-    {
-      x: [1, 2, 3, 4],
-      y: [10, 15, 13, 17],
-      type: 'scatter',
-      mode: 'lines+markers',
-      marker: { color: '#c94435' },
-    },
-  ]}
-  layout={{
-    title: 'Simple Plot',
-    autosize: true,
-    margin: { t: 30, l: 30, r: 30, b: 30 },
-  }}
-  useResizeHandler
-  style={{ width: '100%', height: '300px' }}
-/>
+That worked for runtime, but broke in build time with:
+
+:::danger
+It looks like you are using code that should run on the client-side only.
+To get around it, try using one of:
+- `<BrowserOnly>` (https://docusaurus.io/docs/docusaurus-core/#browseronly)
+- `ExecutionEnvironment` (https://docusaurus.io/docs/docusaurus-core/#executionenvironment).
+:::
+
+Plot.ly depends on runtime attributes such as the browser window that breaks on build, so a custom wrapper is needed to handle loading in the plot.ly library.
+
+```js
+
+const CustomPlot = ({ data, layout }) => {
+  const [Plot, setPlot] = useState(null);
+
+  // Dynamically import `react-plotly.js` on the client side
+  useEffect(() => {
+    let isMounted = true;
+    import('react-plotly.js').then((module) => {
+      if (isMounted) {
+        setPlot(() => module.default);
+      }
+    });
+
+    return () => {
+      isMounted = false; // Cleanup to prevent memory leaks
+    };
+  }, []);
+
+  if (!Plot) {
+    return <div>Loading Plot...</div>; // Show a loading state while Plotly is being imported
+  }
+
+  return (
+    <Plot
+      data={data}
+      layout={layout || {
+        title: 'Default Plot',
+        autosize: true,
+        margin: { t: 30, l: 30, r: 30, b: 30 },
+      }}
+      useResizeHandler
+      style={{ width: '100%', height: '300px' }}
+    />
+  );
+};
+
+export default CustomPlot;
+```
+
+This then renders correctly at run and build time:
+
+<CustomPlot />
+
 
 ## MDX + GenAI = Dynamic UI
 
-If you hadn't guessed already, the above code was created by a GenAI model.  In then seems viable to request a model to output React components, and if that text is within an environment that supports its display, we will instead render the component instead of the text.
-I also like that we control what is rendered, by specifying the import or export, and we can make it as easy as possible for the model to render so we only need to ask nicely in its prompt.
+If you hadn't guessed already, the above code was created by a GenAI model.  It then seems viable to request a model to output React components, and if that text is within an environment that supports its display, we will instead render the component instead of the text.
+I also like that we control what is rendered, by specifying the components by passing them in at runtime, and we can configure those components to not need to many arguments, to make it as easy as possible for the model to render: we only need to ask nicely in its prompt.
 
 For example, a GenAI prompt could include:
 
@@ -143,15 +179,16 @@ A more exciting prompt could be:
 
 ## Creating Dynamic UIs in Markdown
 
-It just so happens, that I had a prototype GenAI Chat React Component lying around as one of [Multivac's UI options](/docs/multivac/#user-interfaces), and can use it to stream custom GenAI APIs, so I'll attempt to host that Chat UI, ask it to output .mdx formatted files, and then render them within the blog.
+It just so happens, that I had a prototype GenAI Chat React Component lying around as one of [Multivac's UI options](/docs/multivac/#user-interfaces), and can use it to stream custom GenAI APIs, so I'll attempt to host that Chat UI, ask it to output MDX format, and then render them within the blog.
 
 ### Build vs render
 
 Lessons learnt whilst attempting this:
 - Components will only respect the rules within that component, not outside.
-- The .mdx examples above are created during `yarn build`, not upon render.  Another approach is needed to render in real-time as the chat returns results.
+- The MDX examples above are created during `yarn build`, not upon render.  Another approach is needed to render in real-time as the chat returns results e.g. the JSX Parser below.
+- Even if you do create them dynamically, Components that run during development may not work during build, as they depend on website elements (e.g. Plot.ly)
 
-However, as we see via Anthropic's Artifacts or Vercel Chat, dynamic rendering is very much possible.  We are looking to create a subset of that functionality: not looking for the ability to render **any** React, just the controlled Components we prompt the model to return.
+We know via [Anthropic's Artifacts](https://www.anthropic.com/news/artifacts) or [v0 Chat](https://v0.dev/), dynamic rendering is very much possible.  We are looking to create a subset of that functionality: not looking for the ability to render **any** React, just the controlled Components we prompt the model to return.
 
 Another more "standard" solution is to have the chat bot use function calling, that return components.  Maybe that's better, who knows.
 
@@ -171,14 +208,8 @@ I can then use its `JXParser()` and send in the components from the .mdx file on
     allowUnknownElements={false}
     blacklistedTags={['script', 'style', 'iframe', 'link', 'meta']}
 />
-```
+``` 
 
-This is then imported, along with a custom plot component at the top of the .mdx file:
-
-```js
-import CustomPlot from '@site/src/components/mdxComponents'; 
-import MultivacChatMessage from '@site/src/components/multivacChat';
-```
 
 ## Dummy data example
 
@@ -188,7 +219,8 @@ I now add the component to the .mdx file below, passing in either imported compo
 <MultivacChatMessage components={{ Highlight, CustomPlot }} />
 ```
 
-Go ahead, give it a try.  This one has a dummy API call that will always return the same mix of markdown, but importantly its not rendering itself, just pulling in text which we are controlling from the .mdx file:  
+Go ahead, give it a try below by typing something into the chat box.  
+This one has a dummy API call that will always return the same mix of markdown, but importantly its not rendering itself, just pulling in text which we are controlling from the .mdx file:  
 
 ```js
 const dummyResponse = `This is normal markdown. <Highlight color="#c94435">This is a highlighted response</Highlight>. This is a CustomPlot component:
@@ -274,4 +306,4 @@ This was intended just to be a demo on what is possible with .mdx to render dyna
 
 Docusaurus is not the only platform that uses .mdx, so this technique is applicable way beyond here.
 
-I'm a complete n00b in React and front end in general so I hope more experienced folks may be able to chime in as describe how to do this better, but I think its a nice workflow for me, espeically for blog posts demonstrating GenAI ideas.  We have just used a simple chat box interface here, but I'd like to explore how GenAI can turn unstructured data into structured data in more automated settings, leveraging cheap models such as Gemini Flash, sending in images, audio, video etc and getting back output.  I'm going to think about including dynamic UI output in all my [cognitive designs](/blog/cognitive-design) going forward, and having a way to do that in a user friendly markdown editor will help turn-around concepts quickly.
+I'm a complete n00b in React and front end in general so I hope more experienced folks may be able to chime in as describe how to do this better, but I think its a nice workflow for me, espeically for blog posts demonstrating GenAI ideas.  We have just used a simple chat box interface here, but I'd like to explore more professional component styling and how GenAI can turn unstructured data into structured data in more automated settings, leveraging cheap quick models such as Gemini Flash, sending in images, audio, video etc and getting back output.  I'm going to think about including dynamic UI output in all my [cognitive designs](/blog/cognitive-design) going forward, and having a way to do that in a user friendly markdown editor will help turn-around concepts quickly.
