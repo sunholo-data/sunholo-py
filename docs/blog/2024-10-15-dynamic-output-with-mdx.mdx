@@ -9,18 +9,13 @@ slug: /dynamic-output-mdx
 import CustomPlot from '@site/src/components/mdxComponents'; 
 import MultivacChatMessage from '@site/src/components/multivacChat';
 
-Every few years I feel the need to change my blogging platform, and each time I am compelled to write a blog post about the exciting new blog tech.  
-I've moved through Blogpost, Wordpress, Posterous, Jenkins, Hugo and today I'd like to introduce [Docusaurus](https://docusaurus.io/).
+Every few years I feel the need to change my blogging platform, and each time I am compelled to write a blog post about the exciting new blog tech.  I've moved through Blogpost, Wordpress, Posterous, Jenkins, Hugo and today I'd like to introduce [Docusaurus](https://docusaurus.io/).
 
-And since this is a GenAI blog, it makes sense I selected a new blogging platform I feel will support GenAI.
-Its a little thought provoking that the current GenAI models work best when working with the most popular languages, frameworks or opinions. 
-They are after all approximating the average of all of human expression.  
-This means they will do better at English, Python and React than more niche areas such as Danish, R or Vue.  I hope this does not destroy diversity.
+And since this is a GenAI blog, it makes sense I selected a new blogging platform I feel will support GenAI.  Its a little thought provoking that the current GenAI models work best when working with the most popular languages, frameworks or opinions. They are after all approximating the average of all of human expression.  This means they will do better at English, Python and React than more niche areas such as Danish, R or Vue.  I hope this does not destroy diversity.
 
 But it also means that since it seems React is the most popular web frontend framework at the moment, it makes sense to investigate using React within GenAI applications.
 
-This Docusaurus blog is written in a flavour of Markdown that supports React Components which made me think: is this a good vessel for creating GenAI output that can dynamically adjust its output format beyond text to dynamic user experiences depending on what they need?
-Lets find out.
+This Docusaurus blog is written in a flavour of Markdown that supports React Components which made me think: is this a good vessel for creating GenAI output that can dynamically adjust its output format?  Can we go beyond text to dynamic user experiences depending on what they need?  Lets find out.
 
 {/* truncate */}
 
@@ -163,11 +158,16 @@ This then renders correctly at run and build time:
 
 <CustomPlot />
 
+This shows potential.  What other elements could be rendered, and how can GenAI render them on the fly?
 
 ## MDX + GenAI = Dynamic UI
 
-If you hadn't guessed already, the above code was created by a GenAI model.  It then seems viable to request a model to output React components, and if that text is within an environment that supports its display, we will instead render the component instead of the text.
-I also like that we control what is rendered, by specifying the components by passing them in at runtime, and we can configure those components to not need many arguments, to make it as easy as possible for the model to render: we only need to ask nicely in its prompt.
+If you hadn't guessed already, the above code was already created by a GenAI model.  I am a data engineer, not a front-end software engineer (and from what I see, frontend UI is why more complex than data science!).  It does seems viable to request a model to output React components, and if that text is within an environment that supports its display, we will instead render the component instead of the text.
+I would also like to control what is rendered, by specifying the components at runtime, so we can configure those components to not need many arguments and make it as easy as possible for the model to render. We should only need to ask nicely.
+
+We know via [Anthropic's Artifacts](https://www.anthropic.com/news/artifacts) or [v0 Chat](https://v0.dev/), dynamic rendering is very much possible.  We are looking to create a subset of that functionality: not looking for the ability to render **any** React, just the controlled Components we prompt the model to return.
+
+Another more "standard" solution is to have the chat bot use function calling, that return components.  Maybe that's better, who knows.
 
 For example, a GenAI prompt could include:
 
@@ -181,18 +181,15 @@ A more exciting prompt could be:
 
 ## Creating Dynamic UIs in Markdown
 
-It just so happens, that I had a prototype GenAI Chat React Component lying around as one of [Multivac's UI options](/docs/multivac/#user-interfaces), and can use it to stream custom GenAI APIs, so I'll attempt to host that Chat UI, ask it to output MDX format, and then render them within the blog.
+It just so happens, that I had a prototype Chat React Component lying around as one of [Multivac's UI options](/docs/multivac/#user-interfaces), and I can use it to stream custom GenAI APIs, so I'll attempt to host that Chat UI within this blog post, ask it to output MDX format, and then render them within the blog using MDX.
 
 ### Build vs render
 
-Lessons learnt whilst attempting this:
+Lessons learnt whilst attempting this were:
+
 - Components will only respect the rules within that component, not outside.
 - The MDX examples above are created during `yarn build`, not upon render.  Another approach is needed to render in real-time as the chat returns results e.g. the JSX Parser below.
 - But it works the other way around too - not all Components that work at render time will work at build time, as they depend on website elements (e.g. Plot.ly).  You may need `<BrowserOnly>` to help here to avoid build time errors.
-
-We know via [Anthropic's Artifacts](https://www.anthropic.com/news/artifacts) or [v0 Chat](https://v0.dev/), dynamic rendering is very much possible.  We are looking to create a subset of that functionality: not looking for the ability to render **any** React, just the controlled Components we prompt the model to return.
-
-Another more "standard" solution is to have the chat bot use function calling, that return components.  Maybe that's better, who knows.
 
 For now, to render React dynamically we're going to need at least the package [`react-jsx-parser`](https://github.com/TroyAlford/react-jsx-parser), installed via:
 
