@@ -63,7 +63,8 @@ if __name__ == "__main__":
         self.vac_interpreter = vac_interpreter or partial(self.vac_interpreter_default)
         self.additional_routes = additional_routes if additional_routes is not None else []
         self.register_routes()
-
+        self.register_additional_routes()
+        self.register_after_request()
 
     def vac_interpreter_default(self, question: str, vector_name: str, chat_history=[], **kwargs):
         # Create a callback that does nothing for streaming if you don't want intermediate outputs
@@ -110,8 +111,7 @@ if __name__ == "__main__":
         # OpenAI compatible endpoint
         self.app.route('/openai/v1/chat/completions', methods=['POST'])(self.handle_openai_compatible_endpoint)
         self.app.route('/openai/v1/chat/completions/<vector_name>', methods=['POST'])(self.handle_openai_compatible_endpoint)
-        # Register additional routes
-        self.register_additional_routes()
+        
 
     def register_additional_routes(self):
         """
@@ -151,6 +151,17 @@ if __name__ == "__main__":
         """
         for route in self.additional_routes:
             self.app.route(route["rule"], methods=route["methods"])(route["handler"])
+
+    def register_after_request(self):
+        """
+        Register after_request to add CORS headers.
+        """
+        @self.app.after_request
+        def add_cors_headers(response):
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key')
+            response.headers.add('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS')
+            return response
 
     def home(self):
         return jsonify("OK")
@@ -385,7 +396,7 @@ if __name__ == "__main__":
             bot_output = {'answer': f'QNA_ERROR: An error occurred while processing /vac/{vector_name}: {str(err)} traceback: {traceback.format_exc()}'}
             if span:
                 gen.end(output=bot_output)
-                
+
         if trace:
             span.end(output=jsonify(bot_output))
             trace.update(output=jsonify(bot_output)) 
