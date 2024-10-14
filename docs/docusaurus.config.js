@@ -5,9 +5,17 @@
 // See: https://docusaurus.io/docs/api/docusaurus-config
 
 import {themes as prismThemes} from 'prism-react-renderer';
+import proxyMiddleware from './src/plugins/proxy';
+
+import 'dotenv/config';
 
 /** @type {import('@docusaurus/types').Config} */
+
 const config = {
+  customFields: {
+    // Put your custom environment here
+    multivacApiKey: process.env.REACT_APP_MULTIVAC_API_KEY || 'default_key_if_not_defined',
+  },
   title: 'Sunholo Dev Portal',
   tagline: 'Development resources for Sunholo and Multivac',
   favicon: 'img/favicon.ico',
@@ -137,9 +145,12 @@ const config = {
       },
     }),
 
+    
 
   plugins: [
+    './src/plugins/proxy',
     [
+      
       '@docusaurus/plugin-ideal-image',
       {
         quality: 70,

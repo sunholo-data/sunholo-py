@@ -16,7 +16,7 @@ def load_prompt_from_yaml(key, prefix="sunholo", load_from_file=False, f_string=
     kind: promptConfig
     apiVersion: v1
     prompts:
-    sunholo:
+      sunholo:
         hello: |
             Say hello to {name} 
     ```

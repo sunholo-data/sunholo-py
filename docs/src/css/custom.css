@@ -47,3 +47,46 @@ div[class*="language-"] pre code {
   background-color: #f9f9f9;
   margin: 20px 0;
 }
+
+.multivac-chat-container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.multivac-input {
+  width: 70%;
+  padding: 10px;
+  margin-right: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.multivac-submit-btn {
+  padding: 10px 20px;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.multivac-submit-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: red;
+  margin-top: 10px;
+}
+
+.multivac-message-output {
+  margin-top: 20px;
+  white-space: pre-wrap;
+  background-color: #f9f9f9;
+  padding: 10px;
+  border-radius: 4px;
+}
