@@ -4,8 +4,8 @@ import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import BrowserOnly from '@docusaurus/BrowserOnly';
 const API_BASE_URL =
   process.env.NODE_ENV === 'development'
-    ? '/api'  // Uses proxy during development
-    : 'https://multivac-api.sunholo.com';  // Direct call in production
+    ? '/api/v1/vertex-genai'  // Uses proxy during development
+    : 'https://vertex-genai-533923089340.europe-west1.run.app';  // Direct call in production
 
 
 function MultivacChatMessage({ components, debug = false }) {
@@ -66,7 +66,7 @@ function MultivacChatMessage({ components, debug = false }) {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/vertex-genai/vac/streaming/dynamic_blog_mdx`, {
+      const response = await fetch(`${API_BASE_URL}/vac/streaming/dynamic_blog_mdx`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
