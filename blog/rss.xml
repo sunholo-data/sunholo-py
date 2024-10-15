@@ -94,7 +94,7 @@ I would also like to control what is rendered, by specifying the components at r
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="calling-a-genai-api-to-make-a-dynamic-ui">Calling a GenAI API to make a Dynamic UI<a href="https://dev.sunholo.com/blog/dynamic-output-mdx#calling-a-genai-api-to-make-a-dynamic-ui" class="hash-link" aria-label="Direct link to Calling a GenAI API to make a Dynamic UI" title="Direct link to Calling a GenAI API to make a Dynamic UI">​</a></h3>
 <p>This is using a Gemini's <a href="https://ai.google.dev/gemini-api/docs/models/gemini#gemini-1.5-flash-8b" target="_blank" rel="noopener noreferrer">gemini-1.5-flash-8b</a> model which is super cheap but not the smartest model out there, but thats the point: the model doesn't have to think too much to render nicely, as we limit its choices to just those React components we send in.</p>
 <blockquote>
-<p>I'm scaling the Cloud Run to 0 for this example so if you try it be patient: on a cold start the first response will be a little slower than subsequent ones.  Its also not saving any chat history.</p>
+<p>I'm scaling the Cloud Run to 0 for this example so if you try it be patient: on a cold start the first response will be a little slower than subsequent ones.  The model will also have no chat history.</p>
 </blockquote>
 <!-- -->
 <p>One of the features of using Multivac is having a prompt CMS via Langfuse, so I can tweak the prompt as I tailor the responses, but as of right now the prompt for the above bot is:</p>

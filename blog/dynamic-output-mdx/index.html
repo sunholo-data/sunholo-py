@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script>window.dataLayer=window.dataLayer||[]</script>
 <script>!function(e,t,a,n){e[n]=e[n]||[],e[n].push({"gtm.start":(new Date).getTime(),event:"gtm.js"});var g=t.getElementsByTagName(a)[0],m=t.createElement(a);m.async=!0,m.src="https://www.googletagmanager.com/gtm.js?id=GTM-WLQZQF2P",g.parentNode.insertBefore(m,g)}(window,document,"script","dataLayer")</script><link rel="stylesheet" href="/assets/css/styles.eda73bc3.css">
-<script src="/assets/js/runtime~main.f4601007.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.fac1d766.js" defer="defer"></script>
 <script src="/assets/js/main.477b74a9.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -95,7 +95,7 @@ I would also like to control what is rendered, by specifying the components at r
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="calling-a-genai-api-to-make-a-dynamic-ui">Calling a GenAI API to make a Dynamic UI<a href="#calling-a-genai-api-to-make-a-dynamic-ui" class="hash-link" aria-label="Direct link to Calling a GenAI API to make a Dynamic UI" title="Direct link to Calling a GenAI API to make a Dynamic UI">​</a></h3>
 <p>This is using a Gemini&#x27;s <a href="https://ai.google.dev/gemini-api/docs/models/gemini#gemini-1.5-flash-8b" target="_blank" rel="noopener noreferrer">gemini-1.5-flash-8b</a> model which is super cheap but not the smartest model out there, but thats the point: the model doesn&#x27;t have to think too much to render nicely, as we limit its choices to just those React components we send in.</p>
 <blockquote>
-<p>I&#x27;m scaling the Cloud Run to 0 for this example so if you try it be patient: on a cold start the first response will be a little slower than subsequent ones.  Its also not saving any chat history.</p>
+<p>I&#x27;m scaling the Cloud Run to 0 for this example so if you try it be patient: on a cold start the first response will be a little slower than subsequent ones.  The model will also have no chat history.</p>
 </blockquote>
 <!-- -->
 <p>One of the features of using Multivac is having a prompt CMS via Langfuse, so I can tweak the prompt as I tailor the responses, but as of right now the prompt for the above bot is:</p>
