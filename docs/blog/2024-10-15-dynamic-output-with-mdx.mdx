@@ -289,7 +289,7 @@ Now lets do it with a real API call.
   };
 ```
 
-I'll use a Vertex deployed API on [Multivac](/docs/multivac/), for which I load the API key in an `.env` file.  I call to my own Multivac cloud as this adds various features I want such as analytics, configuration, user history etc. and runs custom code within a Cloud Run container behind an API key.  I'm scaling the Cloud Run to 0 for this example so if you try it be patient: on a cold start the first response will be a little slower than subsequent ones.
+I'll use a Vertex deployed API on [Multivac](/docs/multivac/), for which I load the API key in an `.env` file.  I call to my own Multivac cloud as this adds various features I want such as analytics, configuration, user history etc. and runs custom code within a Cloud Run container behind an API key.  
 
 :::tip
 Multivac API key is not required, you can modify the API call to be your own API or a direct GenAI API call such as Gemini, Anthropic or OpenAI, or local hosted GenAI APIs via Ollama etc.
@@ -297,9 +297,11 @@ Multivac API key is not required, you can modify the API call to be your own API
 
 I had to do some shenanigans for CORs within Docusaurus and proxy the API calls, you can see that code in the [`plugins/proxy.js`](https://github.com/sunholo-data/sunholo-py/blob/main/docs/src/plugins/proxy.js) but basically its just calling the streaming API and returning text.
 
-### Calling a GenAI model to make a Dynamic UI
+### Calling a GenAI API to make a Dynamic UI
 
 This is using a Gemini's [gemini-1.5-flash-8b](https://ai.google.dev/gemini-api/docs/models/gemini#gemini-1.5-flash-8b) model which is super cheap but not the smartest model out there, but thats the point: the model doesn't have to think too much to render nicely, as we limit its choices to just those React components we send in.
+
+> I'm scaling the Cloud Run to 0 for this example so if you try it be patient: on a cold start the first response will be a little slower than subsequent ones.  Its also not saving any chat history, its just a demo.
 
 <MultivacChatMessage components={{ Highlight, CustomPlot }} />
 
