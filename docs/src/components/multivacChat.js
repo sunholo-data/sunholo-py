@@ -121,7 +121,7 @@ function MultivacChatMessage({ components, debug = false }) {
           allowUnknownElements={false}
           autoCloseVoidElements
           showWarnings
-          renderError={<p>Failed to render: {sanitizeJSX(message)}</p>}
+          renderError={() => <p>Failed to render: {sanitizeJSX(message)}</p>}
           componentsOnly
           blacklistedTags={['script', 'style', 'iframe', 'link', 'meta']}
           onError={(error) => {

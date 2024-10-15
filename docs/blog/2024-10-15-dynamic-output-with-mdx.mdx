@@ -175,9 +175,9 @@ For example, a GenAI prompt could include:
 
 A more exciting prompt could be:
 
-> ...every time you get data that can be displayed as a line chart (e.g. x and y values) then render those values using `<CustomPlot>` e.g. `<CustomPlot data={[{x: [1, 2, 3, 4],y: [10, 15, 13, 17]}]}/>`...
+> ...every time you get data that can be displayed as a line chart (e.g. x and y values) then render those values using `<CustomPlot />` e.g. `<CustomPlot data={[{x: [1, 2, 3, 4],y: [10, 15, 13, 17]}]}/>`...
 
-...assuming we have created `<CustomPlot>` with some sensible defaults.
+...assuming we have created `<CustomPlot />` with some sensible defaults.
 
 ## Creating Dynamic UIs in Markdown
 
@@ -241,6 +241,7 @@ I now add the component to the .mdx file below, passing in either imported compo
 ```
 
 Go ahead, give it a try below by typing something into the chat box.  
+
 This one has a dummy API call that will always return the same mix of markdown, but importantly its not rendering itself, just pulling in text which we are controlling from the .mdx file:  
 
 ```js
@@ -251,38 +252,34 @@ const dummyResponse = `This is normal markdown. <Highlight color="#c94435">This 
 `;
 ```
 
-The model only returns text, no functions, but we see pretty rendering:
+The model only returns text, no functions, but we still see pretty rendering as MDX operates on that text.
 
 <MultivacChatMessage components={{ Highlight, CustomPlot }} debug={true} />
 
 ## API data calls
 
-Now lets do it with a real API call.  
+Now lets do it with a real API call, as documented in the [multivacChat.js script](https://github.com/sunholo-data/sunholo-py/blob/6ad6287f7eb8a7c4762a087db4fae55059051c26/docs/src/components/multivacChat.js#L51).   
 
 ```js
-  // Function to call the real API
-  const fetchRealData = async () => {
+const fetchRealData = async () => {
     setLoading(true);
-    setError(null); // Clear previous errors
-    setMessage('');  // Clear previous messages
+    setError(null);
+    setMessage('');
 
-    // Check if the API key is undefined
     if (!apiKey) {
-      setError("Missing API key. Please ensure the 'REACT_APP_MULTIVAC_API_KEY' environment variable is set.");
+      setError("Missing API key.");
       setLoading(false);
       return;
     }
 
     try {
-      const response = await fetch('/api/v1/vertex-genai/vac/streaming/personal_llama', {
+      const response = await fetch(`${API_BASE_URL}/vac/streaming/dynamic_blog_mdx`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': apiKey, // Ensure to set the API key in your environment variables
+          'x-api-key': apiKey,
         },
-        body: JSON.stringify({
-          user_input: userInput
-        }),
+        body: JSON.stringify({ user_input: userInput, stream_only: true }),
       });
 
       if (!response.ok) {
@@ -296,12 +293,17 @@ Now lets do it with a real API call.
       while (!done) {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
+
         if (value) {
           const chunk = decoder.decode(value);
-          setMessage((prev) => prev + chunk);
+          try {
+            const json = JSON.parse(chunk);
+            console.log("Ignoring JSON chunk:", json);
+          } catch (e) {
+            setMessage((prev) => prev + chunk);
+          }
         }
       }
-
     } catch (error) {
       setError(`An error occurred while fetching data: ${error.message}`);
     } finally {
@@ -310,13 +312,13 @@ Now lets do it with a real API call.
   };
 ```
 
-I'll use a Vertex deployed API on [Multivac](/docs/multivac/), for which I load the API key in an `.env` file.  I call to my own Multivac cloud as this adds various features I want such as analytics, configuration, user history etc. and runs custom code within a Cloud Run container behind an API key.  
+I use a Vertex deployed API on [Multivac](/docs/multivac/) and make a new VAC called `dynamic_blog_mdx` which has no tools, just a prompt that asks it to output the React components.  I call to my own Multivac cloud as this adds various features I want such as prompt management, analytics, configuration, user history etc. and runs custom code within a Cloud Run container.  
 
 :::tip
-Multivac API key is not required, you can modify the API call to be your own API or a direct GenAI API call such as Gemini, Anthropic or OpenAI, or local hosted GenAI APIs via Ollama etc.
+Multivac API requests are by no means required, you can modify the API call to be your own API or use a direct GenAI API call such as Gemini, Anthropic or OpenAI, or local hosted GenAI APIs via Ollama etc.
 :::
 
-I had to do some shenanigans for CORs within Docusaurus and proxy the API calls, you can see that code in the [`plugins/proxy.js`](https://github.com/sunholo-data/sunholo-py/blob/main/docs/src/plugins/proxy.js) but basically its just calling the streaming API and returning text.
+I had to do some shenanigans for CORs within Docusaurus and proxy the API calls, you can see that code in the [`plugins/proxy.js`](https://github.com/sunholo-data/sunholo-py/blob/main/docs/src/plugins/proxy.js) but basically its just calling the streaming API and returning text chunks.
 
 ### Calling a GenAI API to make a Dynamic UI
 
@@ -326,7 +328,19 @@ This is using a Gemini's [gemini-1.5-flash-8b](https://ai.google.dev/gemini-api/
 
 <MultivacChatMessage components={{ Highlight, CustomPlot }} />
 
-One of the features of using Multivac is having a prompt CMS via Langfuse, so I can tweak the prompt as I tailor the responses, but as of right now the prompt for the above bot is:
+#### Bat pie
+
+You should see something like below, where I asked it to make a pie chart about bats:
+
+![](img/bat-pie.png)
+
+### Reactive UI prompts
+
+One of the features of using Multivac is having a [prompt CMS via Langfuse](https://langfuse.com/docs/prompts/get-started), so I can tweak the prompt as I tailor the responses:
+
+![](img/mdx-prompt-langfuse.png) 
+
+The prompt for the above bot is similar to:
 
 :::note
 You are demonstrating how to use React components in your generated text.  
