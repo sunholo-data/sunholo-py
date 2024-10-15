@@ -211,6 +211,21 @@ I can then use its `JXParser()` and send in the components from the .mdx file on
 
 You can see all the code for the [MultivacChatMessage here](https://github.com/sunholo-data/sunholo-py/blob/main/docs/src/components/multivacChat.js), and the [CustomPlot here](https://github.com/sunholo-data/sunholo-py/blob/main/docs/src/components/mdxComponents.js).
 
+### Plan for failure
+
+Another situation we need to deal with non-deterministic GenAI output is that it will likely fail, and we need to make sure that if it outputs invalid Components it doesn't bork the entire text.  This wrapper ensures that even if the GenAI model outputs invalid code, we still see something:
+
+```js
+const SafeComponent = ({ children, fallback = <span>Invalid Component</span> }) => {
+  try {
+    return children;
+  } catch (error) {
+    console.error('Error rendering component:', error);
+    return fallback;
+  }
+};
+```
+
 ## Dummy data example
 
 I now add the component to the .mdx file below, passing in either imported components (`CustomPlot`) or components defined within the .mdx file itself (`Highlight`):
@@ -301,7 +316,7 @@ I had to do some shenanigans for CORs within Docusaurus and proxy the API calls,
 
 This is using a Gemini's [gemini-1.5-flash-8b](https://ai.google.dev/gemini-api/docs/models/gemini#gemini-1.5-flash-8b) model which is super cheap but not the smartest model out there, but thats the point: the model doesn't have to think too much to render nicely, as we limit its choices to just those React components we send in.
 
-> I'm scaling the Cloud Run to 0 for this example so if you try it be patient: on a cold start the first response will be a little slower than subsequent ones.  Its also not saving any chat history, its just a demo.
+> I'm scaling the Cloud Run to 0 for this example so if you try it be patient: on a cold start the first response will be a little slower than subsequent ones.  Its also not saving any chat history.
 
 <MultivacChatMessage components={{ Highlight, CustomPlot }} />
 

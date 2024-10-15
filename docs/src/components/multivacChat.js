@@ -5,8 +5,18 @@ import BrowserOnly from '@docusaurus/BrowserOnly';
 
 const API_BASE_URL =
   process.env.NODE_ENV === 'development'
-    ? '/api/v1/vertex-genai'  // Uses proxy during development
-    : 'https://vertex-genai-533923089340.europe-west1.run.app';  // Direct call in production
+    ? '/api/v1/vertex-genai'
+    : 'https://vertex-genai-533923089340.europe-west1.run.app';
+
+// SafeComponent with fallback to raw text in case of error
+const SafeComponent = ({ children, fallbackText }) => {
+  try {
+    return children;
+  } catch (error) {
+    console.error('Error rendering component:', error);
+    return <div>{fallbackText}</div>;
+  }
+};
 
 function MultivacChatMessage({ components, debug = false }) {
   const { siteConfig } = useDocusaurusContext();
@@ -15,32 +25,36 @@ function MultivacChatMessage({ components, debug = false }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const apiKey = siteConfig.customFields.multivacApiKey; 
+  const apiKey = siteConfig.customFields.multivacApiKey;
 
   useEffect(() => {
     return () => {
-      // Cleanup to avoid memory leaks
       setMessage('');
       setError(null);
       setLoading(false);
     };
   }, []);
 
+  const safeComponents = {};
+  Object.keys(components).forEach((key) => {
+    safeComponents[key] = (props) => (
+      <SafeComponent fallbackText={`[Error rendering ${key}]`}>
+        {React.createElement(components[key], props)}
+      </SafeComponent>
+    );
+  });
+
   const fetchDummyData = async () => {
     setLoading(true);
-    setError(null); // Clear previous errors
-    setMessage('');  // Clear previous messages
-
+    setError(null);
+    setMessage('');
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const dummyResponse = `This is normal markdown. <Highlight color="#c94435">This is a highlighted response</Highlight>. This is a CustomPlot component:
-      <CustomPlot data={[
-          { x: [1, 2, 3, 4], y: [10, 15, 13, 17], type: 'scatter', mode: 'lines+markers' }
-      ]} />
-      `;
+      <CustomPlot data={[{ x: [1, 2, 3, 4], y: [10, 15, 13, 17], type: 'scatter', mode: 'lines+markers' }]} />`;
 
-      setMessage(dummyResponse); // Set the dummy response in one go
+      setMessage(dummyResponse);
     } catch (error) {
       setError('An error occurred while fetching data.');
     } finally {
@@ -50,8 +64,8 @@ function MultivacChatMessage({ components, debug = false }) {
 
   const fetchRealData = async () => {
     setLoading(true);
-    setError(null); // Clear previous errors
-    setMessage('');  // Clear previous messages
+    setError(null);
+    setMessage('');
 
     if (!apiKey) {
       setError("Missing API key.");
@@ -76,7 +90,6 @@ function MultivacChatMessage({ components, debug = false }) {
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let done = false;
-      let fullMessage = '';  // Collect the full message from chunks
       
       while (!done) {
         const { value, done: doneReading } = await reader.read();
@@ -89,8 +102,7 @@ function MultivacChatMessage({ components, debug = false }) {
             console.log("Ignoring JSON chunk:", json);  // Ignore JSON
           } catch (e) {
             // Append the chunk to the message if it's not JSON
-            fullMessage += chunk;
-            setMessage(fullMessage);  // Set the full message incrementally
+            setMessage((prev) => prev + chunk);
           }
         }
       }
@@ -137,13 +149,17 @@ function MultivacChatMessage({ components, debug = false }) {
           {error && <p className="error-message">{error}</p>}
 
           <div className="multivac-message-output">
-            <JSXParser
-              jsx={message}
-              components={components}
-              renderInWrapper={false}
-              allowUnknownElements={false}
-              blacklistedTags={['script', 'style', 'iframe', 'link', 'meta']}
-            />
+            {message ? (
+              <SafeComponent fallbackText={message}>
+                <JSXParser
+                  jsx={message}
+                  components={safeComponents}
+                  renderInWrapper={false}
+                  allowUnknownElements={false}
+                  blacklistedTags={['script', 'style', 'iframe', 'link', 'meta']}
+                />
+              </SafeComponent>
+            ) : null}
           </div>
         </div>
       )}

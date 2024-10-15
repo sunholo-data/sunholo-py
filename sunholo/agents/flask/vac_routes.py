@@ -618,7 +618,7 @@ if __name__ == "__main__":
             user_id = user_id,
             session_id = session_id,
             tags = tags,
-            release = f"sunholo-v{package_version}"
+            release = package_version
         )
 
     def prep_vac(self, request, vector_name):
@@ -660,7 +660,12 @@ if __name__ == "__main__":
             raise ValueError(f"Unable to find vac_config for {vector_name} - {str(e)}")
 
         if trace:
-            trace.update(input=data, metadata=vac_config.configs_by_kind)
+            this_vac_config = vac_config.configs_by_kind.get("vacConfig")
+            metadata_config=None
+            if this_vac_config:
+                metadata_config = this_vac_config.get(vector_name)
+
+            trace.update(input=data, metadata=metadata_config)
 
         user_input = data.pop('user_input').strip()
         stream_wait_time = data.pop('stream_wait_time', 7)
