@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import JSXParser from 'react-jsx-parser';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import BrowserOnly from '@docusaurus/BrowserOnly';
+
 const API_BASE_URL =
   process.env.NODE_ENV === 'development'
     ? '/api/v1/vertex-genai'  // Uses proxy during development
     : 'https://vertex-genai-533923089340.europe-west1.run.app';  // Direct call in production
-
 
 function MultivacChatMessage({ components, debug = false }) {
   const { siteConfig } = useDocusaurusContext();
@@ -26,7 +26,6 @@ function MultivacChatMessage({ components, debug = false }) {
     };
   }, []);
 
-  // Function to simulate the delayed dummy response (for debug mode)
   const fetchDummyData = async () => {
     setLoading(true);
     setError(null); // Clear previous errors
@@ -43,8 +42,7 @@ function MultivacChatMessage({ components, debug = false }) {
       ]} />
       `;
 
-      // Set the dummy response in the message state
-      setMessage(dummyResponse);
+      setMessage(dummyResponse); // Set the dummy response in one go
     } catch (error) {
       setError('An error occurred while fetching data.');
     } finally {
@@ -52,7 +50,6 @@ function MultivacChatMessage({ components, debug = false }) {
     }
   };
 
-  // Function to call the real API
   const fetchRealData = async () => {
     setLoading(true);
     setError(null); // Clear previous errors
@@ -81,33 +78,33 @@ function MultivacChatMessage({ components, debug = false }) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder('utf-8');
-        let done = false;
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let done = false;
 
-        while (!done) {
+      while (!done) {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
         if (value) {
-            const chunk = decoder.decode(value);
-            // Detect if the chunk is JSON by trying to parse it
-            try {
+          const chunk = decoder.decode(value);
+          // Detect if the chunk is JSON by trying to parse it
+          try {
             const json = JSON.parse(chunk);
-            // If it's valid JSON, ignore it
+            // Ignore the JSON chunk
             console.log("Ignoring JSON chunk:", json);
-            } catch (e) {
-            // If it's not JSON, append it to the message
+          } catch (e) {
+            // If it's not JSON, append it to the message using functional state update
             setMessage((prev) => prev + chunk);
-            }
+          }
         }
-        }
+      }
 
     } catch (error) {
-        setError(`An error occurred while fetching data: ${error.message}`);
+      setError(`An error occurred while fetching data: ${error.message}`);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-    };
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -121,7 +118,6 @@ function MultivacChatMessage({ components, debug = false }) {
       setError('Input cannot be empty');
     }
   };
-
 
   return (
     <BrowserOnly>
