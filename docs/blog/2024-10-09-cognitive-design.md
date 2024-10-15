@@ -6,27 +6,21 @@ image: https://dev.sunholo.com/assets/images/cognitive-design-ec3719c6b00a22113d
 slug: /cognitive-design
 ---
 
+import AudioPlayer from '@site/src/components/audio';
+
 ![](img/cognitive-design.webp)
 
 > Its more than a year since my blog post about [running LLMs on Google Cloud](https://code.markedmondson.me/running-llms-on-gcp/) was published, and its safe to say it changed my life.  It feels appropriate to publish a follow up here within the `sunholo` documentation, as its where I've been mentally living for a lot of the past 12 months.  The reaction to the above blog encouraged me to change my career direction and embrace GenAIOps within my own startup, Holosun ApS. This year has been one of intense learning and excitement with ups and downs, but I feel like I made the right call.
 
 This blog post will take some of what I've learnt this past year within GenAI and apply it to a common task in my pre-GenAI career: what is the best way to use BigQuery to extract insights from [Google Analytics 4's BigQuery data export](https://support.google.com/analytics/answer/9358801)?  I wrote a book on [Learning Google Analytics](https://www.oreilly.com/library/view/learning-google-analytics/9781098113070/) in my career before GenAI - with these amazing new tools, can we get more value than before? To tackle this in a GenAI way, let us meet Bertha.
 
+<AudioPlayer src="https://storage.googleapis.com/sunholo-public-podcasts/Cognitive%20Design.wav" />
+
 <!-- truncate -->
 
 ### Supporting links
 
 * *Bertha 2.0 code from this blog post is released under the MIT license and available here: https://github.com/sunholo-data/blog-examples/blob/dev/cognitive-design/bertha.py*
-* *A NotebookLM generated podcast about this blogpost and some of its sources is available here:*
-
-<iframe
-   frameborder="0"
-   width="500"
-   height="100"
-   src="https://drive.google.com/file/d/1_i96FTA37Fpkvw-ib7LNzSTpDa9o9-vD/preview?usp=drive_link">
-</iframe>
-
-[Alternatively, listen to the audio file on Google Drive](https://drive.google.com/file/d/1_i96FTA37Fpkvw-ib7LNzSTpDa9o9-vD/view?usp=drive_link) 
 
 
 
