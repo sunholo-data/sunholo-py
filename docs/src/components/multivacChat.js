@@ -32,10 +32,8 @@ function MultivacChatMessage({ components, debug = false }) {
     setMessage('');  // Clear previous messages
 
     try {
-      // Simulate a 2-second delay before returning dummy data
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // Dummy response (replace this with any JSX content you want to test)
       const dummyResponse = `This is normal markdown. <Highlight color="#c94435">This is a highlighted response</Highlight>. This is a CustomPlot component:
       <CustomPlot data={[
           { x: [1, 2, 3, 4], y: [10, 15, 13, 17], type: 'scatter', mode: 'lines+markers' }
@@ -55,9 +53,8 @@ function MultivacChatMessage({ components, debug = false }) {
     setError(null); // Clear previous errors
     setMessage('');  // Clear previous messages
 
-    // Check if the API key is undefined
     if (!apiKey) {
-      setError("Missing API key. Please ensure the 'REACT_APP_MULTIVAC_API_KEY' environment variable is set.");
+      setError("Missing API key.");
       setLoading(false);
       return;
     }
@@ -67,11 +64,9 @@ function MultivacChatMessage({ components, debug = false }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': apiKey, // Ensure to set the API key in your environment variables
+          'x-api-key': apiKey,
         },
-        body: JSON.stringify({
-          user_input: userInput
-        }),
+        body: JSON.stringify({ user_input: userInput }),
       });
 
       if (!response.ok) {
@@ -81,20 +76,21 @@ function MultivacChatMessage({ components, debug = false }) {
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let done = false;
-
+      let fullMessage = '';  // Collect the full message from chunks
+      
       while (!done) {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
+
         if (value) {
           const chunk = decoder.decode(value);
-          // Detect if the chunk is JSON by trying to parse it
           try {
             const json = JSON.parse(chunk);
-            // Ignore the JSON chunk
-            console.log("Ignoring JSON chunk:", json);
+            console.log("Ignoring JSON chunk:", json);  // Ignore JSON
           } catch (e) {
-            // If it's not JSON, append it to the message using functional state update
-            setMessage((prev) => prev + chunk);
+            // Append the chunk to the message if it's not JSON
+            fullMessage += chunk;
+            setMessage(fullMessage);  // Set the full message incrementally
           }
         }
       }
@@ -110,9 +106,9 @@ function MultivacChatMessage({ components, debug = false }) {
     e.preventDefault();
     if (userInput.trim()) {
       if (debug) {
-        fetchDummyData(); // Fetch the dummy response in debug mode
+        fetchDummyData();
       } else {
-        fetchRealData(); // Call the real API when debug mode is off
+        fetchRealData();
       }
     } else {
       setError('Input cannot be empty');
@@ -143,7 +139,7 @@ function MultivacChatMessage({ components, debug = false }) {
           <div className="multivac-message-output">
             <JSXParser
               jsx={message}
-              components={components} // Pass components dynamically
+              components={components}
               renderInWrapper={false}
               allowUnknownElements={false}
               blacklistedTags={['script', 'style', 'iframe', 'link', 'meta']}
