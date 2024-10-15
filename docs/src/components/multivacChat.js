@@ -119,8 +119,15 @@ function MultivacChatMessage({ components, debug = false }) {
           components={components}
           renderInWrapper={false}
           allowUnknownElements={false}
+          autoCloseVoidElements
+          showWarnings
+          renderError={<p>Failed to render: {sanitizeJSX(message)}</p>}
+          componentsOnly
           blacklistedTags={['script', 'style', 'iframe', 'link', 'meta']}
-          onError={(error) => console.error('onError parsing JSX:', error)} 
+          onError={(error) => {
+            console.error('onError parsing JSX:', error);
+            }
+          } 
         />
       );
     } catch (err) {

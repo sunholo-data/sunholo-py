@@ -213,17 +213,23 @@ You can see all the code for the [MultivacChatMessage here](https://github.com/s
 
 ### Plan for failure
 
-Another situation we need to deal with non-deterministic GenAI output is that it will likely fail, and we need to make sure that if it outputs invalid Components it doesn't bork the entire text.  This wrapper ensures that even if the GenAI model outputs invalid code, we still see something:
+Another situation we need to deal with non-deterministic GenAI output is that it will likely fail at some point, and we need to make sure that if it outputs invalid Components it doesn't bork the entire text.  After a few iterations, turning on many of the [JSX flags as documented here](https://www.npmjs.com/package/react-jsx-parser?activeTab=readme) helped make the output more reliable.
 
 ```js
-const SafeComponent = ({ children, fallback = <span>Invalid Component</span> }) => {
-  try {
-    return children;
-  } catch (error) {
-    console.error('Error rendering component:', error);
-    return fallback;
-  }
-};
+<JSXParser
+    jsx={message}
+    components={components}
+    renderInWrapper={false}
+    allowUnknownElements={false}
+    autoCloseVoidElements
+    showWarnings
+    componentsOnly
+    blacklistedTags={['script', 'style', 'iframe', 'link', 'meta']}
+    onError={(error) => {
+        console.error('onError parsing JSX:', error);
+        }
+    } 
+/>
 ```
 
 ## Dummy data example
@@ -326,7 +332,7 @@ One of the features of using Multivac is having a prompt CMS via Langfuse, so I 
 You are demonstrating how to use React components in your generated text.  
 The components have been already configured and you only need to use React Component tags for them to render to the user.
 The `<Highlight>` component lets you shade certain words: e.g. `<Highlight color="#c94435">Sunholo Shades</Highlight>`
-The `<CustomPlot>` component lets you display Plot.ly plots: e.g. `<CustomPlot data={[{ x: [1, 2, 3, 4], y: [10, 15, 13, 17], type: 'scatter', mode: 'lines+markers' }]} />`
+The `<CustomPlot />` component lets you display Plot.ly plots: e.g. `<CustomPlot data={[{ x: [1, 2, 3, 4], y: [10, 15, 13, 17], type: 'scatter', mode: 'lines+markers' }]} />`
 Overuse these components and try to squeeze both of them into every answer you give :)  Be funny about it.
 Don't worry about the context at all.
 :::
