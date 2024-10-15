@@ -3,20 +3,15 @@ import JSXParser from 'react-jsx-parser';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import BrowserOnly from '@docusaurus/BrowserOnly';
 
+// Utility function to remove JSX tags in case of errors
+const sanitizeJSX = (message) => {
+  return message.replace(/<[^>]+>/g, ''); // Strips out all tags, leaving plain text
+};
+
 const API_BASE_URL =
   process.env.NODE_ENV === 'development'
     ? '/api/v1/vertex-genai'
     : 'https://vertex-genai-533923089340.europe-west1.run.app';
-
-// SafeComponent with fallback to raw text in case of error
-const SafeComponent = ({ children, fallbackText }) => {
-  try {
-    return children;
-  } catch (error) {
-    console.error('Error rendering component:', error);
-    return <div>{fallbackText}</div>;
-  }
-};
 
 function MultivacChatMessage({ components, debug = false }) {
   const { siteConfig } = useDocusaurusContext();
@@ -24,6 +19,7 @@ function MultivacChatMessage({ components, debug = false }) {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [safeMessage, setSafeMessage] = useState(''); // For rendering fallback text
 
   const apiKey = siteConfig.customFields.multivacApiKey;
 
@@ -32,28 +28,18 @@ function MultivacChatMessage({ components, debug = false }) {
       setMessage('');
       setError(null);
       setLoading(false);
+      setSafeMessage(''); // Cleanup
     };
   }, []);
-
-  const safeComponents = {};
-  Object.keys(components).forEach((key) => {
-    safeComponents[key] = (props) => (
-      <SafeComponent fallbackText={`[Error rendering ${key}]`}>
-        {React.createElement(components[key], props)}
-      </SafeComponent>
-    );
-  });
 
   const fetchDummyData = async () => {
     setLoading(true);
     setError(null);
     setMessage('');
+
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      const dummyResponse = `This is normal markdown. <Highlight color="#c94435">This is a highlighted response</Highlight>. This is a CustomPlot component:
-      <CustomPlot data={[{ x: [1, 2, 3, 4], y: [10, 15, 13, 17], type: 'scatter', mode: 'lines+markers' }]} />`;
-
+      const dummyResponse = `This is normal markdown. <Highlight color="#c94435">This is a highlighted response</Highlight>. This is a CustomPlot component: <CustomPlot data={[{ x: [1, 2, 3, 4], y: [10, 15, 13, 17], type: 'scatter', mode: 'lines+markers' }]} />`;
       setMessage(dummyResponse);
     } catch (error) {
       setError('An error occurred while fetching data.');
@@ -80,7 +66,7 @@ function MultivacChatMessage({ components, debug = false }) {
           'Content-Type': 'application/json',
           'x-api-key': apiKey,
         },
-        body: JSON.stringify({ user_input: userInput }),
+        body: JSON.stringify({ user_input: userInput, stream_only: true }),
       });
 
       if (!response.ok) {
@@ -90,7 +76,7 @@ function MultivacChatMessage({ components, debug = false }) {
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let done = false;
-      
+
       while (!done) {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
@@ -99,14 +85,12 @@ function MultivacChatMessage({ components, debug = false }) {
           const chunk = decoder.decode(value);
           try {
             const json = JSON.parse(chunk);
-            console.log("Ignoring JSON chunk:", json);  // Ignore JSON
+            console.log("Ignoring JSON chunk:", json);
           } catch (e) {
-            // Append the chunk to the message if it's not JSON
             setMessage((prev) => prev + chunk);
           }
         }
       }
-
     } catch (error) {
       setError(`An error occurred while fetching data: ${error.message}`);
     } finally {
@@ -124,6 +108,25 @@ function MultivacChatMessage({ components, debug = false }) {
       }
     } else {
       setError('Input cannot be empty');
+    }
+  };
+
+  const handleJSXError = () => {
+    try {
+      return (
+        <JSXParser
+          jsx={message}
+          components={components}
+          renderInWrapper={false}
+          allowUnknownElements={false}
+          blacklistedTags={['script', 'style', 'iframe', 'link', 'meta']}
+          onError={(error) => console.error('onError parsing JSX:', error)} 
+        />
+      );
+    } catch (err) {
+      console.error('catch Error parsing JSX, attempting santize', sanitizeJSX(message));
+      // Fallback to plain text if JSX parsing fails
+      return <p>{sanitizeJSX(message)}</p>;
     }
   };
 
@@ -149,17 +152,7 @@ function MultivacChatMessage({ components, debug = false }) {
           {error && <p className="error-message">{error}</p>}
 
           <div className="multivac-message-output">
-            {message ? (
-              <SafeComponent fallbackText={message}>
-                <JSXParser
-                  jsx={message}
-                  components={safeComponents}
-                  renderInWrapper={false}
-                  allowUnknownElements={false}
-                  blacklistedTags={['script', 'style', 'iframe', 'link', 'meta']}
-                />
-              </SafeComponent>
-            ) : null}
+            {message ? handleJSXError() : null}
           </div>
         </div>
       )}

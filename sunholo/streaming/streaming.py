@@ -87,25 +87,31 @@ def start_streaming_chat(question,
             break
     else:
         log.info(f"Stream has ended after {round(time.time() - first_start, 2)} seconds")
-        log.info("Sending final full message plus sources...")
+        
         
     
     # if  you need it to stop it elsewhere use 
     # stop_event.set()
     content_to_send = content_buffer.read()
     if content_to_send:
-        log.info(f"==\n{content_to_send}")
+        log.info(f"==Flush==\n{content_to_send}")
         yield content_to_send
         content_buffer.clear()
 
     # Stop the stream thread
     chat_thread.join()
 
-    # the json object with full response in 'answer' and the 'sources' array
-    final_result = result_queue.get()
+    if kwargs.get("stream_only"):
+        log.info("stream_only so finishing now")
+        final_yield = ""
+    else:
+        log.info("Sending final full message plus sources...")
+        # the json object with full response in 'answer' and the 'sources' array
+        final_result = result_queue.get()
+        final_yield = parse_output(final_result)
 
     # parses out source_documents if not present etc.
-    yield parse_output(final_result)
+    yield final_yield
 
 async def start_streaming_chat_async(question, vector_name, qna_func_async, chat_history=[], wait_time=2, timeout=120, **kwargs): 
     """
