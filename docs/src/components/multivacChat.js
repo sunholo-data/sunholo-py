@@ -81,25 +81,33 @@ function MultivacChatMessage({ components, debug = false }) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-      let done = false;
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let done = false;
 
-      while (!done) {
+        while (!done) {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
         if (value) {
-          const chunk = decoder.decode(value);
-          setMessage((prev) => prev + chunk);
+            const chunk = decoder.decode(value);
+            // Detect if the chunk is JSON by trying to parse it
+            try {
+            const json = JSON.parse(chunk);
+            // If it's valid JSON, ignore it
+            console.log("Ignoring JSON chunk:", json);
+            } catch (e) {
+            // If it's not JSON, append it to the message
+            setMessage((prev) => prev + chunk);
+            }
         }
-      }
+        }
 
     } catch (error) {
-      setError(`An error occurred while fetching data: ${error.message}`);
+        setError(`An error occurred while fetching data: ${error.message}`);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+    };
 
   const handleSubmit = (e) => {
     e.preventDefault();
