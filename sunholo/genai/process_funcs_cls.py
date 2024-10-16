@@ -12,7 +12,7 @@ from collections import deque
 try:
     import google.generativeai as genai
     import proto
-    from google.generativeai.types import RequestOptions
+    from google.generativeai.types import RequestOptions, GenerateContentResponse
     from google.api_core import retry
     from google.generativeai import ChatSession
     from google.api_core.exceptions import RetryError
@@ -441,11 +441,11 @@ class GenAIFunctionProcessor:
 
             log.info(f"== Start input content for loop [{guardrail}]\n ## Content: {content_parse}")
             this_text = ""  # reset for this loop
-            response = []
+            response = None
 
             try:
                 token_queue.append("\n= Calling Agent =\n")
-                response = chat.send_message(content, stream=True, request_options=RequestOptions(
+                response:GenerateContentResponse = chat.send_message(content, stream=True, request_options=RequestOptions(
                                         retry=retry.Retry(
                                             initial=10, 
                                             multiplier=2, 
@@ -465,19 +465,20 @@ class GenAIFunctionProcessor:
                 token_queue.append(msg)
                 break
 
-            loop_metadata = response.usage_metadata
-            if loop_metadata:
-                usage_metadata = {
-                    "prompt_token_count": usage_metadata["prompt_token_count"] + (loop_metadata.prompt_token_count or 0),
-                    "candidates_token_count": usage_metadata["candidates_token_count"] + (loop_metadata.candidates_token_count or 0),
-                    "total_token_count": usage_metadata["total_token_count"] + (loop_metadata.total_token_count or 0),
-                }
-                token_queue.append((
-                    "\n-- Agent response -- " 
-                    f"Loop tokens: [{loop_metadata.prompt_token_count}]/[{usage_metadata['prompt_token_count']}] "
-                    f"Session tokens: [{loop_metadata.total_token_count}]/[{usage_metadata['total_token_count']}] \n"
-                ))
-            loop_metadata = None
+            if response:
+                loop_metadata = response.usage_metadata
+                if loop_metadata:
+                    usage_metadata = {
+                        "prompt_token_count": usage_metadata["prompt_token_count"] + (loop_metadata.prompt_token_count or 0),
+                        "candidates_token_count": usage_metadata["candidates_token_count"] + (loop_metadata.candidates_token_count or 0),
+                        "total_token_count": usage_metadata["total_token_count"] + (loop_metadata.total_token_count or 0),
+                    }
+                    token_queue.append((
+                        "\n-- Agent response -- " 
+                        f"Loop tokens: [{loop_metadata.prompt_token_count}]/[{usage_metadata['prompt_token_count']}] "
+                        f"Session tokens: [{loop_metadata.total_token_count}]/[{usage_metadata['total_token_count']}] \n"
+                    ))
+                loop_metadata = None
 
             for chunk in response:
                 if not chunk:
