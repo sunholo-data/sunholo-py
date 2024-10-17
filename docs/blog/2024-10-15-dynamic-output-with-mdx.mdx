@@ -108,7 +108,7 @@ import Plot from 'react-plotly.js';
 
 That worked for runtime, but broke in build time with:
 
-:::danger
+:::danger[Error when building website with `yarn build`]
 It looks like you are using code that should run on the client-side only.
 To get around it, try using one of:
 - `<BrowserOnly>` (https://docusaurus.io/docs/docusaurus-core/#browseronly)
@@ -347,7 +347,7 @@ One of the features of using Multivac is having a [prompt CMS via Langfuse](http
 
 The prompt for the above bot is similar to:
 
-:::note
+:::note[Prompt]
 You are demonstrating how to use React components in your generated text.  
 The components have been already configured and you only need to use React Component tags for them to render to the user.
 The `<Highlight>` component lets you shade certain words: e.g. `<Highlight color="#c94435">Sunholo Shades</Highlight>`
