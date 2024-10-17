@@ -225,7 +225,7 @@ class GenAIFunctionProcessor:
 
         return strings
 
-    def process_funcs(self, full_response, output_parts=True) -> Union[list['Part'], str]:
+    def process_funcs(self, full_response, output_parts=True, loop_span=None) -> Union[list['Part'], str]:
         """
         Processes the functions based on the full_response from the generative model.
 
@@ -246,6 +246,7 @@ class GenAIFunctionProcessor:
         ```
         """
         api_requests_and_responses = []
+
 
         if not full_response:
             log.info("No response was found to process")
@@ -273,6 +274,8 @@ class GenAIFunctionProcessor:
                 if len(params)>8000:
                     log.warning(f"Total parameters are over 8000 characters - it may not work properly: {params[:10000]}....[{len(params)}]")
 
+                fn_span = loop_span.span(name=function_name, input=params_obj) if loop_span else None
+
                 # Check if the function is in our dictionary of available functions
                 if function_name in self.funcs:
                     fn_exec = self.funcs[function_name]
@@ -297,8 +300,11 @@ class GenAIFunctionProcessor:
                     api_requests_and_responses.append(
                         [function_name, params, clean_result]
                     )
+                    fn_span.end(output=clean_result) if fn_span else None
                 else:
-                    log.error(f"Function {function_name} is not recognized")
+                    msg = f"Function {function_name} is not recognized"
+                    log.error(msg)
+                    fn_span.end(output=msg) if fn_span else None
 
         log.info(f"{api_requests_and_responses=}")
         self.last_api_requests_and_responses = api_requests_and_responses
@@ -466,7 +472,7 @@ class GenAIFunctionProcessor:
                     input = {'content': content},
                 ) if loop_span else None
 
-                response: GenerateContentResponse = chat.send_message(content, stream=True, request_options=RequestOptions(
+                response: GenerateContentResponse = chat.send_message(content, request_options=RequestOptions(
                                         retry=retry.Retry(
                                             initial=10, 
                                             multiplier=2, 
@@ -519,16 +525,14 @@ class GenAIFunctionProcessor:
                     
                 except ValueError as err:
                     token_queue.append(f"{str(err)} for {chunk=}")
-            fn_span = loop_span.span(name="function_execution", input=response) if loop_span else None
             try:
-                executed_responses = self.process_funcs(response) 
+                executed_responses = self.process_funcs(response, loop_span=loop_span) 
             except Exception as err:
                 log.error(f"Error in executions: {str(err)}")
                 executed_responses = []
                 token_queue.append(f"{str(err)} for {response=}")
 
             log.info(f"[{guardrail}] {executed_responses=}")
-            fn_span.end(output=executed_responses) if fn_span else None
 
             if executed_responses:  
                 token_queue.append("\n-- Agent Actions:\n")
@@ -548,7 +552,7 @@ class GenAIFunctionProcessor:
                         callback.on_llm_new_token(token=token)
 
                     log.info(f"{fn_log} created a result={type(fn_result)=}")
-                    fn_exec_one = fn_exec.span(name=fn_log, input=fn_result) if fn_exec else None
+                    fn_exec_one = fn_exec.span(name=fn, input=fn_args) if fn_exec else None
                     
                     fn_result_json = None
                     # Convert MapComposite to a standard Python dictionary
