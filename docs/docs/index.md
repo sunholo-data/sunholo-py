@@ -2,6 +2,7 @@
 sidebar_position: 1
 slug: /
 ---
+import AudioPlayer from '@site/src/components/audio';
 
 # Introduction
 
@@ -9,18 +10,8 @@ Welcome to the dev portal for the `sunholo` project, which is the open-source co
 
 `sunholo` is a library of helpful utilities for deploying GenAI applications on the cloud.  It includes various python modules and functions that have been needed to help develop GenAI applications called VACs (Virtual Agent Computers) on the Multivac system.  Whilst its primary purpose is to enable Multivac applications, it may also be useful for more general GenAI applications, for instance if you are looking for ways to manage many GenAI configurations.
 
-## Listen to the audio file:
+<AudioPlayer src="https://storage.googleapis.com/sunholo-public-podcasts/sunholo-podcasts.wav" />
 
-A [NotebookLM](https://notebooklm.google/) generated podcast of the codebase that may help give you an overview of what the library is capable of:
-
-<iframe
-   frameborder="0"
-   width="500"
-   height="100"
-   src="https://drive.google.com/file/d/1GvwRmiYDjPjN2hXQ8plhnVDByu6TmgCQ/preview?usp=drive_link">
-</iframe>
-
-[Alternatively, listen to the audio file on Google Drive](https://drive.google.com/file/d/1GvwRmiYDjPjN2hXQ8plhnVDByu6TmgCQ/view?usp=drive_link) 
 
 > "Ever wish you could build your own AI?..."
 
