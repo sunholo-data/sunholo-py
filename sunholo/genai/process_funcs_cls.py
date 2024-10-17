@@ -60,7 +60,7 @@ class GenAIFunctionProcessor:
     ```
     """
 
-    def __init__(self, config: ConfigManager=None, model_name=None):
+    def __init__(self, config: ConfigManager=None, model_name=None, trace=None, parent_observation_id=None):
         """
         Initializes the GenAIFunctionProcessor with the given configuration.
 
@@ -83,6 +83,9 @@ class GenAIFunctionProcessor:
             self.model_name = config.vacConfig("model") if config.vacConfig("llm") == "vertex" else "gemini-1.5-flash"
         elif model_name:
             self.model_name = model_name
+        
+        self.trace = trace
+        self.parent_observation_id = parent_observation_id
         
         self.last_api_requests_and_responses = []
         self._validate_functions()
@@ -430,6 +433,12 @@ class GenAIFunctionProcessor:
         # Initialize token queue to ensure sequential processing
         token_queue = deque()
 
+        span = self.trace.span(
+            name=f"GenAIFunctionProcesser_{self.__class__.__name__}",
+            parent_observation_id=self.parent_observation_id,
+            input = {'content': content},
+        ) if self.trace else None
+
         while guardrail < guardrail_max:
 
             token_queue.append(f"\n----Loop [{guardrail}] Start------\nFunctions: {list(self.funcs.keys())}\n")
@@ -442,10 +451,22 @@ class GenAIFunctionProcessor:
             log.info(f"== Start input content for loop [{guardrail}]\n ## Content: {content_parse}")
             this_text = ""  # reset for this loop
             response = None
+            loop_span = span.span(
+                name=f"loop_{guardrail}",
+                model=self.model_name,
+                input = {'content': content},
+            ) if span else None
 
             try:
                 token_queue.append("\n= Calling Agent =\n")
-                response:GenerateContentResponse = chat.send_message(content, stream=True, request_options=RequestOptions(
+
+                gen = loop_span.generation(
+                    name=f"loop_{guardrail}",
+                    model=self.model_name,
+                    input = {'content': content},
+                ) if loop_span else None
+
+                response: GenerateContentResponse = chat.send_message(content, stream=True, request_options=RequestOptions(
                                         retry=retry.Retry(
                                             initial=10, 
                                             multiplier=2, 
@@ -479,6 +500,9 @@ class GenAIFunctionProcessor:
                         f"Session tokens: [{loop_metadata.total_token_count}]/[{usage_metadata['total_token_count']}] \n"
                     ))
                 loop_metadata = None
+                gen.end(output=dict(response)) if gen else None
+            else:
+                gen.end(output="No response received") if gen else None
 
             for chunk in response:
                 if not chunk:
@@ -495,7 +519,7 @@ class GenAIFunctionProcessor:
                     
                 except ValueError as err:
                     token_queue.append(f"{str(err)} for {chunk=}")
-            
+            fn_span = loop_span.span(name="function_execution", input=response) if loop_span else None
             try:
                 executed_responses = self.process_funcs(response) 
             except Exception as err:
@@ -504,9 +528,11 @@ class GenAIFunctionProcessor:
                 token_queue.append(f"{str(err)} for {response=}")
 
             log.info(f"[{guardrail}] {executed_responses=}")
+            fn_span.end(output=executed_responses) if fn_span else None
 
             if executed_responses:  
                 token_queue.append("\n-- Agent Actions:\n")
+                fn_exec = loop_span.span(name="function_actions", input=executed_responses) if loop_span else None
                 for executed_response in executed_responses:
                     token = ""
                     fn = executed_response.function_response.name
@@ -522,6 +548,7 @@ class GenAIFunctionProcessor:
                         callback.on_llm_new_token(token=token)
 
                     log.info(f"{fn_log} created a result={type(fn_result)=}")
+                    fn_exec_one = fn_exec.span(name=fn_log, input=fn_result) if fn_exec else None
                     
                     fn_result_json = None
                     # Convert MapComposite to a standard Python dictionary
@@ -574,10 +601,14 @@ class GenAIFunctionProcessor:
                     
                     this_text += token
                     token_queue.append(token)
+                    fn_exec_one.end(output=token) if fn_exec_one else None
+                    
             else:
                 token = "\nNo function executions were found\n"
                 token_queue.append(token)
                 this_text += token
+
+            fn_exec.end(output=this_text) if fn_exec else None
 
             if this_text:
                 content.append(f"Agent: {this_text}")    
@@ -595,6 +626,7 @@ class GenAIFunctionProcessor:
                 content.append(f"Agent: No response was found for loop [{guardrail}]")
 
             token_queue.append(f"\n----Loop [{guardrail}] End------\n{usage_metadata}\n----------------------")
+            loop_span.end(output=content, metadata=loop_metadata) if loop_span else None
 
             go_on_check = self.check_function_result("decide_to_go_on", {"go_on": False})
             if go_on_check:
@@ -617,6 +649,7 @@ class GenAIFunctionProcessor:
         usage_metadata["functions_called"] = functions_called
 
         big_text = "\n".join(big_result[-loop_return:])
+        span.end(output=big_text, metadata=usage_metadata) if span else None
 
         return big_text, usage_metadata
 
