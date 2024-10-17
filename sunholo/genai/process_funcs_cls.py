@@ -500,7 +500,7 @@ class GenAIFunctionProcessor:
                         f"Session tokens: [{loop_metadata.total_token_count}]/[{usage_metadata['total_token_count']}] \n"
                     ))
                 loop_metadata = None
-                gen.end(output=dict(response)) if gen else None
+                gen.end(output=response.to_dict()) if gen else None
             else:
                 gen.end(output="No response received") if gen else None
 
