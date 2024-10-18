@@ -129,7 +129,7 @@ class AlloyDBClient:
                 log.error("Can't create AlloyDBEngine - install via `pip install sunholo[gcp,database]`")
                 raise ValueError("Can't import AlloyDBEngine")
 
-        log.info(f"Inititaing AlloyDB Langchain engine for database: {self.database}")
+        log.info(f"Inititaing AlloyDB Langchain engine for database: {self.database} with config: {self.config}")
 
         from google.cloud.alloydb.connector import IPTypes
         engine = AlloyDBEngine.from_instance(

@@ -81,7 +81,9 @@ class GenAIFunctionProcessor:
         self.model_name = "gemini-1.5-flash"
         if config:
             self.model_name = config.vacConfig("model") if config.vacConfig("llm") == "vertex" else "gemini-1.5-flash"
-        elif model_name:
+        
+        if model_name:
+            log.info(f"Overriding agent model name {self.model_name} with model {model_name}")
             self.model_name = model_name
         
         self.trace = trace
