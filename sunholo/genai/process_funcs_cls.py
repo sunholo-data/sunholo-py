@@ -609,13 +609,12 @@ class GenAIFunctionProcessor:
                     this_text += token
                     token_queue.append(token)
                     fn_exec_one.end(output=token) if fn_exec_one else None
-                    
+                fn_exec.end(output=this_text) if fn_exec else None        
+
             else:
                 token = "\nNo function executions were found\n"
                 token_queue.append(token)
                 this_text += token
-
-            fn_exec.end(output=this_text) if fn_exec else None
 
             if this_text:
                 content.append(f"Agent: {this_text}")    
