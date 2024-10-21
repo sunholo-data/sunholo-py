@@ -459,6 +459,7 @@ class GenAIFunctionProcessor:
             log.info(f"== Start input content for loop [{guardrail}]\n ## Content: {content_parse}")
             this_text = ""  # reset for this loop
             response = None
+            executed_responses = []
             loop_span = span.span(
                 name=f"loop_{guardrail}",
                 model=self.model_name,
@@ -511,28 +512,28 @@ class GenAIFunctionProcessor:
                 gen.end(output=response.to_dict()) if gen else None
             else:
                 gen.end(output="No response received") if gen else None
+            
 
-            for chunk in response:
-                if not chunk:
-                    continue
+                for chunk in response:
+                    if not chunk:
+                        continue
 
-                log.debug(f"[{guardrail}] {chunk=}")
+                    log.debug(f"[{guardrail}] {chunk=}")
+                    try:
+                        if hasattr(chunk, 'text') and isinstance(chunk.text, str):
+                            token = chunk.text
+                            token_queue.append(token)
+                            this_text += token
+                        else:
+                            log.info("skipping chunk with no text")
+                        
+                    except ValueError as err:
+                        token_queue.append(f"{str(err)} for {chunk=}")
                 try:
-                    if hasattr(chunk, 'text') and isinstance(chunk.text, str):
-                        token = chunk.text
-                        token_queue.append(token)
-                        this_text += token
-                    else:
-                        log.info("skipping chunk with no text")
-                    
-                except ValueError as err:
-                    token_queue.append(f"{str(err)} for {chunk=}")
-            try:
-                executed_responses = self.process_funcs(response, loop_span=loop_span) 
-            except Exception as err:
-                log.error(f"Error in executions: {str(err)}")
-                executed_responses = []
-                token_queue.append(f"{str(err)} for {response=}")
+                    executed_responses = self.process_funcs(response, loop_span=loop_span) 
+                except Exception as err:
+                    log.error(f"Error in executions: {str(err)}")
+                    token_queue.append(f"{str(err)} for {response=}")
 
             log.info(f"[{guardrail}] {executed_responses=}")
 
