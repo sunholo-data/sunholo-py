@@ -420,7 +420,7 @@ Cognitive designs are common in AI research, both within model architecture and 
 
 Read the Chase-SQL paper at https://arxiv.org/pdf/2410.01943v1
 
-## Applying Cognitive Design to Berta 2.0
+## Applying Cognitive Design to Bertha 2.0
 
 Applying cognitive design to Bertha, let’s first map out its current cognitive flow:
 
@@ -443,7 +443,7 @@ From my experience writing the GA4 book, I’d say the major hurdles are the com
 
 Coincidently [CHASE-SQL](https://arxiv.org/pdf/2410.01943v1) mentioned above in the examples came out as I was writing this post, with deep discussion on cognitive designs to improve SQL generation. It’s worth checking out for ideas. One of which we can also implement is creating lots of candidate SQL commands in parallel, and then getting a judge to select the best.
 
-The new Bertha 2.0 cognitive design wil then add:
+The new Bertha 2.0 cognitive design will then add:
 
 1. A function it can use to create better SQL
 2. Use a sub-agent to called from the SQL creation agent that used Sonnet 3.5 and CHASE-SQL techniques
