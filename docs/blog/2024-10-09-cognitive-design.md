@@ -7,7 +7,6 @@ slug: /cognitive-design
 ---
 
 import AudioPlayer from '@site/src/components/audio';
-import CogFlow from '@site/src/components/reactFlow';
 
 ![](img/cognitive-design.webp)
 
