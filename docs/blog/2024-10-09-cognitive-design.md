@@ -427,51 +427,6 @@ Applying cognitive design to Bertha, let’s first map out its current cognitive
 
 [![Bertha Cognitive Design](img/bertha-cog-design.png)](img/bertha-cog-design.png)
 
-<CogFlow 
-  height="800px" 
-  title="Bertha 1.0 Design Process"
-  nodes={[
-    { id: '1', type: 'input', data: { label: 'User Question' }, position: { x: 200, y: 0 } },
-    { id: '2', type: 'default', data: { label: 'Orchestrator' }, position: { x: 200, y: 100 } },
-    
-    {
-      id: 'A', 
-      type: 'group', 
-      data: { label: 'Bertha 1.0' }, 
-      position: { x: 100, y: 200 }, 
-      style: { width: 500, height: 300 }
-    },
-    { id: 'B', type: 'default', data:  { label: 'Next Loop' }, position: { x: 0, y: 300 } },
-    { id: '2B', type: 'default', data: { label: 'Select Function' }, position: { x: 150, y: 50 }, parentId: 'A', extent: 'parent' },
-    { id: '3', type: 'default', data: { label: 'Get Datasets' }, position: { x: 50, y: 100 }, parentId: 'A', extent: 'parent' },
-    { id: '4', type: 'default', data: { label: 'Get Tables' }, position: { x: 200, y: 50 }, parentId: 'A', extent: 'parent' },
-    { id: '5', type: 'default', data: { label: 'Get Schema' }, position: { x: 350, y: 50 }, parentId: 'A', extent: 'parent' },
-    { id: '6', type: 'default', data: { label: 'Run SQL Query' }, position: { x: 50, y: 150 }, parentId: 'A', extent: 'parent' },
-    { id: '7', type: 'default', data: { label: 'Save Results in Memory' }, position: { x: 350, y: 150 }, parentId: 'A', extent: 'parent' },
-    
-    { id: '8', type: 'default', data: { label: 'Question Answered?' }, position: { x: 200, y: 550 } },
-    { id: '9', type: 'default', data: { label: 'Stop Process' }, position: { x: 200, y: 650 } },
-    { id: '10', type: 'output', data: { label: 'Return Results to User' }, position: { x: 200, y: 750 } }
-  ]}
-  edges={[
-    { id: 'e1-2', source: '1', target: '2', animated: true, type: 'smart' },
-    { id: 'e2-A', source: '2', target: '2B', animated: true, type: 'smart' },
-    { id: 'e2b-3', source: '2B', target: '3', animated: true, type: 'smart' },
-    { id: 'e2b-4', source: '2B', target: '4', animated: true, type: 'smart' },
-    { id: 'e2b-5', source: '2B', target: '5', animated: true, type: 'smart' },
-    { id: 'e2b-6', source: '2B', target: '6', animated: true, type: 'smart' },
-    { id: 'e3-7', source: '3', target: '7', animated: true, type: 'smart' },
-    { id: 'e4-7', source: '4', target: '7', animated: true, type: 'smart' },
-    { id: 'e5-7', source: '5', target: '7', animated: true, type: 'smart' },
-    { id: 'e6-7', source: '6', target: '7', animated: true, type: 'smart' },
-    { id: 'e7-8', source: '7', target: '8', animated: true, type: 'smart' },
-    { id: 'e8-9', source: '8', target: '9', label: 'Yes', animated: true, type: 'smart' },
-    { id: 'e8-B', source: '8', target: 'B', label: 'No', animated: true, type: 'smart' },
-    { id: 'eB-2', source: 'B', target: '2', label: 'New Loop', animated: true, type: 'smart' },
-    { id: 'e9-10', source: '9', target: '10', animated: true, type: 'smart' }
-  ]}
-/>
-
 We want to improve its successful task completion rate. This is where evals make their first appearance: we can’t improve that which we can’t measure. Here we’re looking for successful queries with the minimum amount of tokens and time. Other agents may prefer to stress other metrics. 
 
 For evals and prompt management I use self-hosted [Langfuse](https://langfuse.com/): it’s very customizable and integrates well with GCP, accepting scores from Vertex eval which you can view next to the exact prompt, function call, generation etc. 
