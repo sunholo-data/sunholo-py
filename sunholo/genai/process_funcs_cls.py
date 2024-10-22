@@ -512,28 +512,27 @@ class GenAIFunctionProcessor:
                 gen.end(output=response.to_dict()) if gen else None
             else:
                 gen.end(output="No response received") if gen else None
-            
 
-                for chunk in response:
-                    if not chunk:
-                        continue
+            for chunk in response:
+                if not chunk:
+                    continue
 
-                    log.debug(f"[{guardrail}] {chunk=}")
-                    try:
-                        if hasattr(chunk, 'text') and isinstance(chunk.text, str):
-                            token = chunk.text
-                            token_queue.append(token)
-                            this_text += token
-                        else:
-                            log.info("skipping chunk with no text")
-                        
-                    except ValueError as err:
-                        token_queue.append(f"{str(err)} for {chunk=}")
+                log.debug(f"[{guardrail}] {chunk=}")
                 try:
-                    executed_responses = self.process_funcs(response, loop_span=loop_span) 
-                except Exception as err:
-                    log.error(f"Error in executions: {str(err)}")
-                    token_queue.append(f"{str(err)} for {response=}")
+                    if hasattr(chunk, 'text') and isinstance(chunk.text, str):
+                        token = chunk.text
+                        token_queue.append(token)
+                        this_text += token
+                    else:
+                        log.info("skipping chunk with no text")
+                    
+                except ValueError as err:
+                    token_queue.append(f"{str(err)} for {chunk=}")
+            try:
+                executed_responses = self.process_funcs(response, loop_span=loop_span) 
+            except Exception as err:
+                log.error(f"Error in executions: {str(err)}")
+                token_queue.append(f"{str(err)} for {response=}")
 
             log.info(f"[{guardrail}] {executed_responses=}")
 
