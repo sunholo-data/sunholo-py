@@ -25,6 +25,8 @@ For this explanation, I break down cognition messaging into three modes:
 
 I believe the messages passed around within a cognitive design can be broken out into the sub-categories above, and that can help us design better performing systems.  This seems to become important once one starts to work with asynchronous, parallel calls to GenAI models, which again I think may be because that is more akin to how human brains work, as opposed to sequential, one call at a time API requests we start with when first getting to know GenAI models.
 
+<AudioPlayer src="https://storage.googleapis.com/sunholo-public-podcasts/Subconscious%20messages%20in%20GenAI.wav" />
+
 <!-- truncate -->`
 
 ## Cognitive design and agent orchestration
