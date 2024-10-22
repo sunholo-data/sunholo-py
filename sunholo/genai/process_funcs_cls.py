@@ -513,6 +513,8 @@ class GenAIFunctionProcessor:
             else:
                 gen.end(output="No response received") if gen else None
 
+            if not response:
+                response = []
             for chunk in response:
                 if not chunk:
                     continue
