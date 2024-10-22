@@ -23,11 +23,11 @@ For this explanation, I break down cognition messaging into three modes:
 * **Our subconscious** - e.g. thoughts we are not aware of, but influence our thoughts.  I attribute this to internal logging and messages within a GenAI function, that are not surfaced to an outer agent.  
 :::
 
-I believe the messages passed around within a cognitive design can be broken out into the sub-categories above, and that can help us design better performing systems.  This seems to become important when one starts to work with asynchronous, parrallel calls to GenAI models, which again I think may be because that is more akin to how human brains work, rather than sequential, one at a time API calls we start with when first using GenAI models.
+I believe the messages passed around within a cognitive design can be broken out into the sub-categories above, and that can help us design better performing systems.  This seems to become important once one starts to work with asynchronous, parallel calls to GenAI models, which again I think may be because that is more akin to how human brains work, as opposed to sequential, one call at a time API requests we start with when first getting to know GenAI models.
 
 <!-- truncate -->`
 
-## Cognitive design and agent orchestration.
+## Cognitive design and agent orchestration
 
 Using the above approach, I've created bots that takes in various contexts and responds well to a variety of questions. It responds quickly, but as it is answering internal monologue influences and evolves the answer as its writing, until the reply ends with a reflective summary on everything it has just said. Note this is distinct from prompting techniques such as [ReACT](https://research.google/blog/react-synergizing-reasoning-and-acting-in-language-models/) or [Chain of Thought](https://research.google/blog/language-models-perform-reasoning-via-chain-of-thought/), which rely on a sequential, single API call.  A parallel approach for calling GenAI models means working at a more [GenOps](https://www.sunholo.com) or data engineering level, aggregating API requests to GenAI models and orchestrating their parrallel returns via async or microservice patterns.
 
@@ -83,7 +83,7 @@ Its written in the first person as if the agent is just continuing an existing a
 
 The `<response_so_far>` is a string that is populated and grows longer each time a tool, bit of context or new information becomes available.  A loop over the responses repeatedly calls the prompt above, with longer and longer `<response_so_far>` content.
 
-However, the end user is not seeing seperate API responses - instead those responses go to a callback queue, which streams the results to the user in one continuous answer.  This way we get system 1 style answers with quick initial responses based on limited information and then a longer more reflective system 2 answer near the end of the same answer, once all context is gathered.   The answers seem similar to [OpenAIs o1-preview model](https://openai.com/index/introducing-openai-o1-preview/), although they are working at the model training level, but I suspect there is a bit of similar engineering going on for their responses too.  Async parallel calling seems to be an essential skill for customer facing GenAI apps due to this flexibility and performance.
+However, the end user is not seeing separate API responses - instead those responses go to a callback queue, which streams the results to the user in one continuous answer.  This way we get system 1 style answers with quick initial responses based on limited information and then a longer more reflective system 2 answer near the end of the same answer, once all context is gathered.   The answers seem similar to [OpenAIs o1-preview model](https://openai.com/index/introducing-openai-o1-preview/), although they are working at the model training level, but I suspect there is a bit of similar engineering going on for their responses too.  Async parallel calling seems to be an essential skill for customer facing GenAI apps due to this flexibility and performance.
 
 ## Subconscious = stderr?
 
@@ -97,7 +97,7 @@ The function of these message types differ: the system-to-system, `stderr` or su
 
 The reason I’m reaching for more provocative names for these messages is that it occurred to me that calling them subconscious or conscious messages is more just a matter of perspective once you have any level of nested hierarchy. If an agent uses a tool, that calls another agent, that in turn calls another agent, what should be surfaced to the end user differs accordingly. 
 
-For example: a user requests a perspective on wind farms: an agent calls an energy database research agent which in turn calls a SQL creation agent. Internal (subconscious) messages may be the SQL fed to the database agent: the end user need not see it. The end user recieves a well considered answer that includes the results of the SQL, but doesn't see the SQL itself.
+For example: a user requests a perspective on wind farms: an agent calls an energy database research agent which in turn calls a SQL creation agent. Internal (subconscious) messages may be the SQL fed to the database agent: the end user need not see it. The end user receives a well considered answer that includes the results of the SQL, but doesn't see the SQL itself.
 
 But next, a user requests the SQL to search the database themselves along with the answers.  Now that previously subconscious SQL string should bubble up and be given to the user.  What was previously an inner internal message for bot use only should now reach external eyes.  Here is the cognitive design of the app now:
 
@@ -130,7 +130,7 @@ Here I think is a key difference for GenAI systems over traditional software eng
 
 ## Abstracting up to society and down to metabolism
 
-The thing is, why stop there? The end user may be requesting the information from the bot after a request from their manager to send it to a client. The client won’t need to know the details, and will probably just get the synopsis. Internal communication transparency is not wanted as it would cloud the insights. Isn't all human behaviour actually a plethora of choices between what internal messages are used to influence extrnal communication?
+The thing is, why stop there? The end user may be requesting the information from the bot after a request from their manager to send it to a client. The client won’t need to know the details, and will probably just get the synopsis. Internal communication transparency is not wanted as it would cloud the insights. Isn't all human behaviour actually a plethora of choices between what internal messages are used to influence external communication?
 
 <CogFlow
   title="Society"
@@ -181,21 +181,21 @@ My first applications after thinking about this are the following steps:
 * To aid separation of these two message streams, create a callback for the user (conscious) and a callback for internal messages (subconscious). There is no real reason to restrict this to two, but let’s keep it simple until we see a need for more.
 * Let the models decide which stream to use. The cognitive architecture gains a free channel to send messages not intended for users (eg document metadata, download urls) and a channel for the end user. 
 * An orchestrator or routing bot is useful for collating and deciding which messages go where.  Function calling or agent frameworks work with this.
-* Consider agent hierachies and how much information is sent to each level.  A sub-agent may only send/recieve what they need to function with no knowledge of the wider goal, or it could get more context so it can craft its answer better, and send back more information.  Probably good reasons for both strategies.
+* Consider agent hierarchies and how much information is sent to each level.  A sub-agent may only send/receive what they need to function with no knowledge of the wider goal, or it could get more context so it can craft its answer better, and send back more information.  Probably good reasons for both strategies.
 * Today's end user could in the future be a super-agent calling the same agent our current user needs.
 * Individual agents don't need to be super-smart to contribute to a wider system.  Cheap/fast/dumb agents that do one thing well and in parallel with good messaging may outperform one expensive/slow/smart agent.  
 * Monitor all messages effectively with evals, tracing, logs etc. and have an easy mechanism to move them between streams
 
 ## The ethics of GenAI subconscious messages
 
-One fear of the AI-led world is that machines will start to make decisions for us, in some neo-fascist world that does not value human diginity above other goals given to it or created internally by some twisted machine logic.  Having oversight on the internal messaging of GenAI systems will in that case play a critical importance to how these systems interface with humans and societies.  Measures such as GDPR and the AI Act in the EU are designed to never allow machines to change our fates without our knowledge.  The abuses of power like this predates AI by millennia, but we have a chance now to put in place adequete transparency in a way we couldn't actually do before: bureaucrats deciding the fates of people behind closed doors and via whispered conversations should be much harder to monitor than AI systems that are inherently digital and so should be able to have all internal thoughts, subconscious or otherwise, recorded and available at some level.  
+One fear of the AI-led world is that machines will start to make decisions for us, in some neo-fascist world that does not value human dignity above other goals given to it or created internally by some twisted machine logic.  Having oversight on the internal messaging of GenAI systems will in that case play a critical importance to how these systems interface with humans and societies.  Measures such as GDPR and the AI Act in the EU are designed to never allow machines to change our fates without our knowledge.  The abuses of power like this predates AI by millennia, but we have a chance now to put in place adequate transparency in a way we couldn't actually do before: bureaucrats deciding the fates of people behind closed doors and via whispered conversations should be much harder to monitor than AI systems that are inherently digital and so should be able to have all internal thoughts, subconscious or otherwise, recorded and available at some level.  
 
 That GenAI models use neural networks that are essentially blackboxes in how they have assigned their internal weights should make it even more important to record and monitor every interaction that model creates in relation to human beings.  For instance, every conversation can be saved to a private database, just in case.  But beyond simple monitoring, that dataset is also the route to improving outcomes, as well as giving people the trust on what these systems think, do and say IF they have access, and its not kept private.
 
 ## Future trends up to GenAI societies
 
-And as I speculated about before, once we get to teams of agents then having an orchestrator agent with good leadership skills may be more important than a super-smart one.  The ability to clearly define goals, keep the bots motiviated(!) and allocate workloads effectively, are all skills not necessarily found in STEM, but in management and people skills.
+And as I speculated about before, once we get to teams of agents then having an orchestrator agent with good leadership skills may be more important than a super-smart one.  The ability to clearly define goals, keep the bots motivated(!) and allocate workloads effectively, are all skills not necessarily found in STEM, but in management and people skills.
 
 I can see a future where just as software engineering gains abstractions (binary, assembly, system programming, dynamic etc) the agents we make today may in the future be just one cog in a much larger system e.g. [Multivac?](/docs/multivac/) :)  Having a route for deeply nested agents performing not just as single agents but groups, societies, companies and organizations with varying levels of internal and external messaging.
 
-If you have some thoughts about the above, please let me know on social media or otherwise, I'm keen to hear your perspective too.  Have I stretched an analogy too far or can you see other applications of subsciousness in your GenAI system?  Let me know!
+If you have some thoughts about the above, please let me know on social media or otherwise, I'm keen to hear your perspective too.  Have I stretched an analogy too far or can you see other applications of subconsciousness in your GenAI system?  Let me know!
