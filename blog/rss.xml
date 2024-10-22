@@ -218,7 +218,7 @@ Don't worry about the context at all.</p></div></div>
 <p>Cognitive designs are common in AI research, both within model architecture and in techniques to extract more performance from them.  This example looks to improve the performance of SQL queries create via natural language, which we will use later on to try to improve Bertha.</p>
 <p><img decoding="async" loading="lazy" src="https://dev.sunholo.com/assets/images/chase-sql-1efc6ac79a6b1f992aa36cfd21f287cd.png" width="1932" height="868" class="img_ev3q"></p>
 <p>Read the Chase-SQL paper at <a href="https://arxiv.org/pdf/2410.01943v1" target="_blank" rel="noopener noreferrer">https://arxiv.org/pdf/2410.01943v1</a></p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="applying-cognitive-design-to-berta-20">Applying Cognitive Design to Berta 2.0<a href="https://dev.sunholo.com/blog/cognitive-design#applying-cognitive-design-to-berta-20" class="hash-link" aria-label="Direct link to Applying Cognitive Design to Berta 2.0" title="Direct link to Applying Cognitive Design to Berta 2.0">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="applying-cognitive-design-to-bertha-20">Applying Cognitive Design to Bertha 2.0<a href="https://dev.sunholo.com/blog/cognitive-design#applying-cognitive-design-to-bertha-20" class="hash-link" aria-label="Direct link to Applying Cognitive Design to Bertha 2.0" title="Direct link to Applying Cognitive Design to Bertha 2.0">​</a></h2>
 <p>Applying cognitive design to Bertha, let’s first map out its current cognitive flow:</p>
 <p><a href="https://dev.sunholo.com/assets/files/bertha-cog-design-f51aa2a699edc254e52ba95d6d3bb877.png" target="_blank"><img decoding="async" loading="lazy" alt="Bertha Cognitive Design" src="https://dev.sunholo.com/assets/images/bertha-cog-design-f51aa2a699edc254e52ba95d6d3bb877.png" width="3127" height="3840" class="img_ev3q"></a></p>
 <p>We want to improve its successful task completion rate. This is where evals make their first appearance: we can’t improve that which we can’t measure. Here we’re looking for successful queries with the minimum amount of tokens and time. Other agents may prefer to stress other metrics.</p>
@@ -234,7 +234,7 @@ Don't worry about the context at all.</p></div></div>
 </ul>
 <p>From my experience writing the GA4 book, I’d say the major hurdles are the complicated schema of the raw GA4 data export. Providing some helper functions that can pull out common metrics will be a great help to both human and machine. Let’s also add a stronger model for the SQL creation part: currently <a href="https://www.anthropic.com/news/claude-3-5-sonnet" target="_blank" rel="noopener noreferrer">Anthropic's Sonnet 3.5</a> is state of the art for coding.</p>
 <p>Coincidently <a href="https://arxiv.org/pdf/2410.01943v1" target="_blank" rel="noopener noreferrer">CHASE-SQL</a> mentioned above in the examples came out as I was writing this post, with deep discussion on cognitive designs to improve SQL generation. It’s worth checking out for ideas. One of which we can also implement is creating lots of candidate SQL commands in parallel, and then getting a judge to select the best.</p>
-<p>The new Bertha 2.0 cognitive design wil then add:</p>
+<p>The new Bertha 2.0 cognitive design will then add:</p>
 <ol>
 <li>A function it can use to create better SQL</li>
 <li>Use a sub-agent to called from the SQL creation agent that used Sonnet 3.5 and CHASE-SQL techniques</li>
