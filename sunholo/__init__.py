@@ -18,6 +18,7 @@ from . import lookup
 from . import patches
 from . import pubsub
 from . import qna
+from . import senses
 from . import streaming
 from . import terraform
 from . import tools
@@ -46,6 +47,7 @@ __all__ = ['agents',
            'patches', 
            'pubsub',
            'qna', 
+           'senses',
            'streaming', 
            'terraform',
            'tools',

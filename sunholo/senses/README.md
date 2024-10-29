@@ -1,6 +1,6 @@
 # Senses
 
-Helping models see and hear
+Helping models see and hear and talk
 
 ## Livekit
 

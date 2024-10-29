@@ -1,7 +1,7 @@
 try:
-    import hcl2
+    from hcl2 import load as hcl2_load
 except ImportError:
-    hcl2 = None
+    hcl2_load = None
 
 import json
 import subprocess
@@ -66,8 +66,8 @@ class TerraformVarsEditor:
         -------
         editor = TerraformVarsEditor('example.tfvars', '/path/to/terraform/config')
         """
-        if hcl2 is None:
-            raise ImportError('hcl2 is required for parsing terraform files, install via `pip install sunholo[iac]`')
+        if hcl2_load is None:
+            raise ImportError('hcl2.load is required for parsing terraform files, install via `pip install sunholo"[iac]"`')
 
         # Check for the MULTIVAC_TERRAFORM_DIR environment variable
         if terraform_dir == '.' and 'MULTIVAC_TERRAFORM_DIR' in os.environ:
@@ -100,7 +100,7 @@ class TerraformVarsEditor:
         data = self._load_tfvars()
         """
         with open(self.tfvars_file, 'r') as file:
-            return hcl2.load(file)
+            return hcl2_load(file)
 
     def _save_tfvars(self) -> None:
         """

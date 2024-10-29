@@ -891,3 +891,39 @@ Usage example, assuming you have a `terraform.tfvars` file to edit with a new Cl
 ```sh
 sunholo tfvars add terraform.tfvars cloud_run new_service --json-file=new_service.json --terraform-dir=/path/to/terraform/config
 ```
+
+## sunholo tts
+
+Text to speech via Google Cloud Speech API.
+
+```sh
+sunholo tts -h                                                          
+usage: sunholo tts [-h] {speak,save} ...
+
+positional arguments:
+  {speak,save}  TTS subcommands
+    speak       Convert text to speech and play it
+    save        Convert text to speech and save to file
+
+optional arguments:
+  -h, --help    show this help message and exit
+```
+
+Usage example - can speak directly via your local audio device or save to a file:
+
+```sh
+# speaks if you have volume up
+sunholo tts speak "hello world.  I'm the voice of the Multivac"
+
+# saves to audio.wav file
+sunholo tts save "hello world.  I'm the voice of the Multivac"
+```
+
+You can configure the language, gender, voice type as per: https://cloud.google.com/text-to-speech/docs/voices
+
+```sh
+usage: sunholo tts speak [-h] [--file] [--language LANGUAGE] [--voice-gender {NEUTRAL,MALE,FEMALE}] [--sample-rate SAMPLE_RATE]
+                         [--voice_name VOICE_NAME]
+                         text
+```
+            

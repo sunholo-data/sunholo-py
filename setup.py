@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.105.8'
+version = '0.106.0'
 
 setup(
     name='sunholo',
@@ -55,6 +55,8 @@ setup(
             "google-cloud-storage",
             "google-cloud-pubsub",
             "google-cloud-discoveryengine",
+            "google-cloud-texttospeech",
+
             "google-generativeai>=0.7.1",
             "gunicorn",
             "httpcore",
@@ -70,6 +72,7 @@ setup(
             "langchain-anthropic==0.1.23",
             "langchain-google-vertexai",
             "langfuse",
+            "numpy",
             "pg8000",
             "pgvector",
             "pillow",
@@ -81,6 +84,7 @@ setup(
             "python-socketio",
             "pytesseract",
             "rich",
+            "sounddevice",
             "supabase",
             "tabulate",
             "tantivy",
@@ -130,6 +134,7 @@ setup(
             "google-cloud-logging",
             "google-cloud-pubsub",
             "google-cloud-discoveryengine",
+            "google-cloud-texttospeech",
             "google-generativeai>=0.7.1",
             "langchain-google-genai==1.0.10",
             "langchain_google_alloydb_pg>=0.2.2",
@@ -166,6 +171,11 @@ setup(
         ],
         'iac':[
             'python-hcl2'
+        ],
+        'tts':[
+            'google-cloud-texttospeech',
+            'numpy',
+            'sounddevice',
         ]
 
     },

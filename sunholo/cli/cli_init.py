@@ -39,27 +39,26 @@ This will create a new directory named `my_genai_project` with the template file
 
     # Create project directory
     if os.path.exists(project_dir):
-        console.print(f"[bold red]ERROR: Directory {project_dir} already exists. Please choose a different project name.[/bold red]")
-        return
+        console.print(f"Directory {project_dir} already exists. Skipping template creation.  If you wish to init a new project, please choose a different project name.")
+    else:
+        console.print(f"Directory {project_dir} not found.  Copying over template files.")
+        os.makedirs(project_dir)
 
-    os.makedirs(project_dir)
-
-    # Copy template files
-    template_dir = get_module_filepath("templates/project")
-    for filename in os.listdir(template_dir):
-        src_path = os.path.join(template_dir, filename)
-        dest_path = os.path.join(project_dir, filename)
-        if os.path.isfile(src_path):
-            shutil.copy(src_path, dest_path)
-        elif os.path.isdir(src_path):
-            shutil.copytree(src_path, dest_path)
-    
-
+        # Copy template files
+        template_dir = get_module_filepath("templates/project")
+        for filename in os.listdir(template_dir):
+            src_path = os.path.join(template_dir, filename)
+            dest_path = os.path.join(project_dir, filename)
+            if os.path.isfile(src_path):
+                shutil.copy(src_path, dest_path)
+            elif os.path.isdir(src_path):
+                shutil.copytree(src_path, dest_path)
 
     # Determine the location of the generated.tfvars file
     terraform_dir = args.terraform_dir or os.getenv('MULTIVAC_TERRAFORM_DIR')
     if terraform_dir is None:
-        raise ValueError("Must specify a terraform_dir or use the MULTIVAC_TERRAFORM_DIR environment variable")
+        console.print("[SKIP] To auto-generate terraform code, must specify a --terraform_dir or use the MULTIVAC_TERRAFORM_DIR environment variable")
+        return
     
     tfvars_file = os.path.join(terraform_dir, 'generated.tfvars')
 

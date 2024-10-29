@@ -13,6 +13,7 @@ from .vertex import setup_vertex_subparser
 from ..llamaindex import setup_llamaindex_subparser
 from ..excel import setup_excel_subparser
 from ..terraform import setup_tfvarseditor_subparser
+from ..senses.stream_voice import setup_tts_subparser
 
 from ..utils import ConfigManager
 from ..utils.version import sunholo_version
@@ -98,6 +99,8 @@ def main(args=None):
     setup_excel_subparser(subparsers)
     # terraform
     setup_tfvarseditor_subparser(subparsers)
+    # tts
+    setup_tts_subparser(subparsers)
 
     #TODO: add database setup commands: alloydb and supabase
 
