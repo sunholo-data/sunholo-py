@@ -894,7 +894,7 @@ sunholo tfvars add terraform.tfvars cloud_run new_service --json-file=new_servic
 
 ## sunholo tts
 
-Text to speech via Google Cloud Speech API.
+Text to speech via Google Cloud Speech API. It streams making an API call per sentence.
 
 ```sh
 sunholo tts -h                                                          
@@ -917,6 +917,9 @@ sunholo tts speak "hello world.  I'm the voice of the Multivac"
 
 # saves to audio.wav file
 sunholo tts save "hello world.  I'm the voice of the Multivac"
+
+# read from file
+sunholo tts speak --file README.md 
 ```
 
 You can configure the language, gender, voice type as per: https://cloud.google.com/text-to-speech/docs/voices

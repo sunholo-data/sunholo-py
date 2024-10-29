@@ -60,7 +60,10 @@ class StreamingTTS:
         self.voice_gender = texttospeech.SsmlVoiceGender.NEUTRAL
         self.voice_name = "en-GB-Journey-D"
         # Audio processing parameters
-        self.fade_duration = 0.1  # 10ms fade in/out
+        # Separate fade durations for playback and file saving
+        self.playback_fade_duration = 0.05  # 50ms fade for real-time playback
+        self.file_fade_duration = 0.01      # 10ms fade for file saving
+        self.stream = None
         self._initialize_audio_device()
 
     def set_voice(self, voice_name: str):
@@ -137,111 +140,101 @@ class StreamingTTS:
             sd.default.channels = 1
             sd.default.dtype = np.int16
             
-            # Start and stop the stream once to "warm up" the audio device
-            dummy_audio = np.zeros(int(self.sample_rate * 1), dtype=np.int16)
-            with sd.OutputStream(
+            # Initialize persistent output stream
+            self.stream = sd.OutputStream(
                 samplerate=self.sample_rate,
                 channels=1,
                 dtype=np.int16,
                 latency='low'
-            ) as stream:
-                stream.write(dummy_audio)
+            )
+            self.stream.start()
             
             log.info("Audio device initialized successfully")
         except Exception as e:
             log.error(f"Error initializing audio device: {e}")
             raise
 
-    def _make_fade(x, in_length, out_length=None, type='l', copy=True):
-        """Apply fade in/out to a signal.
-
-        If `x` is two-dimenstional, this works along the columns (= first
-        axis).
-
-        This is based on the *fade* effect of SoX, see:
-        http://sox.sourceforge.net/sox.html
-
-        The C implementation can be found here:
-        http://sourceforge.net/p/sox/code/ci/master/tree/src/fade.c
-
-        Parameters
-        ----------
-        x : array_like
-            Input signal.
-        in_length : int
-            Length of fade-in in samples (contrary to SoX, where this is
-            specified in seconds).
-        out_length : int, optional
-            Length of fade-out in samples.  If not specified, `fade_in` is
-            used also for the fade-out.
-        type : {'t', 'q', 'h', 'l', 'p'}, optional
-            Select the shape of the fade curve: 'q' for quarter of a sine
-            wave, 'h' for half a sine wave, 't' for linear ("triangular")
-            slope, 'l' for logarithmic, and 'p' for inverted parabola.
-            The default is logarithmic.
-        copy : bool, optional
-            If `False`, the fade is applied in-place and a reference to
-            `x` is returned.
-
-        """
-        x = np.array(x, copy=copy)
-
-        if out_length is None:
-            out_length = in_length
-
-        def make_fade(length, type):
-            fade = np.arange(length) / length
-            if type == 't':  # triangle
-                pass
-            elif type == 'q':  # quarter of sinewave
-                fade = np.sin(fade * np.pi / 2)
-            elif type == 'h':  # half of sinewave... eh cosine wave
-                fade = (1 - np.cos(fade * np.pi)) / 2
-            elif type == 'l':  # logarithmic
-                fade = np.power(0.1, (1 - fade) * 5)  # 5 means 100 db attenuation
-            elif type == 'p':  # inverted parabola
-                fade = (1 - (1 - fade)**2)
-            else:
-                raise ValueError("Unknown fade type {0!r}".format(type))
-            return fade
-
-        # Using .T w/o [:] causes error: https://github.com/numpy/numpy/issues/2667
-        x[:in_length].T[:] *= make_fade(in_length, type)
-        x[len(x) - out_length:].T[:] *= make_fade(out_length, type)[::-1]
-        return x
+    def _make_fade(self, length: int, fade_type: str='l') -> np.ndarray:
+        """Generate a fade curve of specified length and type."""
+        fade = np.arange(length, dtype=np.float32) / length
+        
+        if fade_type == 't':  # triangle
+            pass
+        elif fade_type == 'q':  # quarter of sinewave
+            fade = np.sin(fade * np.pi / 2)
+        elif fade_type == 'h':  # half of sinewave
+            fade = (1 - np.cos(fade * np.pi)) / 2
+        elif fade_type == 'l':  # logarithmic
+            fade = np.power(0.1, (1 - fade) * 5)
+        elif fade_type == 'p':  # inverted parabola
+            fade = (1 - (1 - fade)**2)
+        else:
+            raise ValueError(f"Unknown fade type {fade_type!r}")
+        
+        return fade
     
-    def _apply_fade(self, audio: np.ndarray, fade_in: bool = True, fade_out: bool = True) -> np.ndarray:
-        """Apply fade in/out to audio to prevent clicks."""
-        fade_length = int(self.fade_duration * self.sample_rate)
-        audio = audio.astype(np.float32)  # Convert to float for fade calculation
+    def _apply_fade(self, audio: np.ndarray, fade_duration: float, fade_in: bool = True, fade_out: bool = True) -> np.ndarray:
+        """Apply fade in/out to audio with specified duration."""
+        if audio.ndim != 1:
+            raise ValueError("Audio must be 1-dimensional")
+        
+        fade_length = int(fade_duration * self.sample_rate)
+        audio = audio.astype(np.float32)
         
         if fade_in:
-            fade_in_curve = np.linspace(0, 1, fade_length)
+            fade_in_curve = self._make_fade(fade_length, 'l')
             audio[:fade_length] *= fade_in_curve
             
         if fade_out:
-            fade_out_curve = np.linspace(1, 0, fade_length)
-            audio[-fade_length:] *= fade_out_curve
+            fade_out_curve = self._make_fade(fade_length, 'l')
+            audio[-fade_length:] *= fade_out_curve[::-1]
         
-        return audio.astype(np.int16)  # Convert back to int16
+        return audio.astype(np.int16)
+
     
-    def _play_audio_chunk(self, audio_chunk: np.ndarray):
+    def _play_audio_chunk(self, audio_chunk: np.ndarray, is_final_chunk: bool = False):
         """Play a single audio chunk with proper device handling."""
         try:
-            # Add small silence padding and apply fades
-            padding = np.zeros(int(1 * self.sample_rate), dtype=np.int16)
-            audio_with_padding = np.concatenate([padding, audio_chunk, padding])
-            processed_audio = self._apply_fade(audio_with_padding)
+            # Add longer padding for the final chunk
+            padding_duration = 0.1 if is_final_chunk else 0.02
+            padding = np.zeros(int(padding_duration * self.sample_rate), dtype=np.int16)
             
-            # Use context manager for proper stream handling
-            with sd.OutputStream(
-                samplerate=self.sample_rate,
-                channels=1,
-                dtype=np.int16,
-                latency='low'
-            ) as stream:
-                stream.write(processed_audio)
-                stream.write(np.zeros(int(0.1 * self.sample_rate), dtype=np.int16))  
+            if is_final_chunk:
+                # For final chunk, add extra padding and longer fade
+                audio_with_padding = np.concatenate([
+                    padding, 
+                    audio_chunk, 
+                    padding,
+                    np.zeros(int(0.2 * self.sample_rate), dtype=np.int16)  # Extra tail padding
+                ])
+                fade_duration = self.playback_fade_duration * 2  # Longer fade for end
+            else:
+                audio_with_padding = np.concatenate([padding, audio_chunk, padding])
+                fade_duration = self.playback_fade_duration
+            
+            processed_audio = self._apply_fade(
+                audio_with_padding,
+                fade_duration=fade_duration,
+                fade_in=True,
+                fade_out=True
+            )
+            
+            if self.stream and self.stream.active:
+                self.stream.write(processed_audio)
+                if is_final_chunk:
+                    # Write a small buffer of silence at the end
+                    final_silence = np.zeros(int(0.1 * self.sample_rate), dtype=np.int16)
+                    self.stream.write(final_silence)
+            else:
+                with sd.OutputStream(
+                    samplerate=self.sample_rate,
+                    channels=1,
+                    dtype=np.int16,
+                    latency='low'
+                ) as temp_stream:
+                    temp_stream.write(processed_audio)
+                    if is_final_chunk:
+                        temp_stream.write(np.zeros(int(0.1 * self.sample_rate), dtype=np.int16))
             
         except Exception as e:
             log.error(f"Error during audio playback: {e}")
@@ -250,11 +243,31 @@ class StreamingTTS:
     def audio_player(self):
         """Continuously play audio chunks from the queue."""
         log.info("Audio player started")
-        while self.is_playing or not self.audio_queue.empty():
-            if not self.audio_queue.empty():
-                audio_chunk = self.audio_queue.get()
-                self._play_audio_chunk(audio_chunk)
-            time.sleep(0.1) 
+        try:
+            while self.is_playing or not self.audio_queue.empty():
+                if not self.audio_queue.empty():
+                    audio_chunk = self.audio_queue.get()
+                    self._play_audio_chunk(audio_chunk)
+                time.sleep(0.005)  # Reduced sleep time for more responsive playback
+        finally:
+            # Ensure stream is properly closed
+            if self.stream and self.stream.active:
+                self.stream.stop()
+                self.stream.close()
+                self.stream = None
+
+    def __del__(self):
+        """Cleanup method to ensure stream is closed."""
+        if hasattr(self, 'stream') and self.stream and self.stream.active:
+            # Write a small silence buffer before closing
+            final_silence = np.zeros(int(0.1 * self.sample_rate), dtype=np.int16)
+            try:
+                self.stream.write(final_silence)
+                time.sleep(0.1)  # Let the final audio finish playing
+            except Exception:
+                pass  # Ignore errors during cleanup
+            self.stream.stop()
+            self.stream.close()
     
     def process_text_stream(self, text_generator):
         """Process incoming text stream and convert to audio."""
@@ -281,24 +294,37 @@ class StreamingTTS:
             player_thread.join()
     
     def save_to_file(self, text_generator, output_path):
-        """Save the audio to a WAV file instead of playing it."""
+        """Save the audio to a WAV file with minimal fading."""
         import wave
         
         all_audio = []
         for text_chunk in text_generator:
             audio_chunk = self.text_to_audio(text_chunk)
-            processed_chunk = self._apply_fade(audio_chunk)
+            # Use shorter fade duration for file saving
+            processed_chunk = self._apply_fade(
+                audio_chunk,
+                fade_duration=self.file_fade_duration
+            )
             all_audio.append(processed_chunk)
         
-        # Add small silence between chunks and at ends
-        silence = np.zeros(int(0.1 * self.sample_rate), dtype=np.int16)
+        # Add minimal silence between chunks
+        silence = np.zeros(int(0.05 * self.sample_rate), dtype=np.int16)
         final_audio = silence
-        for chunk in all_audio:
+        
+        for i, chunk in enumerate(all_audio):
+            if i == len(all_audio) - 1:
+                # For the last chunk, use a slightly longer fade out
+                chunk = self._apply_fade(
+                    chunk,
+                    fade_duration=self.file_fade_duration * 2,
+                    fade_in=False,
+                    fade_out=True
+                )
             final_audio = np.concatenate([final_audio, chunk, silence])
         
         with wave.open(output_path, 'wb') as wav_file:
             wav_file.setnchannels(1)
-            wav_file.setsampwidth(2)  # 16-bit audio
+            wav_file.setsampwidth(2)
             wav_file.setframerate(self.sample_rate)
             wav_file.writeframes(final_audio.tobytes())
 
