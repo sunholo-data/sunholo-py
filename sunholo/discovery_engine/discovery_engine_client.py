@@ -12,6 +12,7 @@ except ImportError:
 
 from ..custom_logging import log
 from typing import Optional, List
+import asyncio
 
 class DiscoveryEngineClient:
     """
@@ -69,9 +70,15 @@ class DiscoveryEngineClient:
         self.store_client  = discoveryengine.DataStoreServiceClient(client_options=client_options)
         self.doc_client    = discoveryengine.DocumentServiceClient(client_options=client_options)
         self.search_client = discoveryengine.SearchServiceClient(client_options=client_options)
-        self.async_search_client = discoveryengine.SearchServiceAsyncClient(client_options=client_options)
         self.engine_client = discoveryengine.EngineServiceClient(client_options=client_options)
-
+        # Initialize the async client only if there's an active event loop
+        try:
+            asyncio.get_running_loop()
+            self.async_search_client = discoveryengine.SearchServiceAsyncClient(client_options=client_options)
+        except RuntimeError:
+            # No event loop in non-async environment, set async client to None
+            log.info("No event loop detected; skipping async client initialization")
+            self.async_search_client = None
 
     @classmethod
     def my_retry(cls):

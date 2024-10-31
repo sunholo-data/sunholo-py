@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.106.1'
+version = '0.106.2'
 
 setup(
     name='sunholo',
@@ -56,7 +56,6 @@ setup(
             "google-cloud-pubsub",
             "google-cloud-discoveryengine",
             "google-cloud-texttospeech",
-
             "google-generativeai>=0.7.1",
             "gunicorn",
             "httpcore",

@@ -19,4 +19,11 @@ curl $VAC_URL/vac/streaming/template \
   -d '{
     "user_input": "What do you know about MLOps?"
 }'
+
+curl $VAC_URL/vac/streaming/template \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_input": "Can you summarise what the white house executive order will enable in the regulation of LLMs and AI?",
+    "chat_history": [{"name": "Human", "content":"Hi! "}, {"name": "AI", "content": "Hi!"}, ]
+}'
 ```
