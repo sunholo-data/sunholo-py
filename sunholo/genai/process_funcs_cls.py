@@ -491,9 +491,9 @@ class GenAIFunctionProcessor:
                 
             except Exception as e:
                 msg = f"Error sending {content} to model: {str(e)} - {traceback.format_exc()}"
-                log.info(msg)
+                log.error(msg)
                 token_queue.append(msg)
-                break
+                this_text += msg
 
             if response:
                 loop_metadata = response.usage_metadata
