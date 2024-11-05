@@ -23,6 +23,8 @@ import queue
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+import io
+import wave
 
 import argparse
 import json
@@ -131,6 +133,43 @@ class StreamingTTS:
         # Convert audio bytes to numpy array for playback
         audio_np = np.frombuffer(response.audio_content, dtype=np.int16)
         return audio_np
+
+    def generate_audio_stream(self, text):
+        """
+        Generate a stream of audio data from a text chunk.
+        Returns audio in WAV format for streaming.
+        
+        Args:
+            text (str): Text to convert to speech
+            
+        Yields:
+            bytes: WAV-formatted audio data
+        """
+        try:
+            # Convert text to audio using existing method
+            audio_chunk = self.text_to_audio(text)
+            
+            # Process audio chunk with fading
+            processed_chunk = self._apply_fade(
+                audio_chunk,
+                fade_duration=self.file_fade_duration,
+                fade_in=True,
+                fade_out=True
+            )
+            
+            # Convert to WAV format
+            wav_buffer = io.BytesIO()
+            with wave.open(wav_buffer, 'wb') as wav_file:
+                wav_file.setnchannels(1)
+                wav_file.setsampwidth(2)
+                wav_file.setframerate(self.sample_rate)
+                wav_file.writeframes(processed_chunk.tobytes())
+            
+            yield wav_buffer.getvalue()
+            
+        except Exception as e:
+            log.error(f"Error generating audio stream: {e}")
+            yield b''
     
     def _initialize_audio_device(self):
         """Initialize audio device with proper settings."""
