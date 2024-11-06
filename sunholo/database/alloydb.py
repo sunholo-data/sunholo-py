@@ -275,17 +275,19 @@ def _list_sources_from_docstore(sources, vector_name, search_type="OR"):
     if sources:
         conditions = and_or_ilike(sources, search_type=search_type)
         query = f"""
-            SELECT DISTINCT langchain_metadata->>'objectId' AS objectId
+            SELECT source AS objectId
             FROM {table_name}
             WHERE {conditions}
-            ORDER BY langchain_metadata->>'objectId' ASC
+            GROUP BY source
+            ORDER BY source ASC
             LIMIT 500;
         """
     else:
         query = f"""
-            SELECT DISTINCT langchain_metadata->>'objectId' AS objectId
+            SELECT source AS objectId
             FROM {table_name}
-            ORDER BY langchain_metadata->>'objectId' ASC
+            GROUP BY source
+            ORDER BY source ASC
             LIMIT 500;
         """
 
