@@ -6,6 +6,8 @@ try:
     import sounddevice as sd
 except ImportError:
     sd = None
+except OSError:
+    sd = None
 
 try:
     import numpy as np
