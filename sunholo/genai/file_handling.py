@@ -6,10 +6,13 @@ import asyncio
 import tempfile
 import re
 import traceback
-
-import google.generativeai as genai
-from google.generativeai.types import file_types
-
+try:
+    import google.generativeai as genai
+    from google.generativeai.types import file_types
+except ImportError:
+    genai = None
+    file_types = None
+    
 DOCUMENT_MIMES = [
     'application/pdf',
     'application/x-javascript',
