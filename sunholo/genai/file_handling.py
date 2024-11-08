@@ -1,18 +1,18 @@
 from ..custom_logging import log
 from ..gcs import get_bytes_from_gcs
 
+from functools import partial
 import mimetypes
 import asyncio
 import tempfile
 import re
+import os
 import traceback
 try:
     import google.generativeai as genai
-    from google.generativeai.types import file_types
 except ImportError:
     genai = None
-    file_types = None
-    
+
 DOCUMENT_MIMES = [
     'application/pdf',
     'application/x-javascript',
@@ -72,12 +72,25 @@ ALLOWED_MIME_TYPES = set(AUDIO_MIMES + VIDEO_MIMES + IMAGE_MIMES + DOCUMENT_MIME
 #   'url': 'https://firebasestorage.googleapis.com/v0/b/multiv...', 
 #   'contentType': 'image/jpeg'}
 # ]
+
+def sanitize_file(filename):
+    # Split the filename into name and extension
+    name, extension = os.path.splitext(filename)
+    
+    # Sanitize the name by removing invalid characters and converting to lowercase
+    sanitized_name = re.sub(r'[^a-z0-9-]', '', name.lower())
+    sanitized_name = re.sub(r'^-+|-+$', '', sanitized_name)  # Remove leading or trailing dashes
+    
+    # Reattach the original extension
+    return f"{sanitized_name}"
+
 async def construct_file_content(gs_list, bucket:str):
     """
     Args:
     - gs_list: a list of dicts representing files in a bucket
        - contentType: The content type of the file on GCS
        - storagePath: The path in the bucket
+       - name: The name of the file
     - bucket: The bucket the files are in
 
     """
@@ -103,31 +116,48 @@ async def construct_file_content(gs_list, bucket:str):
     for file_info in file_list:
         img_url = f"gs://{bucket}/{file_info['storagePath']}"
         mime_type = file_info['contentType']
-        # Append the async download task to the task list
-        tasks.append(download_gcs_upload_genai(img_url, mime_type))
+        name = sanitize_file(file_info['name'])
+        log.info(f"Processing {name=}")
+        try:
+            myfile = genai.get_file(name)
+            content.append(
+                {"role": "user", "parts": [
+                    {"file_data": myfile}, 
+                    {"text": f"You have been given the ability to work with file '{name}' with {mime_type=}."}
+                    ]
+                })
+            log.info(f"Found existing genai.get_file {name=}")
+            
+        except Exception as e:
+            log.info(f"Not found checking genai.get_file: '{name}' {str(e)}")
+            tasks.append(download_gcs_upload_genai(img_url, mime_type, name=name))
 
     # Run all tasks in parallel
-    content = await asyncio.gather(*tasks)
+    if tasks:
+        task_content = await asyncio.gather(*tasks)
+        content.extend(task_content)
 
     return content
 
 # Helper function to handle each file download with error handling
-async def download_file_with_error_handling(img_url, mime_type):
+async def download_file_with_error_handling(img_url, mime_type, name):
     try:
-        return await download_gcs_upload_genai(img_url, mime_type)
+        return await download_gcs_upload_genai(img_url, mime_type, name)
     except Exception as err:
         msg= f"Error processing file from {img_url}: {str(err)}"
         log.error(msg)
         return {"role": "user", "parts": [{"text": msg}]}
 
-async def download_gcs_upload_genai(img_url, mime_type, retries=3, delay=2):
+async def download_gcs_upload_genai(img_url, mime_type, name=None, retries=3, delay=2):
     import aiofiles
+    from google.generativeai.types import file_types
     """
     Downloads and uploads a file with retries in case of failure.
     
     Args:
       - img_url: str The URL of the file to download.
       - mime_type: str The MIME type of the file.
+      - name: str Optional name, else a random one will be created
       - retries: int Number of retry attempts before failing.
       - delay: int Initial delay between retries, exponentially increasing.
       
@@ -159,7 +189,7 @@ async def download_gcs_upload_genai(img_url, mime_type, retries=3, delay=2):
             temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=extension)
             downloaded_file = temp_file.name
 
-            sanitized_file = re.sub(r'[^\w\-.]', '_', downloaded_file)
+            sanitized_file = sanitize_file(downloaded_file)
 
             log.info(f"Writing file {sanitized_file}")
             async with aiofiles.open(sanitized_file, 'wb') as f:
@@ -167,8 +197,13 @@ async def download_gcs_upload_genai(img_url, mime_type, retries=3, delay=2):
 
             # Upload the file and get its content reference
             try:
-                downloaded_content: file_types.File = await asyncio.to_thread(genai.upload_file, sanitized_file )
-                return {"role": "user", "parts": [{"file_data": downloaded_content}]}
+                downloaded_content: file_types.File = await asyncio.to_thread(
+                    partial(genai.upload_file, name=name, mime_type=mime_type), 
+                    sanitized_file
+                    )
+                return {"role": "user", "parts": [{"file_data": downloaded_content}, 
+                                                  {"text": f"You have been given the ability to read and work with filename '{name}' with {mime_type=}."}
+                                                  ]}
             except Exception as err:
                 msg = f"Could not upload {sanitized_file} to genai.upload_file: {str(err)} {traceback.format_exc()}"
                 log.error(msg)
