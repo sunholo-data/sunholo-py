@@ -30,8 +30,9 @@ setup(
         "google-auth", # to check if on gcp
         "ruamel.yaml",
         "langchain==0.2.16",
-        "langchain_experimental>=0.0.61",
-        "langchain-community>=0.2.11",
+        "langchain_experimental==0.0.65",
+        "langchain-community==0.2.17",
+        "langsmith==0.1.140",
     ],
     extras_require={
         # Define optional dependencies with feature names
@@ -62,7 +63,7 @@ setup(
             "httpx",
             "jsonschema",
             "lancedb",
-            "langchain>=0.2.12",
+            "langchain>=0.2.16",
             "langchain-experimental>=0.0.61",
             "langchain-community>=0.2.11",
             "langchain-openai==0.1.25",
