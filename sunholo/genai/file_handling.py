@@ -82,7 +82,7 @@ def sanitize_file(filename):
     sanitized_name = re.sub(r'^-+|-+$', '', sanitized_name)  # Remove leading or trailing dashes
     
     # Reattach the original extension
-    return f"{sanitized_name}"
+    return sanitized_name[:40]
 
 async def construct_file_content(gs_list, bucket:str):
     """
@@ -131,7 +131,7 @@ async def construct_file_content(gs_list, bucket:str):
             
         except Exception as e:
             log.info(f"Not found checking genai.get_file: '{name}' {str(e)}")
-            tasks.append(download_gcs_upload_genai(img_url, mime_type, name=name))
+            tasks.append(download_gcs_upload_genai(img_url, mime_type=mime_type, name=name, display_url=display_url))
 
     # Run all tasks in parallel
     if tasks:
@@ -149,7 +149,7 @@ async def download_file_with_error_handling(img_url, mime_type, name):
         log.error(msg)
         return {"role": "user", "parts": [{"text": msg}]}
 
-async def download_gcs_upload_genai(img_url, mime_type, name=None, retries=3, delay=2):
+async def download_gcs_upload_genai(img_url, mime_type, name=None, display_url=None, retries=3, delay=2):
     import aiofiles
     from google.generativeai.types import file_types
     """
@@ -181,7 +181,7 @@ async def download_gcs_upload_genai(img_url, mime_type, name=None, retries=3, de
 
             if file_size > 19434343:
                 log.warning(f"File size for {img_url}: {file_size} is too big.")
-                msg =  f"The file for {img_url} is too large ({file_size} bytes) to be used directly.  Use RAG instead."
+                msg =  f"The file for {img_url} is too large ({file_size} bytes) to be used directly.  Use RAG instead or {display_url=}"
                 return {"role": "user", "parts": [{"text": msg}]}
             
             extension = mimetypes.guess_extension(mime_type)
@@ -203,15 +203,15 @@ async def download_gcs_upload_genai(img_url, mime_type, name=None, retries=3, de
                     sanitized_file
                     )
                 return {"role": "user", "parts": [{"file_data": downloaded_content}, 
-                                                  {"text": f"You have been given the ability to read and work with filename '{name}' with {mime_type=}."}
+                                                  {"text": f"You have been given the ability to read and work with filename '{name=}' with {mime_type=} {display_url=}"}
                                                   ]}
             except Exception as err:
-                msg = f"Could not upload {sanitized_file} to genai.upload_file: {str(err)} {traceback.format_exc()}"
+                msg = f"Could not upload {sanitized_file} to genai.upload_file: {str(err)} {traceback.format_exc()} {display_url=}"
                 log.error(msg)
                 return {"role": "user", "parts": [{"text": msg}]}
         
         except Exception as err:
-            log.error(f"Error processing file {img_url} on attempt {attempt + 1}/{retries}: {str(err)}")
+            log.error(f"Error processing file {img_url} {mime_type=} on attempt {attempt + 1}/{retries}: {str(err)}")
 
             if attempt < retries - 1:
                 log.info(f"Retrying in {delay} seconds...")
