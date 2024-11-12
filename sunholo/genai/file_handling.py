@@ -115,6 +115,7 @@ async def construct_file_content(gs_list, bucket:str):
     tasks = []
     for file_info in file_list:
         img_url = f"gs://{bucket}/{file_info['storagePath']}"
+        display_url = file_info.get('url')
         mime_type = file_info['contentType']
         name = sanitize_file(file_info['name'])
         log.info(f"Processing {name=}")
@@ -123,7 +124,7 @@ async def construct_file_content(gs_list, bucket:str):
             content.append(
                 {"role": "user", "parts": [
                     {"file_data": myfile}, 
-                    {"text": f"You have been given the ability to work with file '{name}' with {mime_type=}."}
+                    {"text": f"You have been given the ability to work with file {name=} with {mime_type=} {display_url=}"}
                     ]
                 })
             log.info(f"Found existing genai.get_file {name=}")
