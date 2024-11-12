@@ -51,6 +51,7 @@ VIDEO_MIMES = [
 AUDIO_MIMES = [
     'audio/wav',
     'audio/mp3',
+    'audio/mpeg', #added
     'audio/aiff',
     'audio/aac',
     'audio/ogg',
@@ -105,6 +106,8 @@ async def construct_file_content(gs_list, bucket:str):
             continue
         if the_mime_type in ALLOWED_MIME_TYPES:
             file_list.append(element)
+        else:
+            log.warning(f'{the_mime_type} is not in allowed MIME types for {element.get("name")}')
     
     if not file_list:
         return {"role": "user", "parts": [{"text": "No eligible contentTypes were found"}]}
