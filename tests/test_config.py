@@ -15,6 +15,7 @@ def test_load_config():
 def test_load_config_key(mock_load_all_configs):
     mock_load_all_configs.return_value = {
         "vacConfig": {
+            "apiVersion": "test",
             "vac": {
                 "test_vector": {
                     "key1": "value1",
