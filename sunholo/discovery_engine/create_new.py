@@ -11,7 +11,8 @@ def create_new_discovery_engine(config:ConfigManager):
         if "chunk_size" in chunker_config:
             chunk_size = chunker_config["chunk_size"]    
 
-    project_id = get_gcp_project()
+    gcp_config = config.vacConfig("gcp_config")
+    project_id = gcp_config.get("project_id") or get_gcp_project()
     if not project_id:
         raise ValueError("Could not find project_id in gcp_config")
     

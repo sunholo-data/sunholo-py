@@ -211,6 +211,8 @@ def load_config_key(key: str, vector_name: str, kind: str):
     config = configs_by_kind[kind]
 
     apiVersion = config.get('apiVersion')
+    if apiVersion is None:
+        raise ValueError("Could not find apiVersion for config")
 
     log.debug(f"Fetching '{key}' for '{vector_name}' from '{kind}/{apiVersion}'")
     

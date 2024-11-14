@@ -36,10 +36,18 @@ def do_discovery_engine(message_data:str, metadata:dict, config:ConfigManager=No
                 log.info(f"Found vectorstore {vectorstore}")
                 if value.get('read_only'):
                     continue
+                gcp_config = config.vacConfig("gcp_config")
+                if not gcp_config:
+                    project_id = get_gcp_project()
+                else:
+                    project_id = gcp_config.get("project_id")
+
+                if not project_id:
+                    raise ValueError("Couldn't retrieve project_id for vertex_ai_search")        
                 #location = gcp_config.get('location') 
                 corpus = DiscoveryEngineClient(
                     data_store_id=config.vector_name, 
-                    project_id=get_gcp_project(),
+                    project_id=project_id
                     # location needs to be 'eu' or 'us' which doesn't work with other configurations
                     #location=location or global_location
                     )

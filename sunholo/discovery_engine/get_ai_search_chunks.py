@@ -37,7 +37,9 @@ def get_all_chunks(question:str, config:ConfigManager):
                 num_chunks = value.get('num_chunks') or 3
                 gcp_config = config.vacConfig("gcp_config")
                 project_id = gcp_config.get('project_id')
-                chunk = get_chunks(question, vector_name, num_chunks, project_id=project_id)
+                serving_config = value.get('serving_config')
+
+                chunk = get_chunks(question, vector_name, num_chunks, project_id=project_id, serving_config=serving_config)
                 if chunk:
                     chunks.append(chunk)
     if chunks:
@@ -46,10 +48,12 @@ def get_all_chunks(question:str, config:ConfigManager):
     log.warning(f"No chunks found for {vector_name}")
     return None
 
-def get_chunks(question, vector_name, num_chunks, project_id=None):
+def get_chunks(question, vector_name, num_chunks, project_id=None, serving_config=None):
+    if serving_config is None:
+        serving_config = "default_serving_config"
     de = DiscoveryEngineClient(vector_name, project_id=project_id or get_gcp_project(include_config=True))
     try:
-        return de.get_chunks(question, num_previous_chunks=num_chunks, num_next_chunks=num_chunks)
+        return de.get_chunks(question, num_previous_chunks=num_chunks, num_next_chunks=num_chunks, serving_config=serving_config)
     except Exception as err:
         log.error(f"No discovery engine chunks found: {str(err)}")
     
