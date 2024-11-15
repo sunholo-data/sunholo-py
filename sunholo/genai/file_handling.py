@@ -121,20 +121,27 @@ async def construct_file_content(gs_list, bucket:str):
         display_url = file_info.get('url')
         mime_type = file_info['contentType']
         name = sanitize_file(file_info['name'])
-        log.info(f"Processing {name=}")
+        display_name = file_info['name']
+        log.info(f"Processing {name=} {display_name=}")
         try:
             myfile = genai.get_file(name)
             content.append(
                 {"role": "user", "parts": [
                     {"file_data": myfile}, 
-                    {"text": f"You have been given the ability to work with file {name=} with {mime_type=} {display_url=}"}
+                    {"text": f"You have been given the ability to work with file {display_name=} with {mime_type=} {display_url=}"}
                     ]
                 })
             log.info(f"Found existing genai.get_file {name=}")
             
         except Exception as e:
             log.info(f"Not found checking genai.get_file: '{name}' {str(e)}")
-            tasks.append(download_gcs_upload_genai(img_url, mime_type=mime_type, name=name, display_url=display_url))
+            tasks.append(
+                download_gcs_upload_genai(img_url, 
+                                          mime_type=mime_type, 
+                                          name=name, 
+                                          display_url=display_url, 
+                                          display_name=display_name)
+                                          )
 
     # Run all tasks in parallel
     if tasks:
@@ -152,7 +159,12 @@ async def download_file_with_error_handling(img_url, mime_type, name):
         log.error(msg)
         return {"role": "user", "parts": [{"text": msg}]}
 
-async def download_gcs_upload_genai(img_url, mime_type, name=None, display_url=None, retries=3, delay=2):
+async def download_gcs_upload_genai(img_url, 
+                                    mime_type, 
+                                    name=None, 
+                                    display_url=None, 
+                                    display_name=None, 
+                                    retries=3, delay=2):
     import aiofiles
     from google.generativeai.types import file_types
     """
@@ -202,11 +214,11 @@ async def download_gcs_upload_genai(img_url, mime_type, name=None, display_url=N
             # Upload the file and get its content reference
             try:
                 downloaded_content: file_types.File = await asyncio.to_thread(
-                    partial(genai.upload_file, name=name, mime_type=mime_type), 
+                    partial(genai.upload_file, name=name, mime_type=mime_type, display_name=display_name), 
                     sanitized_file
                     )
                 return {"role": "user", "parts": [{"file_data": downloaded_content}, 
-                                                  {"text": f"You have been given the ability to read and work with filename '{name=}' with {mime_type=} {display_url=}"}
+                                                  {"text": f"You have been given the ability to read and work with filename '{display_name=}' with {mime_type=} {display_url=}"}
                                                   ]}
             except Exception as err:
                 msg = f"Could not upload {sanitized_file} to genai.upload_file: {str(err)} {traceback.format_exc()} {display_url=}"
