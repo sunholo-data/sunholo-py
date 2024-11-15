@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.110.1'
+version = '0.110.2'
 
 setup(
     name='sunholo',
@@ -32,7 +32,7 @@ setup(
         "langchain==0.2.16",
         "langchain_experimental==0.0.65",
         "langchain-community==0.2.17",
-        "langsmith==0.1.140",
+        "langsmith==0.1.143",
     ],
     extras_require={
         # Define optional dependencies with feature names
