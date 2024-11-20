@@ -1,5 +1,11 @@
 from ..custom_logging import log
 from ..utils import ConfigManager
+import threading
+try:
+    from langfuse import Langfuse
+    langfuse = Langfuse()
+except ImportError:
+    langfuse = None
 
 # Load the YAML file
 def load_prompt_from_yaml(key, prefix="sunholo", load_from_file=False, f_string=True):
@@ -50,31 +56,33 @@ def load_prompt_from_yaml(key, prefix="sunholo", load_from_file=False, f_string=
     ```
 
     """
-    config = ConfigManager(prefix)
+    # Initialize Langfuse client
     if load_from_file:
+        config = ConfigManager(prefix)
         
         return config.promptConfig(key)
 
-
-    from langfuse import Langfuse
-
-    # Initialize Langfuse client
-    langfuse = Langfuse()
-
-    try:
-        if prefix is None:
-            langfuse_template = key
-        else:
-            langfuse_template = f"{prefix}-{key}"
-            
-        langfuse_prompt = langfuse.get_prompt(langfuse_template, cache_ttl_seconds=300)
-
-        if f_string:
-            return langfuse_prompt.get_langchain_prompt()
+    if langfuse is None:
+        log.warning("No Langfuse import available - install via sunholo[http]")
+    else:
+        langfuse_result = [None]
         
-        return langfuse_prompt
-    
-    except Exception as err:
-        log.warning(f"Could not find langfuse template: {langfuse_template} - {str(err)} - attempting to load from promptConfig")
+        def langfuse_load():
+            try:
+                template = f"{prefix}-{key}" if prefix else key
+                prompt = langfuse.get_prompt(template, cache_ttl_seconds=300)
+                langfuse_result[0] = prompt.get_langchain_prompt() if f_string else prompt
+            except Exception as err:
+                log.warning(f"Langfuse error: {template} - {str(err)}")
+                config = ConfigManager(prefix)
+                langfuse_result[0] = config.promptConfig(key)
 
+        thread = threading.Thread(target=langfuse_load)
+        thread.start()
+        thread.join(timeout=1)
+
+        if langfuse_result[0]:
+            return langfuse_result[0]
+
+    config = ConfigManager(prefix)
     return config.promptConfig(key)
