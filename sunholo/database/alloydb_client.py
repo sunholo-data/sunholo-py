@@ -302,7 +302,7 @@ class AlloyDBClient:
             SELECT page_content, source, langchain_metadata, images_gsurls, doc_id::text as doc_id
             FROM "{table_name}"
             WHERE source ILIKE '%{source}%'
-            LIMIT 500;
+            LIMIT 1000;
         """
 
         return query
@@ -319,7 +319,7 @@ class AlloyDBClient:
             SELECT page_content, source, langchain_metadata, images_gsurls, doc_id::text as doc_id
             FROM "{table_name}"
             WHERE doc_id = '{doc_id}'
-            LIMIT 50;
+            LIMIT 500;
         """
 
         return query
@@ -362,11 +362,16 @@ class AlloyDBClient:
         conditions = self._and_or_ilike(sources, search_type=search_type)
 
         query = f"""
-            SELECT * 
+            WITH ranked_sources AS (
+            SELECT *,
+                    ROW_NUMBER() OVER (PARTITION BY source ORDER BY doc_id) as chunk_num
             FROM {table_name}
             WHERE {conditions}
-            ORDER BY source ASC
-            LIMIT 50;
+            )
+            SELECT *
+            FROM ranked_sources
+            ORDER BY source ASC, chunk_num ASC
+            LIMIT 1000;
         """
 
         return query
@@ -378,10 +383,9 @@ class AlloyDBClient:
         if sources:
             conditions = self._and_or_ilike(sources, search_type=search_type)
             query = f"""
-                SELECT source AS objectId
+                SELECT DISTINCT source AS objectId
                 FROM {table_name}
                 WHERE {conditions}
-                GROUP BY source
                 ORDER BY source ASC
                 LIMIT 500;
             """
