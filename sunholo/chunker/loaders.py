@@ -189,21 +189,23 @@ def read_file_to_documents(gs_file: pathlib.Path, metadata: dict = None):
 
     log.info(f"Sending {pdf_path} to UnstructuredLoader")
     UNSTRUCTURED_URL = os.getenv("UNSTRUCTURED_URL")
-    unstructured_kwargs = {"pdf_infer_table_structure": True,
+    unstructured_kwargs = {"skip_infer_table_types": [],
                             "extract_image_block_types":  ["Image", "Table"]
                             }
     
-    if not  UnstructuredLoader:
+    if not UnstructuredLoader:
         raise ImportError("UnstructuredLoader requires 'langchain_unstructured' to be installed")
     
+    log.info(f"{UNSTRUCTURED_KEY=} and {UNSTRUCTURED_URL=}")
     if UNSTRUCTURED_URL:
-        log.debug(f"Found UNSTRUCTURED_URL: {UNSTRUCTURED_URL}")
+        log.info(f"Found UNSTRUCTURED_URL: {UNSTRUCTURED_URL}")
         the_endpoint = f"{UNSTRUCTURED_URL}/general/v0/general"
         try:
+            log.info(f"Calling {the_endpoint}")
             loader = UnstructuredLoader(
                 file_path=pdf_path,
                 url=the_endpoint,
-                mode="elements",
+                partition_via_api=True,
                 **unstructured_kwargs)
         except Exception as err:
             if "'utf-8' codec can't decode byte" in str(err):
@@ -212,6 +214,7 @@ def read_file_to_documents(gs_file: pathlib.Path, metadata: dict = None):
             else:
                 raise err
     else:
+        log.info("Calling Unstructured Loader via Public API")
         loader = UnstructuredLoader(
             file_path=pdf_path,
             api_key=UNSTRUCTURED_KEY,
