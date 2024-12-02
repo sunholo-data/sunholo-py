@@ -185,3 +185,4 @@ yarn-error.log*
 docs/sunholo-py-docs-files.txt
 sunholo-py-files.txt
 *.wav
+uv.lock

@@ -1,0 +1,10 @@
+[project]
+name = "sunholo-py"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "langchain-unstructured>=0.1.2",
+    "sunholo[all]>=0.111.0",
+]

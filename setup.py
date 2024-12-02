@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.111.0'
+version = '0.112.0'
 
 setup(
     name='sunholo',
@@ -71,6 +71,7 @@ setup(
             "langchain_google_alloydb_pg",
             "langchain-anthropic==0.1.23",
             "langchain-google-vertexai",
+            "langchain-unstructured",
             "langfuse",
             "numpy",
             "pg8000",
@@ -90,7 +91,7 @@ setup(
             "tantivy",
             "tenacity",
             "tiktoken",
-            "unstructured[local-inference]==0.14.9",
+            "unstructured[local-inference,all-docs]",
             "xlwings"
         ],
         'azure': [
@@ -114,11 +115,12 @@ setup(
         'pipeline': [
             "GitPython",
             "lark",
+            "langchain-unstructured",
             "psutil",
             "pypdf",
             "pytesseract",
             "tabulate",
-            "unstructured[local-inference]==0.14.9",
+            "unstructured[local-inference,all-docs]"
         ],
         'gcp': [
             "anthropic[vertex]",

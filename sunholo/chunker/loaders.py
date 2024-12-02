@@ -11,9 +11,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from langchain_community.document_loaders import UnstructuredFileLoader
-from langchain_community.document_loaders import UnstructuredAPIFileLoader
-from langchain_community.document_loaders import UnstructuredURLLoader
+from langchain_unstructured import UnstructuredLoader
 
 from langchain_community.document_loaders import GitLoader
 from langchain_community.document_loaders import GoogleDriveLoader
@@ -162,7 +160,7 @@ def read_url_to_document(url: str, metadata: dict = None):
     unstructured_kwargs = {"pdf_infer_table_structure": True,
                             "extract_image_block_types":  ["Image", "Table"]
                             }
-    loader = UnstructuredURLLoader(urls=[url], mode="elements", unstructured_kwargs=unstructured_kwargs)
+    loader = UnstructuredLoader(web_url=url, mode="elements", unstructured_kwargs=unstructured_kwargs)
     docs = loader.load()
     if metadata is not None:
         for doc in docs:
@@ -170,7 +168,7 @@ def read_url_to_document(url: str, metadata: dict = None):
             if not doc.metadata.get("source") and doc.metadata.get("url"):
                 doc.metadata["source"] = doc.metadata["url"]
     
-    log.info(f"UnstructuredURLLoader docs: {docs}")
+    log.info(f"UnstructuredLoader docs: {docs}")
     
     return docs
 
@@ -184,7 +182,7 @@ def read_file_to_documents(gs_file: pathlib.Path, metadata: dict = None):
             log.info(f"Already uploaded to bucket, skipping {pdf_path}")
             return []
 
-    log.info(f"Sending {pdf_path} to UnstructuredAPIFileLoader")
+    log.info(f"Sending {pdf_path} to UnstructuredLoader")
     UNSTRUCTURED_URL = os.getenv("UNSTRUCTURED_URL")
     unstructured_kwargs = {"pdf_infer_table_structure": True,
                             "extract_image_block_types":  ["Image", "Table"]
@@ -194,8 +192,8 @@ def read_file_to_documents(gs_file: pathlib.Path, metadata: dict = None):
         log.debug(f"Found UNSTRUCTURED_URL: {UNSTRUCTURED_URL}")
         the_endpoint = f"{UNSTRUCTURED_URL}/general/v0/general"
         try:
-            loader = UnstructuredAPIFileLoader(
-                pdf_path,
+            loader = UnstructuredLoader(
+                file_path=pdf_path,
                 url=the_endpoint,
                 mode="elements",
                 **unstructured_kwargs)
@@ -206,8 +204,8 @@ def read_file_to_documents(gs_file: pathlib.Path, metadata: dict = None):
             else:
                 raise err
     else:
-        loader = UnstructuredAPIFileLoader(
-            pdf_path,
+        loader = UnstructuredLoader(
+            file_path=pdf_path,
             api_key=UNSTRUCTURED_KEY,
             mode="elements",
             **unstructured_kwargs)
@@ -216,7 +214,7 @@ def read_file_to_documents(gs_file: pathlib.Path, metadata: dict = None):
     try:
         docs = loader.load() # this takes a long time 30m+ for big PDF files
     except ValueError as e:
-        log.info(f"Error for {gs_file} from UnstructuredAPIFileLoader: {str(e)}")
+        log.info(f"Error for {gs_file} from UnstructuredLoader: {str(e)}")
         pdf_path = pathlib.Path(gs_file)
         if pdf_path.suffix == ".pdf":
             local_doc = read_pdf_file(pdf_path, metadata=metadata)
@@ -268,7 +266,7 @@ def convert_to_txt_and_extract(gs_file, split=False):
     try:
         # Convert the file to .txt and try again
         txt_file = convert_to_txt(gs_file)
-        loader = UnstructuredFileLoader(
+        loader = UnstructuredLoader(
             txt_file, 
             mode="elements")
 
