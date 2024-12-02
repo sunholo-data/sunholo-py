@@ -11,7 +11,10 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-from langchain_unstructured import UnstructuredLoader
+try:
+    from langchain_unstructured import UnstructuredLoader
+except ImportError:
+    UnstructuredLoader = None
 
 from langchain_community.document_loaders import GitLoader
 from langchain_community.document_loaders import GoogleDriveLoader
@@ -157,6 +160,8 @@ def read_gdrive_to_document(url: str, metadata: dict = None):
 
 def read_url_to_document(url: str, metadata: dict = None):
 
+    if not  UnstructuredLoader:
+        raise ImportError("UnstructuredLoader requires 'langchain_unstructured' to be installed")
     unstructured_kwargs = {"pdf_infer_table_structure": True,
                             "extract_image_block_types":  ["Image", "Table"]
                             }
@@ -187,6 +192,9 @@ def read_file_to_documents(gs_file: pathlib.Path, metadata: dict = None):
     unstructured_kwargs = {"pdf_infer_table_structure": True,
                             "extract_image_block_types":  ["Image", "Table"]
                             }
+    
+    if not  UnstructuredLoader:
+        raise ImportError("UnstructuredLoader requires 'langchain_unstructured' to be installed")
     
     if UNSTRUCTURED_URL:
         log.debug(f"Found UNSTRUCTURED_URL: {UNSTRUCTURED_URL}")
@@ -260,6 +268,9 @@ def read_file_to_documents(gs_file: pathlib.Path, metadata: dict = None):
 
 def convert_to_txt_and_extract(gs_file, split=False):
 
+    if not  UnstructuredLoader:
+        raise ImportError("UnstructuredLoader requires 'langchain_unstructured' to be installed")
+    
     log.info("trying file parsing locally via .txt conversion")
     txt_file = None
     docs = []
