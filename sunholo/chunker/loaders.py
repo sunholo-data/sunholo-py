@@ -162,7 +162,7 @@ def read_url_to_document(url: str, metadata: dict = None):
 
     if not  UnstructuredLoader:
         raise ImportError("UnstructuredLoader requires 'langchain_unstructured' to be installed")
-    unstructured_kwargs = {"pdf_infer_table_structure": True,
+    unstructured_kwargs = {"skip_infer_table_types": [],
                             "extract_image_block_types":  ["Image", "Table"]
                             }
     loader = UnstructuredLoader(web_url=url, mode="elements", unstructured_kwargs=unstructured_kwargs)

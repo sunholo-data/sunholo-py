@@ -477,10 +477,10 @@ class GenAIFunctionProcessor:
 
                 response: GenerateContentResponse = chat.send_message(content, request_options=RequestOptions(
                                         retry=retry.Retry(
-                                            initial=10, 
+                                            initial=1, 
                                             multiplier=2, 
-                                            maximum=60, 
-                                            timeout=90
+                                            maximum=10, 
+                                            timeout=60
                                         )
                                        ))
             except RetryError as err:
@@ -490,8 +490,10 @@ class GenAIFunctionProcessor:
                 this_text += msg
                 
             except Exception as e:
-                msg = f"Error sending {content} to model: {str(e)} - {traceback.format_exc()}"
-                log.error(msg)
+                msg = f"Error sending {content} to model: {str(e)}"
+                if str(e) == "finish_reason: 10":
+                    msg = "The Gemini API does not work with this input - you need to try something else. Error is: finish_reason: 10"
+                log.error(msg + f"{traceback.format_exc()}")
                 token_queue.append(msg)
                 this_text += msg
 
