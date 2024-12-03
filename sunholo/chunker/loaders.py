@@ -182,6 +182,11 @@ def read_file_to_documents(gs_file: pathlib.Path, metadata: dict = None):
     docs = []
     pdf_path = str(pathlib.Path(gs_file))
 
+    # Skip CSV files
+    if pdf_path.lower().endswith('.csv'):
+        log.info(f"Skipping CSV file: {pdf_path}")
+        return []
+
     if metadata:
         if metadata.get("uploaded_to_bucket"):
             log.info(f"Already uploaded to bucket, skipping {pdf_path}")
