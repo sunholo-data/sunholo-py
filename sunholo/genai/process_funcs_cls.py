@@ -491,7 +491,7 @@ class GenAIFunctionProcessor:
                 
             except Exception as e:
                 msg = f"Error sending {content} to model: {str(e)}"
-                if str(e) == "finish_reason: 10":
+                if "finish_reason: 10" in str(e):
                     msg = "The Gemini API does not work with this input - you need to try something else. Error is: finish_reason: 10"
                 log.error(msg + f"{traceback.format_exc()}")
                 token_queue.append(msg)
@@ -590,6 +590,7 @@ class GenAIFunctionProcessor:
                             log.warning(f"{fn_result_json} did not work for decide_to_go_on")
                             token = f"Error calling decide_to_go_on with {fn_result=}\n"
                     else:
+
                         token = f"--- {fn_log} result --- \n"
                         # if json dict we look for keys to extract
                         if fn_result_json:
@@ -621,8 +622,8 @@ class GenAIFunctionProcessor:
 
             if this_text:
                 #content.append(f"Agent: {this_text}")    
-                # update content relying on gemini chat history instead
-                content = [f"Agent:\n{this_text}"]
+                # update content relying on gemini chat history instead, and the parsed function result objects
+                content = executed_responses
                 # if text includes gs:// try to download it
                 image_uploads = extract_gs_images_and_genai_upload(this_text)
                 if image_uploads:
