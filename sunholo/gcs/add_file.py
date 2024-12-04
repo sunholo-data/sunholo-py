@@ -45,7 +45,9 @@ def handle_base64_image(base64_data: str, vector_name: str, extension: str):
         raise ValueError(f"Invalid Base64 image data: Missing metadata header {base64_data}")
 
     if model.startswith("openai"):  # pass it to gpt directly
-        return base64_data, base64_data.split(",", 1)
+        mime_type = base64_data.split(",", 1)
+        log.info(f"Returning directly as openai - mime_type: {mime_type}")
+        return base64_data, mime_type
 
     try:
         header, encoded = base64_data.split(",", 1)
@@ -58,8 +60,8 @@ def handle_base64_image(base64_data: str, vector_name: str, extension: str):
         image_uri = add_file_to_gcs(filename, vector_name)
         os.remove(filename)  # Clean up the saved file
 
-        # Determine MIME type based on extension
-        mime_type = guess_mime_type(extension) or "application/octet-stream"
+        # Determine MIME type based on filename
+        mime_type = guess_mime_type(filename) or "application/octet-stream"
 
         return image_uri, mime_type
     except Exception as e:
