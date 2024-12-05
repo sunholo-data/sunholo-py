@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.113.2'
+version = '0.113.3'
 
 setup(
     name='sunholo',

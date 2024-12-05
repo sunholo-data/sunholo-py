@@ -621,9 +621,11 @@ class GenAIFunctionProcessor:
                 this_text += token
 
             if this_text:
-                #content.append(f"Agent: {this_text}")    
                 # update content relying on gemini chat history instead, and the parsed function result objects
-                content = executed_responses
+                if executed_responses:
+                    content = executed_responses
+                else:
+                    content = [f"[{guardrail}] Agent: No function responses where found: {this_text}"]
                 # if text includes gs:// try to download it
                 image_uploads = extract_gs_images_and_genai_upload(this_text)
                 if image_uploads:
@@ -635,7 +637,7 @@ class GenAIFunctionProcessor:
                 big_result.append(this_text)
             else:
                 log.warning(f"[{guardrail}] No content created this loop")
-                content = [f"Agent: ERROR - No response was found for loop [{guardrail}]"]
+                content = [f"[{guardrail}] Agent: ERROR - No response was found for loop [{guardrail}]"]
 
             token_queue.append(f"\n----Loop [{guardrail}] End------\n{usage_metadata}\n----------------------")
             loop_span.end(output=content, metadata=loop_metadata) if loop_span else None
