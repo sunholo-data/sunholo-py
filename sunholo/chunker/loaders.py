@@ -13,11 +13,12 @@
 #   limitations under the License.
 try:
     from langchain_unstructured import UnstructuredLoader
+    from langchain_community.document_loaders import GitLoader
+    from langchain_community.document_loaders import GoogleDriveLoader
 except ImportError:
     UnstructuredLoader = None
-
-from langchain_community.document_loaders import GitLoader
-from langchain_community.document_loaders import GoogleDriveLoader
+    GitLoader=None
+    GoogleDriveLoader=None
 
 from ..custom_logging import log
 from .pdfs import read_pdf_file

@@ -18,14 +18,24 @@ from ..custom_logging import log
 from ..components import get_llm
 from ..chunker.splitter import chunk_doc_to_docs
 
-from langchain.prompts import PromptTemplate
-from langchain.chat_models import ChatVertexAI
-from langchain.chat_models import ChatOpenAI
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.llms import OpenAI
-from langchain.llms import VertexAI
-from langchain.chains.summarize import load_summarize_chain
-from langchain.schema import Document
+try:
+    from langchain.prompts import PromptTemplate
+    from langchain.chat_models import ChatVertexAI
+    from langchain.chat_models import ChatOpenAI
+    from langchain_google_genai import ChatGoogleGenerativeAI
+    from langchain.llms import OpenAI
+    from langchain.llms import VertexAI
+    from langchain.chains.summarize import load_summarize_chain
+    from langchain.schema import Document
+except ImportError:
+    PromptTemplate=None
+    ChatVertexAI=None
+    ChatOpenAI=None
+    ChatGoogleGenerativeAI=None
+    OpenAI=None
+    VertexAI=None
+    load_summarize_chain=None
+    Document=None
 
 prompt_template = """Write a summary for below, including key concepts, people and distinct information but do not add anything that is not in the original text:
 

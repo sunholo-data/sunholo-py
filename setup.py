@@ -94,6 +94,12 @@ setup(
             "unstructured[local-inference,all-docs]",
             "xlwings"
         ],
+        'langchain': [
+            "langchain==0.2.16",
+            "langchain_experimental==0.0.65",
+            "langchain-community==0.2.17",
+            "langsmith==0.1.143",
+        ],
         'azure': [
             "azure-identity",
             "azure-storage-blob"

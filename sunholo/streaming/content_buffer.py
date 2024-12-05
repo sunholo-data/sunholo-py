@@ -12,8 +12,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 from typing import Any, Dict, List, Union
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain.schema import LLMResult
+
+try:
+    from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+    from langchain.schema import LLMResult
+except ImportError:
+    StreamingStdOutCallbackHandler = None
+    LLMResult = None
 
 import threading
 import asyncio

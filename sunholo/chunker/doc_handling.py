@@ -12,10 +12,14 @@ import tempfile
 import traceback
 import json
 import os
-from langchain.docstore.document import Document
-
-from langchain.prompts import PromptTemplate
-from langchain_core.output_parsers import StrOutputParser
+try:
+    from langchain.docstore.document import Document
+    from langchain.prompts import PromptTemplate
+    from langchain_core.output_parsers import StrOutputParser
+except ImportError:
+    Document = None
+    PromptTemplate = None
+    StrOutputParser = None
 
 def send_doc_to_docstore(docs, vector_name):
 
@@ -52,6 +56,9 @@ def send_doc_to_docstore(docs, vector_name):
     return doc_id, docs
 
 def create_big_doc(docs):
+
+    if not Document:
+        raise ImportError("Document object requires langchain installed")
 
     if not docs:
         return None, None, None
@@ -107,6 +114,9 @@ def create_big_doc(docs):
 
 def summarise_docs(docs, vector_name, summary_threshold_default=10000, model_limit_default=25000):
 
+    if not PromptTemplate or not StrOutputParser:
+        raise ImportError("PromptTemplate and StrOutputParser requires langchain installed")
+    
     if not docs:
         return None
     

@@ -17,8 +17,11 @@ import json
 import datetime
 import uuid
 
-from langchain.schema import Document
-
+try:
+    from langchain.schema import Document
+except ImportError:
+    Document = None
+    
 from ..components import get_embeddings, pick_vectorstore, load_memories, pick_embedding
 from ..custom_logging import log
 from ..database.uuid import generate_uuid_from_object_id

@@ -17,13 +17,17 @@ from ..utils import ConfigManager
 from .llm import get_embeddings
 from ..utils.gcp_project import get_gcp_project
 
-from langchain.retrievers import MergerRetriever
-from langchain_community.retrievers import GoogleCloudEnterpriseSearchRetriever
-# https://python.langchain.com/docs/integrations/retrievers/merger_retriever
-from langchain_community.document_transformers import EmbeddingsRedundantFilter
-from langchain.retrievers.document_compressors import DocumentCompressorPipeline
-from langchain.retrievers import ContextualCompressionRetriever
-
+try:
+    from langchain.retrievers import MergerRetriever
+    # https://python.langchain.com/docs/integrations/retrievers/merger_retriever
+    from langchain_community.document_transformers import EmbeddingsRedundantFilter
+    from langchain.retrievers.document_compressors import DocumentCompressorPipeline
+    from langchain.retrievers import ContextualCompressionRetriever
+except ImportError:
+    MergerRetriever=None
+    EmbeddingsRedundantFilter=None
+    DocumentCompressorPipeline=None
+    ContextualCompressionRetriever=None
 
 
 def load_memories(vector_name:str=None, config:ConfigManager=None):

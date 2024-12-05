@@ -3,8 +3,11 @@ from ..pubsub import PubSubManager
 from ..utils.parsers import contains_url, extract_urls
 from ..utils.gcp_project import get_gcp_project
 
-from langchain.schema import Document
-
+try:
+    from langchain.schema import Document
+except ImportError:
+    Document=None
+    
 def publish_if_urls(the_content, vector_name):
     """
     Extracts URLs and puts them in a queue for processing on PubSub

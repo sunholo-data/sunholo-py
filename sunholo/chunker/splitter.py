@@ -13,12 +13,17 @@
 #   limitations under the License.
 from ..custom_logging import log
 from ..utils.parsers import remove_whitespace
-from langchain.schema import Document
-import langchain.text_splitter as text_splitter
+
 from .images import upload_doc_images
 from .doc_handling import send_doc_to_docstore, summarise_docs
 from ..database.uuid import generate_uuid_from_object_id
 
+try:
+    from langchain.schema import Document
+    import langchain.text_splitter as text_splitter
+except ImportError:
+    Document=None
+    text_splitter=None
 
 def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 800, vector_name=None, **kwargs):
     """Turns a Document object into a list of many Document chunks.
