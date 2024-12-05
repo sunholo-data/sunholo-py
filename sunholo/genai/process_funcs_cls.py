@@ -535,7 +535,7 @@ class GenAIFunctionProcessor:
             fn_exec.end(output=self.loop_text) if fn_exec else None        
 
         else:
-            token = "\n[{self.loop_guardrail}] No function executions were performed\n"
+            token = f"\n[{self.loop_guardrail}] No function executions were performed\n"
             self.token_queue.append(token)
             self.loop_text += token
             

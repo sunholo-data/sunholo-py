@@ -44,56 +44,56 @@ def convert_to_txt(file_path):
     shutil.copyfile(file_path, txt_file)
     return txt_file
 
+if GoogleDriveLoader is not None:
+    class MyGoogleDriveLoader(GoogleDriveLoader):
+        url: Optional[str] = Field(None)
 
-class MyGoogleDriveLoader(GoogleDriveLoader):
-    url: Optional[str] = Field(None)
+        def __init__(self, url, *args, **kwargs):
+            super().__init__(*args, **kwargs, file_ids=['dummy']) # Pass dummy value
+            self.url = url
 
-    def __init__(self, url, *args, **kwargs):
-        super().__init__(*args, **kwargs, file_ids=['dummy']) # Pass dummy value
-        self.url = url
+        def _extract_id(self, url):
+            parsed_url = urlparse(unquote(url))
+            path_parts = parsed_url.path.split('/')
+            
+            # Iterate over the parts
+            for part in path_parts:
+                # IDs are typically alphanumeric and at least a few characters long
+                # So let's say that to be an ID, a part has to be at least 15 characters long
+                if all(char.isalnum() or char in ['_', '-'] for char in part) and len(part) >= 15:
+                    return part
+            
+            # Return None if no ID was found
+            return None
 
-    def _extract_id(self, url):
-        parsed_url = urlparse(unquote(url))
-        path_parts = parsed_url.path.split('/')
-        
-        # Iterate over the parts
-        for part in path_parts:
-            # IDs are typically alphanumeric and at least a few characters long
-            # So let's say that to be an ID, a part has to be at least 15 characters long
-            if all(char.isalnum() or char in ['_', '-'] for char in part) and len(part) >= 15:
-                return part
-        
-        # Return None if no ID was found
-        return None
+        def load_from_url(self, url: str):
+            id = self._extract_id(url)
+            from googleapiclient.errors import HttpError
+            from googleapiclient.discovery import build
 
-    def load_from_url(self, url: str):
-        id = self._extract_id(url)
-        from googleapiclient.errors import HttpError
-        from googleapiclient.discovery import build
+            # Identify type of URL
+            try:
+                service = build("drive", "v3", credentials=self._load_credentials())
+                file = service.files().get(fileId=id).execute()
+            except HttpError as err:
+                log.error(f"Error loading file {url}: {str(err)}")
+                raise
 
-        # Identify type of URL
-        try:
-            service = build("drive", "v3", credentials=self._load_credentials())
-            file = service.files().get(fileId=id).execute()
-        except HttpError as err:
-            log.error(f"Error loading file {url}: {str(err)}")
-            raise
+            mime_type = file["mimeType"]
 
-        mime_type = file["mimeType"]
-
-        if "folder" in mime_type:
-            # If it's a folder, load documents from the folder
-            return self._load_documents_from_folder(id)
-        else:
-            # If it's not a folder, treat it as a single file
-            if mime_type == "application/vnd.google-apps.document":
-                return [self._load_document_from_id(id)]
-            elif mime_type == "application/vnd.google-apps.spreadsheet":
-                return self._load_sheet_from_id(id)
-            elif mime_type == "application/pdf":
-                return [self._load_file_from_id(id)]
+            if "folder" in mime_type:
+                # If it's a folder, load documents from the folder
+                return self._load_documents_from_folder(id)
             else:
-                return []
+                # If it's not a folder, treat it as a single file
+                if mime_type == "application/vnd.google-apps.document":
+                    return [self._load_document_from_id(id)]
+                elif mime_type == "application/vnd.google-apps.spreadsheet":
+                    return self._load_sheet_from_id(id)
+                elif mime_type == "application/pdf":
+                    return [self._load_file_from_id(id)]
+                else:
+                    return []
 
 def ignore_files(filepath):
     """Returns True if the given path's file extension is found within 
