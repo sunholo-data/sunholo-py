@@ -89,8 +89,18 @@ class GenAIFunctionProcessor:
         self.trace = trace
         self.parent_observation_id = parent_observation_id
         
+        # agent loops
         self.last_api_requests_and_responses = []
         self._validate_functions()
+
+        self.loop_span = None
+        self.token_queue = []
+        self.loop_text = ""
+        self.loop_content = []
+        self.loop_guardrail = 0
+        self.big_result = []
+        self.usage_metadata = {}
+        self.functions_called =[]
 
     def construct_tools(self) -> dict:
         """
@@ -249,7 +259,6 @@ class GenAIFunctionProcessor:
         """
         api_requests_and_responses = []
 
-
         if not full_response:
             log.info("No response was found to process")
             return api_requests_and_responses
@@ -272,7 +281,7 @@ class GenAIFunctionProcessor:
                     params_obj = {key: val for key, val in fn.args.items()}
 
                 params = ', '.join(f'{key}={val}' for key, val in params_obj.items())
-                log.info(f"Executing {function_name} with params {params} (Total Characters: {len(params)})")
+                log.info(f"== Executing {function_name} with params {params} (Total Characters: {len(params)})")
                 if len(params)>8000:
                     log.warning(f"Total parameters are over 8000 characters - it may not work properly: {params[:10000]}....[{len(params)}]")
 
@@ -413,6 +422,202 @@ class GenAIFunctionProcessor:
             # If it's a primitive value, return it as is
             return value
 
+    """
+        self.loop_span = None
+        self.token_queue = None
+        self.loop_chat = None
+        self.loop_text = None
+        self.loop_content = None
+        self.loop_guardrail = None
+    """
+
+    def _loop_update_content(self):
+        if self.loop_text:
+            # update content relying on gemini chat history, and the parsed function result objects
+            if self.loop_executed_responses:
+                self.loop_content = self.loop_executed_responses
+            else:
+                self.loop_content = [f"[{self.loop_guardrail}] Agent: {self.loop_text}"]
+            # if text includes gs:// try to download it
+            image_uploads = extract_gs_images_and_genai_upload(self.loop_text)
+            if image_uploads:
+                for img in image_uploads:
+                    log.info(f"Adding {img=}")
+                    self.loop_content.append(img)
+                    self.loop_content.append(f"{img.name} was created by agent and added")
+            log.info(f"[{self.loop_guardrail}] Updated content:\n{self.loop_text}")
+            self.big_result.append(self.loop_text)
+        else:
+            log.warning(f"[{self.loop_guardrail}] No content created this loop")
+            self.loop_content = [f"[{self.loop_guardrail}] Agent: ERROR - No response was found for loop [{self.loop_guardrail}]"]
+
+    def _loop_handle_executed_responses(self, response):
+        try:
+            self.loop_executed_responses = self.process_funcs(response, loop_span=self.loop_span) 
+        except Exception as err:
+            log.error(f"Error in executions: {str(err)}")
+            self.token_queue.append(f"{str(err)} for {response=}")
+
+        log.info(f"[{self.loop_guardrail}] {self.loop_executed_responses=}")
+
+        if self.loop_executed_responses:  
+            self.token_queue.append("\n-- Agent Actions:\n")
+            fn_exec = self.loop_span.span(name="function_actions", input=self.loop_executed_responses) if self.loop_span else None
+            for executed_response in self.loop_executed_responses:
+                token = ""
+                fn = executed_response.function_response.name
+                fn_args = executed_response.function_response.response.get("args")
+                fn_result = executed_response.function_response.response["result"]
+                fn_log = f"{fn}({fn_args})"
+                log.info(fn_log)
+                self.functions_called.append(fn_log)
+                self.token_queue.append(f"\n-- {fn_log} ...executing...\n") if fn != "decide_to_go_on" else ""
+                while self.token_queue:
+                    token = self.token_queue.popleft()
+                    self.loop_callback.on_llm_new_token(token=token)
+
+                log.info(f"{fn_log} created a result={type(fn_result)=}")
+                fn_exec_one = fn_exec.span(name=fn, input=fn_args) if fn_exec else None
+                
+                fn_result_json = None
+                # Convert MapComposite to a standard Python dictionary
+                if isinstance(fn_result, proto.marshal.collections.maps.MapComposite):
+                    fn_result_json = self.convert_composite_to_native(fn_result)
+                elif isinstance(fn_result, proto.marshal.collections.repeated.RepeatedComposite):
+                    fn_result = self.convert_composite_to_native(fn_result)
+                elif isinstance(fn_result, dict):
+                    fn_result_json = fn_result
+                elif isinstance(fn_result, str):
+                    try:
+                        if isinstance(fn_result_json, str):
+                            fn_result_json = json.loads(fn_result_json)
+                    except json.JSONDecodeError:
+                        log.warning(f"{fn_result} was not JSON decoded")
+                    except Exception as err:
+                        log.warning(f"{fn_result} was not json decoded due to unknown exception: {str(err)} {traceback.format_exc()}")
+                else:
+                    log.warning(f"Unrecognised type for {fn_log}: {type(fn_result)}")
+                
+                # should be a string or a dict by now
+                log.info(f"Processed {fn_log} to {fn_result_json=} type: {type(fn_result_json)}")
+                
+                if fn == "decide_to_go_on":
+                    log.info(f"{fn_result_json=} {type(fn_result)}")
+                    if fn_result_json:
+                        token = f"\n{'STOPPING' if not fn_result_json.get('go_on') else 'CONTINUE'}: {fn_result_json.get('chat_summary')}\n"
+                    else:
+                        log.warning(f"{fn_result_json} did not work for decide_to_go_on")
+                        token = f"Error calling decide_to_go_on with {fn_result=}\n"
+                else:
+
+                    token = f"--- {fn_log} result --- \n"
+                    # if json dict we look for keys to extract
+                    if fn_result_json:
+                        log.info(f"{fn_result_json} dict parsing")
+                        if fn_result_json.get('stdout'):
+                            text = fn_result_json.get('stdout')
+                            token += self.remove_invisible_characters(text)
+                        if fn_result_json.get('stderr'):
+                            text = fn_result_json.get('stdout')
+                            token += self.remove_invisible_characters(text)
+                        # If neither 'stdout' nor 'stderr' is present, dump the entire JSON
+                        if 'stdout' not in fn_result_json and 'stderr' not in fn_result_json:
+                            log.info(f"No recognised keys ('stdout' or 'stderr') in dict: {fn_result_json=} - dumping it all")
+                            token += f"{json.dumps(fn_result_json, indent=2)}\n"  # Added `indent=2` for readability
+                    else:
+                        # probably a string, just return it
+                        log.info(f"{fn_result_json} non-dict (String?) parsing")
+                        token += f"{self.remove_invisible_characters(fn_result)}\n--- end ---\n"
+                
+                self.loop_text += token
+                self.token_queue.append(token)
+                fn_exec_one.end(output=token) if fn_exec_one else None
+            fn_exec.end(output=self.loop_text) if fn_exec else None        
+
+        else:
+            token = "\n[{self.loop_guardrail}] No function executions were performed\n"
+            self.token_queue.append(token)
+            self.loop_text += token
+            
+    def _loop_output_text(self, response:GenerateContentResponse):
+        if not response:
+            return
+        
+        for chunk in response:
+            if not chunk:
+                continue
+
+            log.debug(f"[{self.loop_guardrail}] {chunk=}")
+            try:
+                if hasattr(chunk, 'text') and isinstance(chunk.text, str):
+                    token = chunk.text
+                    self.token_queue.append(token)
+                    self.loop_text += token
+                else:
+                    log.info("skipping chunk with no text")
+                
+            except ValueError as err:
+                self.token_queue.append(f"{str(err)} for {chunk=}")
+
+    def _loop_metadata(self, response:GenerateContentResponse, gen=None):
+        loop_metadata = None
+        if response:
+            loop_metadata = response.usage_metadata
+            if loop_metadata:
+                self.usage_metadata = {
+                    "prompt_token_count": self.usage_metadata["prompt_token_count"] + (loop_metadata.prompt_token_count or 0),
+                    "candidates_token_count": self.usage_metadata["candidates_token_count"] + (loop_metadata.candidates_token_count or 0),
+                    "total_token_count": self.usage_metadata["total_token_count"] + (loop_metadata.total_token_count or 0),
+                }
+                self.token_queue.append((
+                    "\n-- Agent response -- " 
+                    f"Loop tokens: [{loop_metadata.prompt_token_count}]/[{self.usage_metadata['prompt_token_count']}] "
+                    f"Session tokens: [{loop_metadata.total_token_count}]/[{self.usage_metadata['total_token_count']}] \n"
+                ))
+            gen.end(output=response.to_dict()) if gen else None
+        else:
+            gen.end(output="No response received") if gen else None
+        
+        return loop_metadata
+
+    def _loop_call_agent(self, chat:ChatSession):
+        response=None
+        gen=None
+        try:
+            self.token_queue.append("\n= Calling Agent =\n")
+            loop_content = self.loop_content
+            gen = self.loop_span.generation(
+                name=f"loop_{self.loop_guardrail}",
+                model=self.model_name,
+                input = {'content': self.loop_content},
+            ) if self.loop_span else None
+
+            log.info(f"{loop_content=}")
+            response: GenerateContentResponse = chat.send_message(loop_content, request_options=RequestOptions(
+                                    retry=retry.Retry(
+                                        initial=1, 
+                                        multiplier=2, 
+                                        maximum=10, 
+                                        timeout=60
+                                    )
+                                    ))
+        except RetryError as err:
+            msg = f"Retry error - lets try again if its occured less than twice: {str(err)}"
+            log.warning(msg)
+            self.token_queue.append(msg)
+            self.loop_text += msg
+            
+        except Exception as e:
+            msg = f"Error sending {loop_content} to model: {str(e)}"
+            if "finish_reason: 10" in str(e):
+                    msg = (f"I encounted an error on the previous step when sending this data: {json.dumps(loop_content)}"
+                            " -- Can you examine what was sent and identify why? If possible correct it so we can answer the original user question.")
+            log.error(msg + f"{traceback.format_exc()}")
+            self.token_queue.append(msg)
+            self.loop_text += msg
+        
+        return response, gen
+
     def run_agent_loop(self, chat:ChatSession, content:list, callback=None, guardrail_max=10, loop_return=3): # type: ignore
         """
         Runs the agent loop, sending messages to the orchestrator, processing responses, and executing functions.
@@ -429,17 +634,14 @@ class GenAIFunctionProcessor:
         """
         if not callback:
             callback = self.IOCallback()
-        guardrail = 0
-        big_result = []
-        usage_metadata = {
+        self.big_result = []
+        self.usage_metadata = {
             "prompt_token_count": 0,
             "candidates_token_count": 0,
             "total_token_count": 0
         }
-        functions_called =[]
-        function_results = []
-        # Initialize token queue to ensure sequential processing
-        token_queue = deque()
+        
+        self.functions_called =[]
 
         span = self.trace.span(
             name=f"GenAIFunctionProcesser_{self.__class__.__name__}",
@@ -447,225 +649,73 @@ class GenAIFunctionProcessor:
             input = {'content': content},
         ) if self.trace else None
 
-        while guardrail < guardrail_max:
+        self.loop_span = None
+        # Initialize token queue to ensure sequential processing
+        self.token_queue = deque()
+        self.loop_text = ""
+        self.loop_content = content
+        self.loop_guardrail = 0
+        self.loop_executed_responses = []
+        self.loop_callback = callback
 
-            token_queue.append(f"\n----Loop [{guardrail}] Start------\nFunctions: {list(self.funcs.keys())}\n")
+        while self.loop_guardrail < guardrail_max:
+            self.token_queue.append(f"\n----Loop [{self.loop_guardrail}] Start------\nFunctions: {list(self.funcs.keys())}\n")
 
             content_parse = ""
             for i, chunk in enumerate(content):
                 content_parse += f"\n - {i}) {chunk}"
-            content_parse += f"\n== End input content for loop [{guardrail}] =="
+            content_parse += f"\n== End input content for loop [{self.loop_guardrail}] =="
 
-            log.info(f"== Start input content for loop [{guardrail}]\n ## Content: {content_parse}")
-            this_text = ""  # reset for this loop
+            log.info(f"== Start input content for loop [{self.loop_guardrail}]\n ## Content: {content_parse}")
+            
+            # resets for this loop
+            self.loop_text = ""  
             response = None
-            executed_responses = []
-            loop_span = span.span(
-                name=f"loop_{guardrail}",
+            self.loop_executed_responses = []
+
+            self.loop_span = span.span(
+                name=f"loop_{self.loop_guardrail}",
                 model=self.model_name,
-                input = {'content': content},
+                input = {'content': self.loop_content},
             ) if span else None
 
-            try:
-                token_queue.append("\n= Calling Agent =\n")
+            response, gen = self._loop_call_agent(chat)
 
-                gen = loop_span.generation(
-                    name=f"loop_{guardrail}",
-                    model=self.model_name,
-                    input = {'content': content},
-                ) if loop_span else None
+            loop_metadata = self._loop_metadata(response, gen)
 
-                response: GenerateContentResponse = chat.send_message(content, request_options=RequestOptions(
-                                        retry=retry.Retry(
-                                            initial=1, 
-                                            multiplier=2, 
-                                            maximum=10, 
-                                            timeout=60
-                                        )
-                                       ))
-            except RetryError as err:
-                msg = f"Retry error - lets try again if its occured less than twice: {str(err)}"
-                log.warning(msg)
-                token_queue.append(msg)
-                this_text += msg
-                
-            except Exception as e:
-                msg = f"Error sending {content} to model: {str(e)}"
-                if "finish_reason: 10" in str(e):
-                    msg = "The Gemini API does not work with this input - you need to try something else. Error is: finish_reason: 10"
-                log.error(msg + f"{traceback.format_exc()}")
-                token_queue.append(msg)
-                this_text += msg
+            self._loop_output_text(response)
 
-            if response:
-                loop_metadata = response.usage_metadata
-                if loop_metadata:
-                    usage_metadata = {
-                        "prompt_token_count": usage_metadata["prompt_token_count"] + (loop_metadata.prompt_token_count or 0),
-                        "candidates_token_count": usage_metadata["candidates_token_count"] + (loop_metadata.candidates_token_count or 0),
-                        "total_token_count": usage_metadata["total_token_count"] + (loop_metadata.total_token_count or 0),
-                    }
-                    token_queue.append((
-                        "\n-- Agent response -- " 
-                        f"Loop tokens: [{loop_metadata.prompt_token_count}]/[{usage_metadata['prompt_token_count']}] "
-                        f"Session tokens: [{loop_metadata.total_token_count}]/[{usage_metadata['total_token_count']}] \n"
-                    ))
-                loop_metadata = None
-                gen.end(output=response.to_dict()) if gen else None
-            else:
-                gen.end(output="No response received") if gen else None
+            self._loop_handle_executed_responses(response)
 
-            if not response:
-                response = []
-            for chunk in response:
-                if not chunk:
-                    continue
+            self._loop_update_content()
 
-                log.debug(f"[{guardrail}] {chunk=}")
-                try:
-                    if hasattr(chunk, 'text') and isinstance(chunk.text, str):
-                        token = chunk.text
-                        token_queue.append(token)
-                        this_text += token
-                    else:
-                        log.info("skipping chunk with no text")
-                    
-                except ValueError as err:
-                    token_queue.append(f"{str(err)} for {chunk=}")
-            try:
-                executed_responses = self.process_funcs(response, loop_span=loop_span) 
-            except Exception as err:
-                log.error(f"Error in executions: {str(err)}")
-                token_queue.append(f"{str(err)} for {response=}")
-
-            log.info(f"[{guardrail}] {executed_responses=}")
-
-            if executed_responses:  
-                token_queue.append("\n-- Agent Actions:\n")
-                fn_exec = loop_span.span(name="function_actions", input=executed_responses) if loop_span else None
-                for executed_response in executed_responses:
-                    token = ""
-                    fn = executed_response.function_response.name
-                    fn_args = executed_response.function_response.response.get("args")
-                    fn_result = executed_response.function_response.response["result"]
-                    fn_log = f"{fn}({fn_args})"
-                    log.info(fn_log)
-                    functions_called.append(fn_log)
-                    function_results.append(fn_result)
-                    token_queue.append(f"\n-- {fn_log} ...executing...\n") if fn != "decide_to_go_on" else ""
-                    while token_queue:
-                        token = token_queue.popleft()
-                        callback.on_llm_new_token(token=token)
-
-                    log.info(f"{fn_log} created a result={type(fn_result)=}")
-                    fn_exec_one = fn_exec.span(name=fn, input=fn_args) if fn_exec else None
-                    
-                    fn_result_json = None
-                    # Convert MapComposite to a standard Python dictionary
-                    if isinstance(fn_result, proto.marshal.collections.maps.MapComposite):
-                        fn_result_json = self.convert_composite_to_native(fn_result)
-                    elif isinstance(fn_result, proto.marshal.collections.repeated.RepeatedComposite):
-                        fn_result = self.convert_composite_to_native(fn_result)
-                    elif isinstance(fn_result, dict):
-                        fn_result_json = fn_result
-                    elif isinstance(fn_result, str):
-                        try:
-                            if isinstance(fn_result_json, str):
-                                fn_result_json = json.loads(fn_result_json)
-                        except json.JSONDecodeError:
-                            log.warning(f"{fn_result} was not JSON decoded")
-                        except Exception as err:
-                            log.warning(f"{fn_result} was not json decoded due to unknown exception: {str(err)} {traceback.format_exc()}")
-                    else:
-                        log.warning(f"Unrecognised type for {fn_log}: {type(fn_result)}")
-                    
-                    # should be a string or a dict by now
-                    log.info(f"Processed {fn_log} to {fn_result_json=} type: {type(fn_result_json)}")
-                    
-                    if fn == "decide_to_go_on":
-                        log.info(f"{fn_result_json=} {type(fn_result)}")
-                        if fn_result_json:
-                            token = f"\n{'STOPPING' if not fn_result_json.get('go_on') else 'CONTINUE'}: {fn_result_json.get('chat_summary')}\n"
-                        else:
-                            log.warning(f"{fn_result_json} did not work for decide_to_go_on")
-                            token = f"Error calling decide_to_go_on with {fn_result=}\n"
-                    else:
-
-                        token = f"--- {fn_log} result --- \n"
-                        # if json dict we look for keys to extract
-                        if fn_result_json:
-                            log.info(f"{fn_result_json} dict parsing")
-                            if fn_result_json.get('stdout'):
-                                text = fn_result_json.get('stdout')
-                                token += self.remove_invisible_characters(text)
-                            if fn_result_json.get('stderr'):
-                                text = fn_result_json.get('stdout')
-                                token += self.remove_invisible_characters(text)
-                            # If neither 'stdout' nor 'stderr' is present, dump the entire JSON
-                            if 'stdout' not in fn_result_json and 'stderr' not in fn_result_json:
-                                log.info(f"No recognised keys ('stdout' or 'stderr') in dict: {fn_result_json=} - dumping it all")
-                                token += f"{json.dumps(fn_result_json, indent=2)}\n"  # Added `indent=2` for readability
-                        else:
-                            # probably a string, just return it
-                            log.info(f"{fn_result_json} non-dict (String?) parsing")
-                            token += f"{self.remove_invisible_characters(fn_result)}\n--- end ---\n"
-                    
-                    this_text += token
-                    token_queue.append(token)
-                    fn_exec_one.end(output=token) if fn_exec_one else None
-                fn_exec.end(output=this_text) if fn_exec else None        
-
-            else:
-                token = "\nNo function executions were found\n"
-                token_queue.append(token)
-                this_text += token
-
-            if this_text:
-                # update content relying on gemini chat history instead, and the parsed function result objects
-                if executed_responses:
-                    content = executed_responses
-                else:
-                    content = [f"[{guardrail}] Agent: No function responses where found: {this_text}"]
-                # if text includes gs:// try to download it
-                image_uploads = extract_gs_images_and_genai_upload(this_text)
-                if image_uploads:
-                    for img in image_uploads:
-                        log.info(f"Adding {img=}")
-                        content.append(img)
-                        content.append(f"{img.name} was created by agent and added")
-                log.info(f"[{guardrail}] Updated content:\n{this_text}")
-                big_result.append(this_text)
-            else:
-                log.warning(f"[{guardrail}] No content created this loop")
-                content = [f"[{guardrail}] Agent: ERROR - No response was found for loop [{guardrail}]"]
-
-            token_queue.append(f"\n----Loop [{guardrail}] End------\n{usage_metadata}\n----------------------")
-            loop_span.end(output=content, metadata=loop_metadata) if loop_span else None
+            self.token_queue.append(f"\n----Loop [{self.loop_guardrail}] End------\n{self.usage_metadata}\n----------------------")
+            self.loop_span.end(output=self.loop_content, metadata=loop_metadata) if self.loop_span else None
 
             go_on_check = self.check_function_result("decide_to_go_on", {"go_on": False})
             if go_on_check:
                 log.info("Breaking agent loop")
                 break
             
-            while token_queue:
-                token = token_queue.popleft()
-                callback.on_llm_new_token(token=token)
+            while self.token_queue:
+                token = self.token_queue.popleft()
+                self.loop_callback.on_llm_new_token(token=token)
             
-            guardrail += 1
-            if guardrail > guardrail_max:
+            self.loop_guardrail += 1
+            if self.loop_guardrail > guardrail_max:
                 log.warning(f"Guardrail kicked in, more than {guardrail_max} loops")
                 break
         
-        while token_queue:
-            token = token_queue.popleft()
-            callback.on_llm_new_token(token=token)
+        while self.token_queue:
+            token = self.token_queue.popleft()
+            self.loop_callback.on_llm_new_token(token=token)
         
-        usage_metadata["functions_called"] = functions_called
+        self.usage_metadata["functions_called"] = self.functions_called
 
-        big_text = "\n".join(big_result[-loop_return:])
-        span.end(output=big_text, metadata=usage_metadata) if span else None
+        big_text = "\n".join(self.big_result[-loop_return:])
+        span.end(output=big_text, metadata=self.sage_metadata) if span else None
 
-        return big_text, usage_metadata
+        return big_text, self.usage_metadata
 
     class IOCallback:
         """
