@@ -12,21 +12,21 @@ from collections import deque
 try:
     import google.generativeai as genai
     import proto
-    from google.generativeai.types import RequestOptions, GenerateContentResponse
     from google.api_core import retry
     from google.generativeai import ChatSession
     from google.api_core.exceptions import RetryError
+    from google.generativeai.types import RequestOptions, GenerateContentResponse
 except ImportError:
     genai = None
     ChatSession = None
+    GenerateContentResponse = None
 
 from .images import extract_gs_images_and_genai_upload
 
 if TYPE_CHECKING:
     from google.generativeai.protos import Part
     from google.generativeai import ChatSession
-
-
+    from google.generativeai.types import RequestOptions, GenerateContentResponse
 
 class GenAIFunctionProcessor:
     """
