@@ -15,7 +15,6 @@ from . import invoke
 from . import langfuse
 from . import llamaindex
 from . import lookup
-from . import patches
 from . import pubsub
 from . import qna
 from . import senses
@@ -44,7 +43,6 @@ __all__ = ['agents',
            'langfuse', 
            'llamaindex',
            'lookup', 
-           'patches', 
            'pubsub',
            'qna', 
            'senses',
