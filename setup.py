@@ -27,6 +27,7 @@ setup(
     },
     install_requires=[
         # Base dependencies
+        "aiohttp",
         "google-auth", # to check if on gcp
         "requests",
         "ruamel.yaml",
@@ -34,6 +35,7 @@ setup(
     extras_require={
         # Define optional dependencies with feature names
         'all': [
+            "aiohttp",
             "anthropic[vertex]",
             "asyncpg",
             "azure-identity",
