@@ -32,6 +32,7 @@ setup(
         "pydantic",
         "requests",
         "ruamel.yaml",
+        "tenacity"
     ],
     extras_require={
         # Define optional dependencies with feature names
