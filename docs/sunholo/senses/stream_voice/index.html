@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script>window.dataLayer=window.dataLayer||[]</script>
 <script>!function(e,t,a,n){e[n]=e[n]||[],e[n].push({"gtm.start":(new Date).getTime(),event:"gtm.js"});var g=t.getElementsByTagName(a)[0],m=t.createElement(a);m.async=!0,m.src="https://www.googletagmanager.com/gtm.js?id=GTM-WLQZQF2P",g.parentNode.insertBefore(m,g)}(window,document,"script","dataLayer")</script><link rel="stylesheet" href="/assets/css/styles.73fd73cb.css">
-<script src="/assets/js/runtime~main.33abbfcd.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.916fea3b.js" defer="defer"></script>
 <script src="/assets/js/main.09299f6b.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -55,7 +55,7 @@ tts.process_text_stream(sample_text_stream())</p>
 </ul>
 </li>
 <li>
-<p>_apply_fade(self, audio: numpy.ndarray, fade_duration: float, fade_in: bool = True, fade_out: bool = True) -&gt; numpy.ndarray</p>
+<p>_apply_fade(self, audio: Any, fade_duration: float, fade_in: bool = True, fade_out: bool = True) -&gt; Any</p>
 <ul>
 <li>Apply fade in/out to audio with specified duration.</li>
 </ul>
@@ -67,13 +67,13 @@ tts.process_text_stream(sample_text_stream())</p>
 </ul>
 </li>
 <li>
-<p>_make_fade(self, length: int, fade_type: str = &#x27;l&#x27;) -&gt; numpy.ndarray</p>
+<p>_make_fade(self, length: int, fade_type: str = &#x27;l&#x27;) -&gt; Any</p>
 <ul>
 <li>Generate a fade curve of specified length and type.</li>
 </ul>
 </li>
 <li>
-<p>_play_audio_chunk(self, audio_chunk: numpy.ndarray, is_final_chunk: bool = False)</p>
+<p>_play_audio_chunk(self, audio_chunk: Any, is_final_chunk: bool = False)</p>
 <ul>
 <li>Play a single audio chunk with proper device handling.</li>
 </ul>
