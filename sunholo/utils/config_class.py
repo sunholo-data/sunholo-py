@@ -140,7 +140,7 @@ class ConfigManager:
                 config = json.load(file)
             else:
                 # Create YAML parser that forbids duplicates
-                yaml = YAML(typ='full')
+                yaml = YAML(typ='safe')
                 yaml.allow_duplicate_keys = False
                 config = yaml.load(file)
 
