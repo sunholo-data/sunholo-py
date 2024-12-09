@@ -1,8 +1,10 @@
 import os
-import yaml
+from ruamel.yaml import YAML
 import shutil
 from ..utils.config import get_module_filepath
 from ..utils.parsers import sanitize_cloudrun_name
+
+yaml = YAML(typ='safe')
 
 def init_project(args):
     """

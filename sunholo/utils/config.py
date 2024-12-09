@@ -14,11 +14,12 @@
 
 import os
 import json
-import yaml
 from datetime import datetime, timedelta
 from collections import defaultdict
 from .timedelta import format_timedelta
 
+from ruamel.yaml import YAML
+yaml = YAML(typ='safe')
 
 def get_module_filepath(filepath: str):
     """
@@ -107,7 +108,7 @@ def reload_config_file(config_file, filename):
         if filename.endswith('.json'):
             config = json.load(file)
         else:
-            config = yaml.safe_load(file)
+            config = yaml.load(file)
     
     config_cache[filename] = (config, datetime.now())
     log.debug(f"Loaded and cached {config_file}")
@@ -166,7 +167,7 @@ def load_config(filename: str=None) -> tuple[dict, str]:
         if filename.endswith(".json"):
             config = json.load(f)
         elif filename.endswith(".yaml") or filename.endswith(".yml"):
-            config = yaml.safe_load(f)
+            config = yaml.load(f)
         else:
             raise ValueError(f"Unsupported config file format: {config_file}. The supported formats are JSON and YAML.")
 

@@ -13,6 +13,8 @@ import json
 from io import StringIO
 import os
 import re
+from ruamel.yaml import YAML
+yaml = YAML(typ='safe')
 
 class VertexAIExtensions:
     """
@@ -115,13 +117,12 @@ class VertexAIExtensions:
     def upload_openapi_file(self, filename: str, extension_name:str, vac:str=None):
         if vac:
             from ..agents.route import route_vac
-            import yaml
 
             new_url = route_vac(vac)
 
             log.info(f'Overwriting extension URL with VAC url for {vac=} - {new_url=}')
             
-            openapi = yaml.safe_load(filename)
+            openapi = yaml.load(filename)
 
             openapi['servers'][0]['url'] = new_url
             with open(filename, 'w') as file:
@@ -145,10 +146,9 @@ class VertexAIExtensions:
         return self.current_extension.api_spec()
         
     def load_tool_use_examples(self, filename: str):
-        import yaml
 
         with open(filename, 'r') as file:
-            self.tool_use_examples = yaml.safe_load(file)
+            self.tool_use_examples = yaml.load(file)
 
         # google.cloud.aiplatform_v1beta1.types.ToolUseExample
         return self.tool_use_examples

@@ -1,9 +1,7 @@
 import os
 import json
-import yaml
 from datetime import datetime, timedelta
 from collections import defaultdict
-from yaml.constructor import SafeConstructor, ConstructorError
 
 from .timedelta import format_timedelta
 
@@ -122,30 +120,32 @@ class ConfigManager:
         Returns:
             dict: The loaded configuration.
         """
+    def _reload_config_file(self, config_file, filename, is_local=False):
+        """
+        Helper function to load a config file and update the cache.
+
+        Args:
+            config_file (str): The path to the configuration file.
+            filename (str): The name of the configuration file.
+            is_local (bool): Indicates if the config file is from the local folder.
+
+        Returns:
+            dict: The loaded configuration.
+        """
         from ..custom_logging import log
-
-        class NoDuplicateKeyConstructor(SafeConstructor):
-            def construct_mapping(self, node, deep=False):
-                mapping = {}
-                for key_node, value_node in node.value:
-                    key = self.construct_object(key_node, deep=deep)
-                    if key in mapping:
-                        raise ConstructorError(f"Duplicate key found: {key_node.start_mark}")
-                    value = self.construct_object(value_node, deep=deep)
-                    mapping[key] = value
-                return mapping
-
-        NoDuplicateKeyLoader = yaml.Loader
-        NoDuplicateKeyLoader.add_constructor(
-            yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-            NoDuplicateKeyConstructor.construct_mapping
-        )
+        from ruamel.yaml import YAML, DuplicateKeyError
 
         with open(config_file, 'r') as file:
             if filename.endswith('.json'):
                 config = json.load(file)
             else:
-                config = yaml.load(file, Loader=NoDuplicateKeyLoader)
+                # Create YAML parser that forbids duplicates
+                yaml = YAML(typ='safe')
+                yaml.allow_duplicate_keys = False
+                try:
+                    config = yaml.load(file)
+                except DuplicateKeyError as e:
+                    raise ValueError(f"Duplicate key found in {filename}: {str(e)}")
 
         self.config_cache[filename] = (config, datetime.now())
         if is_local:
