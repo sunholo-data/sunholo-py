@@ -29,6 +29,7 @@ setup(
         # Base dependencies
         "aiohttp",
         "google-auth", # to check if on gcp
+        "pydantic",
         "requests",
         "ruamel.yaml",
     ],
@@ -79,6 +80,7 @@ setup(
             "playwright",
             "psutil",
             "psycopg2-binary",
+            "pydantic",
             "pypdf",
             "python-hcl2",
             "python-socketio",
