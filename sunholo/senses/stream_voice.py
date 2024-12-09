@@ -1,3 +1,12 @@
+from typing import Optional, TYPE_CHECKING, Union, Any
+
+if TYPE_CHECKING:
+    import numpy as np
+    from numpy.typing import NDArray
+    ArrayType = NDArray[np.int16]
+else:
+    ArrayType = Any  # Fallback type when numpy isn't available
+
 try:
     from google.cloud import texttospeech
 except ImportError:
@@ -29,9 +38,6 @@ import io
 import wave
 
 import argparse
-import json
-from typing import Optional
-from pathlib import Path
 import sys
 
 class StreamingTTS:
@@ -195,8 +201,11 @@ class StreamingTTS:
             log.error(f"Error initializing audio device: {e}")
             raise
 
-    def _make_fade(self, length: int, fade_type: str='l') -> np.ndarray:
+    def _make_fade(self, length: int, fade_type: str='l') -> ArrayType:
         """Generate a fade curve of specified length and type."""
+        if np is None:  # Runtime check
+            raise ImportError("numpy is required. Install with pip install sunholo[tts]")
+    
         fade = np.arange(length, dtype=np.float32) / length
         
         if fade_type == 't':  # triangle
@@ -214,8 +223,11 @@ class StreamingTTS:
         
         return fade
     
-    def _apply_fade(self, audio: np.ndarray, fade_duration: float, fade_in: bool = True, fade_out: bool = True) -> np.ndarray:
+    def _apply_fade(self, audio: ArrayType, fade_duration: float, fade_in: bool = True, fade_out: bool = True) -> ArrayType:
         """Apply fade in/out to audio with specified duration."""
+        if np is None:  # Runtime check
+            raise ImportError("numpy is required. Install with pip install sunholo[tts]")
+    
         if audio.ndim != 1:
             raise ValueError("Audio must be 1-dimensional")
         
@@ -233,8 +245,11 @@ class StreamingTTS:
         return audio.astype(np.int16)
 
     
-    def _play_audio_chunk(self, audio_chunk: np.ndarray, is_final_chunk: bool = False):
+    def _play_audio_chunk(self, audio_chunk: ArrayType, is_final_chunk: bool = False):
         """Play a single audio chunk with proper device handling."""
+        if np is None:  # Runtime check
+            raise ImportError("numpy is required. Install with pip install sunholo[tts]")
+    
         try:
             # Add longer padding for the final chunk
             padding_duration = 0.1 if is_final_chunk else 0.02
@@ -415,7 +430,7 @@ def tts_command(args):
                 Panel((
                     f"Saying: {args.text}"
                     ), 
-                    title=f"Text to Speech",
+                    title="Text to Speech",
                     subtitle=f"{tts.voice_name} is talking"),
                     )
             tts.process_text_stream(
