@@ -14,9 +14,6 @@
 import os
 import requests
 import socket
-# can't install due to circular import sunholo.logging
-import logging
-
 
 def is_running_on_cloudrun():
     """

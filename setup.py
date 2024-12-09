@@ -28,6 +28,7 @@ setup(
     install_requires=[
         # Base dependencies
         "google-auth", # to check if on gcp
+        "requests",
         "ruamel.yaml",
     ],
     extras_require={
@@ -80,6 +81,7 @@ setup(
             "python-hcl2",
             "python-socketio",
             "pytesseract",
+            "requests",
             "rich",
             "sounddevice",
             "supabase",
