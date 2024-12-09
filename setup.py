@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.115.0'
+version = '0.115.1'
 
 setup(
     name='sunholo',
@@ -147,8 +147,8 @@ setup(
             "google-cloud-pubsub",
             "google-cloud-discoveryengine",
             "google-cloud-texttospeech",
-            "google-generativeai>=0.7.1",
-            "langchain-google-genai==1.0.10",
+            "google-generativeai>=0.8.3",
+            "langchain-google-genai>=2.0.0",
             "langchain_google_alloydb_pg>=0.2.2",
             "langchain-google-vertexai",
             "pillow",
