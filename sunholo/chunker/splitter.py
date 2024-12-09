@@ -28,6 +28,9 @@ except ImportError:
 def chunk_doc_to_docs(documents: list, extension: str = ".md", min_size: int = 800, vector_name=None, **kwargs):
     """Turns a Document object into a list of many Document chunks.
        If a document or chunk is smaller than min_size, it will be merged with adjacent documents or chunks."""
+    
+    if Document is None:
+        raise ImportError("Document chunker needs langchain installed via sunholo[pipeline]")
 
     if len(documents)==0:
         log.warning("No documents found to chunk in chunk_doc_to_docs")
@@ -136,6 +139,9 @@ def choose_splitter(extension: str, chunk_size: int=1024, chunk_overlap:int=200,
                     )
 
                     return semantic_splitter
+
+    if not text_splitter:
+        raise ImportError("text_splitter needs langchain installed via sunholo[pipeline]")
 
 
     if extension == ".py":

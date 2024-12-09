@@ -34,6 +34,9 @@ def embed_pubsub_chunk(data: dict):
          data JSON
     """
 
+    if Document is None:
+        raise ImportError("Embeddin requires langchain installed via sunholo[pipeline]")
+    
     message_data = base64.b64decode(data['message']['data']).decode('utf-8')
     messageId = data['message'].get('messageId')
     publishTime = data['message'].get('publishTime')

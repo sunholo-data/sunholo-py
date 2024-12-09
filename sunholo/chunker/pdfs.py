@@ -14,6 +14,7 @@
 import os
 import pathlib
 from ..custom_logging import log
+from ..types import Document
 
 def split_pdf_to_pages(pdf_path, temp_dir):
 
@@ -51,7 +52,6 @@ def split_pdf_to_pages(pdf_path, temp_dir):
     return page_files
 
 def read_pdf_file(pdf_path, metadata):
-    from langchain.schema import Document
     from pypdf import PdfReader
     log.info(f"Trying local PDF parsing.  Reading PDF {pdf_path}...")
 

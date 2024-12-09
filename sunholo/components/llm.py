@@ -110,7 +110,7 @@ def llm_str_to_llm(llm_str, model=None, vector_name=None, config=None):
         return VertexAI(model_name = model, temperature=0, max_output_tokens=1024)
 
     elif llm_str == 'model_garden':
-        from ..patches.langchain.vertexai import VertexAIModelGarden
+        from langchain_google_vertexai import VertexAIModelGarden
         model_garden_config = config.vacConfig("gcp_config")
         if model_garden_config is None:
             raise ValueError("llm='model_garden' requires a gcp_config entry in config yaml file")

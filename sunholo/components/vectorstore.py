@@ -102,7 +102,7 @@ def pick_vectorstore(vs_str: str, vector_name: str=None, embeddings=None, config
         return vectorstore
         
     elif vs_str == "lancedb":
-        from ..patches.langchain.lancedb import LanceDB
+        from langchain_community.vectorstores import LanceDB
         import lancedb
 
         LANCEDB_BUCKET = os.environ.get("LANCEDB_BUCKET")

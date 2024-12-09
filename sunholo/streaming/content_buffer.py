@@ -13,13 +13,6 @@
 #   limitations under the License.
 from typing import Any, Dict, List, Union
 
-try:
-    from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-    from langchain.schema import LLMResult
-except ImportError:
-    StreamingStdOutCallbackHandler = None
-    LLMResult = None
-
 import threading
 import asyncio
 import re
@@ -114,7 +107,7 @@ class ContentBuffer:
             self.content_available.clear()
 
 
-class BufferStreamingStdOutCallbackHandler(StreamingStdOutCallbackHandler):
+class BufferStreamingStdOutCallbackHandler:
     """
     A callback handler for streaming LLM output to a content buffer.
 
@@ -212,12 +205,12 @@ class BufferStreamingStdOutCallbackHandler(StreamingStdOutCallbackHandler):
                 self.content_buffer.write(self.buffer)
                 self.buffer = ""
 
-    def on_llm_end(self, response: LLMResult, **kwargs: Any) -> None:
+    def on_llm_end(self, response, **kwargs: Any) -> None:
         """
         Handles the end of LLM streaming.
 
         Args:
-            response (LLMResult): The result returned by the LLM.
+            response: The result returned by the LLM.
             **kwargs: Additional keyword arguments.
 
         Writes any remaining buffer content to the content buffer, and sets a signal indicating
@@ -233,7 +226,7 @@ class BufferStreamingStdOutCallbackHandler(StreamingStdOutCallbackHandler):
 
 
 
-class BufferStreamingStdOutCallbackHandlerAsync(StreamingStdOutCallbackHandler):
+class BufferStreamingStdOutCallbackHandlerAsync:
     """
     An async callback handler for streaming LLM output to a content buffer.
 
@@ -315,12 +308,12 @@ class BufferStreamingStdOutCallbackHandlerAsync(StreamingStdOutCallbackHandler):
                 await self.content_buffer.async_write(self.buffer)
                 self.buffer = ""
 
-    async def async_on_llm_end(self, response: LLMResult, **kwargs: Any) -> None:
+    async def async_on_llm_end(self, response, **kwargs: Any) -> None:
         """
         Asynchronously handles the end of LLM streaming.
 
         Args:
-            response (LLMResult): The result returned by the LLM.
+            response: The result returned by the LLM.
             **kwargs: Additional keyword arguments.
         """
         if self.buffer:

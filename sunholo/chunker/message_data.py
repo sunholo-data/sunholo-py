@@ -29,10 +29,7 @@ try:
 except ImportError:
     BlobServiceClient = None
 
-try:
-    from langchain.schema import Document
-except ImportError:
-    Document = None
+from ..types import Document
 
 from .splitter import chunk_doc_to_docs
 from .pdfs import split_pdf_to_pages

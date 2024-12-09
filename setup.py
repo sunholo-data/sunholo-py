@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.114.2'
+version = '0.115.0'
 
 setup(
     name='sunholo',
@@ -29,10 +29,6 @@ setup(
         # Base dependencies
         "google-auth", # to check if on gcp
         "ruamel.yaml",
-        "langchain==0.2.16",
-        "langchain_experimental==0.0.65",
-        "langchain-community==0.2.17",
-        "langsmith==0.1.143",
     ],
     extras_require={
         # Define optional dependencies with feature names
@@ -95,10 +91,10 @@ setup(
             "xlwings"
         ],
         'langchain': [
-            "langchain==0.2.16",
-            "langchain_experimental==0.0.65",
-            "langchain-community==0.2.17",
-            "langsmith==0.1.143",
+            "langchain",
+            "langchain_experimental",
+            "langchain-community",
+            "langsmith",
         ],
         'azure': [
             "azure-identity",
@@ -121,6 +117,7 @@ setup(
         'pipeline': [
             "GitPython",
             "lark",
+            "langchain>=0.2.16",
             "langchain-unstructured",
             "psutil",
             "pypdf",
@@ -189,10 +186,10 @@ setup(
     },
     classifiers=[
         'Development Status :: 3 - Alpha',      # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as the current state of your package
-        'Intended Audience :: Developers',      # Define that your audience are developers
+        'Intended Audience :: Developers',     
         'Topic :: Software Development :: Build Tools',
         'License :: OSI Approved :: Apache Software License', 
-        'Programming Language :: Python :: 3',      #Specify which python versions that you want to support
+        'Programming Language :: Python :: 3', 
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12'

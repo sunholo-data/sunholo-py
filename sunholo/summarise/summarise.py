@@ -13,8 +13,6 @@
 #   limitations under the License.
 from ..custom_logging import log
 
-
-
 from ..components import get_llm
 from ..chunker.splitter import chunk_doc_to_docs
 
@@ -36,6 +34,8 @@ except ImportError:
     VertexAI=None
     load_summarize_chain=None
     Document=None
+import time
+import random
 
 prompt_template = """Write a summary for below, including key concepts, people and distinct information but do not add anything that is not in the original text:
 
@@ -45,10 +45,10 @@ SUMMARY:"""
 MAP_PROMPT = PromptTemplate(template=prompt_template, input_variables=["text"])
 
 
-import time
-import random
-
 def summarise_docs(docs, vector_name, skip_if_less=10000):
+    if Document is None:
+        raise ImportError("summarise_docs requires langchain installed via sunholo[pipeline]")
+    
     llm  = get_llm(vector_name)
   
     if isinstance(llm, ChatOpenAI) or isinstance(llm, OpenAI):
