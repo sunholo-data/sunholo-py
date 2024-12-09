@@ -133,19 +133,16 @@ class ConfigManager:
             dict: The loaded configuration.
         """
         from ..custom_logging import log
-        from ruamel.yaml import YAML, DuplicateKeyError
+        from ruamel.yaml import YAML
 
         with open(config_file, 'r') as file:
             if filename.endswith('.json'):
                 config = json.load(file)
             else:
                 # Create YAML parser that forbids duplicates
-                yaml = YAML(typ='safe')
+                yaml = YAML(typ='full')
                 yaml.allow_duplicate_keys = False
-                try:
-                    config = yaml.load(file)
-                except DuplicateKeyError as e:
-                    raise ValueError(f"Duplicate key found in {filename}: {str(e)}")
+                config = yaml.load(file)
 
         self.config_cache[filename] = (config, datetime.now())
         if is_local:
