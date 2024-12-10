@@ -74,6 +74,7 @@ setup(
             "langchain-google-vertexai",
             "langchain-unstructured",
             "langfuse",
+            "mcp",
             "numpy",
             "pg8000",
             "pgvector",

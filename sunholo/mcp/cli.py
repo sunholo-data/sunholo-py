@@ -3,16 +3,7 @@ import asyncio
 from typing import Any, Sequence
 from functools import lru_cache
 import subprocess
-from mcp.server import Server
-from mcp.server.stdio import stdio_server
-from mcp.types import (
-    Resource,
-    Tool,
-    TextContent,
-    ImageContent,
-    EmbeddedResource,
-)
-"""
+
 try:
     from mcp.server import Server
     from mcp.server.stdio import stdio_server
@@ -23,9 +14,12 @@ try:
         ImageContent,
         EmbeddedResource,
     )
+
+    from rich import print
+    from ..cli.sun_rich import console
 except ImportError:
     Server = None
-"""
+    console = None
 
 from pydantic import AnyUrl
 
@@ -233,6 +227,7 @@ def cli_mcp(args):
         server = SunholoMCPServer()
             
         logger.info("Starting Sunholo MCP server...")
+        console.print("Starting MCP server...")
         asyncio.run(server.run())
 
     except Exception as e:

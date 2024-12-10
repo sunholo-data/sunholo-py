@@ -44,8 +44,14 @@ sunholo
 
 ```bash
 uv tool upgrade sunholo
-uv tool install --from "sunholo[cli,anthropic]" sunholo 
-
+# install tool with Anthropic MCP
+uv tool install --from "sunholo[cli]" sunholo --with "sunholo[anthropic]"
+# install tool with Google Text-to-speech
+uv tool install --from "sunholo[cli]" sunholo --with "sunholo[tts]"
+# install with both text-to-speech and anthropic
+uv tool install --from "sunholo[cli]" sunholo --with "sunholo[anthropic,tts]"
+# etc...
+uv tool install --from "sunholo[cli]" sunholo --with "sunholo[all]"
 ```
 
 ### Install via pip (legacy)
