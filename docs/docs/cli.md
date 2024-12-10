@@ -2,7 +2,53 @@
 
 A CLI is installed via `sunholo"[cli]"`
 
-![](img/install.gif)
+## Install using uv (recommended)
+
+uv is a new python envioronment library that makes it easy to use python tools such as `sunholo`.
+
+First install `uv' if you haven't got it: https://docs.astral.sh/uv/getting-started/installation/
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+You can then run the `sunholo` command by installing its  `[cli]` extra
+
+```bash
+uvx --from "sunholo[cli]" sunholo
+#Installed 35 packages in 71ms
+#usage: sunholo [-h] [--debug] [--project PROJECT] [--region REGION] [-v]
+#               {deploy,list-configs,init,merge-text,proxy,vac,embed,swagger,vertex,llamaindex,excel-init,tfvars,tts} ...
+
+#sunholo CLI tool for deploying GenAI VACs
+#...
+```
+
+To install it within `uv`s cache, use the following command:
+
+```bash
+uv tool install --from "sunholo[cli]" sunholo 
+```
+
+You can then run it like this:
+
+```bash
+sunholo
+# usage: sunholo [-h] [--debug] [--project PROJECT] [--region REGION] [-v]
+#               {deploy,list-configs,init,merge-text,proxy,vac,embed,swagger,vertex,llamaindex,excel-init,tfvars,tts} ...
+#
+#sunholo CLI tool for deploying GenAI VACs
+```
+
+### Upgrades and installing features
+
+```bash
+uv tool upgrade sunholo
+uv tool install --from "sunholo[cli,anthropic]" sunholo 
+
+```
+
+### Install via pip (legacy)
 
 ```bash
 pip install sunholo"[cli]"

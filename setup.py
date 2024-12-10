@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.115.3'
+version = '0.116.0'
 
 setup(
     name='sunholo',
@@ -159,7 +159,8 @@ setup(
             "tiktoken"
         ],
         'anthropic': [
-            "langchain-anthropic==0.1.23"   
+            "langchain-anthropic>=0.1.23",
+            "mcp"
         ],
         'tools' : [
             'openapi-spec-validator',
@@ -188,7 +189,8 @@ setup(
             'google-cloud-texttospeech',
             'numpy',
             'sounddevice',
-        ]
+        ],
+        
 
     },
     classifiers=[
