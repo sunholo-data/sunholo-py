@@ -64,7 +64,7 @@ def main(args=None):
     """
     default_project, default_region = load_default_gcp_config()
 
-    parser = argparse.ArgumentParser(description="sunholo CLI tool for deploying GenAI VACs", add_help=False)
+    parser = argparse.ArgumentParser(description="sunholo CLI tool for deploying GenAI VACs 3", add_help=False)
     parser.add_argument('-h', '--help', action=CustomHelpAction, help='Show this help message and exit')
     parser.add_argument('--debug', action='store_true', help='Enable debug output')
     parser.add_argument('--project', default=default_project, help='GCP project to list Cloud Run services from.')

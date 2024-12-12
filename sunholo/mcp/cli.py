@@ -24,16 +24,26 @@ except ImportError:
 from pydantic import AnyUrl
 
 # Configure logging
-from ..custom_logging import setup_logging
-logger = setup_logging("sunholo-mcp-server")
+import logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger("sunholo-mcp")
 
-class SunholoMCPServer:
+
+class SunholoMCPServer2:
     def __init__(self):
+        logger.info("Initializing Sunholo MCP Server")
+
         if Server is None:
             raise ImportError("SunholoMCPServer requires `sunholo[anthropic]` to be installed")
         
         self.server = Server("sunholo-mcp-server")
+        self.server.onerror = self.handle_error
+
         self.setup_handlers()
+
+    def handle_error(self, error: Exception):
+        """Handle server errors"""
+        logger.error(f"MCP Server error: {error}", exc_info=True)
 
     def setup_handlers(self):
         """Set up all the MCP protocol handlers"""
@@ -48,8 +58,8 @@ class SunholoMCPServer:
             """List available Sunholo resources"""
             return [
                 Resource(
-                    uri="sunholo://vacs/list",
-                    name="Available Sunholo VACs",
+                    uri="sunholo://vacs/list2",
+                    name="Available Sunholo VACs 2",
                     mimeType="application/json",
                     description="List of available Virtual Agent Computers"
                 )
@@ -58,14 +68,17 @@ class SunholoMCPServer:
         @self.server.read_resource()
         async def read_resource(uri: AnyUrl) -> str:
             """Read Sunholo resources based on URI"""
-            if str(uri) == "sunholo://vacs/list":
+            logger.info(f"{uri} available")
+            console.print(f"{uri} available")
+            if str(uri) == "sunholo://vacs/list2":
                 try:
                     # Execute sunholo vac list command
                     result = subprocess.run(
-                        ["sunholo", "vac", "list", "--debug"],
+                        ["sunholo", "vac", "list"],
                         capture_output=True,
                         text=True
                     )
+                    console.print(f"{result=}")
                     return result.stdout
                 except subprocess.CalledProcessError as e:
                     raise RuntimeError(f"Failed to list VACs: {str(e)}")
@@ -83,7 +96,7 @@ class SunholoMCPServer:
             return [
                 Tool(
                     name="chat_with_vac",
-                    description="Chat with a specific Sunholo VAC",
+                    description="Chat with a specific Sunholo VAC2",
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -95,18 +108,34 @@ class SunholoMCPServer:
                                 "type": "string",
                                 "description": "Message to send to the VAC"
                             },
-                            "headless": {
-                                "type": "boolean",
-                                "description": "Whether to run in headless mode",
-                                "default": True
-                            }
                         },
                         "required": ["vac_name", "message"]
                     }
                 ),
                 Tool(
+                    name="list_configs",
+                    description="List Sunholo configurations2",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "kind": {
+                                "type": "string",
+                                "description": "Filter configurations by kind e.g. vacConfig"
+                            },
+                            "vac": {
+                                "type": "string", 
+                                "description": "Filter configurations by VAC name"
+                            },
+                            "validate": {
+                                "type": "boolean",
+                                "description": "Validate the configuration files"
+                            }
+                        }
+                    }
+                ),
+                Tool(
                     name="embed_content",
-                    description="Embed content in a VAC's vector store",
+                    description="Embed content in a VAC's vector store2",
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -142,15 +171,13 @@ class SunholoMCPServer:
 
                 vac_name = arguments.get("vac_name")
                 message = arguments.get("message")
-                headless = arguments.get("headless", True)
 
                 if not vac_name or not message:
                     raise ValueError("Missing required arguments")
 
                 try:
                     cmd = ["sunholo", "vac", "chat", vac_name, message]
-                    if headless:
-                        cmd.append("--headless")
+                    cmd.append("--headless")
 
                     result = subprocess.run(
                         cmd,
@@ -207,6 +234,25 @@ class SunholoMCPServer:
                             text=f"Error embedding content: {e.stderr}"
                         )
                     ]
+            elif name == "list_configs":
+
+                # Build command
+                cmd = ["sunholo", "list-configs"]
+                
+                if arguments.get("kind"):
+                    cmd.extend(["--kind", arguments["kind"]])
+                if arguments.get("vac"):
+                    cmd.extend(["--vac", arguments["vac"]])
+                if arguments.get("validate"):
+                    cmd.append("--validate")
+
+                # Execute sunholo command
+                try:
+                    result = subprocess.run(cmd, capture_output=True, text=True)
+                    return [TextContent(type="text", text=result.stdout)]
+                except subprocess.CalledProcessError as e:
+                    return [TextContent(type="text", text=f"Error: {e.stderr}")]
+
 
             raise ValueError(f"Unknown tool: {name}")
 
@@ -224,10 +270,10 @@ def cli_mcp(args):
     try:
 
         # Create and run the MCP server
-        server = SunholoMCPServer()
+        server = SunholoMCPServer2()
             
-        logger.info("Starting Sunholo MCP server...")
-        console.print("Starting MCP server...")
+        logger.info("Starting Sunholo MCP server3...")
+        console.print("Starting Sunholo MCP server3...")
         asyncio.run(server.run())
 
     except Exception as e:
@@ -236,9 +282,9 @@ def cli_mcp(args):
 
 def setup_mcp_subparser(subparsers):
     """
-    Sets up an argparse subparser for the 'mcp' command.
+    Sets up an argparse subparser for the 'mcp' command 3.
 
-    By default will use configurations within the folder specified by '_CONFIG_FOLDER'
+    By default will use configurations within the folder specified by 'VAC_CONFIG_FOLDER'
 
     Example command:
     ```bash
@@ -246,6 +292,6 @@ def setup_mcp_subparser(subparsers):
     ```
     """
     mcp_parser = subparsers.add_parser('mcp', 
-                                      help='Start an Anthropic MCP server that wraps `sunholo` functionality')
+                                      help='Start an Anthropic MCP server that wraps `sunholo` functionality3')
     
     mcp_parser.set_defaults(func=cli_mcp)
