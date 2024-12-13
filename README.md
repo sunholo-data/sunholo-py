@@ -23,6 +23,12 @@ pip install . --use-feature=in-tree-build
 pytest tests
 ```
 
+## Local dev
+
+```sh
+uv tool install --from "sunholo[cli]" sunholo --with ".[all]"
+```
+
 ## Demos
 
 Using https://github.com/charmbracelet/vhs

@@ -43,6 +43,9 @@ sunholo
 ### Upgrades and installing features
 
 ```bash
+#uninstall
+uv tool uninstall sunholo
+#upgrade
 uv tool upgrade sunholo
 # install tool with Anthropic MCP
 uv tool install --from "sunholo[cli]" sunholo --with "sunholo[anthropic]"

@@ -3,6 +3,7 @@ import asyncio
 from typing import Any, Sequence
 from functools import lru_cache
 import subprocess
+from ..utils.version import sunholo_version
 
 try:
     from mcp.server import Server
@@ -24,12 +25,10 @@ except ImportError:
 from pydantic import AnyUrl
 
 # Configure logging
-import logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger("sunholo-mcp")
+from ..custom_logging import setup_logging
+logger = setup_logging("sunholo-mcp")
 
-
-class SunholoMCPServer2:
+class SunholoMCPServer:
     def __init__(self):
         logger.info("Initializing Sunholo MCP Server")
 
@@ -58,8 +57,8 @@ class SunholoMCPServer2:
             """List available Sunholo resources"""
             return [
                 Resource(
-                    uri="sunholo://vacs/list2",
-                    name="Available Sunholo VACs 2",
+                    uri="sunholo://vacs/list",
+                    name="Available Sunholo VACs",
                     mimeType="application/json",
                     description="List of available Virtual Agent Computers"
                 )
@@ -70,7 +69,7 @@ class SunholoMCPServer2:
             """Read Sunholo resources based on URI"""
             logger.info(f"{uri} available")
             console.print(f"{uri} available")
-            if str(uri) == "sunholo://vacs/list2":
+            if str(uri) == "sunholo://vacs/list":
                 try:
                     # Execute sunholo vac list command
                     result = subprocess.run(
@@ -78,7 +77,6 @@ class SunholoMCPServer2:
                         capture_output=True,
                         text=True
                     )
-                    console.print(f"{result=}")
                     return result.stdout
                 except subprocess.CalledProcessError as e:
                     raise RuntimeError(f"Failed to list VACs: {str(e)}")
@@ -96,7 +94,7 @@ class SunholoMCPServer2:
             return [
                 Tool(
                     name="chat_with_vac",
-                    description="Chat with a specific Sunholo VAC2",
+                    description="Chat with a specific Sunholo VAC",
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -114,7 +112,7 @@ class SunholoMCPServer2:
                 ),
                 Tool(
                     name="list_configs",
-                    description="List Sunholo configurations2",
+                    description="List Sunholo configurations",
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -135,7 +133,7 @@ class SunholoMCPServer2:
                 ),
                 Tool(
                     name="embed_content",
-                    description="Embed content in a VAC's vector store2",
+                    description="Embed content in a VAC's vector store",
                     inputSchema={
                         "type": "object",
                         "properties": {
@@ -269,11 +267,16 @@ def cli_mcp(args):
     """CLI handler for the MCP server command"""
     try:
 
+        if not os.getenv("VAC_CONFIG_FOLDER"):
+            raise ValueError("sunholo configuration folder must be present in config/ or via VAC_CONFIG_FOLDER")
+        
         # Create and run the MCP server
-        server = SunholoMCPServer2()
-            
-        logger.info("Starting Sunholo MCP server3...")
-        console.print("Starting Sunholo MCP server3...")
+        server = SunholoMCPServer()
+        msg = {"message": "Starting Sunholo MCP server..."}
+
+        logger.info(msg)
+        console.print(msg)
+        
         asyncio.run(server.run())
 
     except Exception as e:
@@ -292,6 +295,6 @@ def setup_mcp_subparser(subparsers):
     ```
     """
     mcp_parser = subparsers.add_parser('mcp', 
-                                      help='Start an Anthropic MCP server that wraps `sunholo` functionality3')
+                                      help='Start an Anthropic MCP server that wraps `sunholo` functionality')
     
     mcp_parser.set_defaults(func=cli_mcp)

@@ -16,7 +16,6 @@ from ..terraform import setup_tfvarseditor_subparser
 from ..senses.stream_voice import setup_tts_subparser
 from ..mcp.cli import setup_mcp_subparser
 
-
 from ..utils import ConfigManager
 from ..utils.version import sunholo_version
 
@@ -24,7 +23,7 @@ from ..custom_logging import log
 
 from .sun_rich import console
 import sys
-from rich.panel import Panel
+
 
 def load_default_gcp_config():
     try:
@@ -43,6 +42,7 @@ class CustomHelpAction(argparse.Action):
         super().__init__(option_strings, dest, nargs=nargs, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
+        from rich.panel import Panel
         console.print(
             Panel("Welcome to Sunholo Command Line Interface, your assistant to deploy GenAI Virtual Agent Computers (VACs) to Multivac or your own Cloud.", 
                     title="Sunholo GenAIOps Assistant CLI",
@@ -64,7 +64,7 @@ def main(args=None):
     """
     default_project, default_region = load_default_gcp_config()
 
-    parser = argparse.ArgumentParser(description="sunholo CLI tool for deploying GenAI VACs 3", add_help=False)
+    parser = argparse.ArgumentParser(description=f"sunholo CLI tool for deploying GenAI VACs - [{sunholo_version()}]", add_help=False)
     parser.add_argument('-h', '--help', action=CustomHelpAction, help='Show this help message and exit')
     parser.add_argument('--debug', action='store_true', help='Enable debug output')
     parser.add_argument('--project', default=default_project, help='GCP project to list Cloud Run services from.')
