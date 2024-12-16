@@ -3,7 +3,6 @@ import asyncio
 from typing import Any, Sequence
 from functools import lru_cache
 import subprocess
-from ..utils.version import sunholo_version
 
 try:
     from mcp.server import Server
@@ -68,7 +67,6 @@ class SunholoMCPServer:
         async def read_resource(uri: AnyUrl) -> str:
             """Read Sunholo resources based on URI"""
             logger.info(f"{uri} available")
-            console.print(f"{uri} available")
             if str(uri) == "sunholo://vacs/list":
                 try:
                     # Execute sunholo vac list command
