@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.116.2'
+version = '0.117.0'
 
 setup(
     name='sunholo',
@@ -59,6 +59,7 @@ setup(
             "google-cloud-discoveryengine",
             "google-cloud-texttospeech",
             "google-generativeai>=0.7.1",
+            "google-genai",
             "gunicorn",
             "httpcore",
             "httpx",
@@ -136,9 +137,9 @@ setup(
         'gcp': [
             "anthropic[vertex]",
             "google-api-python-client",
-            "google-cloud-alloydb-connector[pg8000]",
             "google-auth-httplib2",
             "google-auth-oauthlib",
+            "google-cloud-alloydb-connector[pg8000]",
             "google-cloud-aiplatform>=1.58.0",
             "google-cloud-bigquery",
             "google-cloud-build",
@@ -148,12 +149,12 @@ setup(
             "google-cloud-pubsub",
             "google-cloud-discoveryengine",
             "google-cloud-texttospeech",
+            "google-genai",
             "google-generativeai>=0.8.3",
             "langchain-google-genai>=2.0.0",
             "langchain_google_alloydb_pg>=0.2.2",
             "langchain-google-vertexai",
             "pillow",
-
         ],
         'openai': [
             "langchain-openai==0.1.25",
