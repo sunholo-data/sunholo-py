@@ -1,4 +1,5 @@
-from typing import Optional, List, Union, Dict, Any, TypedDict
+from typing import Optional, List, Union, Dict, Any, TypedDict, TYPE_CHECKING, Generator
+
 import enum
 import json
 from pydantic import BaseModel
@@ -25,6 +26,13 @@ try:
     import cv2 as cv2
 except ImportError:
     cv2 = None
+
+if TYPE_CHECKING:
+    from google import genai
+    from google.genai import types
+    from google.genai.types import Tool, GenerateContentConfig, EmbedContentConfig
+else:
+    genai = None
 
 class GoogleAIConfig(BaseModel):
     """Configuration class for GoogleAI client initialization.
@@ -63,7 +71,7 @@ class GoogleAI:
         
         self.default_model = "gemini-2.0-flash-exp"
     
-    def google_search_tool(self) -> types.Tool:
+    def google_search_tool(self) -> "types.Tool":
         from google.genai.types import Tool, GoogleSearch
         return Tool(
             google_search = GoogleSearch()
@@ -78,7 +86,7 @@ class GoogleAI:
         top_k: int = 20,
         stop_sequences: Optional[List[str]] = None,
         system_prompt: Optional[str] = None,
-        tools: Optional[List[types.Tool]] = None
+        tools: Optional[List["types.Tool"]] = None
     ) -> str:
         """Generate text using the specified model.
         
@@ -290,7 +298,7 @@ class GoogleAI:
         prompt: str,
         model: Optional[str] = None,
         **kwargs
-    ):
+    ) -> "Generator[str, None, None]":
         """Stream text generation responses.
         
         Args:
