@@ -77,6 +77,7 @@ setup(
             "langfuse",
             "mcp",
             "numpy",
+            "opencv-python",
             "pg8000",
             "pgvector",
             "pillow",
@@ -192,6 +193,9 @@ setup(
             'numpy',
             'sounddevice',
         ],
+        'video':[
+            'opencv-python'
+        ]
         
 
     },

@@ -1,11 +1,30 @@
 from typing import Optional, List, Union, Dict, Any, TypedDict
 import enum
+import json
 from pydantic import BaseModel
+import time
 try:
     from google import genai
     from google.genai import types
 except ImportError:
     genai = None
+
+try:
+    import sounddevice as sd
+except ImportError:
+    sd = None
+except OSError:
+    sd = None
+
+try:
+    import numpy as np
+except ImportError:
+    np = None
+
+try:
+    import cv2 as cv2
+except ImportError:
+    cv2 = None
 
 class GoogleAIConfig(BaseModel):
     """Configuration class for GoogleAI client initialization.
@@ -113,7 +132,132 @@ class GoogleAI:
             config=types.GenerateContentConfig(**kwargs)
         )
         return response.text
-    
+        
+    async def _record_audio(
+            self,
+            duration: float = 5.0,
+            sample_rate: int = 16000
+        ) -> bytes:
+        """Internal method to record audio."""
+        if sd is None or np is None:
+            raise ImportError("sounddevice and numpy are required for audio. Install with pip install sunholo[tts]")
+        
+        print(f"Recording for {duration} seconds...")
+        audio_data = sd.rec(
+            int(duration * sample_rate),
+            samplerate=sample_rate,
+            channels=1,
+            dtype=np.int16
+        )
+        sd.wait()
+        print("Recording complete")
+        return audio_data.tobytes()
+
+    async def _record_video(
+            self,
+            duration: float = 5.0
+        ) -> List[bytes]:
+        """Internal method to record video frames."""
+        import cv2
+        
+        frames = []
+        screen = cv2.VideoCapture(0)
+        start_time = time.time()
+        
+        try:
+            while time.time() - start_time < duration:
+                ret, frame = screen.read()
+                if ret:
+                    _, buffer = cv2.imencode('.jpg', frame)
+                    frames.append(buffer.tobytes())
+                    time.sleep(0.1)  # Limit frame rate
+        finally:
+            screen.release()
+        
+        return frames
+
+    async def _process_responses(self, session) -> List[str]:
+        """Internal method to process session responses."""
+        responses = []
+        i = 1
+        async for response in session.receive():
+            model_turn = response.server_content.model_turn
+            if model_turn is None:
+                continue
+            for part in model_turn.parts:
+                text = part.text
+                print(f"[{i}] {text}")
+                i += 1
+                responses.append(text)
+        return responses
+
+    async def live_async(
+            self,
+            prompt: Optional[Union[str, List[Union[str, bytes]]]] = None,
+            input_type: str = "text",  # "text", "audio", or "video"
+            duration: Optional[float] = None,  # For audio/video recording duration
+            model: Optional[str] = None,
+            **kwargs
+        ) -> str:
+        """Live Multimodal API with support for text, audio, and video inputs.
+        
+        Args:
+            input_type: Type of input ("text", "audio", or "video")
+            prompt: Text prompt or list of text/binary chunks
+            duration: Recording duration for audio/video in seconds
+            model: Optional model name
+            **kwargs: Additional configuration parameters
+        
+        Returns:
+            str: Generated response text
+        """
+        client = genai.Client(
+            http_options={
+                'api_version': 'v1alpha',
+                'url': 'generativelanguage.googleapis.com',
+            }
+        )
+        
+        config = {
+            "generation_config": {"response_modalities": ["TEXT"]}
+        }
+
+        async with client.aio.live.connect(model=self.default_model, config=config) as session:
+            # Handle different input types
+            if input_type == "text":
+                message = {
+                    "client_content": {
+                        "turns": [
+                            {
+                                "parts": [{"text": prompt}],
+                                "role": "user"
+                            }
+                        ],
+                        "turn_complete": True
+                    }
+                }
+                await session.send(json.dumps(message), end_of_turn=True)
+            
+            elif input_type == "audio":
+                audio_data = await self._record_audio(duration=duration or 5.0)
+                message = {"media_chunks": [audio_data]}
+                await session.send(message)
+                await session.send(json.dumps({"turn_complete": True}), end_of_turn=True)
+            
+            elif input_type == "video":
+                frames = await self._record_video(duration=duration or 5.0)
+                for frame in frames:
+                    message = {"media_chunks": [frame]}
+                    await session.send(message)
+                await session.send(json.dumps({"turn_complete": True}), end_of_turn=True)
+            
+            else:
+                raise ValueError(f"Unsupported input_type: {input_type}")
+
+            # Process responses
+            responses = await self._process_responses(session)
+            return "OK"
+        
     def gs_uri(self, uri, mime_type=None):
       
         if mime_type is None:
