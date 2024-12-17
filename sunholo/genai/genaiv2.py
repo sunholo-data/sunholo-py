@@ -44,6 +44,11 @@ class GoogleAI:
         
         self.default_model = "gemini-2.0-flash-exp"
     
+    def google_search_tool(self) -> types.Tool:
+        from google.genai.types import Tool, GoogleSearch
+        return Tool(
+            google_search = GoogleSearch()
+        )
     def generate_text(
         self,
         prompt: str,
@@ -53,7 +58,8 @@ class GoogleAI:
         top_p: float = 0.95,
         top_k: int = 20,
         stop_sequences: Optional[List[str]] = None,
-        system_prompt: Optional[str] = None
+        system_prompt: Optional[str] = None,
+        tools: Optional[List[types.Tool]] = None
     ) -> str:
         """Generate text using the specified model.
         
@@ -66,6 +72,7 @@ class GoogleAI:
             top_k (int): Top-k sampling parameter
             stop_sequences (Optional[List[str]]): Sequences that stop generation
             system_prompt (Optional[str]): System-level instruction
+            tools: list of python functions or Tool objects
             
         Returns:
             str: Generated text response
@@ -78,6 +85,7 @@ class GoogleAI:
             top_p=top_p,
             top_k=top_k,
             stop_sequences=stop_sequences or [],
+            tools=tools or []
         )
         
         if system_prompt:
@@ -105,6 +113,33 @@ class GoogleAI:
             config=types.GenerateContentConfig(**kwargs)
         )
         return response.text
+    
+    def gs_uri(self, uri, mime_type=None):
+      
+        if mime_type is None:
+            from ..utils.mime import guess_mime_type
+            mime_type = guess_mime_type(uri)
+
+        return types.Part.from_uri(
+            file_uri=uri,
+            mime_type=mime_type,
+        )
+
+    def local_file(self, filename, mime_type=None):
+        if mime_type is None:
+            from ..utils.mime import guess_mime_type
+            mime_type = guess_mime_type(filename)
+
+        with open(filename, 'rb') as f:
+            image_bytes = f.read()
+        
+        if image_bytes and mime_type:
+            return types.Part.from_bytes(
+                data=image_bytes,
+                mime_type=mime_type,
+            )
+        else:
+            raise ValueError(f"Could not read bytes or mime_type for {filename=} - {mime_type=}")
 
     def stream_text(
         self,
@@ -203,13 +238,13 @@ class GoogleAI:
                             'type': 'STRING',
                             'enum': [e.value for e in field_type]
                         }
-                    elif field_type == str:
+                    elif field_type is str:
                         schema_dict['properties'][field_name] = {'type': 'STRING'}
-                    elif field_type == int:
+                    elif field_type is int:
                         schema_dict['properties'][field_name] = {'type': 'INTEGER'}
-                    elif field_type == float:
+                    elif field_type is float:
                         schema_dict['properties'][field_name] = {'type': 'NUMBER'}
-                    elif field_type == bool:
+                    elif field_type is bool:
                         schema_dict['properties'][field_name] = {'type': 'BOOLEAN'}
                     else:
                         schema_dict['properties'][field_name] = {'type': 'STRING'}
@@ -241,13 +276,13 @@ class GoogleAI:
                                 'type': 'STRING',
                                 'enum': [e.value for e in field_type]
                             }
-                        elif field_type == str:
+                        elif field_type is str:
                             schema_dict['properties'][field_name] = {'type': 'STRING'}
-                        elif field_type == int:
+                        elif field_type is int:
                             schema_dict['properties'][field_name] = {'type': 'INTEGER'}
-                        elif field_type == float:
+                        elif field_type is float:
                             schema_dict['properties'][field_name] = {'type': 'NUMBER'}
-                        elif field_type == bool:
+                        elif field_type is bool:
                             schema_dict['properties'][field_name] = {'type': 'BOOLEAN'}
                         else:
                             schema_dict['properties'][field_name] = {'type': 'STRING'}
@@ -277,28 +312,28 @@ class GoogleAI:
                             'type': 'STRING',
                             'enum': [e.value for e in field_info.annotation]
                         }
-                    elif field_info.annotation == str:
+                    elif field_info.annotation is str:
                         field_type = {'type': 'STRING'}
-                    elif field_info.annotation == int:
+                    elif field_info.annotation is int:
                         field_type = {'type': 'INTEGER'}
-                    elif field_info.annotation == float:
+                    elif field_info.annotation is float:
                         field_type = {'type': 'NUMBER'}
-                    elif field_info.annotation == bool:
+                    elif field_info.annotation is bool:
                         field_type = {'type': 'BOOLEAN'}
-                    elif field_info.annotation == list or (
+                    elif field_info.annotation is list or (
                         hasattr(field_info.annotation, '__origin__') and 
-                        field_info.annotation.__origin__ == list
+                        field_info.annotation.__origin__ is list
                     ):
                         # Handle typed lists
                         if hasattr(field_info.annotation, '__args__'):
                             inner_type = field_info.annotation.__args__[0]
-                            if inner_type == str:
+                            if inner_type is str:
                                 item_type = 'STRING'
-                            elif inner_type == int:
+                            elif inner_type is int:
                                 item_type = 'INTEGER'
-                            elif inner_type == float:
+                            elif inner_type is float:
                                 item_type = 'NUMBER'
-                            elif inner_type == bool:
+                            elif inner_type is bool:
                                 item_type = 'BOOLEAN'
                             else:
                                 item_type = 'STRING'
@@ -353,62 +388,3 @@ class GoogleAI:
         )
         return response.total_tokens
 
-# Example usage:
-if __name__ == "__main__":
-    import os
-    if not os.getenv("GOOGLE_API_KEY"):
-        raise ValueError("Need to set GOOGLE_API_KEY environment variable")
-    
-    # Initialize with Google AI API
-    config = GoogleAIConfig(
-        api_key=os.getenv("GOOGLE_API_KEY"),
-    )
-    ai = GoogleAI(config)
-    
-    # Basic text generation
-    response = ai.generate_text(
-        "Write a short poem about AI",
-        temperature=0.8
-    )
-    print(response)
-    
-    # Structured output example
-    from pydantic import BaseModel
-    
-    class MovieReview(BaseModel):
-        title: str
-        rating: float
-        tags: List[str]
-        summary: str
-        
-    review = ai.structured_output(
-        "Review the movie 'Inception'",
-        MovieReview
-    )
-    print(review)
-    
-    # Streaming example
-    #for chunk in ai.stream_text("Tell me a story"):
-    #    print(chunk, end="")
-
-    import enum
-    from typing_extensions import TypedDict
-
-    class Grade(enum.Enum):
-        A_PLUS = "a+"
-        A = "a"
-        B = "b"
-        C = "c"
-        D = "d"
-        F = "f"
-
-    class Recipe(TypedDict):
-        recipe_name: str
-        grade: Grade
-    
-    enum_review = ai.structured_output(
-        "List about 10 cookie recipes, grade them based on popularity",
-        Recipe, 
-        is_list=True
-    )
-    print(enum_review)
