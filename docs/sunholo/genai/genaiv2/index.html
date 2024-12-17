@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script>window.dataLayer=window.dataLayer||[]</script>
 <script>!function(e,t,a,n){e[n]=e[n]||[],e[n].push({"gtm.start":(new Date).getTime(),event:"gtm.js"});var g=t.getElementsByTagName(a)[0],m=t.createElement(a);m.async=!0,m.src="https://www.googletagmanager.com/gtm.js?id=GTM-WLQZQF2P",g.parentNode.insertBefore(m,g)}(window,document,"script","dataLayer")</script><link rel="stylesheet" href="/assets/css/styles.73fd73cb.css">
-<script src="/assets/js/runtime~main.07dc56f2.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.a92ac593.js" defer="defer"></script>
 <script src="/assets/js/main.0a95ac7d.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -31,7 +31,26 @@ See <a href="https://ai.google.dev/gemini-api/docs/models/gemini-v2" target="_bl
 <p>Args:
 config (GoogleAIConfig): Configuration for client initialization</p>
 <ul>
-<li>count_tokens(self, text: str, model: Optional[str] = None) -&gt; int<!-- -->
+<li>
+<p>_process_responses(self, session) -&gt; List[str]</p>
+<ul>
+<li>Internal method to process session responses.</li>
+</ul>
+</li>
+<li>
+<p>_record_audio(self, duration: float = 5.0, sample_rate: int = 16000) -&gt; bytes</p>
+<ul>
+<li>Internal method to record audio.</li>
+</ul>
+</li>
+<li>
+<p>_record_video(self, duration: float = 5.0) -&gt; List[bytes]</p>
+<ul>
+<li>Internal method to record video frames.</li>
+</ul>
+</li>
+<li>
+<p>count_tokens(self, text: str, model: Optional[str] = None) -&gt; int</p>
 <ul>
 <li>Count the number of tokens in the text.</li>
 </ul>
@@ -94,6 +113,22 @@ Union[List[float], List[List[float]]]: Embeddings</p>
 <li>No docstring available.</li>
 </ul>
 </li>
+<li>
+<p>live_async(self, prompt: Union[str, List[Union[str, bytes]], NoneType] = None, input_type: str = &#x27;text&#x27;, duration: Optional[float] = None, model: Optional[str] = None, **kwargs) -&gt; str</p>
+<ul>
+<li>Live Multimodal API with support for text, audio, and video inputs.</li>
+</ul>
+</li>
+</ul>
+<p>Args:
+input_type: Type of input (&quot;text&quot;, &quot;audio&quot;, or &quot;video&quot;)
+prompt: Text prompt or list of text/binary chunks
+duration: Recording duration for audio/video in seconds
+model: Optional model name
+**kwargs: Additional configuration parameters</p>
+<p>Returns:
+str: Generated response text</p>
+<ul>
 <li>
 <p>local_file(self, filename, mime_type=None)</p>
 <ul>
