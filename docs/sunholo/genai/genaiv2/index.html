@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script>window.dataLayer=window.dataLayer||[]</script>
 <script>!function(e,t,a,n){e[n]=e[n]||[],e[n].push({"gtm.start":(new Date).getTime(),event:"gtm.js"});var g=t.getElementsByTagName(a)[0],m=t.createElement(a);m.async=!0,m.src="https://www.googletagmanager.com/gtm.js?id=GTM-WLQZQF2P",g.parentNode.insertBefore(m,g)}(window,document,"script","dataLayer")</script><link rel="stylesheet" href="/assets/css/styles.73fd73cb.css">
-<script src="/assets/js/runtime~main.a92ac593.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.ecc16246.js" defer="defer"></script>
 <script src="/assets/js/main.0a95ac7d.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -62,7 +62,7 @@ model (Optional[str]): Model to use for tokenization</p>
 <p>Returns:
 int: Number of tokens</p>
 <ul>
-<li>generate_text(self, prompt: str, model: Optional[str] = None, temperature: float = 0.7, max_output_tokens: int = 1024, top_p: float = 0.95, top_k: int = 20, stop_sequences: Optional[List[str]] = None, system_prompt: Optional[str] = None, tools: Optional[List[google.genai.types.Tool]] = None) -&gt; str<!-- -->
+<li>generate_text(self, prompt: str, model: Optional[str] = None, temperature: float = 0.7, max_output_tokens: int = 1024, top_p: float = 0.95, top_k: int = 20, stop_sequences: Optional[List[str]] = None, system_prompt: Optional[str] = None, tools: Optional[List[ForwardRef(&#x27;types.Tool&#x27;)]] = None) -&gt; str<!-- -->
 <ul>
 <li>Generate text using the specified model.</li>
 </ul>
@@ -102,7 +102,7 @@ output_dim (Optional[int]): Desired embedding dimension</p>
 Union[List[float], List[List[float]]]: Embeddings</p>
 <ul>
 <li>
-<p>google_search_tool(self) -&gt; google.genai.types.Tool</p>
+<p>google_search_tool(self) -&gt; &#x27;types.Tool&#x27;</p>
 <ul>
 <li>No docstring available.</li>
 </ul>
@@ -136,7 +136,7 @@ str: Generated response text</p>
 </ul>
 </li>
 <li>
-<p>stream_text(self, prompt: str, model: Optional[str] = None, **kwargs)</p>
+<p>stream_text(self, prompt: str, model: Optional[str] = None, **kwargs) -&gt; &#x27;Generator[str, None, None]&#x27;</p>
 <ul>
 <li>Stream text generation responses.</li>
 </ul>
