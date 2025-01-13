@@ -200,7 +200,7 @@ def write_vac_config(project_dir: str, service_name: str):
 
     # Write the YAML configuration to the file
     with open(vac_config_path, 'w') as file:
-        yaml.dump(vac_config_content, file, default_flow_style=False)
+        yaml.dump(vac_config_content, file)
 
     print(f"{vac_config_path} written successfully with service name '{service_name}'.")
 
