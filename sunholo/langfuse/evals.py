@@ -2,7 +2,7 @@ import os
 import json
 
 from ..pubsub import decode_pubsub_message
-from langfuse import Langfuse
+
 import traceback
 
 
@@ -55,6 +55,7 @@ def direct_langfuse_evals(data, eval_funcs: list=[eval_length]):
 
 
 def do_evals(trace_id, eval_funcs: list=[eval_length], **kwargs) -> dict:
+    from langfuse import Langfuse
     # Initialize Langfuse with environment variables
     langfuse = Langfuse(
         secret_key=os.environ["LANGFUSE_SECRET_KEY"],
