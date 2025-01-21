@@ -22,7 +22,8 @@ def has_text_extension(file_path):
         '.txt', '.md', '.py', '.json', '.xml', '.csv', '.html', '.htm',
         '.css', '.js', '.java', '.c', '.cpp', '.h', '.hpp', '.r', '.sh',
         '.bat', '.ini', '.yaml', '.yml', '.toml', '.pl', '.rb', '.go', 
-        '.ts', '.tsx', '.rs', '.swift', '.kt', '.kts', '.scala', '.sql'
+        '.ts', '.tsx', '.rs', '.swift', '.kt', '.kts', '.scala', '.sql',
+        '.tf', '.tfvars',
     }
     # Get the file extension and check if it's in the set
     _, ext = os.path.splitext(file_path)
@@ -141,6 +142,8 @@ def merge_text_files(source_folder, output_file, patterns):
                             outfile.write(f"\n--- End of {file_path} ---\n\n")
                     except (IOError, UnicodeDecodeError):
                         print(f"Skipping file (cannot read as text): {file_path}")
+                else:
+                    print(f"Skipping file (not a recognised text file extension): {file_path}")
         outfile.write("\n--- File Tree ---\n")
         outfile.write("\n".join(file_tree))
     
