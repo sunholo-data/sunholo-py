@@ -43,7 +43,7 @@ def load_gitignore_patterns(gitignore_path):
     """
     with open(gitignore_path, 'r') as f:
         patterns = [line.strip() for line in f if line.strip() and not line.startswith('#')]
-    patterns.extend(["*.git/*", "*.terraform/*"])
+    patterns.extend([".git/", ".terraform/"]) # More precise pattern matching
     return patterns
 
 def should_ignore(file_path, patterns):
@@ -62,11 +62,18 @@ def should_ignore(file_path, patterns):
         True
     """
     rel_path = os.path.relpath(file_path)
-
+    
     for pattern in patterns:
-        if fnmatch(rel_path, pattern) or fnmatch(os.path.basename(rel_path), pattern):
+        # Handle directory patterns ending with /
+        if pattern.endswith('/'):
+            if any(part == pattern[:-1] for part in rel_path.split(os.sep)):
+                print(f"Ignoring {rel_path}")
+                return True
+        # Handle file patterns
+        elif fnmatch(rel_path, pattern):
+            print(f"Ignoring {rel_path}")
             return True
-
+    
     return False
 
 
