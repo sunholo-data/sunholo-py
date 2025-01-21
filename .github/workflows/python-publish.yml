@@ -44,7 +44,7 @@ jobs:
         deactivate
     - name: Run unit tests
       run: |
-        pip install .  # Install the current package
+        pip install .[test]  # Install the current package
         pytest tests
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29

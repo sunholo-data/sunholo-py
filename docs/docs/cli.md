@@ -30,6 +30,12 @@ To install it within `uv`s cache, use the following command:
 uv tool install --from "sunholo[cli]" sunholo 
 ```
 
+If installing locally for development, clone this repo then install at the root:
+
+```bash
+uv tool install --from ".[cli]" sunholo --upgrade
+```
+
 You can then run it like this:
 
 ```bash

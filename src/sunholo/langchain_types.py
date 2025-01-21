@@ -1,10 +1,9 @@
-from typing import Any, Dict, Optional, TYPE_CHECKING, Union
 from dataclasses import dataclass, asdict
 import json
+from typing import Dict, Any
 
-if TYPE_CHECKING:
-    from langchain.schema import Document as LangchainDocument
-
+# Note: Moved TYPE_CHECKING to only be used where needed
+from typing import TYPE_CHECKING
 
 @dataclass
 class Document:
@@ -36,7 +35,8 @@ class Document:
         """Convert to JSON string - for compatibility with LangChain's Document."""
         return json.dumps(self.to_dict())
 
-def convert_to_langchain_doc(doc: Document) -> Union[Any, "LangchainDocument"]:
+# Move the type checking import and annotation inside the function
+def convert_to_langchain_doc(doc: Document) -> Any:  # Remove Union and LangchainDocument from return type
     """Convert our Document to a LangChain Document.
     
     Returns Any when LangChain isn't available to avoid type errors.

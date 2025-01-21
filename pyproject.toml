@@ -1,0 +1,216 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sunholo"
+version = "0.118.1"
+description = "Large Language Model DevOps - a package to help deploy LLMs to the Cloud."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache License, Version 2.0" }
+authors = [
+    { name = "Holosun ApS", email = "multivac@sunholo.com" },
+]
+keywords = ["llms", "devops", "google_cloud_platform"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "aiohttp",
+    "google-auth",
+    "pydantic",
+    "requests",
+    "ruamel.yaml",
+    "tenacity"
+]
+
+[project.urls]
+Homepage = "https://github.com/sunholo-data/sunholo-py"
+Download = "https://github.com/sunholo-data/sunholo-py/archive/refs/tags/v0.118.0.tar.gz"
+
+[project.scripts]
+sunholo = "sunholo.cli.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["*"]
+
+[tool.setuptools.package-data]
+"sunholo.database" = ["sql/sb/*.sql"]
+"sunholo.lookup" = ["*.yaml"]
+"sunholo.templates" = ["*.*"]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+    # any other test dependencies
+]
+all = [
+    "aiohttp",
+    "anthropic[vertex]",
+    "asyncpg",
+    "azure-identity",
+    "azure-storage-blob",
+    "fastapi",
+    "flask",
+    "google-auth",
+    "google-auth-httplib2",
+    "google-auth-oauthlib",
+    "google-cloud-aiplatform>=1.58.0",
+    "google-api-python-client",
+    "google-cloud-alloydb-connector[pg8000]",
+    "google-cloud-bigquery",
+    "google-cloud-build",
+    "google-cloud-service-control",
+    "google-cloud-logging",
+    "google-cloud-storage",
+    "google-cloud-pubsub",
+    "google-cloud-discoveryengine",
+    "google-cloud-texttospeech",
+    "google-generativeai>=0.7.1",
+    "google-genai",
+    "gunicorn",
+    "httpcore",
+    "httpx",
+    "jsonschema",
+    "lancedb",
+    "langchain>=0.2.16",
+    "langchain-experimental>=0.0.61",
+    "langchain-community>=0.2.11",
+    "langchain-openai==0.1.25",
+    "langchain-google-genai==1.0.10",
+    "langchain_google_alloydb_pg",
+    "langchain-anthropic==0.1.23",
+    "langchain-google-vertexai",
+    "langchain-unstructured",
+    "langfuse",
+    "mcp",
+    "numpy",
+    "opencv-python",
+    "pg8000",
+    "pgvector",
+    "pillow",
+    "playwright",
+    "psutil",
+    "psycopg2-binary",
+    "pydantic",
+    "pypdf",
+    "python-hcl2",
+    "python-socketio",
+    "pytesseract",
+    "requests",
+    "rich",
+    "sounddevice",
+    "supabase",
+    "tabulate",
+    "tantivy",
+    "tenacity",
+    "tiktoken",
+    "unstructured[local-inference,all-docs]",
+    "xlwings"
+]
+langchain = [
+    "langchain",
+    "langchain_experimental",
+    "langchain-community",
+    "langsmith"
+]
+azure = [
+    "azure-identity",
+    "azure-storage-blob"
+]
+cli = [
+    "jsonschema>=4.21.1",
+    "rich"
+]
+database = [
+    "asyncpg",
+    "supabase",
+    "sqlalchemy",
+    "pg8000",
+    "pgvector",
+    "psycopg2-binary",
+    "lancedb",
+    "tantivy"
+]
+pipeline = [
+    "GitPython",
+    "lark",
+    "langchain>=0.2.16",
+    "langchain-unstructured",
+    "psutil",
+    "pypdf",
+    "pytesseract",
+    "tabulate",
+    "unstructured[local-inference,all-docs]"
+]
+gcp = [
+    "anthropic[vertex]",
+    "google-api-python-client",
+    "google-auth-httplib2",
+    "google-auth-oauthlib",
+    "google-cloud-alloydb-connector[pg8000]",
+    "google-cloud-aiplatform>=1.58.0",
+    "google-cloud-bigquery",
+    "google-cloud-build",
+    "google-cloud-service-control",
+    "google-cloud-storage",
+    "google-cloud-logging",
+    "google-cloud-pubsub",
+    "google-cloud-discoveryengine",
+    "google-cloud-texttospeech",
+    "google-genai",
+    "google-generativeai>=0.8.3",
+    "langchain-google-genai>=2.0.0",
+    "langchain_google_alloydb_pg>=0.2.2",
+    "langchain-google-vertexai",
+    "pillow"
+]
+openai = [
+    "langchain-openai==0.1.25",
+    "tiktoken"
+]
+anthropic = [
+    "langchain-anthropic>=0.1.23",
+    "mcp"
+]
+tools = [
+    "openapi-spec-validator",
+    "playwright"
+]
+http = [
+    "fastapi",
+    "flask",
+    "gunicorn",
+    "httpcore",
+    "httpx",
+    "langfuse",
+    "python-socketio",
+    "requests",
+    "tenacity"
+]
+excel = [
+    "xlwings",
+    "requests",
+    "rich"
+]
+iac = ["python-hcl2"]
+tts = [
+    "google-cloud-texttospeech",
+    "numpy",
+    "sounddevice"
+]
+video = ["opencv-python"]

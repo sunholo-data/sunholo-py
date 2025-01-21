@@ -2,7 +2,7 @@ from ..custom_logging import log
 from ..pubsub import PubSubManager
 from ..utils.parsers import contains_url, extract_urls
 from ..utils.gcp_project import get_gcp_project
-from ..types import Document
+from ..langchain_types import Document
     
 def publish_if_urls(the_content, vector_name):
     """

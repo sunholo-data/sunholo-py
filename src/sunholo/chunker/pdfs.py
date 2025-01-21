@@ -14,7 +14,7 @@
 import os
 import pathlib
 from ..custom_logging import log
-from ..types import Document
+from ..langchain_types import Document
 
 def split_pdf_to_pages(pdf_path, temp_dir):
 
