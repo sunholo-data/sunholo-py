@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sunholo"
-version = "0.118.1"
+version = "0.118.2"
 description = "Large Language Model DevOps - a package to help deploy LLMs to the Cloud."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -90,10 +90,10 @@ all = [
     "langchain>=0.2.16",
     "langchain-experimental>=0.0.61",
     "langchain-community>=0.2.11",
-    "langchain-openai==0.1.25",
-    "langchain-google-genai==1.0.10",
+    "langchain-openai>=0.3.2",
+    "langchain-google-genai>=2.0.9",
     "langchain_google_alloydb_pg",
-    "langchain-anthropic==0.1.23",
+    "langchain-anthropic>=0.1.23",
     "langchain-google-vertexai",
     "langchain-unstructured",
     "langfuse",
@@ -180,7 +180,7 @@ gcp = [
     "pillow"
 ]
 openai = [
-    "langchain-openai==0.1.25",
+    "langchain-openai>=0.3.2",
     "tiktoken"
 ]
 anthropic = [
