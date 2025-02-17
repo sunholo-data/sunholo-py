@@ -232,7 +232,7 @@ async def download_gcs_upload_genai(img_url,
                 else:
                     client = genaiv2.Client()
                     downloaded_content = await asyncio.to_thread(
-                        partial(client.files.upload, name=name, config=dict(mime_type=mime_type, display_name=display_name)), 
+                        partial(client.files.upload, config=dict(mime_type=mime_type, display_name=display_name)), 
                         sanitized_file
                         )
                     return {"role": "user", "parts": [{"file_data": downloaded_content}, 
