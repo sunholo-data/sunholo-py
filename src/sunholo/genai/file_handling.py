@@ -10,8 +10,10 @@ import os
 import traceback
 try:
     import google.generativeai as genai
+    from google import genai as genaiv2
 except ImportError:
     genai = None
+    genaiv2 = None
 
 DOCUMENT_MIMES = [
     'application/pdf',
@@ -85,7 +87,7 @@ def sanitize_file(filename):
     # Reattach the original extension
     return sanitized_name[:40]
 
-async def construct_file_content(gs_list, bucket:str):
+async def construct_file_content(gs_list, bucket:str, genai_lib=False):
     """
     Args:
     - gs_list: a list of dicts representing files in a bucket
@@ -93,6 +95,7 @@ async def construct_file_content(gs_list, bucket:str):
        - storagePath: The path in the bucket
        - name: The name of the file
     - bucket: The bucket the files are in
+    - genai: whether its using the genai SDK
 
     """
     
@@ -124,7 +127,12 @@ async def construct_file_content(gs_list, bucket:str):
         display_name = file_info['name']
         log.info(f"Processing {name=} {display_name=}")
         try:
-            myfile = genai.get_file(name)
+            if not genai_lib:
+                myfile = genai.get_file(name)
+            else:
+                client = genaiv2.Client()
+                myfile = client.files.get(name)
+
             content.append(
                 {"role": "user", "parts": [
                     {"file_data": myfile}, 
@@ -132,7 +140,6 @@ async def construct_file_content(gs_list, bucket:str):
                     ]
                 })
             log.info(f"Found existing genai.get_file {name=}")
-            
         except Exception as e:
             log.info(f"Not found checking genai.get_file: '{name}' {str(e)}")
             tasks.append(
@@ -140,7 +147,8 @@ async def construct_file_content(gs_list, bucket:str):
                                           mime_type=mime_type, 
                                           name=name, 
                                           display_url=display_url, 
-                                          display_name=display_name)
+                                          display_name=display_name,
+                                          genai_lib=genai_lib)
                                           )
 
     # Run all tasks in parallel
@@ -164,7 +172,7 @@ async def download_gcs_upload_genai(img_url,
                                     name=None, 
                                     display_url=None, 
                                     display_name=None, 
-                                    retries=3, delay=2):
+                                    retries=3, delay=2, genai_lib=False):
     import aiofiles
     from google.generativeai.types import file_types
     """
@@ -213,13 +221,23 @@ async def download_gcs_upload_genai(img_url,
 
             # Upload the file and get its content reference
             try:
-                downloaded_content: file_types.File = await asyncio.to_thread(
-                    partial(genai.upload_file, name=name, mime_type=mime_type, display_name=display_name), 
-                    sanitized_file
-                    )
-                return {"role": "user", "parts": [{"file_data": downloaded_content}, 
-                                                  {"text": f"You have been given the ability to read and work with filename '{display_name=}' with {mime_type=} {display_url=}"}
-                                                  ]}
+                if not genai_lib:
+                    downloaded_content: file_types.File = await asyncio.to_thread(
+                        partial(genai.upload_file, name=name, mime_type=mime_type, display_name=display_name), 
+                        sanitized_file
+                        )
+                    return {"role": "user", "parts": [{"file_data": downloaded_content}, 
+                                                    {"text": f"You have been given the ability to read and work with filename '{display_name=}' with {mime_type=} {display_url=}"}
+                                                    ]}
+                else:
+                    client = genaiv2.Client()
+                    downloaded_content = await asyncio.to_thread(
+                        partial(client.files.upload, name=name, config=dict(mime_type=mime_type, display_name=display_name)), 
+                        sanitized_file
+                        )
+                    return {"role": "user", "parts": [{"file_data": downloaded_content}, 
+                                                    {"text": f"You have been given the ability to read and work with filename '{display_name=}' with {mime_type=} {display_url=}"}
+                                                    ]}   
             except Exception as err:
                 msg = f"Could not upload {sanitized_file} to genai.upload_file: {str(err)} {traceback.format_exc()} {display_url=}"
                 log.error(msg)
