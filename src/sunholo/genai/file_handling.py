@@ -220,8 +220,8 @@ async def download_gcs_upload_genai(img_url,
                 await f.write(file_bytes)
 
             # Upload the file and get its content reference
-            try:
-                if not genai_lib:
+            if not genai_lib:
+                try:
                     downloaded_content: file_types.File = await asyncio.to_thread(
                         partial(genai.upload_file, name=name, mime_type=mime_type, display_name=display_name), 
                         sanitized_file
@@ -229,18 +229,25 @@ async def download_gcs_upload_genai(img_url,
                     return {"role": "user", "parts": [{"file_data": downloaded_content}, 
                                                     {"text": f"You have been given the ability to read and work with filename '{display_name=}' with {mime_type=} {display_url=}"}
                                                     ]}
-                else:
+                except Exception as err:
+                    msg = f"Could not upload {sanitized_file} to genai.upload_file: {str(err)} {traceback.format_exc()} {display_url=}"
+                    log.error(msg)
+                    return {"role": "user", "parts": [{"text": msg}]}
+            else:
+                try:
                     client = genaiv2.Client()
                     downloaded_content = await asyncio.to_thread(
-                        client.files.upload(file=sanitized_file, config=dict(mime_type=mime_type, display_name=display_name))
+                        client.files.upload, 
+                        file=sanitized_file,  
+                        config=dict(mime_type=mime_type, display_name=display_name)
                     )
                     return {"role": "user", "parts": [{"file_data": downloaded_content}, 
                                                     {"text": f"You have been given the ability to read and work with filename '{display_name=}' with {mime_type=} {display_url=}"}
                                                     ]}   
-            except Exception as err:
-                msg = f"Could not upload {sanitized_file} to genai.upload_file: {str(err)} {traceback.format_exc()} {display_url=}"
-                log.error(msg)
-                return {"role": "user", "parts": [{"text": msg}]}
+                except Exception as err:
+                    msg = f"Could not upload {sanitized_file} to genaiv2.client.files.upload: {str(err)} {traceback.format_exc()} {display_url=}"
+                    log.error(msg)
+                    return {"role": "user", "parts": [{"text": msg}]}
         
         except Exception as err:
             log.error(f"Error processing file {img_url} {mime_type=} on attempt {attempt + 1}/{retries}: {str(err)}")
