@@ -132,7 +132,7 @@ async def construct_file_content(gs_list, bucket:str, genai_lib=False):
                 myfile = genai.get_file(name)
             else:
                 client = genaiv2.Client()
-                myfile = client.files.get(file=name)
+                myfile = client.files.get(name=name)
             content.append(myfile)
             content.append(f"You have been given the ability to work with file {display_name=} with {mime_type=} {display_url=}")
             log.info(f"Found existing genai.get_file {name=}")
