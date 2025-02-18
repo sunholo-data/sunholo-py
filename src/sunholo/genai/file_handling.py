@@ -241,9 +241,7 @@ async def download_gcs_upload_genai(img_url,
                         file=sanitized_file,  
                         config=dict(mime_type=mime_type, display_name=display_name)
                     )
-                    return {"role": "user", "parts": [{"file_data": downloaded_content}, 
-                                                    {"text": f"You have been given the ability to read and work with filename '{display_name=}' with {mime_type=} {display_url=}"}
-                                                    ]}   
+                    return downloaded_content 
                 except Exception as err:
                     msg = f"Could not upload {sanitized_file} to genaiv2.client.files.upload: {str(err)} {traceback.format_exc()} {display_url=}"
                     log.error(msg)
