@@ -94,6 +94,7 @@ async def construct_file_content(gs_list, bucket:str, genai_lib=False):
        - contentType: The content type of the file on GCS
        - storagePath: The path in the bucket
        - name: The name of the file
+       - url: The URL of the file that can be used to display the contents
     - bucket: The bucket the files are in
     - genai: whether its using the genai SDK
 
@@ -131,14 +132,9 @@ async def construct_file_content(gs_list, bucket:str, genai_lib=False):
                 myfile = genai.get_file(name)
             else:
                 client = genaiv2.Client()
-                myfile = client.files.get(name)
-
-            content.append(
-                {"role": "user", "parts": [
-                    {"file_data": myfile}, 
-                    {"text": f"You have been given the ability to work with file {display_name=} with {mime_type=} {display_url=}"}
-                    ]
-                })
+                myfile = client.files.get(file=name)
+            content.append(myfile)
+            content.append(f"You have been given the ability to work with file {display_name=} with {mime_type=} {display_url=}")
             log.info(f"Found existing genai.get_file {name=}")
         except Exception as e:
             log.info(f"Not found checking genai.get_file: '{name}' {str(e)}")
@@ -241,7 +237,9 @@ async def download_gcs_upload_genai(img_url,
                         file=sanitized_file,  
                         config=dict(mime_type=mime_type, display_name=display_name)
                     )
-                    return downloaded_content 
+                    return [downloaded_content, 
+                            f"You have been given the ability to read and work with filename '{display_name=}' with {mime_type=} {display_url=}"]
+
                 except Exception as err:
                     msg = f"Could not upload {sanitized_file} to genaiv2.client.files.upload: {str(err)} {traceback.format_exc()} {display_url=}"
                     log.error(msg)
