@@ -435,7 +435,7 @@ class DiscoveryEngineClient:
         return operation.operation.name
 
     def _import_document_request(self,
-        request: discoveryengine.ImportDocumentsRequest # type: ignore
+        request
     ) -> str:
         """
         Handles the common logic for making an ImportDocumentsRequest, including retrying.
