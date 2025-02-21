@@ -69,7 +69,10 @@ def do_discovery_engine(message_data:str, metadata:dict, config:ConfigManager=No
                     gcs_uri=message_data,
                     metadata=metadata
                 )
-                log.info(f"Imported file to corpus: {response} with metadata: {metadata}")
+                if response:
+                    log.info(f"Imported file to corpus: {response} with metadata: {metadata}")
+                else:
+                    log.warning(f"Could not import {message_data} got not response")
             except Exception as err:
                 log.error(f"Error importing {message_data} - {corp=} - {str(err)}")
 

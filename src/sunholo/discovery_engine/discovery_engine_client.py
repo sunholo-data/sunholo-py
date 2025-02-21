@@ -558,6 +558,9 @@ class DiscoveryEngineClient:
                 except json.JSONDecodeError as e:
                     log.error(f"Error decoding JSON in line: {line.strip()}. Error: {e}")
                     continue  # Skip to the next line if there's an error
+                except Exception as e:
+                    log.error(f"Unknown error: {str(e)}")
+                    raise e
 
         # 2. Use InlineSource to import:
         request = discoveryengine.ImportDocumentsRequest(
@@ -615,6 +618,7 @@ class DiscoveryEngineClient:
 
         except Exception as e:
             log.error(f"Error importing document with metadata: {e}")
+            raise e
     
     def get_mime_type(self, uri:str):
         return guess_mime_type(uri)
