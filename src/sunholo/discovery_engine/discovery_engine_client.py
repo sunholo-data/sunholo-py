@@ -15,7 +15,7 @@ from typing import Optional, List
 import asyncio
 import json
 import uuid
-from ..utils import guess_mime_type
+from ..utils.mime import guess_mime_type
 
 class DiscoveryEngineClient:
     """
