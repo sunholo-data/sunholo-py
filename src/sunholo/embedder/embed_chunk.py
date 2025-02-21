@@ -26,7 +26,7 @@ from ..components import get_embeddings, pick_vectorstore, load_memories, pick_e
 from ..custom_logging import log
 from ..database.uuid import generate_uuid_from_object_id
 from ..utils import ConfigManager
-from .embed_chunk import audit_metadata
+from .embed_metadata import audit_metadata
 
 def embed_pubsub_chunk(data: dict):
     """Triggered from a message on a Cloud Pub/Sub topic "embed_chunk" topic
