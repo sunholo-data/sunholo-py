@@ -1,6 +1,7 @@
 from .discovery_engine_client import DiscoveryEngineClient
 from ..utils import ConfigManager
 from ..utils.gcp_project import get_gcp_project
+from ..custom_logging import log
 
 def create_new_discovery_engine(config:ConfigManager):
 
@@ -12,9 +13,13 @@ def create_new_discovery_engine(config:ConfigManager):
             chunk_size = chunker_config["chunk_size"]    
 
     gcp_config = config.vacConfig("gcp_config")
-    project_id = gcp_config.get("project_id") or get_gcp_project()
+    if not gcp_config:
+        log.info("Found no gcp_config in configuration so using get_gcp_project()")
+        project_id = get_gcp_project()
+    else:
+        project_id = gcp_config.get("project_id") or get_gcp_project()
     if not project_id:
-        raise ValueError("Could not find project_id in gcp_config")
+        raise ValueError("Could not find project_id in gcp_config or global")
     
     #location = gcp_config.get('location')
 

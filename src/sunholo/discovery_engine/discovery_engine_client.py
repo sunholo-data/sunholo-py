@@ -564,7 +564,6 @@ class DiscoveryEngineClient:
             parent=parent,
             inline_source=discoveryengine.ImportDocumentsRequest.InlineSource(
                 documents=documents_with_metadata,  # Pass the list of Document objects
-                data_schema="document"  # Important: Set to "document" when providing full Documents
             ),
             reconciliation_mode=discoveryengine.ImportDocumentsRequest.ReconciliationMode.INCREMENTAL,
         )
@@ -607,7 +606,6 @@ class DiscoveryEngineClient:
                 parent=parent,
                 inline_source=discoveryengine.ImportDocumentsRequest.InlineSource(
                     documents=[document],
-                    data_schema="document"
                 ),
                 reconciliation_mode=discoveryengine.ImportDocumentsRequest.ReconciliationMode.INCREMENTAL
             )
