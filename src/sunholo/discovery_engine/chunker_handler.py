@@ -5,7 +5,7 @@ from ..components import load_memories
 
 from .discovery_engine_client import DiscoveryEngineClient
 from .create_new import create_new_discovery_engine
-    
+from ..embedder.embed_metadata import audit_metadata
 
 def do_discovery_engine(message_data:str, metadata:dict, config:ConfigManager=None):
     """
@@ -65,6 +65,7 @@ def do_discovery_engine(message_data:str, metadata:dict, config:ConfigManager=No
             return None
         for corp in corpuses:
             try:
+                metadata = audit_metadata(metadata, chunk_length=500)
                 response = corp.import_document_with_metadata(
                     gcs_uri=message_data,
                     metadata=metadata

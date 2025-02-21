@@ -26,6 +26,7 @@ from ..components import get_embeddings, pick_vectorstore, load_memories, pick_e
 from ..custom_logging import log
 from ..database.uuid import generate_uuid_from_object_id
 from ..utils import ConfigManager
+from .embed_chunk import audit_metadata
 
 def embed_pubsub_chunk(data: dict):
     """Triggered from a message on a Cloud Pub/Sub topic "embed_chunk" topic
@@ -75,25 +76,7 @@ def embed_pubsub_chunk(data: dict):
     
     log.info(f"Embedding: {vector_name} page_content: {page_content[:30]}...[{len(page_content)}] - {metadata}")
 
-    if 'eventTime' not in metadata:
-        metadata['eventTime'] = datetime.datetime.now().isoformat(timespec='microseconds') + "Z"
-    metadata['eventtime'] = metadata['eventTime']
-
-    if 'source' not in metadata:
-        if 'objectId' in metadata:
-            metadata['source'] = metadata['objectId']
-        elif 'url' in metadata:
-            metadata['source'] = metadata['url']
-        else:
-            log.warning(f"No source found in metadata: {metadata}")
-    
-    if 'original_source' not in metadata:
-        metadata['original_source'] = metadata.get('source')
-    else:
-        metadata['source'] = metadata['original_source']
-    
-    if 'chunk_length' not in metadata:
-        metadata['chunk_length'] = len(page_content)
+    metadata = audit_metadata(metadata, chunk_length=len(page_content))
     
     if 'doc_id' not in metadata:
         log.warning(f"No doc_id found in metadata for {metadata['source']}- creating one")
