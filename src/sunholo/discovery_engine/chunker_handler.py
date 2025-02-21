@@ -65,8 +65,9 @@ def do_discovery_engine(message_data:str, metadata:dict, config:ConfigManager=No
             return None
         for corp in corpuses:
             try:
-                response = corp.import_documents(
-                    gcs_uri=message_data
+                response = corp.import_document_with_metadata(
+                    gcs_uri=message_data,
+                    metadata=metadata
                 )
                 log.info(f"Imported file to corpus: {response} with metadata: {metadata}")
             except Exception as err:
@@ -81,8 +82,9 @@ def do_discovery_engine(message_data:str, metadata:dict, config:ConfigManager=No
                         continue
                     if new_corp:
                         log.info(f"Found new DiscoveryEngine {config.vector_name=} - {new_corp=}")
-                        response = corp.import_documents(
-                            gcs_uri=message_data
+                        response = corp.import_document_with_metadata(
+                            gcs_uri=message_data,
+                            metadata=metadata
                         )
                     
                 continue

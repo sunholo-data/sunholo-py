@@ -1,6 +1,6 @@
 try:
     from google.api_core.client_options import ClientOptions
-    from google.cloud import discoveryengine_v1alpha as discoveryengine
+    from google.cloud import discoveryengine
     from google.api_core.retry import Retry, if_exception_type
     from google.api_core.exceptions import ResourceExhausted, AlreadyExists
     from google.cloud.discoveryengine_v1alpha import SearchResponse, Chunk
@@ -13,6 +13,9 @@ except ImportError:
 from ..custom_logging import log
 from typing import Optional, List
 import asyncio
+import json
+import uuid
+from ..utils import guess_mime_type
 
 class DiscoveryEngineClient:
     """
@@ -431,7 +434,37 @@ class DiscoveryEngineClient:
 
         return operation.operation.name
 
+    def _import_document_request(self,
+        request: discoveryengine.ImportDocumentsRequest # type: ignore
+    ) -> str:
+        """
+        Handles the common logic for making an ImportDocumentsRequest, including retrying.
 
+        Args:
+            request (discoveryengine.ImportDocumentsRequest): The prepared request object.
+
+        Returns:
+            str: The operation name.
+        """
+        @self.my_retry()
+        def import_documents_with_retry(doc_client, request):
+            return doc_client.import_documents(request=request)
+        
+        try:
+            operation = import_documents_with_retry(self.doc_client, request)
+        except ResourceExhausted as e:
+            log.error(f"DiscoveryEngine Operation failed after retries due to quota exceeded: {e}")
+            raise e
+        except AlreadyExists as e:
+            # Extract relevant info from the request to log
+            gcs_uri = request.gcs_source.input_uris if request.gcs_source else None
+            bigquery_table = request.bigquery_source.table_id if request.bigquery_source else None
+            log.warning(f"DiscoveryEngine - Already exists: {e} - {gcs_uri=} {bigquery_table=}")
+        except Exception as e:
+            log.error(f"An unexpected DiscoveryEngine error occurred: {e}")
+            raise e
+
+        return operation.operation.name
 
     def import_documents(self,
         gcs_uri: Optional[str] = None,
@@ -479,23 +512,117 @@ class DiscoveryEngineClient:
             )
 
         # Make the request
-        @self.my_retry()
-        def import_documents_with_retry(doc_client, request):
-            return doc_client.import_documents(request=request)
-        
-        try:
-            operation = import_documents_with_retry(self.doc_client, request)
-        except ResourceExhausted as e:
-            log.error(f"DiscoveryEngine Operation failed after retries due to quota exceeded: {e}")
+        return self._import_document_request(request)
 
-            raise e
-        except AlreadyExists as e:
-            log.warning(f"DiscoveryEngine - Already exists: {e} - {gcs_uri=} {bigquery_table=}")
+
+    def import_documents_with_metadata(self, gcs_uri: str, data_schema="content", branch="default_branch"):
+        """
+        Supply a JSONLD GCS location to import all the GS URIs within and their metadata
+        """
+        parent = self.doc_client.branch_path(
+            self.project_id, 
+            self.location, 
+            self.data_store_id, 
+            branch
+        )
+
+        # 1. Prepare your documents with metadata:
+        documents_with_metadata = []
+        with open(gcs_uri, 'r') as f:  # Assuming one JSON object per line in your GCS file
+            for line in f:
+                try:
+                    document_data = json.loads(line)  # Load the JSON from the line
+                    # Check if it has the required fields, if not create them
+                    if "id" not in document_data:
+                        document_data["id"] = str(uuid.uuid4())
+                    if "structData" not in document_data:
+                        document_data["structData"] = {}
+                    if "content" not in document_data:
+                        document_data["content"] = {}
+                    # Create the Document object with your metadata
+                    document = discoveryengine.Document(
+                        name = f"{parent}/documents/{document_data['id']}", # important!
+                        id=document_data["id"],
+                        struct_data=document_data.get("structData", {}),  # Your metadata here
+                        content = discoveryengine.Content(
+                            mime_type = document_data.get("content", {}).get("mimeType", "text/plain"),
+                            uri = document_data.get("content", {}).get("uri", ""),
+                        )
+                    )
+
+                    if "jsonData" in document_data:
+                        document.json_data = document_data["jsonData"]
+
+                    documents_with_metadata.append(document)
+
+                except json.JSONDecodeError as e:
+                    log.error(f"Error decoding JSON in line: {line.strip()}. Error: {e}")
+                    continue  # Skip to the next line if there's an error
+
+        # 2. Use InlineSource to import:
+        request = discoveryengine.ImportDocumentsRequest(
+            parent=parent,
+            inline_source=discoveryengine.ImportDocumentsRequest.InlineSource(
+                documents=documents_with_metadata,  # Pass the list of Document objects
+                data_schema="document"  # Important: Set to "document" when providing full Documents
+            ),
+            reconciliation_mode=discoveryengine.ImportDocumentsRequest.ReconciliationMode.INCREMENTAL,
+        )
+
+        return self._import_document_request(request)
+
+    
+    def import_document_with_metadata(self, gcs_uri: str, metadata: dict, branch="default_branch"):
+        """
+        Imports a single document with metadata.
+
+        Args:
+            gcs_uri: The GCS URI of the document to import.
+            metadata: A dictionary containing the metadata for the document.
+            branch: The branch to import the document into.
+
+        Returns:
+            str: The operation name.
+        """
+        try:
+            # 1. Generate a unique document ID
+            document_id = str(uuid.uuid4())
+
+            # 2. Create a Document object
+            parent = self.doc_client.branch_path(
+                self.project_id, self.location, self.data_store_id, branch
+            )
+            document = discoveryengine.Document(
+                name=f"{parent}/documents/{document_id}",
+                id=document_id,
+                struct_data=metadata,
+                content=discoveryengine.Document.Content(
+                    uri=gcs_uri,
+                    mime_type=self.get_mime_type(gcs_uri)
+                )
+            )
+
+            # 3. Use InlineSource for import
+            request = discoveryengine.ImportDocumentsRequest(
+                parent=parent,
+                inline_source=discoveryengine.ImportDocumentsRequest.InlineSource(
+                    documents=[document],
+                    data_schema="document"
+                ),
+                reconciliation_mode=discoveryengine.ImportDocumentsRequest.ReconciliationMode.INCREMENTAL
+            )
+
+            # 4. Make the import request (using the common method)
+            return self._import_document_request(request)
 
         except Exception as e:
-            log.error(f"An unexpected DiscoveryEngine error occurred: {e}")
-
-            raise e
-
-        return operation.operation.name
-
+            log.error(f"Error importing document with metadata: {e}")
+    
+    def get_mime_type(self, uri:str):
+        return guess_mime_type(uri)
+    
+    def search_with_filters(self, query, folder=None, date=None,
+                        num_previous_chunks=3, num_next_chunks=3, 
+                        page_size=10, parse_chunks_to_string=True, 
+                        serving_config="default_serving_config"):
+        pass

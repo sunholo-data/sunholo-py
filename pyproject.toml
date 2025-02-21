@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sunholo"
-version = "0.118.10"
+version = "0.119.0"
 description = "Large Language Model DevOps - a package to help deploy LLMs to the Cloud."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -27,10 +27,11 @@ classifiers = [
 dependencies = [
     "aiohttp",
     "google-auth",
+    "google-cloud-discoveryengine>=0.13.4",
     "pydantic",
     "requests",
     "ruamel.yaml",
-    "tenacity"
+    "tenacity",
 ]
 
 [project.urls]
@@ -78,7 +79,7 @@ all = [
     "google-cloud-logging",
     "google-cloud-storage",
     "google-cloud-pubsub",
-    "google-cloud-discoveryengine",
+    "google-cloud-discoveryengine>=0.13.4",
     "google-cloud-texttospeech",
     "google-generativeai>=0.7.1",
     "google-genai",
@@ -170,7 +171,7 @@ gcp = [
     "google-cloud-storage",
     "google-cloud-logging",
     "google-cloud-pubsub",
-    "google-cloud-discoveryengine",
+    "google-cloud-discoveryengine>=0.13.4",
     "google-cloud-texttospeech",
     "google-genai",
     "google-generativeai>=0.8.3",
