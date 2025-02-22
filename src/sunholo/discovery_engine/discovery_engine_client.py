@@ -177,6 +177,15 @@ class DiscoveryEngineClient:
 
         return operation.operation.name
 
+    def _search_data_store_path(self, 
+                                data_store_id: str, 
+                                collection_id: str = "default_collection", 
+                                serving_config: str = "default_serving_config"):
+        if data_store_id.startswith("projects/"):
+            return data_store_id  # Already a full path
+        
+        return f"projects/{self.project_id}/locations/{self.location}/collections/{collection_id}/dataStores/{data_store_id}"
+        
     def get_chunks(
         self,
         query: str,
@@ -185,6 +194,7 @@ class DiscoveryEngineClient:
         page_size: int = 10,
         parse_chunks_to_string: bool = True,
         serving_config: str = "default_serving_config",
+        data_store_ids: Optional[List[str]] = None,
     ):
         """Retrieves chunks or documents based on a query.
 
@@ -196,6 +206,7 @@ class DiscoveryEngineClient:
             page_size (int, optional): The maximum number of results to return per page (default is 10).
             parse_chunks_to_string: If True will put chunks in one big string, False will return object
             serving_config: The resource name of the Search serving config 
+            data_store_ids: If you want to search over many data stores, not just the one that was used to init the class. They should be of the format projects/{project}/locations/{location}/collections/{collection_id}/dataStores/{data_store_id}
 
         Returns:
             discoveryengine.SearchResponse: The search response object containing the search results.
@@ -216,7 +227,6 @@ class DiscoveryEngineClient:
             serving_config
         )
 
-
         search_request = discoveryengine.SearchRequest(
             serving_config=serving_config_path,
             query=query,
@@ -229,6 +239,14 @@ class DiscoveryEngineClient:
                 ),
             ),
         )
+
+        if data_store_ids:
+            search_request.data_store_specs = [
+                discoveryengine.SearchRequest.DataStoreSpec(
+                    data_store=self._search_data_store_path(data_store_id, serving_config=serving_config)
+                )
+                for data_store_id in data_store_ids
+            ]
 
         log.info(f"Discovery engine request: {search_request=}")
         search_response = self.search_client.search(search_request)
@@ -251,6 +269,7 @@ class DiscoveryEngineClient:
         page_size: int = 10,
         parse_chunks_to_string: bool = True,
         serving_config: str = "default_serving_config",
+        data_store_ids: Optional[List[str]] = None,
     ):
         """Retrieves chunks or documents based on a query.
 
@@ -262,6 +281,7 @@ class DiscoveryEngineClient:
             page_size (int, optional): The maximum number of results to return per page (default is 10).
             parse_chunks_to_string: If True will put chunks in one big string, False will return object
             serving_config: The resource name of the Search serving config 
+            data_store_ids: If you want to search over many data stores, not just the one that was used to init the class. They should be of the format projects/{project}/locations/{location}/collections/{collection_id}/dataStores/{data_store_id}
 
         Returns:
             discoveryengine.SearchResponse: The search response object containing the search results.
@@ -295,6 +315,12 @@ class DiscoveryEngineClient:
                 ),
             ),
         )
+
+        if data_store_ids:
+            search_request.data_store_specs = [
+                discoveryengine.SearchRequest.DataStoreSpec(data_store=data_store_id)
+                for data_store_id in data_store_ids
+            ]
 
         log.info(f"Discovery engine async request: {search_request=}")
         search_response = await self.async_search_client.search(search_request)
