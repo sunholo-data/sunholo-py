@@ -1,24 +1,26 @@
-from sunholo.discovery_engine import DiscoveryEngineClient 
 
-# Replace with your actual project ID and location
-PROJECT_ID = "multivac-internal-dev"
-LOCATION = "eu"
-
-print(f"{PROJECT_ID=} {LOCATION=}")
-
-# Data store IDs to test
-# They should be of the format projects/{project}/locations/{location}/collections/{collection_id}/dataStores/{data_store_id} if collection is not default
-DATA_STORE_IDS = [
-    "aitana", #default collection
-    #"projects/multivac-internal-dev/locations/eu/collections/default_collection/dataStores/sunholo-drive-datastore",
-    #"projects/multivac-internal-dev/locations/eu/collections/sunholo-gmail-datastore/dataStores/sunholo-gmail-datastore_google_mail",
-    # Add other data store IDs as needed
-]
 
 def test_discovery_engine_client(project_id, location, data_store_ids):
     """
     Tests the functionality of your DiscoveryEngineClient class with multiple and single data stores.
     """
+    
+    from sunholo.discovery_engine import DiscoveryEngineClient 
+
+    # Replace with your actual project ID and location
+    PROJECT_ID = "multivac-internal-dev"
+    LOCATION = "eu"
+
+    print(f"{PROJECT_ID=} {LOCATION=}")
+
+    # Data store IDs to test
+    # They should be of the format projects/{project}/locations/{location}/collections/{collection_id}/dataStores/{data_store_id} if collection is not default
+    DATA_STORE_IDS = [
+        "aitana", #default collection
+        #"projects/multivac-internal-dev/locations/eu/collections/default_collection/dataStores/sunholo-drive-datastore",
+        #"projects/multivac-internal-dev/locations/eu/collections/sunholo-gmail-datastore/dataStores/sunholo-gmail-datastore_google_mail",
+        # Add other data store IDs as needed
+    ]
 
     def test_search(client, query, data_store_ids=None):
         """
