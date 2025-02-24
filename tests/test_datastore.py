@@ -136,4 +136,4 @@ def test_discovery_engine_client(project_id, location, data_store_ids):
 
 
 # Run the tests
-test_discovery_engine_client(PROJECT_ID, LOCATION, DATA_STORE_IDS)
+#test_discovery_engine_client(PROJECT_ID, LOCATION, DATA_STORE_IDS)
