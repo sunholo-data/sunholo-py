@@ -248,9 +248,13 @@ class DiscoveryEngineClient:
                 for data_store_id in data_store_ids
             ]
 
-        log.info(f"Discovery engine request: {search_request=}")
-        search_response = self.search_client.search(search_request)
-        
+        try:
+            log.info(f"Discovery engine request: {search_request=}")
+            search_response = self.search_client.search(search_request)
+        except Exception as err:
+            log.warning(f"Error searching {search_request=} - no results found? {str(err)}")
+            search_response = []
+
         if parse_chunks_to_string:
 
             big_string = self.process_chunks(search_response)
@@ -322,9 +326,13 @@ class DiscoveryEngineClient:
                 for data_store_id in data_store_ids
             ]
 
-        log.info(f"Discovery engine async request: {search_request=}")
-        search_response = await self.async_search_client.search(search_request)
-        log.info(f"Discovery engine async response: {search_response=}")
+        try:
+            log.info(f"Discovery engine request: {search_request=}")
+            search_response = self.async_search_client.search(search_request)
+        except Exception as err:
+            log.warning(f"Error searching {search_request=} - no results found? {str(err)}")
+            search_response = []
+
         if parse_chunks_to_string:
 
             big_string = await self.async_process_chunks(search_response)
@@ -649,8 +657,91 @@ class DiscoveryEngineClient:
     def get_mime_type(self, uri:str):
         return guess_mime_type(uri)
     
-    def search_with_filters(self, query, folder=None, date=None,
+    def search_with_filters(self, query, filter_str=None,
                         num_previous_chunks=3, num_next_chunks=3, 
                         page_size=10, parse_chunks_to_string=True, 
-                        serving_config="default_serving_config"):
-        pass
+                        serving_config="default_serving_config",
+                        data_store_ids: Optional[List[str]] = None):
+        """
+        Searches with a generic filter string.
+
+        Args:
+            query (str): The search query.
+            filter_str (str, optional): The filter string to apply (e.g., "source LIKE 'my_source' AND eventTime > TIMESTAMP('2024-01-01')").
+            #... other parameters from get_chunks
+
+        Returns:
+            discoveryengine.SearchResponse or str: The search response object or string of chunks.
+        """
+
+        serving_config_path = self.search_client.serving_config_path(
+            self.project_id,
+            self.location,
+            self.data_store_id,
+            serving_config
+        )
+
+        search_request = discoveryengine.SearchRequest(
+            serving_config=serving_config_path,
+            query=query,
+            page_size=page_size, 
+            content_search_spec=discoveryengine.SearchRequest.ContentSearchSpec(
+                search_result_mode="CHUNKS", 
+                chunk_spec=discoveryengine.SearchRequest.ContentSearchSpec.ChunkSpec(
+                    num_previous_chunks=num_previous_chunks,
+                    num_next_chunks=num_next_chunks,
+                ),
+            ),
+            filter=filter_str # name:'ANY("king kong")'
+        )
+
+        if data_store_ids:
+            search_request.data_store_specs = [
+                discoveryengine.SearchRequest.DataStoreSpec(
+                    data_store=self._search_data_store_path(data_store_id, serving_config=serving_config)
+                )
+                for data_store_id in data_store_ids
+            ]
+
+
+
+        log.info(f"Discovery engine request with filter: {search_request=}")
+        try:
+            search_response = self.search_client.search(search_request)
+        except Exception as e:
+            log.info(f"No results {search_request.data_store_specs=}: {str(e)}")
+            return None
+        
+        if parse_chunks_to_string:
+            big_string = self.process_chunks(search_response)
+            log.info(f"Discovery engine chunks string sample: {big_string[:100]}")
+            return big_string
+        
+        log.info("Discovery engine response object")
+        return search_response
+
+    def search_by_objectId_and_or_date(self, query, objectId=None, date=None, **kwargs):
+        """
+        Searches and filters by objectId (exact match) and/or date.
+
+        Args:
+            query (str): The search query.
+            objectId (str, optional): The exact objectId to filter by.
+            date (str, optional): The literal_iso_8601_datetime_format date to filter by e.g. 2025-02-24T12:25:30.123Z
+            **kwargs: Additional keyword arguments to pass to `search_with_filters`.
+
+        Returns:
+            list: A list of search results.
+        """
+        filter_clauses = []
+        if objectId:
+            filter_clauses.append(f'objectId: ANY("{objectId}")')
+        if date:
+            filter_clauses.append(f'eventTime >= "{date}"')
+
+        if filter_clauses:
+            filter_str = " AND ".join(filter_clauses)  # Combine with AND
+            return self.search_with_filters(query, filter_str, **kwargs)
+        else:
+            # No filters, perform regular search
+            return self.search_with_filters(query, **kwargs)

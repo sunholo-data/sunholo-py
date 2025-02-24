@@ -1,0 +1,39 @@
+  # A single expression or multiple expressions that are joined by "AND" or "OR".
+  filter = expression, { " AND " | "OR", expression };
+  # Expressions can be prefixed with "-" or "NOT" to express a negation.
+  expression = [ "-" | "NOT " ],
+    # A parenthetical expression.
+    | "(", expression, ")"
+    # A simple expression applying to a text field.
+    # Function "ANY" returns true if the field exactly matches any of the literals.
+    ( text_field, ":", "ANY", "(", literal, { ",", literal }, ")"
+    # A simple expression applying to a numerical field. Function "IN" returns true
+    # if a field value is within the range. By default, lower_bound is inclusive and
+    # upper_bound is exclusive.
+    | numerical_field, ":", "IN", "(", lower_bound, ",", upper_bound, ")"
+    # A simple expression that applies to a numerical field and compares with a double value.
+    | numerical_field, comparison, double
+    # An expression that applies to a geolocation field with text/street/postal address.
+    |  geolocation_field, ":", "GEO_DISTANCE(", literal, ",", distance_in_meters, ")"
+    # An expression that applies to a geolocation field with latitude and longitude.
+    | geolocation_field, ":", "GEO_DISTANCE(", latitude_double, ",", longitude_double, ",", distance_in_meters, ")"
+    # Datetime field
+    | datetime_field, comparison, literal_iso_8601_datetime_format);
+  # A lower_bound is either a double or "*", which represents negative infinity.
+  # Explicitly specify inclusive bound with the character 'i' or exclusive bound
+  # with the character 'e'.
+  lower_bound = ( double, [ "e" | "i" ] ) | "*";
+  # An upper_bound is either a double or "*", which represents infinity.
+  # Explicitly specify inclusive bound with the character 'i' or exclusive bound
+  # with the character 'e'.
+  upper_bound = ( double, [ "e" | "i" ] ) | "*";
+  # Supported comparison operators.
+  comparison = "<=" | "<" | ">=" | ">" | "=";
+  # A literal is any double quoted string. You must escape backslash (\) and
+  # quote (") characters.
+  literal = double quoted string;
+  text_field = text field - for example, category;
+  numerical_field = numerical field - for example, score;
+  geolocation_field = field of geolocation data type - for example home_address, location;
+  datetime_field = field of datetime data type - for example creation_date, expires_on;
+  literal_iso_8601_datetime_format = either a double quoted string representing ISO 8601 datetime or a numerical field representing microseconds from unix epoch.
