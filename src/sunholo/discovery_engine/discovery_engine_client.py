@@ -607,6 +607,12 @@ class DiscoveryEngineClient:
 
         return self._import_document_request(request)
 
+    def _create_unique_gsuri_docid(self, gcs_uri:str):
+        import hashlib
+        # Create SHA-256 hash of the URI
+        hash_object = hashlib.sha256(gcs_uri.encode())
+        # Take first 16 bytes (128 bits) and encode as hex
+        return hash_object.hexdigest()[:32]
     
     def import_document_with_metadata(self, gcs_uri: str, metadata: dict, branch="default_branch"):
         """
@@ -622,7 +628,7 @@ class DiscoveryEngineClient:
         """
         try:
             # 1. Generate a unique document ID
-            document_id = str(uuid.uuid4())
+            document_id = self._create_unique_gsuri_docid(gcs_uri)
 
             # 2. Create a Document object
             parent = self.doc_client.branch_path(
