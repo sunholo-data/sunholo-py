@@ -1,4 +1,5 @@
 
+#not used for unit tests yet
 
 def test_discovery_engine_client(project_id, location, data_store_ids):
     """
