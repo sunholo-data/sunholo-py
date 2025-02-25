@@ -38,7 +38,7 @@ def process_chunker_data(message_data, metadata, vector_name):
         return llamacheck
     
     # if only a discovery engine memory, return early as no other processing needed
-    discovery_check = discovery_engine_chunker_check(message_data, metadata, config=config)
+    discovery_check = discovery_engine_chunker_check(message_data, metadata, config=config, process=False)
     if discovery_check:
         return discovery_check
 

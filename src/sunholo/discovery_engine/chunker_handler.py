@@ -125,7 +125,11 @@ def check_write_memories(config:ConfigManager):
     
     return write_mem
 
-def discovery_engine_chunker_check(message_data, metadata, vector_name:str=None, config:ConfigManager=None):
+def discovery_engine_chunker_check(message_data, 
+                                   metadata, 
+                                   vector_name:str=None, 
+                                   config:ConfigManager=None,
+                                   process:bool=True):
 
     if config is None:
         if vector_name is None:
@@ -139,7 +143,7 @@ def discovery_engine_chunker_check(message_data, metadata, vector_name:str=None,
     
     total_memories = len(check_write_memories(config))
     llama = None
-    if check_discovery_engine_in_memory(config):
+    if check_discovery_engine_in_memory(config) and process:
         llama = do_discovery_engine(message_data, metadata, config=config)
         log.info(f"Processed discovery engine: {llama}")
 

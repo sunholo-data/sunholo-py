@@ -223,12 +223,11 @@ def setup_discovery_engine_subparser(subparsers):
     # Search subcommand
     search_parser = discovery_engine_subparsers.add_parser('search', help='Search a Discovery Engine datastore')
     search_parser.add_argument('--query', required=True, help='The search query')
-    search_parser.add_argument('--num-previous-chunks', type=int, default=3, help='Number of previous chunks to return for context')
-    search_parser.add_argument('--num-next-chunks', type=int, default=3, help='Number of next chunks to return for context')
+    search_parser.add_argument('--data-store-id', required=True, help='Data store ID to search')
     search_parser.add_argument('--page-size', type=int, default=10, help='The maximum number of results to return per page')
     search_parser.add_argument('--parse-chunks-to-string', action='store_true', help='Combine chunks into a single string')
     search_parser.add_argument('--serving-config', default='default_serving_config', help='The serving configuration to use')
-    search_parser.add_argument('--data-store-ids', nargs='+', help='List of data store IDs to search (optional)')
+
     search_parser.set_defaults(func=discovery_engine_command)
 
     # Search by ID and/or Date subcommand
