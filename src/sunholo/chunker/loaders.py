@@ -160,9 +160,8 @@ def read_gdrive_to_document(url: str, metadata: dict = None):
     return docs
 
 def read_url_to_document(url: str, metadata: dict = None):
+    from langchain_unstructured import UnstructuredLoader
 
-    if not  UnstructuredLoader:
-        raise ImportError("UnstructuredLoader requires 'langchain_unstructured' to be installed")
     unstructured_kwargs = {"skip_infer_table_types": [],
                             "extract_image_block_types":  ["Image", "Table"]
                             }
@@ -179,7 +178,7 @@ def read_url_to_document(url: str, metadata: dict = None):
     return docs
 
 def read_file_to_documents(gs_file: pathlib.Path, metadata: dict = None):
-    
+    from langchain_unstructured import UnstructuredLoader
     docs = []
     pdf_path = str(pathlib.Path(gs_file))
 
@@ -276,7 +275,7 @@ def read_file_to_documents(gs_file: pathlib.Path, metadata: dict = None):
     return docs
 
 def convert_to_txt_and_extract(gs_file, split=False):
-
+    from langchain_unstructured import UnstructuredLoader
     if not  UnstructuredLoader:
         raise ImportError("UnstructuredLoader requires 'langchain_unstructured' to be installed")
     
