@@ -344,7 +344,6 @@ class DiscoveryEngineClient:
         return search_response
     
     def chunk_format(self, chunk):
-        from google.protobuf.json_format import MessageToDict
 
         return (
                     f"# {chunk.id}\n"
@@ -353,7 +352,7 @@ class DiscoveryEngineClient:
                     f"Relevance score: {chunk.relevance_score}\n"
                     f"Document URI: {chunk.document_metadata.uri}\n"
                     f"Document Title: {chunk.document_metadata.title}\n"
-                    f"Document Metadata: {MessageToDict(chunk.document_metadata.struct_data)}\n"
+                    f"Document Metadata: {dict(chunk.document_metadata.struct_data)}\n"
                 )        
 
     def process_chunks(self, response):
