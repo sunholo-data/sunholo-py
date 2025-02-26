@@ -116,7 +116,7 @@ async def async_get_all_chunks(question:str, config:ConfigManager, filter_str=No
 async def async_get_chunks(question, vector_name, num_chunks, filter_str, project_id=None):
     de = DiscoveryEngineClient(vector_name, project_id=project_id)
     try:
-        return await de.search_with_filters(query=question, 
+        return await de.async_search_with_filters(query=question, 
                                             filter_str=filter_str,
                                             num_previous_chunks=num_chunks, 
                                             num_next_chunks=num_chunks)
