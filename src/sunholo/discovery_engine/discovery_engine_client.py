@@ -350,6 +350,7 @@ class DiscoveryEngineClient:
                     f"## metadata\n"
                     f"Document URI: {chunk.document_metadata.uri}\n"
                     f"Document Title: {chunk.document_metadata.title}\n"
+                    f"Document ImportTime: {chunk.document_metadata.eventTime}\n"
                 )        
 
     def process_chunks(self, response):
@@ -357,7 +358,8 @@ class DiscoveryEngineClient:
 
         # Check if the response contains results
         if not hasattr(response, 'results') or not response.results:
-            raise ValueError(f'No results found in response: {response=}')
+            log.info(f'No results found in response: {response=}')
+            return []
         
         # Iterate through each result in the response
         for result in response.results:
@@ -386,7 +388,8 @@ class DiscoveryEngineClient:
 
         # Check if the response contains results
         if not hasattr(response, 'results') or not response.results:
-            raise ValueError(f'No results found in response: {response=}')
+            log.info(f'No results found in response: {response=}')
+            return []
         
         # Iterate through each result in the response
         for result in response.results:

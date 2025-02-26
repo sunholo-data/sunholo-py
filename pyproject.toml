@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sunholo"
-version = "0.119.13"
+version = "0.119.14"
 description = "Large Language Model DevOps - a package to help deploy LLMs to the Cloud."
 readme = "README.md"
 requires-python = ">=3.10"
