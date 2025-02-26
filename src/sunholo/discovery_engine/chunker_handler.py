@@ -152,6 +152,10 @@ def discovery_engine_chunker_check(message_data,
 
         return llama
     
+    # If not processing and only memory, do not process further
+    if not process and total_memories == 1:
+        return metadata
+    
     elif llama:
         log.info("Discovery Engine found but not the only memory, continuing with other processes.")
 
