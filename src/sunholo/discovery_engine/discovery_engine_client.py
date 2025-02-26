@@ -351,7 +351,7 @@ class DiscoveryEngineClient:
                     f"Relevance score: {chunk.relevance_score}\n"
                     f"Document URI: {chunk.document_metadata.uri}\n"
                     f"Document Title: {chunk.document_metadata.title}\n"
-                    f"Document Metadata: {chunk.document_metadata.struct_data}\n"
+                    f"Document Metadata: {chunk.document_metadata.struct_data.dict()}\n"
                 )        
 
     def process_chunks(self, response):
