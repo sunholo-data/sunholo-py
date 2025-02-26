@@ -347,10 +347,11 @@ class DiscoveryEngineClient:
         return (
                     f"# {chunk.id}\n"
                     f"{chunk.content}\n"
-                    f"## metadata\n"
+                    f"## {chunk.id} metadata\n"
+                    f"Relevance score: {chunk.relevance_score}\n"
                     f"Document URI: {chunk.document_metadata.uri}\n"
                     f"Document Title: {chunk.document_metadata.title}\n"
-                    f"Document ImportTime: {chunk.document_metadata.eventTime}\n"
+                    f"Document Metadata: {chunk.document_metadata.struct_data}\n"
                 )        
 
     def process_chunks(self, response):
