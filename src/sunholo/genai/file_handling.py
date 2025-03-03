@@ -261,9 +261,9 @@ async def download_gcs_upload_genai(img_url,
             try:
                 if not genai_lib:
                     downloaded_content = await asyncio.to_thread(
-                        partial(genai.upload_file, name=name, mime_type=mime_type, display_name=display_name), 
-                        file_path
-                    )
+                            partial(genai.upload_file, name=api_name, mime_type=mime_type, display_name=display_name), 
+                            file_path  # Use the unsanitized path for filesystem access
+                        )
                     
                     # Clean up after successful upload
                     try:
@@ -280,8 +280,9 @@ async def download_gcs_upload_genai(img_url,
                     
                     # Use semaphore to limit concurrent uploads
                     async with upload_semaphore:
-                        client.files.upload(
-                            file=file_path,  # Unsanitized path for filesystem access
+                        downloaded_content = await asyncio.to_thread(
+                            client.files.upload, 
+                            file=file_path,  # Use the unsanitized path for filesystem access
                             config=dict(mime_type=mime_type, display_name=display_name, name=api_name)
                         )
                     
