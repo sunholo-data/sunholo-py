@@ -79,24 +79,40 @@ ALLOWED_MIME_TYPES = set(AUDIO_MIMES + VIDEO_MIMES + IMAGE_MIMES + DOCUMENT_MIME
 # ]
 
 def sanitize_file(filename):
+    """
+    Sanitize filename to conform to Gemini API requirements:
+    - Only lowercase alphanumeric characters and dashes
+    - Cannot begin or end with a dash
+    """
     # Split the filename into name and extension
     name, extension = os.path.splitext(filename)
     
-    # Sanitize the name by removing invalid characters and converting to lowercase
-    sanitized_name = re.sub(r'[^a-z0-9-]', '', name.lower())
-    sanitized_name = re.sub(r'^-+|-+$', '', sanitized_name)  # Remove leading or trailing dashes
+    # Convert to lowercase
+    name = name.lower()
     
-    # Reattach the original extension
+    # Replace any non-alphanumeric characters (including underscores) with dashes
+    sanitized_name = re.sub(r'[^a-z0-9]', '-', name)
+    
+    # Remove consecutive dashes
+    sanitized_name = re.sub(r'-+', '-', sanitized_name)
+    
+    # Remove leading or trailing dashes
+    sanitized_name = sanitized_name.strip('-')
+    
+    # If the name is empty after sanitization, use a default
+    if not sanitized_name:
+        sanitized_name = 'file'
+    
+    # Limit the length
     return sanitized_name[:40]
 
-async def construct_file_content(gs_list, bucket:str, genai_lib=False):
+async def construct_file_content(gs_list, bucket:str, genai_lib=False, timeout=60):
     """
-    Thread-safe implementation for processing multiple files concurrently.
-    
     Args:
     - gs_list: a list of dicts representing files in a bucket
     - bucket: The bucket the files are in
     - genai_lib: whether its using the genai SDK
+    - timeout: timeout in seconds for the gather operation
     """
     
     file_list = []
@@ -112,7 +128,7 @@ async def construct_file_content(gs_list, bucket:str, genai_lib=False):
             log.warning(f'{the_mime_type} is not in allowed MIME types for {element.get("name")}')
     
     if not file_list:
-        return {"role": "user", "parts": [{"text": "No eligible contentTypes were found"}]}
+        return [{"role": "user", "parts": [{"text": "No eligible contentTypes were found"}]}]
 
     content = []
     
@@ -122,9 +138,12 @@ async def construct_file_content(gs_list, bucket:str, genai_lib=False):
         img_url = f"gs://{bucket}/{file_info['storagePath']}"
         display_url = file_info.get('url')
         mime_type = file_info['contentType']
-        # Generate a unique name for each file to avoid conflicts
+        # Generate a unique name for each file
+        import uuid
         original_name = sanitize_file(file_info['name'])
-        unique_name = f"{original_name}_{str(uuid.uuid4())[:8]}"
+        unique_id = str(uuid.uuid4())[:8]
+        unique_name = sanitize_file(f"{original_name}-{unique_id}")
+
         display_name = file_info['name']
         log.info(f"Processing {unique_name=} {display_name=}")
         
@@ -148,16 +167,30 @@ async def construct_file_content(gs_list, bucket:str, genai_lib=False):
                                          genai_lib=genai_lib)
                                         )
 
-    # Process files in batches to avoid overwhelming the system
-    content_results = []
-    batch_size = 3  # Process 3 files at a time
+    # Process files with timeout
+    if tasks:
+        try:
+            # Add timeout to prevent hanging
+            task_results = await asyncio.wait_for(asyncio.gather(*tasks, return_exceptions=True), timeout=timeout)
+            
+            # Process results, handle any exceptions
+            for result in task_results:
+                if isinstance(result, Exception):
+                    log.error(f"Task failed with error: {str(result)}")
+                    # Add error message to content
+                    content.append({"role": "user", "parts": [{"text": f"Error processing file: {str(result)}"}]})
+                else:
+                    # Normalize the result structure based on genai_lib
+                    if genai_lib and isinstance(result, list):
+                        content.append(result[0])  # The file object
+                        content.append({"role": "user", "parts": [{"text": result[1]}]})  # The message
+                    else:
+                        content.append(result)
+        except asyncio.TimeoutError:
+            log.error(f"Timeout occurred after {timeout} seconds while processing files")
+            content.append({"role": "user", "parts": [{"text": f"Some files could not be processed within the time limit ({timeout} seconds)"}]})
     
-    for i in range(0, len(tasks), batch_size):
-        batch = tasks[i:i+batch_size]
-        batch_results = await asyncio.gather(*batch)
-        content_results.extend(batch_results)
-    
-    content.extend(content_results)
+    log.info(f"construct_file_content completed with {len(content)} items")
     return content
 
 # Helper function to handle each file download with error handling
