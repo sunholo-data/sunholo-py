@@ -139,10 +139,8 @@ async def construct_file_content(gs_list, bucket:str, genai_lib=False, timeout=6
         display_url = file_info.get('url')
         mime_type = file_info['contentType']
         # Generate a unique name for each file
-        import uuid
         original_name = sanitize_file(file_info['name'])
-        unique_id = str(uuid.uuid4())[:8]
-        unique_name = sanitize_file(f"{original_name}-{unique_id}")
+        unique_name = sanitize_file(f"{original_name}")
 
         display_name = file_info['name']
         log.info(f"Processing {unique_name=} {display_name=}")
@@ -251,7 +249,7 @@ async def download_gcs_upload_genai(img_url,
             
             # Create a file with unique path
             file_path = os.path.join(temp_dir, f"file_{unique_id}{extension}")
-            
+            file_path = sanitize_file(file_path)
             log.info(f"Writing file {file_path}")
             async with aiofiles.open(file_path, 'wb') as f:
                 await f.write(file_bytes)
