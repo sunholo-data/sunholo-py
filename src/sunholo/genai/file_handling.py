@@ -243,13 +243,17 @@ async def download_gcs_upload_genai(img_url,
             extension = mimetypes.guess_extension(mime_type)
             
             # Create a unique directory for this upload task
+            # Create a unique directory for this upload task
             unique_id = str(uuid.uuid4())
             temp_dir = os.path.join(tempfile.gettempdir(), f"upload_{unique_id}")
             os.makedirs(temp_dir, exist_ok=True)
-            
-            # Create a file with unique path
+
+            # Create a file with unique path - NO sanitization in the filesystem path
             file_path = os.path.join(temp_dir, f"file_{unique_id}{extension}")
-            file_path = sanitize_file(file_path)
+            
+            api_name = sanitize_file(f"file-{unique_id[:8]}")
+
+
             log.info(f"Writing file {file_path}")
             async with aiofiles.open(file_path, 'wb') as f:
                 await f.write(file_bytes)
@@ -276,10 +280,9 @@ async def download_gcs_upload_genai(img_url,
                     
                     # Use semaphore to limit concurrent uploads
                     async with upload_semaphore:
-                        downloaded_content = await asyncio.to_thread(
-                            client.files.upload, 
-                            file=file_path,  
-                            config=dict(mime_type=mime_type, display_name=display_name)
+                        client.files.upload(
+                            file=file_path,  # Unsanitized path for filesystem access
+                            config=dict(mime_type=mime_type, display_name=display_name, name=api_name)
                         )
                     
                     # Clean up after successful upload
