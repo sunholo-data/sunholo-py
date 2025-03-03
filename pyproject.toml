@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sunholo"
-version = "0.119.18"
+version = "0.120.0"
 description = "Large Language Model DevOps - a package to help deploy LLMs to the Cloud."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -59,6 +59,7 @@ test = [
     # any other test dependencies
 ]
 all = [
+    "aiofiles",
     "aiohttp",
     "anthropic[vertex]",
     "asyncpg",
@@ -81,7 +82,7 @@ all = [
     "google-cloud-discoveryengine>=0.13.4",
     "google-cloud-texttospeech",
     "google-generativeai>=0.7.1",
-    "google-genai",
+    "google-genai>=0.2.2",
     "gunicorn",
     "httpcore",
     "httpx",
@@ -159,6 +160,7 @@ pipeline = [
     "unstructured[local-inference,all-docs]"
 ]
 gcp = [
+    "aiofiles",
     "anthropic[vertex]",
     "google-api-python-client",
     "google-auth-httplib2",
@@ -173,7 +175,7 @@ gcp = [
     "google-cloud-pubsub",
     "google-cloud-discoveryengine>=0.13.4",
     "google-cloud-texttospeech",
-    "google-genai",
+    "google-genai>=0.2.2",
     "google-generativeai>=0.8.3",
     "langchain-google-genai>=2.0.0",
     "langchain_google_alloydb_pg>=0.2.2",

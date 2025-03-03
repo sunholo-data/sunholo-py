@@ -9,8 +9,9 @@ from ..custom_logging import log
 def get_default_email():
 
     # https://stackoverflow.com/questions/64234214/how-to-generate-a-blob-signed-url-in-google-cloud-run
-
-    gcs_credentials, project_id = refresh_credentials()
+    gcs_credentials, project_id = get_default_creds()
+    if gcs_credentials is None:
+        gcs_credentials, project_id = refresh_credentials()
 
     if gcs_credentials is None:
         log.error("Could not refresh the credentials properly.")

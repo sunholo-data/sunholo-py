@@ -3,6 +3,7 @@ from ..gcs import get_bytes_from_gcs
 
 from functools import partial
 import mimetypes
+import uuid
 import asyncio
 import tempfile
 import re
@@ -11,6 +12,7 @@ import traceback
 try:
     import google.generativeai as genai
     from google import genai as genaiv2
+
 except ImportError:
     genai = None
     genaiv2 = None
@@ -89,20 +91,16 @@ def sanitize_file(filename):
 
 async def construct_file_content(gs_list, bucket:str, genai_lib=False):
     """
+    Thread-safe implementation for processing multiple files concurrently.
+    
     Args:
     - gs_list: a list of dicts representing files in a bucket
-       - contentType: The content type of the file on GCS
-       - storagePath: The path in the bucket
-       - name: The name of the file
-       - url: The URL of the file that can be used to display the contents
     - bucket: The bucket the files are in
-    - genai: whether its using the genai SDK
-
+    - genai_lib: whether its using the genai SDK
     """
     
     file_list = []
     for element in gs_list:
-
         the_mime_type = element.get('contentType')
         if the_mime_type is None:
             continue
@@ -124,34 +122,42 @@ async def construct_file_content(gs_list, bucket:str, genai_lib=False):
         img_url = f"gs://{bucket}/{file_info['storagePath']}"
         display_url = file_info.get('url')
         mime_type = file_info['contentType']
-        name = sanitize_file(file_info['name'])
+        # Generate a unique name for each file to avoid conflicts
+        original_name = sanitize_file(file_info['name'])
+        unique_name = f"{original_name}_{str(uuid.uuid4())[:8]}"
         display_name = file_info['name']
-        log.info(f"Processing {name=} {display_name=}")
+        log.info(f"Processing {unique_name=} {display_name=}")
+        
         try:
             if not genai_lib:
-                myfile = genai.get_file(name)
+                myfile = genai.get_file(unique_name)
             else:
                 client = genaiv2.Client()
-                myfile = client.files.get(name=name)
+                myfile = client.files.get(name=unique_name)
             content.append(myfile)
             content.append(f"You have been given the ability to work with file {display_name=} with {mime_type=} {display_url=}")
-            log.info(f"Found existing genai.get_file {name=}")
+            log.info(f"Found existing genai.get_file {unique_name=}")
         except Exception as e:
-            log.info(f"Not found checking genai.get_file: '{name}' {str(e)}")
+            log.info(f"Not found checking genai.get_file: '{unique_name}' {str(e)}")
             tasks.append(
                 download_gcs_upload_genai(img_url, 
-                                          mime_type=mime_type, 
-                                          name=name, 
-                                          display_url=display_url, 
-                                          display_name=display_name,
-                                          genai_lib=genai_lib)
-                                          )
+                                         mime_type=mime_type, 
+                                         name=unique_name, 
+                                         display_url=display_url, 
+                                         display_name=display_name,
+                                         genai_lib=genai_lib)
+                                        )
 
-    # Run all tasks in parallel
-    if tasks:
-        task_content = await asyncio.gather(*tasks)
-        content.extend(task_content)
-
+    # Process files in batches to avoid overwhelming the system
+    content_results = []
+    batch_size = 3  # Process 3 files at a time
+    
+    for i in range(0, len(tasks), batch_size):
+        batch = tasks[i:i+batch_size]
+        batch_results = await asyncio.gather(*batch)
+        content_results.extend(batch_results)
+    
+    content.extend(content_results)
     return content
 
 # Helper function to handle each file download with error handling
@@ -169,10 +175,9 @@ async def download_gcs_upload_genai(img_url,
                                     display_url=None, 
                                     display_name=None, 
                                     retries=3, delay=2, genai_lib=False):
-    import aiofiles
-    from google.generativeai.types import file_types
     """
     Downloads and uploads a file with retries in case of failure.
+    Thread-safe implementation using unique file paths.
     
     Args:
       - img_url: str The URL of the file to download.
@@ -184,9 +189,10 @@ async def download_gcs_upload_genai(img_url,
     Returns:
       - downloaded_content: The result of the file upload if successful.
     """
+    import aiofiles
     for attempt in range(retries):
         try:
-            log.info(f"Upload {attempt} for {img_url=}")
+            log.info(f"Upload attempt [{attempt}] for {img_url=}")
             # Download the file bytes asynchronously
             file_bytes = await asyncio.to_thread(get_bytes_from_gcs, img_url)
             if not file_bytes:
@@ -200,50 +206,72 @@ async def download_gcs_upload_genai(img_url,
 
             if file_size > 19434343:
                 log.warning(f"File size for {img_url}: {file_size} is too big.")
-                msg =  f"The file for {img_url} is too large ({file_size} bytes) to be used directly.  Use RAG instead or {display_url=}"
+                msg = f"The file for {img_url} is too large ({file_size} bytes) to be used directly. Use RAG instead or {display_url=}"
                 return {"role": "user", "parts": [{"text": msg}]}
             
             extension = mimetypes.guess_extension(mime_type)
             
-            # Use aiofiles for asynchronous file operations
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=extension)
-            downloaded_file = temp_file.name
-
-            sanitized_file = sanitize_file(downloaded_file)
-
-            log.info(f"Writing file {sanitized_file}")
-            async with aiofiles.open(sanitized_file, 'wb') as f:
+            # Create a unique directory for this upload task
+            unique_id = str(uuid.uuid4())
+            temp_dir = os.path.join(tempfile.gettempdir(), f"upload_{unique_id}")
+            os.makedirs(temp_dir, exist_ok=True)
+            
+            # Create a file with unique path
+            file_path = os.path.join(temp_dir, f"file_{unique_id}{extension}")
+            
+            log.info(f"Writing file {file_path}")
+            async with aiofiles.open(file_path, 'wb') as f:
                 await f.write(file_bytes)
 
-            # Upload the file and get its content reference
-            if not genai_lib:
-                try:
-                    downloaded_content: file_types.File = await asyncio.to_thread(
-                        partial(genai.upload_file, name=name, mime_type=mime_type, display_name=display_name), 
-                        sanitized_file
-                        )
-                    return {"role": "user", "parts": [{"file_data": downloaded_content}, 
-                                                    {"text": f"You have been given the ability to read and work with filename '{display_name=}' with {mime_type=} {display_url=}"}
-                                                    ]}
-                except Exception as err:
-                    msg = f"Could not upload {sanitized_file} to genai.upload_file: {str(err)} {traceback.format_exc()} {display_url=}"
-                    log.error(msg)
-                    return {"role": "user", "parts": [{"text": msg}]}
-            else:
-                try:
-                    client = genaiv2.Client()
+            try:
+                if not genai_lib:
                     downloaded_content = await asyncio.to_thread(
-                        client.files.upload, 
-                        file=sanitized_file,  
-                        config=dict(mime_type=mime_type, display_name=display_name)
+                        partial(genai.upload_file, name=name, mime_type=mime_type, display_name=display_name), 
+                        file_path
                     )
+                    
+                    # Clean up after successful upload
+                    try:
+                        os.remove(file_path)
+                        os.rmdir(temp_dir)
+                    except OSError as e:
+                        log.warning(f"Cleanup error (non-critical): {str(e)}")
+                        
+                    return {"role": "user", "parts": [{"file_data": downloaded_content}, 
+                                                    {"text": f"You have been given the ability to read and work with filename '{display_name}' with {mime_type=} {display_url=}"}
+                                                   ]}
+                else:
+                    client = genaiv2.Client()
+                    
+                    # Use semaphore to limit concurrent uploads
+                    async with upload_semaphore:
+                        downloaded_content = await asyncio.to_thread(
+                            client.files.upload, 
+                            file=file_path,  
+                            config=dict(mime_type=mime_type, display_name=display_name)
+                        )
+                    
+                    # Clean up after successful upload
+                    try:
+                        os.remove(file_path)
+                        os.rmdir(temp_dir)
+                    except OSError as e:
+                        log.warning(f"Cleanup error (non-critical): {str(e)}")
+                        
                     return [downloaded_content, 
-                            f"You have been given the ability to read and work with filename '{display_name=}' with {mime_type=} {display_url=}"]
+                            f"You have been given the ability to read and work with filename '{display_name}' with {mime_type=} {display_url=}"]
 
-                except Exception as err:
-                    msg = f"Could not upload {sanitized_file} to genaiv2.client.files.upload: {str(err)} {traceback.format_exc()} {display_url=}"
-                    log.error(msg)
-                    return {"role": "user", "parts": [{"text": msg}]}
+            except Exception as err:
+                # Clean up on error
+                try:
+                    os.remove(file_path)
+                    os.rmdir(temp_dir)
+                except OSError:
+                    pass
+                
+                msg = f"Could not upload {file_path} to {'genai.upload_file' if not genai_lib else 'genaiv2.client.files.upload'}: {str(err)} {traceback.format_exc()} {display_url=}"
+                log.error(msg)
+                return {"role": "user", "parts": [{"text": msg}]}
         
         except Exception as err:
             log.error(f"Error processing file {img_url} {mime_type=} on attempt {attempt + 1}/{retries}: {str(err)}")
@@ -254,4 +282,8 @@ async def download_gcs_upload_genai(img_url,
                 delay *= 2  # Exponential backoff
             else:
                 raise err  # Raise the error after max retries
+
+# Add this at the module level
+# Create a semaphore to limit concurrent uploads
+upload_semaphore = asyncio.Semaphore(5)  # Adjust the value based on your needs
 
