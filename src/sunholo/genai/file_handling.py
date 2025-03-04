@@ -12,6 +12,7 @@ import traceback
 try:
     import google.generativeai as genai
     from google import genai as genaiv2
+    from google.genai import types
 
 except ImportError:
     genai = None
@@ -106,13 +107,18 @@ def sanitize_file(filename):
     # Limit the length
     return sanitized_name[:40]
 
-async def construct_file_content(gs_list, bucket:str, genai_lib=False, timeout=60):
+async def construct_file_content(gs_list, 
+                                 bucket:str, 
+                                 genai_lib=False, 
+                                 timeout=60,
+                                 genai_lib_vertex=False):
     """
     Args:
     - gs_list: a list of dicts representing files in a bucket
     - bucket: The bucket the files are in
     - genai_lib: whether its using the genai SDK
     - timeout: timeout in seconds for the gather operation
+    - genai_lib_vertex: bool whether to use the vertex version of the genai library, using default credentials
     """
     
     file_list = []
@@ -130,7 +136,28 @@ async def construct_file_content(gs_list, bucket:str, genai_lib=False, timeout=6
     if not file_list:
         return [{"role": "user", "parts": [{"text": "No eligible contentTypes were found"}]}]
 
+    # export GOOGLE_GENAI_USE_VERTEXAI=true
+    # export GOOGLE_CLOUD_PROJECT='your-project-id'
+    # export GOOGLE_CLOUD_LOCATION='us-central1'
     content = []
+    if genai_lib_vertex or os.getenv("GOOGLE_GENAI_USE_VERTEXAI"):
+        client = genaiv2.Client(vertexai=True)
+        # we can just use the gs:// uri directly
+        for file_info in file_list:
+            img_url = f"gs://{bucket}/{file_info['storagePath']}"
+            mime_type = file_info['contentType']
+            display_name = file_info['name']
+            display_url = img_url
+            file_content = types.Part.from_uri(
+                file_uri=img_url,
+                mime_type=mime_type,
+            )
+            file_content_list = [file_content, 
+                f"You have been given the ability to read and work with filename '{display_name}' with {mime_type=} {display_url=}"] 
+            content.extend(file_content_list)
+
+        return content       
+
     
     # Loop through the valid files and process them
     tasks = []
@@ -139,8 +166,7 @@ async def construct_file_content(gs_list, bucket:str, genai_lib=False, timeout=6
         display_url = file_info.get('url')
         mime_type = file_info['contentType']
         # Generate a unique name for each file
-        original_name = sanitize_file(file_info['name'])
-        unique_name = sanitize_file(f"{original_name}")
+        unique_name= sanitize_file(file_info['name'])
 
         display_name = file_info['name']
         log.info(f"Processing {unique_name=} {display_name=}")
@@ -205,7 +231,8 @@ async def download_gcs_upload_genai(img_url,
                                     name=None, 
                                     display_url=None, 
                                     display_name=None, 
-                                    retries=3, delay=2, genai_lib=False):
+                                    retries=3, delay=2, 
+                                    genai_lib=False):
     """
     Downloads and uploads a file with retries in case of failure.
     Thread-safe implementation using unique file paths.
@@ -216,6 +243,8 @@ async def download_gcs_upload_genai(img_url,
       - name: str Optional name, else a random one will be created
       - retries: int Number of retry attempts before failing.
       - delay: int Initial delay between retries, exponentially increasing.
+      - genai_lin: bool whether to use newer genai library to upload files
+
       
     Returns:
       - downloaded_content: The result of the file upload if successful.
@@ -242,7 +271,6 @@ async def download_gcs_upload_genai(img_url,
             
             extension = mimetypes.guess_extension(mime_type)
             
-            # Create a unique directory for this upload task
             # Create a unique directory for this upload task
             unique_id = str(uuid.uuid4())
             temp_dir = os.path.join(tempfile.gettempdir(), f"upload_{unique_id}")
@@ -275,14 +303,16 @@ async def download_gcs_upload_genai(img_url,
                     return {"role": "user", "parts": [{"file_data": downloaded_content}, 
                                                     {"text": f"You have been given the ability to read and work with filename '{display_name}' with {mime_type=} {display_url=}"}
                                                    ]}
+
                 else:
+
                     client = genaiv2.Client()
                     
                     # Use semaphore to limit concurrent uploads
                     async with upload_semaphore:
                         downloaded_content = await asyncio.to_thread(
                             client.files.upload, 
-                            file=file_path,  # Use the unsanitized path for filesystem access
+                            path=file_path,  # Use the unsanitized path for filesystem access
                             config=dict(mime_type=mime_type, display_name=display_name, name=api_name)
                         )
                     

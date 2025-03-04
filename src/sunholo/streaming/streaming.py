@@ -209,12 +209,27 @@ async def start_streaming_chat_async(question, vector_name, qna_func_async, chat
     stop_event.set()
     await chat_task  # Ensure the async task is awaited
 
-    # Handle final result
-    if not result_queue.empty():
-        final_result = result_queue.get()
-        parsed_final_result = parse_output(final_result)
-        if 'answer' in parsed_final_result:
-            yield json.dumps(parsed_final_result)
+    # Handle final flush of any remaining content
+    content_to_send = await content_buffer.async_read()
+    if content_to_send:
+        log.info(f"==Flush Async==\n{content_to_send}")
+        yield content_to_send
+        await content_buffer.async_clear()
+
+    # Handle final result to match non-async behavior
+    if kwargs.get("stream_only"):
+        log.info("stream_only so finishing now")
+        final_yield = ""
+    else:
+        log.info("Sending final full message plus sources...")
+        if not result_queue.empty():
+            final_result = result_queue.get()
+            final_yield = parse_output(final_result)
+        else:
+            final_yield = ""
+
+    # Match the non-async behavior - yield the parsed output directly, not as JSON
+    yield final_yield
 
 
 def generate_proxy_stream(stream_to_f, user_input, vector_name, chat_history, generate_f_output, **kwargs):
