@@ -47,7 +47,7 @@ def setup_excel_plugin(args):
         subprocess.run([python_executable, "-c", "import xlwings"], check=True, capture_output=True)
         console.print("xlwings is installed in the Python environment.")
     except subprocess.CalledProcessError:
-        console.print("[bold red]WARNING: xlwings is not installed in the Python environment. Please install it using 'pip install sunholo\[excel]'[/bold red]")
+        console.print("[bold red]WARNING: xlwings is not installed in the Python environment. Please install it using 'pip install sunholo[excel]'[/bold red]")
 
     
     # Write the xlwings.conf file
