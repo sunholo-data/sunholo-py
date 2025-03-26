@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sunholo"
-version = "0.121.0"
+version = "0.123.0"
 description = "Large Language Model DevOps - a package to help deploy LLMs to the Cloud."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -27,6 +27,8 @@ classifiers = [
 dependencies = [
     "aiohttp",
     "google-auth",
+    "ollama>=0.4.7",
+    "pillow>=11.0.0",
     "pydantic",
     "requests",
     "ruamel.yaml",
@@ -181,6 +183,10 @@ gcp = [
     "langchain_google_alloydb_pg>=0.2.2",
     "langchain-google-vertexai",
     "pillow"
+]
+ollama = [
+        "pillow", 
+        "ollama>=0.4.7"
 ]
 openai = [
     "langchain-openai>=0.3.2",
