@@ -262,21 +262,38 @@ class AlloyDBClient:
     async def _execute_sql_async_langchain(self, sql_statement):
         return await self.engine._afetch(query = sql_statement)
         
-    async def _execute_sql_async_pg8000(self, sql_statement):
-        """Executes a given SQL statement asynchronously with error handling."""
+    async def _execute_sql_async_pg8000(self, sql_statement, values=None):
+        """Executes a given SQL statement asynchronously with error handling.
+        
+        Args:
+            sql_statement (str): The SQL statement to execute
+            values (list, optional): Values for parameterized query
+            
+        Returns:
+            Result of SQL execution
+        """
         sql_ = sqlalchemy.text(sql_statement)
         result = None
-        async with self.engine.connect() as conn:
-            try:
-                log.info(f"Executing SQL statement asynchronously: {sql_}")
+        
+        # Get connection directly, avoiding async with
+        conn = await self.engine.connect()
+        try:
+            log.info(f"Executing SQL statement asynchronously: {sql_}")
+            if values:
+                result = await conn.execute(sql_, values)
+            else:
                 result = await conn.execute(sql_)
-            except DatabaseError as e:
-                if "already exists" in str(e):
-                    log.warning(f"Error ignored: {str(e)}. Assuming object already exists.")
-                else:
-                    raise
-            finally:
-                await conn.close()
+            
+            # Explicitly commit transaction
+            await conn.commit()
+        except DatabaseError as e:
+            if "already exists" in str(e):
+                log.warning(f"Error ignored: {str(e)}. Assuming object already exists.")
+            else:
+                raise
+        finally:
+            # Close connection only here, not inside the context manager
+            await conn.close()
 
         return result
     
@@ -540,7 +557,7 @@ class AlloyDBClient:
         """
         try:
             # Simple query to check connection
-            result = await self.execute_sql_async("SELECT 1")
+            _ = await self.execute_sql_async("SELECT 1")
             return True
         except Exception as e:
             log.warning(f"Database connection check failed: {e}")
@@ -565,7 +582,7 @@ class AlloyDBClient:
                 # Re-create the engine
                 self.engine = self._create_engine()
                 
-            log.info(f"Successfully reconnected to AlloyDB")
+            log.info("Successfully reconnected to AlloyDB")
             return True
         except Exception as e:
             log.error(f"Failed to reconnect to AlloyDB: {e}")
@@ -640,7 +657,8 @@ class AlloyDBClient:
         # Grant permissions if users are provided
         if users:
             for user in users:
-                await self.execute_sql_async(f'GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "{table_name}" TO "{user}";')
+                grant_sql = f'GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "{table_name}" TO "{user}";'
+                await self.execute_sql_async(grant_sql)
         
         return result
 
@@ -690,23 +708,3 @@ class AlloyDBClient:
         log.info(f"Inserted data into table {table_name}")
         
         return result
-
-    async def execute_sql_async(self, sql_statement, values=None):
-        """
-        Executes a given SQL statement asynchronously with optional parameter values.
-        
-        Args:
-            sql_statement (str): The SQL statement to execute
-            values (list, optional): Values for parameterized query
-            
-        Returns:
-            Result of SQL execution
-        """
-        log.info(f"Executing async SQL statement: {sql_statement}")
-        if self.engine_type == "pg8000":
-            result = await self._execute_sql_async_pg8000(sql_statement, values)
-        elif self.engine_type == "langchain":
-            result = await self._execute_sql_async_langchain(sql_statement, values)
-        
-        return result
-
