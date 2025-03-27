@@ -14,7 +14,6 @@ from .uuid import generate_uuid_from_object_id
 from ..custom_logging import log
 from ..utils import ConfigManager
 from ..components import get_embeddings
-
 class AlloyDBClient:
     """
     A class to manage interactions with an AlloyDB instance.
@@ -530,9 +529,16 @@ class AlloyDBClient:
             bool: True if connection is valid, False otherwise
         """
         try:
-            # Simple query to check connection
-            _ = await self.execute_sql_async("SELECT 1")
-            return True
+            # For pg8000 engine, use synchronous connection
+            if self.engine_type == "pg8000":
+                # Use direct synchronous query
+                with self.engine.connect() as conn:
+                    conn.execute(sqlalchemy.text("SELECT 1"))
+                return True
+            else:
+                # For langchain, use async connection
+                await self._execute_sql_async_langchain("SELECT 1")
+                return True
         except Exception as e:
             log.warning(f"Database connection check failed: {e}")
             return False
