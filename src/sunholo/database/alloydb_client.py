@@ -228,22 +228,31 @@ class AlloyDBClient:
     def _execute_sql_langchain(self, sql_statement):
         return self.engine._fetch(query = sql_statement)
 
-    def _execute_sql_pg8000(self, sql_statement):
-        """Executes a given SQL statement with error handling.
+    def _execute_sql_pg8000(self, sql_statement, params=None):
+        """
+        Executes a given SQL statement with error handling.
 
-         - sql_statement (str): The SQL statement to execute.
-         - Returns: The result of the execution, if any.
+        Args:
+            sql_statement (str): The SQL statement to execute.
+            params (dict or list, optional): Parameters for the SQL statement.
+            
+        Returns:
+            The result of the execution, if any.
         """
         sql_ = sqlalchemy.text(sql_statement)
         result = None
         with self.engine.connect() as conn:
             try:
                 log.info(f"Executing SQL statement: {sql_}")
-                result = conn.execute(sql_)
+                if params:
+                    result = conn.execute(sql_, params)
+                else:
+                    result = conn.execute(sql_)
             except DatabaseError as e:
                 if "already exists" in str(e):
                     log.warning(f"Error ignored: {str(e)}. Assuming object already exists.")
                 else:
+                    log.error(f"Database error: {e}, SQL: {sql_statement}, Params: {params}")
                     raise  
             finally:
                 conn.close()
@@ -253,6 +262,7 @@ class AlloyDBClient:
     async def execute_sql_async(self, sql_statement):
         log.info(f"Executing async SQL statement: {sql_statement}")
         if self.engine_type == "pg8000":
+            # dont use async???
             result = await self._execute_sql_async_pg8000(sql_statement)
         elif self.engine_type == "langchain":
             result = await self._execute_sql_async_langchain(sql_statement)
@@ -275,14 +285,14 @@ class AlloyDBClient:
         sql_ = sqlalchemy.text(sql_statement)
         result = None
         
-        # Get connection directly, avoiding async with
-        conn = await self.engine.connect()
+        # IMPORTANT: Don't use await here, the engine.connect() is synchronous
+        conn = self.engine.connect()
         try:
             log.info(f"Executing SQL statement asynchronously: {sql_}")
             if values:
-                result = await conn.execute(sql_, values)
+                result = conn.execute(sql_, values)
             else:
-                result = await conn.execute(sql_)
+                result = conn.execute(sql_)
             
             # Explicitly commit transaction
             await conn.commit()
@@ -293,7 +303,7 @@ class AlloyDBClient:
                 raise
         finally:
             # Close connection only here, not inside the context manager
-            await conn.close()
+            conn.close()
 
         return result
     
@@ -512,42 +522,6 @@ class AlloyDBClient:
 
         self.grant_table_permissions(vectorstore_id, users)
 
-    async def _execute_sql_async_pg8000(self, sql_statement, values=None):
-        """Executes a given SQL statement asynchronously with error handling."""
-        sql_ = sqlalchemy.text(sql_statement)
-        result = None
-        async with self.engine.connect() as conn:
-            try:
-                log.info(f"Executing SQL statement asynchronously: {sql_}")
-                if values:
-                    result = await conn.execute(sql_, values)
-                else:
-                    result = await conn.execute(sql_)
-            except DatabaseError as e:
-                if "already exists" in str(e):
-                    log.warning(f"Error ignored: {str(e)}. Assuming object already exists.")
-                else:
-                    raise
-            finally:
-                await conn.close()
-
-        return result
-
-    async def _execute_sql_async_langchain(self, sql_statement, values=None):
-        """Execute SQL asynchronously using langchain engine"""
-        if values:
-            # Implement parameterized queries for langchain engine
-            # This would need to be adjusted based on how langchain engine handles parameters
-            log.warning("Parameterized queries may not be fully supported with langchain engine")
-            # For now, attempt a basic string substitution (not ideal for production)
-            for value in values:
-                if isinstance(value, str):
-                    sql_statement = sql_statement.replace("%s", f"'{value}'", 1)
-                else:
-                    sql_statement = sql_statement.replace("%s", str(value), 1)
-        
-        return await self.engine._afetch(query=sql_statement)
-
     async def check_connection(self):
         """
         Checks if the database connection is still valid.
@@ -650,15 +624,24 @@ class AlloyDBClient:
         )
         '''
         
-        # Execute SQL to create table
-        result = await self.execute_sql_async(sql)
+        # Execute SQL to create table based on engine type
+        if self.engine_type == "pg8000":
+            # Use the synchronous method for pg8000
+            result = self._execute_sql_pg8000(sql)
+        else:
+            # Use the async method for langchain
+            result = await self._execute_sql_async_langchain(sql)
+        
         log.info(f"Created or ensured table {table_name} exists")
         
         # Grant permissions if users are provided
         if users:
             for user in users:
                 grant_sql = f'GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "{table_name}" TO "{user}";'
-                await self.execute_sql_async(grant_sql)
+                if self.engine_type == "pg8000":
+                    self.execute_sql(grant_sql)
+                else:
+                    await self._execute_sql_async_langchain(grant_sql)
         
         return result
 
@@ -683,15 +666,22 @@ class AlloyDBClient:
             insert_data["extraction_backend"] = metadata.get("extraction_backend", "unknown")
             insert_data["extraction_model"] = metadata.get("extraction_model", "unknown")
         
-        # Prepare column names and placeholders for values
+        # Prepare column names and values for SQL
         columns = [f'"{key}"' for key in insert_data.keys()]
-        placeholders = []
-        values = []
         
-        # Process values and create properly formatted placeholders
-        for key, value in insert_data.items():
-            values.append(json.dumps(value) if isinstance(value, (dict, list)) else value)
-            placeholders.append("%s")
+        # Process values
+        processed_values = {}
+        for i, (key, value) in enumerate(insert_data.items()):
+            # Create a unique parameter name
+            param_name = f"param_{i}"
+            # For JSON values, convert to string
+            if isinstance(value, (dict, list)):
+                processed_values[param_name] = json.dumps(value)
+            else:
+                processed_values[param_name] = value
+        
+        # Create placeholders using named parameters
+        placeholders = [f":{param_name}" for param_name in processed_values.keys()]
         
         # Create SQL statement for insertion
         columns_str = ", ".join(columns)
@@ -703,8 +693,14 @@ class AlloyDBClient:
         RETURNING id
         '''
         
-        # Execute SQL to insert data
-        result = await self.execute_sql_async(sql, values)
+        # Execute SQL to insert data based on engine type
+        if self.engine_type == "pg8000":
+            # Use the synchronous method for pg8000 with properly formatted parameters
+            result = self._execute_sql_pg8000(sql, processed_values)
+        else:
+            # Use the async method for langchain
+            result = await self._execute_sql_async_langchain(sql, processed_values)
+        
         log.info(f"Inserted data into table {table_name}")
         
         return result
