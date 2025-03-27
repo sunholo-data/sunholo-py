@@ -531,6 +531,60 @@ class AlloyDBClient:
         
         return await self.engine._afetch(query=sql_statement)
 
+    async def check_connection(self):
+        """
+        Checks if the database connection is still valid.
+        
+        Returns:
+            bool: True if connection is valid, False otherwise
+        """
+        try:
+            # Simple query to check connection
+            result = await self.execute_sql_async("SELECT 1")
+            return True
+        except Exception as e:
+            log.warning(f"Database connection check failed: {e}")
+            return False
+
+    async def ensure_connected(self):
+        """
+        Ensures the database connection is valid, attempting to reconnect if necessary.
+        
+        Returns:
+            bool: True if connection is valid or reconnection successful, False otherwise
+        """
+        if await self.check_connection():
+            return True
+            
+        try:
+            # Attempt to reconnect - implementation depends on your database driver
+            if self.engine_type == "pg8000":
+                # Re-create the engine
+                self.engine = self._create_engine_from_pg8000(self.user, self.password, self.database)
+            elif self.engine_type == "langchain":
+                # Re-create the engine
+                self.engine = self._create_engine()
+                
+            log.info(f"Successfully reconnected to AlloyDB")
+            return True
+        except Exception as e:
+            log.error(f"Failed to reconnect to AlloyDB: {e}")
+            return False
+
+    async def close(self):
+        """
+        Properly close the database connection.
+        """
+        try:
+            if self.engine_type == "pg8000":
+                # Close engine or connector
+                if hasattr(self, 'connector'):
+                    await self.connector.close()
+            # For langchain engine, additional cleanup might be needed
+            log.info("Closed AlloyDB connection")
+        except Exception as e:
+            log.warning(f"Error closing AlloyDB connection: {e}")
+
 async def create_table_from_schema(self, table_name: str, schema_data: dict, users: list = None):
     """
     Creates or ensures a table exists based on the structure of the provided schema data.
