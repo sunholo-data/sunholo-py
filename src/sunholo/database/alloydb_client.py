@@ -585,128 +585,128 @@ class AlloyDBClient:
         except Exception as e:
             log.warning(f"Error closing AlloyDB connection: {e}")
 
-async def create_table_from_schema(self, table_name: str, schema_data: dict, users: list = None):
-    """
-    Creates or ensures a table exists based on the structure of the provided schema data.
-    
-    Args:
-        table_name (str): Name of the table to create
-        schema_data (dict): Data structure that matches the expected schema
-        users (list, optional): List of users to grant permissions to
+    async def create_table_from_schema(self, table_name: str, schema_data: dict, users: list = None):
+        """
+        Creates or ensures a table exists based on the structure of the provided schema data.
         
-    Returns:
-        Result of SQL execution
-    """
-    # Generate column definitions from schema data
-    columns = []
-    for key, value in schema_data.items():
-        if isinstance(value, dict):
-            # For nested objects, store as JSONB
-            columns.append(f'"{key}" JSONB')
-        elif isinstance(value, list):
-            # For arrays, store as JSONB
-            columns.append(f'"{key}" JSONB')
-        elif isinstance(value, int):
-            columns.append(f'"{key}" INTEGER')
-        elif isinstance(value, float):
-            columns.append(f'"{key}" NUMERIC')
-        elif isinstance(value, bool):
-            columns.append(f'"{key}" BOOLEAN')
-        else:
-            # Default to TEXT for strings and other types
-            columns.append(f'"{key}" TEXT')
-    
-    # Add metadata columns
-    columns.extend([
-        '"source" TEXT',
-        '"extraction_date" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP',
-        '"extraction_backend" TEXT',
-        '"extraction_model" TEXT'
-    ])
-    
-    # Create SQL statement for table creation
-    columns_sql = ", ".join(columns)
-    sql = f'''
-    CREATE TABLE IF NOT EXISTS "{table_name}" (
-        id SERIAL PRIMARY KEY,
-        {columns_sql}
-    )
-    '''
-    
-    # Execute SQL to create table
-    result = await self.execute_sql_async(sql)
-    log.info(f"Created or ensured table {table_name} exists")
-    
-    # Grant permissions if users are provided
-    if users:
-        for user in users:
-            await self.execute_sql_async(f'GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "{table_name}" TO "{user}";')
-    
-    return result
+        Args:
+            table_name (str): Name of the table to create
+            schema_data (dict): Data structure that matches the expected schema
+            users (list, optional): List of users to grant permissions to
+            
+        Returns:
+            Result of SQL execution
+        """
+        # Generate column definitions from schema data
+        columns = []
+        for key, value in schema_data.items():
+            if isinstance(value, dict):
+                # For nested objects, store as JSONB
+                columns.append(f'"{key}" JSONB')
+            elif isinstance(value, list):
+                # For arrays, store as JSONB
+                columns.append(f'"{key}" JSONB')
+            elif isinstance(value, int):
+                columns.append(f'"{key}" INTEGER')
+            elif isinstance(value, float):
+                columns.append(f'"{key}" NUMERIC')
+            elif isinstance(value, bool):
+                columns.append(f'"{key}" BOOLEAN')
+            else:
+                # Default to TEXT for strings and other types
+                columns.append(f'"{key}" TEXT')
+        
+        # Add metadata columns
+        columns.extend([
+            '"source" TEXT',
+            '"extraction_date" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP',
+            '"extraction_backend" TEXT',
+            '"extraction_model" TEXT'
+        ])
+        
+        # Create SQL statement for table creation
+        columns_sql = ", ".join(columns)
+        sql = f'''
+        CREATE TABLE IF NOT EXISTS "{table_name}" (
+            id SERIAL PRIMARY KEY,
+            {columns_sql}
+        )
+        '''
+        
+        # Execute SQL to create table
+        result = await self.execute_sql_async(sql)
+        log.info(f"Created or ensured table {table_name} exists")
+        
+        # Grant permissions if users are provided
+        if users:
+            for user in users:
+                await self.execute_sql_async(f'GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "{table_name}" TO "{user}";')
+        
+        return result
 
-async def write_data_to_table(self, table_name: str, data: dict, metadata: dict = None):
-    """
-    Writes data to the specified table.
-    
-    Args:
-        table_name (str): Name of the table
-        data (dict): Data to write to the table
-        metadata (dict, optional): Additional metadata to include
+    async def write_data_to_table(self, table_name: str, data: dict, metadata: dict = None):
+        """
+        Writes data to the specified table.
         
-    Returns:
-        Result of SQL execution
-    """
-    # Create copies to avoid modifying the original data
-    insert_data = dict(data)
-    
-    # Add metadata if provided
-    if metadata:
-        insert_data["source"] = metadata.get("objectId", metadata.get("source", "unknown"))
-        insert_data["extraction_backend"] = metadata.get("extraction_backend", "unknown")
-        insert_data["extraction_model"] = metadata.get("extraction_model", "unknown")
-    
-    # Prepare column names and placeholders for values
-    columns = [f'"{key}"' for key in insert_data.keys()]
-    placeholders = []
-    values = []
-    
-    # Process values and create properly formatted placeholders
-    for key, value in insert_data.items():
-        values.append(json.dumps(value) if isinstance(value, (dict, list)) else value)
-        placeholders.append("%s")
-    
-    # Create SQL statement for insertion
-    columns_str = ", ".join(columns)
-    placeholders_str = ", ".join(placeholders)
-    
-    sql = f'''
-    INSERT INTO "{table_name}" ({columns_str})
-    VALUES ({placeholders_str})
-    RETURNING id
-    '''
-    
-    # Execute SQL to insert data
-    result = await self.execute_sql_async(sql, values)
-    log.info(f"Inserted data into table {table_name}")
-    
-    return result
+        Args:
+            table_name (str): Name of the table
+            data (dict): Data to write to the table
+            metadata (dict, optional): Additional metadata to include
+            
+        Returns:
+            Result of SQL execution
+        """
+        # Create copies to avoid modifying the original data
+        insert_data = dict(data)
+        
+        # Add metadata if provided
+        if metadata:
+            insert_data["source"] = metadata.get("objectId", metadata.get("source", "unknown"))
+            insert_data["extraction_backend"] = metadata.get("extraction_backend", "unknown")
+            insert_data["extraction_model"] = metadata.get("extraction_model", "unknown")
+        
+        # Prepare column names and placeholders for values
+        columns = [f'"{key}"' for key in insert_data.keys()]
+        placeholders = []
+        values = []
+        
+        # Process values and create properly formatted placeholders
+        for key, value in insert_data.items():
+            values.append(json.dumps(value) if isinstance(value, (dict, list)) else value)
+            placeholders.append("%s")
+        
+        # Create SQL statement for insertion
+        columns_str = ", ".join(columns)
+        placeholders_str = ", ".join(placeholders)
+        
+        sql = f'''
+        INSERT INTO "{table_name}" ({columns_str})
+        VALUES ({placeholders_str})
+        RETURNING id
+        '''
+        
+        # Execute SQL to insert data
+        result = await self.execute_sql_async(sql, values)
+        log.info(f"Inserted data into table {table_name}")
+        
+        return result
 
-async def execute_sql_async(self, sql_statement, values=None):
-    """
-    Executes a given SQL statement asynchronously with optional parameter values.
-    
-    Args:
-        sql_statement (str): The SQL statement to execute
-        values (list, optional): Values for parameterized query
+    async def execute_sql_async(self, sql_statement, values=None):
+        """
+        Executes a given SQL statement asynchronously with optional parameter values.
         
-    Returns:
-        Result of SQL execution
-    """
-    log.info(f"Executing async SQL statement: {sql_statement}")
-    if self.engine_type == "pg8000":
-        result = await self._execute_sql_async_pg8000(sql_statement, values)
-    elif self.engine_type == "langchain":
-        result = await self._execute_sql_async_langchain(sql_statement, values)
-    
-    return result
+        Args:
+            sql_statement (str): The SQL statement to execute
+            values (list, optional): Values for parameterized query
+            
+        Returns:
+            Result of SQL execution
+        """
+        log.info(f"Executing async SQL statement: {sql_statement}")
+        if self.engine_type == "pg8000":
+            result = await self._execute_sql_async_pg8000(sql_statement, values)
+        elif self.engine_type == "langchain":
+            result = await self._execute_sql_async_langchain(sql_statement, values)
+        
+        return result
 
