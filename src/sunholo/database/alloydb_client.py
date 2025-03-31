@@ -610,19 +610,20 @@ class AlloyDBClient:
                 if items and isinstance(items[0], dict):
                     # If the first item is a dictionary, we need to create columns for all its keys
                     sample_item = items[0]
-                    # Flatten the dictionary with the key as prefix
-                    flattened_item = self._flatten_dict_for_schema(sample_item, key, "_")
                     
-                    # Add columns for all keys in the flattened dictionary
-                    for item_key, item_value in flattened_item.items():
-                        item_column = self._get_column_definition(item_key, item_value)
-                        columns.append(item_column)
+                    # Create columns for all keys in the sample item
+                    for item_key, item_value in sample_item.items():
+                        column_key = f"{key}_{item_key}"
+                        column_type = self._get_sql_type(item_value)
+                        columns.append(f'"{column_key}" {column_type}')
                 else:
                     # If items are simple values, just add a column for the list key itself
-                    columns.append(self._get_column_definition(key, items[0] if items else None))
+                    column_type = self._get_sql_type(items[0] if items else None)
+                    columns.append(f'"{key}" {column_type}')
             else:
                 # Regular handling for non-list fields
-                columns.append(self._get_column_definition(key, value))
+                column_type = self._get_sql_type(value)
+                columns.append(f'"{key}" {column_type}')
         
         # Add metadata columns
         columns.extend([
@@ -656,41 +657,40 @@ class AlloyDBClient:
             for user in users:
                 grant_sql = f'GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "{table_name}" TO "{user}";'
                 if self.engine_type == "pg8000":
-                    self.execute_sql(grant_sql)
+                    self._execute_sql_pg8000(grant_sql)
                 else:
                     await self._execute_sql_async_langchain(grant_sql)
         
         return result
 
-    def _get_column_definition(self, key, value):
+    def _get_sql_type(self, value):
         """
-        Helper method to get SQL column definition from a key and value.
+        Helper method to determine SQL type from a Python value.
         
         Args:
-            key (str): The column name
             value: The value to determine the column type
             
         Returns:
-            str: SQL column definition
+            str: SQL type
         """
         if value is None:
             # For unknown types (None), default to TEXT
-            return f'"{key}" TEXT'
+            return "TEXT"
         elif isinstance(value, dict):
             # For nested objects, store as JSONB
-            return f'"{key}" JSONB'
+            return "JSONB"
         elif isinstance(value, list):
             # For arrays, store as JSONB
-            return f'"{key}" JSONB'
+            return "JSONB"
         elif isinstance(value, int):
-            return f'"{key}" INTEGER'
+            return "INTEGER"
         elif isinstance(value, float):
-            return f'"{key}" NUMERIC'
+            return "NUMERIC"
         elif isinstance(value, bool):
-            return f'"{key}" BOOLEAN'
+            return "BOOLEAN"
         else:
             # Default to TEXT for strings and other types
-            return f'"{key}" TEXT'
+            return "TEXT"
 
     def _flatten_dict_for_schema(self, nested_dict, parent_key='', separator='.'):
         """
@@ -789,6 +789,8 @@ class AlloyDBClient:
             primary_list_key = next(iter(expandable_lists))
             primary_list = expandable_lists[primary_list_key]
             
+            log.info(f"Expanding list '{primary_list_key}' with {len(primary_list)} items into separate rows")
+            
             # For each item in the primary list, create a new row
             for item_idx, item in enumerate(primary_list):
                 # Create a copy of the regular data
@@ -797,7 +799,12 @@ class AlloyDBClient:
                 # Add the current item from the primary list
                 if isinstance(item, dict):
                     # If it's a dictionary, flatten it with the primary key as prefix
-                    flattened_item = self._flatten_dict(item, primary_list_key, "_")
+                    flattened_item = {}
+                    for k, v in item.items():
+                        flattened_key = f"{primary_list_key}_{k}"
+                        flattened_item[flattened_key] = v
+                    
+                    # Update row data with flattened item
                     row_data.update(flattened_item)
                 else:
                     # If it's a simple value, just add it with the list key
@@ -809,8 +816,12 @@ class AlloyDBClient:
                 # Insert this row
                 result = await self._insert_single_row(table_name, row_data, metadata)
                 results.append(result)
+            
+            return results
         
-        return results
+        # If we somehow get here (shouldn't happen), fall back to single row insert
+        return await self._insert_single_row(table_name, regular_data, metadata)
+
 
     async def _insert_single_row(self, table_name: str, data: dict, metadata: dict = None):
         """
