@@ -584,7 +584,8 @@ class AlloyDBClient:
 
     async def create_table_from_schema(self, table_name: str, schema_data: dict, users: list = None):
         """
-        Creates or ensures a table exists based on the structure of the provided schema data.
+        Creates or ensures a table exists based on the structure of the provided schema data,
+        with special handling for expandable lists.
         
         Args:
             table_name (str): Name of the table to create
@@ -596,22 +597,32 @@ class AlloyDBClient:
         """
         # Generate column definitions from schema data
         columns = []
+        
         for key, value in schema_data.items():
-            if isinstance(value, dict):
-                # For nested objects, store as JSONB
-                columns.append(f'"{key}" JSONB')
-            elif isinstance(value, list):
-                # For arrays, store as JSONB
-                columns.append(f'"{key}" JSONB')
-            elif isinstance(value, int):
-                columns.append(f'"{key}" INTEGER')
-            elif isinstance(value, float):
-                columns.append(f'"{key}" NUMERIC')
-            elif isinstance(value, bool):
-                columns.append(f'"{key}" BOOLEAN')
+            # Check if this is a specially marked expandable list
+            if isinstance(value, dict) and value.get("__is_expandable_list__", False):
+                # Handle expandable lists - we need to examine the first item to determine column types
+                items = value.get("items", [])
+                
+                # Add an index column for this list
+                columns.append(f'"{key}_index" INTEGER')
+                
+                if items and isinstance(items[0], dict):
+                    # If the first item is a dictionary, we need to create columns for all its keys
+                    sample_item = items[0]
+                    # Flatten the dictionary with the key as prefix
+                    flattened_item = self._flatten_dict_for_schema(sample_item, key, "_")
+                    
+                    # Add columns for all keys in the flattened dictionary
+                    for item_key, item_value in flattened_item.items():
+                        item_column = self._get_column_definition(item_key, item_value)
+                        columns.append(item_column)
+                else:
+                    # If items are simple values, just add a column for the list key itself
+                    columns.append(self._get_column_definition(key, items[0] if items else None))
             else:
-                # Default to TEXT for strings and other types
-                columns.append(f'"{key}" TEXT')
+                # Regular handling for non-list fields
+                columns.append(self._get_column_definition(key, value))
         
         # Add metadata columns
         columns.extend([
@@ -651,7 +662,64 @@ class AlloyDBClient:
         
         return result
 
-    def flatten_dict(self, nested_dict, parent_key='', separator='.'):
+    def _get_column_definition(self, key, value):
+        """
+        Helper method to get SQL column definition from a key and value.
+        
+        Args:
+            key (str): The column name
+            value: The value to determine the column type
+            
+        Returns:
+            str: SQL column definition
+        """
+        if value is None:
+            # For unknown types (None), default to TEXT
+            return f'"{key}" TEXT'
+        elif isinstance(value, dict):
+            # For nested objects, store as JSONB
+            return f'"{key}" JSONB'
+        elif isinstance(value, list):
+            # For arrays, store as JSONB
+            return f'"{key}" JSONB'
+        elif isinstance(value, int):
+            return f'"{key}" INTEGER'
+        elif isinstance(value, float):
+            return f'"{key}" NUMERIC'
+        elif isinstance(value, bool):
+            return f'"{key}" BOOLEAN'
+        else:
+            # Default to TEXT for strings and other types
+            return f'"{key}" TEXT'
+
+    def _flatten_dict_for_schema(self, nested_dict, parent_key='', separator='.'):
+        """
+        Flatten a nested dictionary for schema creation.
+        
+        Args:
+            nested_dict (dict): The nested dictionary to flatten
+            parent_key (str): The parent key for the current recursion level
+            separator (str): The separator to use between key levels
+            
+        Returns:
+            dict: A flattened dictionary
+        """
+        flattened = {}
+        
+        for key, value in nested_dict.items():
+            # Create the new key with parent_key if it exists
+            new_key = f"{parent_key}{separator}{key}" if parent_key else key
+            
+            # If value is a dictionary, recursively flatten it
+            if isinstance(value, dict):
+                flattened.update(self._flatten_dict_for_schema(value, new_key, separator))
+            else:
+                # For simple values, just add them with the new key
+                flattened[new_key] = value
+                
+        return flattened
+
+    def _flatten_dict(self, nested_dict, parent_key='', separator='.'):
         """
         Flatten a nested dictionary into a single-level dictionary with dot notation for keys.
         
@@ -671,7 +739,7 @@ class AlloyDBClient:
             
             # If value is a dictionary, recursively flatten it
             if isinstance(value, dict):
-                flattened.update(self.flatten_dict(value, new_key, separator))
+                flattened.update(self._flatten_dict(value, new_key, separator))
             # Handle lists containing dictionaries or other values
             elif isinstance(value, list):
                 # Mark lists for special processing during database insertion
@@ -729,7 +797,7 @@ class AlloyDBClient:
                 # Add the current item from the primary list
                 if isinstance(item, dict):
                     # If it's a dictionary, flatten it with the primary key as prefix
-                    flattened_item = self.flatten_dict(item, primary_list_key, "_")
+                    flattened_item = self._flatten_dict(item, primary_list_key, "_")
                     row_data.update(flattened_item)
                 else:
                     # If it's a simple value, just add it with the list key
