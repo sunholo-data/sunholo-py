@@ -651,9 +651,102 @@ class AlloyDBClient:
         
         return result
 
+    def flatten_dict(self, nested_dict, parent_key='', separator='.'):
+        """
+        Flatten a nested dictionary into a single-level dictionary with dot notation for keys.
+        
+        Args:
+            nested_dict (dict): The nested dictionary to flatten
+            parent_key (str): The parent key for the current recursion level
+            separator (str): The separator to use between key levels (default: '.')
+            
+        Returns:
+            dict: A flattened dictionary with special handling for lists
+        """
+        flattened = {}
+        
+        for key, value in nested_dict.items():
+            # Create the new key with parent_key if it exists
+            new_key = f"{parent_key}{separator}{key}" if parent_key else key
+            
+            # If value is a dictionary, recursively flatten it
+            if isinstance(value, dict):
+                flattened.update(self.flatten_dict(value, new_key, separator))
+            # Handle lists containing dictionaries or other values
+            elif isinstance(value, list):
+                # Mark lists for special processing during database insertion
+                # We'll use a special format to indicate this is a list that needs expansion
+                flattened[new_key] = {
+                    "__is_expandable_list__": True,
+                    "items": value
+                }
+            else:
+                # For simple values, just add them with the new key
+                flattened[new_key] = value
+                
+        return flattened
+
     async def write_data_to_table(self, table_name: str, data: dict, metadata: dict = None):
         """
-        Writes data to the specified table.
+        Writes data to the specified table, with special handling for expandable lists.
+        
+        Args:
+            table_name (str): Name of the table
+            data (dict): Data to write to the table
+            metadata (dict, optional): Additional metadata to include
+                
+        Returns:
+            List of results from SQL executions
+        """
+        # Find any expandable lists in the data
+        expandable_lists = {}
+        regular_data = {}
+        
+        for key, value in data.items():
+            if isinstance(value, dict) and value.get("__is_expandable_list__", False):
+                expandable_lists[key] = value["items"]
+            else:
+                regular_data[key] = value
+        
+        # If no expandable lists are found, do a simple insert
+        if not expandable_lists:
+            return await self._insert_single_row(table_name, regular_data, metadata)
+        
+        # For expandable lists, we need to create multiple rows
+        results = []
+        
+        # Create combinations of rows based on expandable lists
+        if expandable_lists:
+            # Get the first expandable list to start with
+            primary_list_key = next(iter(expandable_lists))
+            primary_list = expandable_lists[primary_list_key]
+            
+            # For each item in the primary list, create a new row
+            for item_idx, item in enumerate(primary_list):
+                # Create a copy of the regular data
+                row_data = dict(regular_data)
+                
+                # Add the current item from the primary list
+                if isinstance(item, dict):
+                    # If it's a dictionary, flatten it with the primary key as prefix
+                    flattened_item = self.flatten_dict(item, primary_list_key, "_")
+                    row_data.update(flattened_item)
+                else:
+                    # If it's a simple value, just add it with the list key
+                    row_data[primary_list_key] = item
+                
+                # Add item index for reference
+                row_data[f"{primary_list_key}_index"] = item_idx
+                
+                # Insert this row
+                result = await self._insert_single_row(table_name, row_data, metadata)
+                results.append(result)
+        
+        return results
+
+    async def _insert_single_row(self, table_name: str, data: dict, metadata: dict = None):
+        """
+        Inserts a single row of data into the specified table.
         
         Args:
             table_name (str): Name of the table
@@ -663,14 +756,15 @@ class AlloyDBClient:
         Returns:
             Result of SQL execution
         """
+        
         # Create copies to avoid modifying the original data
         insert_data = dict(data)
         
         # Add metadata if provided
         if metadata:
-            insert_data["source"] = metadata.get("objectId", metadata.get("source", "unknown"))
-            insert_data["extraction_backend"] = metadata.get("extraction_backend", "unknown")
-            insert_data["extraction_model"] = metadata.get("extraction_model", "unknown")
+            insert_data["source"] = metadata.get("objectId", metadata.get("source", "not-in-metadata"))
+            insert_data["extraction_backend"] = metadata.get("extraction_backend", "not-in-metadata")
+            insert_data["extraction_model"] = metadata.get("extraction_model", "not-in-metadata")
         
         # Prepare column names and values for SQL
         columns = [f'"{key}"' for key in insert_data.keys()]

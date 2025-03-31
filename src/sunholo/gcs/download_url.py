@@ -36,7 +36,7 @@ def get_image_from_gcs(gs_uri: str) -> Image.Image: # type: ignore
     except IOError as e:
         raise ValueError("Unable to open image from bytes:", e)
 
-def get_bytes_from_gcs(gs_uri) -> Optional[bytes]:
+def get_bytes_from_gcs(gs_uri: str) -> Optional[bytes]:
     """
     Downloads a file from Google Cloud Storage and returns its bytes.
 
