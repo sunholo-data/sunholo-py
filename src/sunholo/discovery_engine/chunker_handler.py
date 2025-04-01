@@ -100,9 +100,10 @@ def do_discovery_engine(message_data:str, metadata:dict, config:ConfigManager=No
         log.warning("Only gs:// data is supported for Discovery Engine")
 
 
-def check_discovery_engine_in_memory(config:ConfigManager):
+def check_discovery_engine_in_memory(config:ConfigManager) -> int:
     memories = config.vacConfig("memory")
 
+    discovery_engine_memories = 0
     for memory in memories:  # Iterate over the list
         for key, value in memory.items():  # Now iterate over the dictionary
             log.info(f"Found memory {key}")
@@ -110,16 +111,16 @@ def check_discovery_engine_in_memory(config:ConfigManager):
             if vectorstore:
                 if vectorstore == "discovery_engine" or vectorstore == "vertex_ai_search":
                     log.info(f"Found vectorstore {vectorstore}")
-                    return True
+                    discovery_engine_memories += 1
     
-    return False
+    return discovery_engine_memories
 
 def check_write_memories(config:ConfigManager):
     write_mem = []
     memories = config.vacConfig("memory")
     for memory in memories:
         for key, value in memory.items():
-            if value.get('read_only'):
+            if value and value.get('read_only'):
                 continue
             write_mem.append(memory)
     
@@ -142,21 +143,25 @@ def discovery_engine_chunker_check(message_data,
         return None
     
     total_memories = len(check_write_memories(config))
-    llama = None
-    if check_discovery_engine_in_memory(config) and process:
-        llama = do_discovery_engine(message_data, metadata, config=config)
-        log.info(f"Processed discovery engine: {llama}")
+    total_discovery_memories = check_discovery_engine_in_memory(config)
+
+    if not process and total_memories == total_discovery_memories:
+        log.info(f"Do not process discovery engine, and only memory found is discovery engine for {metadata} - stopping")
+        
+        return metadata
+
+    if total_discovery_memories > 0:
+        log.info(f"Process discovery engine for {metadata}")
+        disc_meta = do_discovery_engine(message_data, metadata, config=config)
+        log.info(f"Processed discovery engine: {disc_meta}")
 
     # If discovery engine is the only entry, return
-    if llama and total_memories == 1:
-
-        return llama
+    if total_discovery_memories == total_memories:
+        log.info(f"Process discovery engine was only type found in {metadata} - stopping")
+        
+        return disc_meta
     
-    # If not processing and only memory, do not process further
-    if not process and total_memories == 1:
-        return metadata
-    
-    elif llama:
-        log.info("Discovery Engine found but not the only memory, continuing with other processes.")
+    elif disc_meta:
+        log.info("Discovery Engine found but not the only memory, continuing with other processes - returning None")
 
         return None

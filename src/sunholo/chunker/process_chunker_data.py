@@ -35,13 +35,16 @@ def process_chunker_data(message_data, metadata, vector_name):
     # checks if only a llamaindex chunking/embedder, return early as no other processing needed
     llamacheck = llamaindex_chunker_check(message_data, metadata, vector_name)
     if llamacheck:
+
         return llamacheck
     
     # if only a discovery engine memory, return early as no other processing needed
     discovery_check = discovery_engine_chunker_check(message_data, metadata, config=config, process=False)
     if discovery_check:
+
         return discovery_check
 
+    log.info(f"Discovery engine and llamaindex checks passed - continuing to other memory types for {metadata}")
     chunks = []
 
     if message_data.startswith("gs://"):
