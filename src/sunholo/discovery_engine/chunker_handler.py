@@ -149,6 +149,7 @@ def discovery_engine_chunker_check(message_data,
     total_memories = len(check_write_memories(config))
     total_discovery_memories = check_discovery_engine_in_memory(config)
 
+    log.debug(f"{memories=} {total_memories=} {total_discovery_memories=}")
     if not process and total_memories == total_discovery_memories:
         log.info(f"Do not process discovery engine, and only memory found is discovery engine for {metadata} - stopping")
         
