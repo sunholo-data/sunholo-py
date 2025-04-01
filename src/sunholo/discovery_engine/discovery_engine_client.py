@@ -16,6 +16,7 @@ import asyncio
 import json
 import uuid
 from ..utils.mime import guess_mime_type
+import traceback
 
 class DiscoveryEngineClient:
     """
@@ -80,8 +81,10 @@ class DiscoveryEngineClient:
             self.async_search_client = discoveryengine.SearchServiceAsyncClient(client_options=client_options)
         except RuntimeError:
             # No event loop in non-async environment, set async client to None
-            log.info("No event loop detected; skipping async client initialization")
+            log.info("No event loop detected; skipping Discoveryengine async client initialization")
             self.async_search_client = None
+        
+        log.info(f"Discovery Engine client initialized with {self.project_id=}, {self.data_store_id=}, {self.location=}")
 
     @classmethod
     def my_retry(cls):
@@ -490,6 +493,7 @@ class DiscoveryEngineClient:
             return doc_client.import_documents(request=request)
         
         try:
+            log.debug(f"Requesting import of documents: {request=}")
             operation = import_documents_with_retry(self.doc_client, request)
         except ResourceExhausted as e:
             log.error(f"DiscoveryEngine Operation failed after retries due to quota exceeded: {e}")
@@ -632,6 +636,7 @@ class DiscoveryEngineClient:
             str: The operation name.
         """
         try:
+            log.info(f"Importing doc with metadata: {gcs_uri=}, {metadata=}")
             # 1. Generate a unique document ID
             document_id = self._create_unique_gsuri_docid(gcs_uri)
 
@@ -662,7 +667,7 @@ class DiscoveryEngineClient:
             return self._import_document_request(request)
 
         except Exception as e:
-            log.error(f"Error importing document with metadata: {e}")
+            log.error(f"Error importing document with metadata: {e} {traceback.format_exc()}")
             raise e
     
     def get_mime_type(self, uri:str):

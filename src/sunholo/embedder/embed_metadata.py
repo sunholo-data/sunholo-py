@@ -6,7 +6,7 @@ from ..utils.mime import guess_mime_type
 
 from ..custom_logging import log
 
-def audit_metadata(metadata, chunk_length=None):
+def audit_metadata(metadata:dict, chunk_length:int=None) -> dict:
     
     if 'eventTime' not in metadata:
         metadata['eventTime'] = datetime.datetime.now().isoformat(timespec='microseconds') + "Z"

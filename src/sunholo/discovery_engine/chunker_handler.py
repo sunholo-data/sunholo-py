@@ -36,6 +36,7 @@ def do_discovery_engine(message_data:str, metadata:dict, config:ConfigManager=No
             if vectorstore == "discovery_engine" or vectorstore == "vertex_ai_search":
                 log.info(f"Found vectorstore {vectorstore}")
                 if value.get('read_only'):
+                    log.info(f"{vectorstore} is read only, skipping")
                     continue
 
                 project_id = value.get("project_id")
@@ -50,6 +51,7 @@ def do_discovery_engine(message_data:str, metadata:dict, config:ConfigManager=No
                 if not project_id:
                     raise ValueError("Couldn't retrieve project_id for vertex_ai_search")        
 
+                log.info(f"Using {project_id} and {location} for DiscoveryEngineClient")
                 corpus = DiscoveryEngineClient(
                     data_store_id=config.vector_name, 
                     project_id=project_id,
@@ -67,10 +69,13 @@ def do_discovery_engine(message_data:str, metadata:dict, config:ConfigManager=No
     if message_data.startswith("gs://"):
         log.info(f"DiscoveryEngineClient.import_files for {message_data}")
         if "/pdf_parts/" in message_data:
+            log.info(f"Not processing files with /pdf_parts/ - {message_data}")
             return None
         for corp in corpuses:
             try:
+                
                 metadata = audit_metadata(metadata, chunk_length=500)
+                log.info(f"Importing {message_data} {metadata=} to {corp}")
                 response = corp.import_document_with_metadata(
                     gcs_uri=message_data,
                     metadata=metadata
@@ -160,7 +165,10 @@ def discovery_engine_chunker_check(message_data,
         try:
             log.info(f"Process discovery engine for {metadata}")
             disc_meta = do_discovery_engine(message_data, metadata, config=config)
-            log.info(f"Processed discovery engine: {disc_meta}")
+            if disc_meta is None:
+                log.error(f"No disc_meta found for {metadata}")
+            else:
+                log.info(f"Processed discovery engine: {disc_meta}")
         except Exception as err:
             log.error(f"Error processing discovery engine: {str(err)} {traceback.format_exc()}")
             disc_meta = None
