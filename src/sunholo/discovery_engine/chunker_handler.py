@@ -6,6 +6,7 @@ from ..components import load_memories
 from .discovery_engine_client import DiscoveryEngineClient
 from .create_new import create_new_discovery_engine
 from ..embedder.embed_metadata import audit_metadata
+import traceback
 
 def do_discovery_engine(message_data:str, metadata:dict, config:ConfigManager=None):
     """
@@ -79,7 +80,7 @@ def do_discovery_engine(message_data:str, metadata:dict, config:ConfigManager=No
                 else:
                     log.warning(f"Could not import {message_data} got not response")
             except Exception as err:
-                log.error(f"Error importing {message_data} - {corp=} - {str(err)}")
+                log.error(f"Error importing {message_data} - {corp=} - {str(err)} {traceback.format_exc()}")
 
                 if str(err).startswith("404"):
                     log.info(f"Attempting to create a new DiscoveryEngine corpus: {config.vector_name}")
@@ -94,8 +95,8 @@ def do_discovery_engine(message_data:str, metadata:dict, config:ConfigManager=No
                             gcs_uri=message_data,
                             metadata=metadata
                         )
-                    
-                continue
+                else:
+                    raise Exception(f"Error importing {message_data} - {corp=} - {str(err)}")
 
         metadata["source"] = message_data
         return metadata
@@ -156,9 +157,15 @@ def discovery_engine_chunker_check(message_data,
         return metadata
 
     if total_discovery_memories > 0:
-        log.info(f"Process discovery engine for {metadata}")
-        disc_meta = do_discovery_engine(message_data, metadata, config=config)
-        log.info(f"Processed discovery engine: {disc_meta}")
+        try:
+            log.info(f"Process discovery engine for {metadata}")
+            disc_meta = do_discovery_engine(message_data, metadata, config=config)
+            log.info(f"Processed discovery engine: {disc_meta}")
+        except Exception as err:
+            log.error(f"Error processing discovery engine: {str(err)} {traceback.format_exc()}")
+            disc_meta = None
+            
+        return disc_meta
 
     # If discovery engine is the only entry, return
     if total_discovery_memories == total_memories:
