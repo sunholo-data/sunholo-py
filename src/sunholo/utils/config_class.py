@@ -120,18 +120,6 @@ class ConfigManager:
         Returns:
             dict: The loaded configuration.
         """
-    def _reload_config_file(self, config_file, filename, is_local=False):
-        """
-        Helper function to load a config file and update the cache.
-
-        Args:
-            config_file (str): The path to the configuration file.
-            filename (str): The name of the configuration file.
-            is_local (bool): Indicates if the config file is from the local folder.
-
-        Returns:
-            dict: The loaded configuration.
-        """
         from ..custom_logging import log
         from ruamel.yaml import YAML
 
@@ -244,4 +232,23 @@ class ConfigManager:
             return agents[key]
         else:
             return agents.get("default")
+    
+    def permissionConfig(self, key: str):
+        """
+        Fetch a key from 'permissionConfig' kind configuration.
 
+        Args:
+            key (str): The key to fetch from the configuration.
+
+        Returns:
+            str: The value associated with the specified key.
+        """        
+        self._check_and_reload_configs()
+        config = self.configs_by_kind.get('permissionConfig')
+        if not config:
+            return None
+        agents = config.get('permissions')
+        if key in agents:
+            return agents[key]
+        else:
+            return None

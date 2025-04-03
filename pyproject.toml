@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sunholo"
-version = "0.126.4"
+version = "0.127.0"
 description = "Large Language Model DevOps - a package to help deploy LLMs to the Cloud."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -179,6 +179,7 @@ gcp = [
     "google-cloud-texttospeech",
     "google-genai>=0.2.2",
     "google-generativeai>=0.8.3",
+    "langchain",
     "langchain-google-genai>=2.0.0",
     "langchain_google_alloydb_pg>=0.2.2",
     "langchain-google-vertexai",
@@ -206,6 +207,7 @@ http = [
     "gunicorn",
     "httpcore",
     "httpx",
+    "langchain",
     "langfuse",
     "python-socketio",
     "requests",

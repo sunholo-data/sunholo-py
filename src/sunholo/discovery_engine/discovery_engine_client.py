@@ -614,6 +614,7 @@ class DiscoveryEngineClient:
             reconciliation_mode=discoveryengine.ImportDocumentsRequest.ReconciliationMode.INCREMENTAL,
         )
 
+        log.debug(f"Making import_document_request: {request}")
         return self._import_document_request(request)
 
     def _create_unique_gsuri_docid(self, gcs_uri:str):

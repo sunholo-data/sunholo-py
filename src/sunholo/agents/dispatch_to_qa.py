@@ -21,11 +21,6 @@ import traceback
 from .route import route_endpoint
 import os
 
-try:
-    from langfuse import Langfuse
-    langfuse = Langfuse()
-except ImportError:
-    langfuse = None
 
 def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs):
     """
@@ -93,7 +88,11 @@ def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs
     return qna_endpoint, qna_data
 
 def add_langfuse_trace(qna_endpoint):
-    if not langfuse:
+    try:
+        from langfuse import Langfuse
+        langfuse = Langfuse()
+    except Exception as err:
+        log.error(err)
         return None
     
     trace = langfuse.trace(name = f'dispatch/{os.path.basename(qna_endpoint)}')
