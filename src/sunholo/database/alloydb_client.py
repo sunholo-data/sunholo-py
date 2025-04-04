@@ -883,3 +883,401 @@ class AlloyDBClient:
         log.info(f"Inserted data into table {table_name}")
         
         return result
+    
+    async def get_table_columns(self, table_name, schema="public"):
+        """
+        Fetch column information for an existing table.
+        
+        Args:
+            table_name (str): The table name to get columns for
+            schema (str): Database schema, defaults to "public"
+            
+        Returns:
+            List[dict]: List of column information dictionaries with keys:
+                - name: column name
+                - type: PostgreSQL data type
+                - is_nullable: whether the column allows NULL values
+                - default: default value if any
+        """
+        try:
+            query = f"""
+            SELECT 
+                column_name, 
+                data_type, 
+                is_nullable, 
+                column_default,
+                character_maximum_length
+            FROM 
+                information_schema.columns 
+            WHERE 
+                table_name = '{table_name}'
+                AND table_schema = '{schema}'
+            ORDER BY 
+                ordinal_position;
+            """
+            
+            if self.engine_type == "pg8000":
+                result = self._execute_sql_pg8000(query)
+                rows = result.fetchall() if hasattr(result, 'fetchall') else result
+            else:
+                rows = await self._execute_sql_async_langchain(query)
+            
+            columns = []
+            for row in rows:
+                column_info = {
+                    "name": row[0],
+                    "type": row[1],
+                    "is_nullable": row[2] == "YES",
+                    "default": row[3],
+                    "max_length": row[4]
+                }
+                columns.append(column_info)
+            
+            log.info(f"Retrieved {len(columns)} columns for table '{table_name}'")
+            return columns
+        
+        except Exception as e:
+            log.error(f"Error getting table columns: {e}")
+            return []
+
+    def map_data_to_columns(self, data, column_info, case_sensitive=False):
+        """
+        Map data dictionary to available table columns, handling case sensitivity.
+        
+        Args:
+            data (dict): Dictionary of data to map
+            column_info (list): List of column information dictionaries from get_table_columns
+            case_sensitive (bool): Whether to match column names case-sensitively
+            
+        Returns:
+            dict: Filtered data dictionary with only columns that exist in the table
+        """
+        if not column_info:
+            return data  # No column info, return original data
+        
+        # Create lookup dictionaries for columns
+        columns = {}
+        columns_lower = {}
+        
+        for col in column_info:
+            col_name = col["name"]
+            columns[col_name] = col
+            columns_lower[col_name.lower()] = col_name
+        
+        # Filter and map the data
+        filtered_data = {}
+        for key, value in data.items():
+            if case_sensitive:
+                # Case-sensitive matching
+                if key in columns:
+                    filtered_data[key] = value
+            else:
+                # Case-insensitive matching
+                key_lower = key.lower()
+                if key_lower in columns_lower:
+                    # Use the original column name from the database
+                    original_key = columns_lower[key_lower]
+                    filtered_data[original_key] = value
+        
+        return filtered_data
+
+    def safe_convert_value(self, value, target_type):
+        """
+        Safely convert a value to the target PostgreSQL type.
+        Handles various formats and placeholder values.
+        
+        Args:
+            value: The value to convert
+            target_type (str): PostgreSQL data type name
+            
+        Returns:
+            The converted value appropriate for the target type, or None if conversion fails
+        """
+        if value is None:
+            return None
+        
+        # Handle placeholder values
+        if isinstance(value, str):
+            if value.startswith("No ") or value.lower() in ("none", "n/a", "null", ""):
+                # Special placeholders are converted to None for most types
+                return None
+        
+        try:
+            # Handle different target types
+            if target_type in ("integer", "bigint", "smallint"):
+                if isinstance(value, (int, float)):
+                    return int(value)
+                elif isinstance(value, str) and value.strip():
+                    # Try to extract a number from the string
+                    cleaned = value.replace(',', '')
+                    # Extract the first number if there's text
+                    import re
+                    match = re.search(r'[-+]?\d+', cleaned)
+                    if match:
+                        return int(match.group())
+                return None
+                
+            elif target_type in ("numeric", "decimal", "real", "double precision"):
+                if isinstance(value, (int, float)):
+                    return float(value)
+                elif isinstance(value, str) and value.strip():
+                    # Remove currency symbols and try to convert
+                    cleaned = value.replace('$', '').replace('€', '').replace('£', '')
+                    cleaned = cleaned.replace(',', '.')
+                    # Extract the first number if there's text
+                    import re
+                    match = re.search(r'[-+]?\d+(\.\d+)?', cleaned)
+                    if match:
+                        return float(match.group())
+                return None
+                
+            elif target_type == "boolean":
+                if isinstance(value, bool):
+                    return value
+                elif isinstance(value, (int, float)):
+                    return bool(value)
+                elif isinstance(value, str):
+                    value_lower = value.lower()
+                    if value_lower in ("true", "t", "yes", "y", "1"):
+                        return True
+                    elif value_lower in ("false", "f", "no", "n", "0"):
+                        return False
+                return None
+                
+            elif target_type.startswith("timestamp"):
+                if isinstance(value, str):
+                    # For dates, keep the string format - DB driver will handle conversion
+                    return value
+                # Other types, just return as is
+                return value
+                
+            elif target_type == "jsonb" or target_type == "json":
+                if isinstance(value, (dict, list)):
+                    return json.dumps(value)
+                elif isinstance(value, str):
+                    # Validate it's valid JSON
+                    try:
+                        json.loads(value)
+                        return value
+                    except:
+                        return None
+                return None
+                
+            else:
+                # For text and other types, convert to string
+                if isinstance(value, (dict, list)):
+                    return json.dumps(value)
+                elif value is not None:
+                    return str(value)
+                return None
+                    
+        except Exception as e:
+            log.debug(f"Conversion error for value '{value}' to {target_type}: {e}")
+            return None
+
+    async def insert_rows_safely(self, table_name, rows, metadata=None, continue_on_error=False):
+        """
+        Insert multiple rows into a table with error handling for individual rows.
+        
+        Args:
+            table_name (str): The table to insert into
+            rows (list): List of dictionaries containing row data
+            metadata (dict, optional): Additional metadata to include in each row
+            continue_on_error (bool): Whether to continue if some rows fail
+            
+        Returns:
+            dict: {
+                'success': bool,
+                'total_rows': int,
+                'inserted_rows': int,
+                'failed_rows': int,
+                'errors': list of errors with row data
+            }
+        """
+        if not rows:
+            return {'success': True, 'total_rows': 0, 'inserted_rows': 0, 'failed_rows': 0, 'errors': []}
+        
+        # Get table columns for mapping and type conversion
+        columns = await self.get_table_columns(table_name)
+        column_map = {col['name']: col for col in columns}
+        column_map_lower = {col['name'].lower(): col for col in columns}
+        
+        results = {
+            'success': True,
+            'total_rows': len(rows),
+            'inserted_rows': 0,
+            'failed_rows': 0,
+            'errors': []
+        }
+        
+        for i, row in enumerate(rows):
+            try:
+                # Map row data to actual table columns
+                filtered_row = {}
+                
+                # First, do case-insensitive mapping
+                for key, value in row.items():
+                    key_lower = key.lower()
+                    if key_lower in column_map_lower:
+                        col_info = column_map_lower[key_lower]
+                        col_name = col_info['name']  # Use the correct case from DB
+                        col_type = col_info['type']
+                        
+                        # Try to convert value to the appropriate type
+                        converted_value = self.safe_convert_value(value, col_type)
+                        filtered_row[col_name] = converted_value
+                
+                # Add metadata if provided
+                if metadata:
+                    for key, value in metadata.items():
+                        key_lower = key.lower()
+                        if key_lower in column_map_lower:
+                            col_name = column_map_lower[key_lower]['name']
+                            filtered_row[col_name] = value
+                
+                # Insert the row
+                result = await self._insert_single_row(table_name, filtered_row)
+                results['inserted_rows'] += 1
+                
+            except Exception as e:
+                error_info = {
+                    'row_index': i,
+                    'error': str(e),
+                    'row_data': row
+                }
+                results['errors'].append(error_info)
+                results['failed_rows'] += 1
+                
+                log.error(f"Error inserting row {i}: {e}")
+                
+                if not continue_on_error:
+                    results['success'] = False
+                    return results
+        
+        # Overall success is true if any rows were inserted successfully
+        results['success'] = results['inserted_rows'] > 0
+        return results
+
+    async def create_table_with_columns(self, table_name, column_definitions, if_not_exists=True):
+        """
+        Create a table with explicit column definitions.
+        
+        Args:
+            table_name (str): The name of the table to create
+            column_definitions (list): List of column definition dictionaries:
+                - name: Column name
+                - type: PostgreSQL data type
+                - nullable: Whether column allows NULL (default True)
+                - default: Default value expression (optional)
+                - primary_key: Whether this is a primary key (default False)
+            if_not_exists (bool): Whether to use IF NOT EXISTS clause
+            
+        Returns:
+            Result of the execution
+        """
+        if not column_definitions:
+            raise ValueError("No column definitions provided")
+        
+        # Generate column definition strings
+        column_strs = []
+        
+        # Check if we need to add a serial primary key
+        has_primary_key = any(col.get('primary_key', False) for col in column_definitions)
+        
+        if not has_primary_key:
+            # Add an ID column as primary key
+            column_strs.append("id SERIAL PRIMARY KEY")
+        
+        for col in column_definitions:
+            col_name = col.get('name')
+            col_type = col.get('type', 'TEXT')
+            nullable = col.get('nullable', True)
+            default = col.get('default')
+            primary_key = col.get('primary_key', False)
+            
+            if not col_name:
+                continue
+                
+            # Build the column definition
+            col_def = f'"{col_name}" {col_type}'
+            
+            if primary_key:
+                col_def += " PRIMARY KEY"
+                
+            if not nullable:
+                col_def += " NOT NULL"
+                
+            if default is not None:
+                col_def += f" DEFAULT {default}"
+                
+            column_strs.append(col_def)
+        
+        # Create the SQL statement
+        exists_clause = "IF NOT EXISTS " if if_not_exists else ""
+        columns_sql = ",\n    ".join(column_strs)
+        
+        create_table_sql = f"""
+        CREATE TABLE {exists_clause}"{table_name}" (
+        {columns_sql}
+        )
+        """
+        
+        # Execute the SQL based on engine type
+        log.info(f"Creating table '{table_name}' with explicit column definitions")
+        try:
+            if self.engine_type == "pg8000":
+                result = self._execute_sql_pg8000(create_table_sql)
+            else:
+                result = await self._execute_sql_async_langchain(create_table_sql)
+                
+            log.info(f"Table '{table_name}' created successfully")
+            return result
+        except Exception as e:
+            log.error(f"Error creating table: {e}")
+            raise
+
+    def _get_sql_type_safe(self, value):
+        """
+        Enhanced version of _get_sql_type with better type detection.
+        Handles placeholder values and common patterns.
+        
+        Args:
+            value: The value to determine the column type
+            
+        Returns:
+            str: SQL type
+        """
+        if value is None:
+            return "TEXT"
+        
+        # Handle placeholder values
+        if isinstance(value, str) and (value.startswith("No ") or value.lower() in ("none", "n/a", "null", "")):
+            return "TEXT"  # Always use TEXT for placeholder values
+        
+        if isinstance(value, dict):
+            return "JSONB"
+        elif isinstance(value, list):
+            return "JSONB"
+        elif isinstance(value, bool):
+            return "BOOLEAN"
+        elif isinstance(value, int):
+            return "INTEGER"
+        elif isinstance(value, float):
+            return "NUMERIC"
+        else:
+            # Check if it's a date string
+            if isinstance(value, str):
+                # Try to detect date formats
+                value_lower = value.lower()
+                if len(value) in (8, 10) and ('-' in value or '/' in value):
+                    # Likely a date (YYYY-MM-DD or MM/DD/YYYY)
+                    return "DATE"
+                elif 'date' in value_lower or 'time' in value_lower:
+                    # Column name hint suggests it's a date
+                    return "TIMESTAMP"
+                elif any(currency in value for currency in ('$', '€', '£')):
+                    # Likely a monetary value
+                    return "NUMERIC"
+                
+            # Default to TEXT
+            return "TEXT"
