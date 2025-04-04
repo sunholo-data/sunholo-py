@@ -823,7 +823,7 @@ class AlloyDBClient:
         return await self._insert_single_row(table_name, regular_data, metadata)
 
 
-    async def _insert_single_row(self, table_name: str, data: dict, metadata: dict = None):
+    async def _insert_single_row(self, table_name: str, data: dict, metadata: dict = None, primary_key_column:str = "id"):
         """
         Inserts a single row of data into the specified table.
         
@@ -869,7 +869,7 @@ class AlloyDBClient:
         sql = f'''
         INSERT INTO "{table_name}" ({columns_str})
         VALUES ({placeholders_str})
-        RETURNING id
+        RETURNING {primary_key_column}
         '''
         
         # Execute SQL to insert data based on engine type
@@ -1075,7 +1075,8 @@ class AlloyDBClient:
             log.debug(f"Conversion error for value '{value}' to {target_type}: {e}")
             return None
 
-    async def insert_rows_safely(self, table_name, rows, metadata=None, continue_on_error=False):
+    async def insert_rows_safely(self, table_name, rows, metadata=None, continue_on_error=False, primary_key_column="id"  # Specify the correct primary key column here
+):
         """
         Insert multiple rows into a table with error handling for individual rows.
         
@@ -1084,6 +1085,7 @@ class AlloyDBClient:
             rows (list): List of dictionaries containing row data
             metadata (dict, optional): Additional metadata to include in each row
             continue_on_error (bool): Whether to continue if some rows fail
+            primary_key_column (str): The primary key in the table, default 'id'
             
         Returns:
             dict: {
@@ -1136,7 +1138,7 @@ class AlloyDBClient:
                             filtered_row[col_name] = value
                 
                 # Insert the row
-                result = await self._insert_single_row(table_name, filtered_row)
+                result = await self._insert_single_row(table_name, filtered_row, primary_key_column=primary_key_column)
                 results['inserted_rows'] += 1
                 
             except Exception as e:
@@ -1158,7 +1160,7 @@ class AlloyDBClient:
         results['success'] = results['inserted_rows'] > 0
         return results
 
-    async def create_table_with_columns(self, table_name, column_definitions, if_not_exists=True):
+    async def create_table_with_columns(self, table_name, column_definitions, if_not_exists=True, primary_key_column="id"):
         """
         Create a table with explicit column definitions.
         
@@ -1171,6 +1173,8 @@ class AlloyDBClient:
                 - default: Default value expression (optional)
                 - primary_key: Whether this is a primary key (default False)
             if_not_exists (bool): Whether to use IF NOT EXISTS clause
+            primary_key_column (str): default name of primary key if not specified in column_definitions
+            
             
         Returns:
             Result of the execution
@@ -1186,7 +1190,7 @@ class AlloyDBClient:
         
         if not has_primary_key:
             # Add an ID column as primary key
-            column_strs.append("id SERIAL PRIMARY KEY")
+            column_strs.append(f'"{primary_key_column}" SERIAL PRIMARY KEY')
         
         for col in column_definitions:
             col_name = col.get('name')
