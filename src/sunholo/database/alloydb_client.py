@@ -883,6 +883,64 @@ class AlloyDBClient:
         log.info(f"Inserted data into table {table_name}")
         
         return result
+
+    async def update_row(self, table_name: str, primary_key_column: str, primary_key_value: str, 
+                        update_data: dict, condition: str = None):
+        """
+        Updates a row in the specified table based on the primary key.
+        
+        Args:
+            table_name (str): Name of the table to update
+            primary_key_column (str): Name of the primary key column (e.g., 'acdid')
+            primary_key_value (str): Value of the primary key for the row to update
+            update_data (dict): Dictionary containing column names and values to update
+            condition (str, optional): Additional condition for the WHERE clause
+            
+        Returns:
+            Result of SQL execution
+        """
+        if not update_data:
+            raise ValueError("No update data provided")
+        
+        # Generate SET clause parts
+        set_parts = []
+        processed_values = {}
+        
+        for i, (key, value) in enumerate(update_data.items()):
+            # Create a unique parameter name
+            param_name = f"param_{i}"
+            # For JSON values, convert to string
+            if isinstance(value, (dict, list)):
+                processed_values[param_name] = json.dumps(value)
+            else:
+                processed_values[param_name] = value
+            
+            set_parts.append(f'"{key}" = :{param_name}')
+        
+        # Create the WHERE clause
+        where_clause = f'"{primary_key_column}" = :pk_value'
+        processed_values['pk_value'] = primary_key_value
+        
+        if condition:
+            where_clause += f" AND ({condition})"
+        
+        # Construct the SQL statement
+        set_clause = ", ".join(set_parts)
+        sql = f'UPDATE "{table_name}" SET {set_clause} WHERE {where_clause} RETURNING {primary_key_column}'
+        
+        log.info(f"Executing update on {table_name} for {primary_key_column}={primary_key_value}")
+        
+        # Execute SQL based on engine type
+        if self.engine_type == "pg8000":
+            # Use the synchronous method for pg8000
+            result = self._execute_sql_pg8000(sql, processed_values)
+        else:
+            # Use the async method for langchain
+            result = await self._execute_sql_async_langchain(sql, processed_values)
+        
+        log.info(f"Updated row in {table_name} with {primary_key_column}={primary_key_value}")
+        
+        return result
     
     async def get_table_columns(self, table_name, schema="public"):
         """
@@ -1150,7 +1208,7 @@ class AlloyDBClient:
                 results['errors'].append(error_info)
                 results['failed_rows'] += 1
                 
-                log.error(f"Error inserting row {i}: {e}")
+                log.error(f"Error inserting row {i}: {e} for data: {row}")
                 
                 if not continue_on_error:
                     results['success'] = False
