@@ -136,6 +136,7 @@ def check_write_memories(config:ConfigManager):
     
     return write_mem
 
+
 def discovery_engine_chunker_check(message_data, 
                                    metadata, 
                                    vector_name:str=None, 
@@ -172,8 +173,6 @@ def discovery_engine_chunker_check(message_data,
         except Exception as err:
             log.error(f"Error processing discovery engine: {str(err)} {traceback.format_exc()}")
             disc_meta = None
-            
-        return disc_meta
 
     # If discovery engine is the only entry, return
     if total_discovery_memories == total_memories:
