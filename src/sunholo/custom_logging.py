@@ -142,14 +142,25 @@ class GoogleCloudLogging:
         """
         from .utils.version import sunholo_version
         
+        # Add version to log_text if it exists
         if log_text is not None:
             log_text = f"[{sunholo_version()}] {log_text}"
-            # Apply trace ID to log text
             log_text = self._append_trace_id(log_text)
         
-        if log_struct is not None:
-            # Add trace ID to structured log
-            log_struct = self._add_trace_to_struct(log_struct)
+        # Always create or update log_struct with trace_id if available
+        if not log_struct:
+            log_struct = {}
+        
+        # Make sure log_struct is a dictionary
+        if not isinstance(log_struct, dict):
+            log_struct = {"original_non_dict_value": str(log_struct)}
+        
+        # Add trace ID to log_struct
+        if hasattr(self, 'trace_id') and self.trace_id:
+            log_struct["trace_id"] = self.trace_id
+        
+        # Add version to log_struct
+        log_struct["version"] = sunholo_version()
         
         if not logger_name and not self.logger_name:
             raise ValueError("Must provide a logger name e.g. 'run.googleapis.com%2Fstderr'")
@@ -159,30 +170,28 @@ class GoogleCloudLogging:
             import logging as log
             log.basicConfig(level=log.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
             if log_text:
-                log.info(f"[{severity}][{logger_name or self.logger_name}][{self.version}] - {log_text}")
-            elif log_struct:
+                log.info(f"[{severity}][{logger_name or self.logger_name}][{self.version}] - {log_text} - {log_struct}")
+            else:
                 log.info(f"[{severity}][{logger_name or self.logger_name}][{self.version}] - {str(log_struct)}")
             return
         
         logger = self.client.logger(logger_name or self.logger_name)
-        
         caller_info = self._get_caller_info()
         
+        # Always log struct, and include message if provided
         if log_text:
-            try:
-                turn_to_text = str(log_text)
-                logger.log_text(turn_to_text, severity=severity, source_location=caller_info)
-            except Exception as err:
-                print(f"Could not log this: {log_text=} - {str(err)}")
+            log_struct["message"] = log_text
         
-        if log_struct:
-            if not isinstance(log_struct, dict):
-                print(f"Warning: log_struct must be a dictionary, got {type(log_struct)}")
-            else:
-                try:
-                    logger.log_struct(log_struct, severity=severity, source_location=caller_info)
-                except Exception as err:
-                    print(f"Could not log struct: {log_struct=} - {str(err)}")
+        try:
+            logger.log_struct(log_struct, severity=severity, source_location=caller_info)
+        except Exception as err:
+            print(f"Failed to log struct: {err}")
+            # Fallback to text logging
+            fallback_message = log_text if log_text else str(log_struct)
+            try:
+                logger.log_text(fallback_message, severity=severity, source_location=caller_info)
+            except Exception as text_err:
+                print(f"Even fallback text logging failed: {text_err}")
 
     def debug(self, log_text=None, log_struct=None):
 
