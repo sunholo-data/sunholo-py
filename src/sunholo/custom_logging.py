@@ -89,53 +89,100 @@ class GoogleCloudLogging:
                 }
         return None
 
+    def update_trace_id(self, trace_id):
+        """
+        Updates the trace ID to be included in all logs.
+        
+        Args:
+            trace_id (str): The trace ID to add to all logs.
+        """
+        self.trace_id = trace_id
+
+    def _append_trace_id(self, log_text):
+        """
+        Appends trace ID to log text if available.
+        
+        Args:
+            log_text (str): The log message.
+        
+        Returns:
+            str: Log message with trace ID prefixed if available.
+        """
+        if hasattr(self, 'trace_id') and self.trace_id:
+            return f"{self.logger_name}-{self.trace_id} {log_text}"
+        return log_text
+
+    def _add_trace_to_struct(self, log_struct):
+        """
+        Adds trace ID to structured log data if available.
+        
+        Args:
+            log_struct (dict): The structured log data.
+        
+        Returns:
+            dict: Log structure with trace ID added if available.
+        """
+        if not isinstance(log_struct, dict):
+            return log_struct
+            
+        if hasattr(self, 'trace_id') and self.trace_id:
+            return {**log_struct, "trace_id": self.trace_id}
+        return log_struct
+
     def structured_log(self, log_text=None, log_struct=None, logger_name=None, severity="INFO"):
         """
         Writes log entries to the specified logger as either text or structured data.
-
+        
         Args:
             log_text (str, optional): The log message as a text string. Defaults to None.
             log_struct (dict, optional): The log message as a dictionary for structured log. Defaults to None.
-            logger_name (str, optional): The name of the logger to which to write the log entries. e.g. 
-        logName="run.googleapis.com%2Fstderr"
+            logger_name (str, optional): The name of the logger to which to write the log entries.
+                e.g. logName="run.googleapis.com%2Fstderr"
             severity (str, optional): The severity level of the log entry. Defaults to "INFO".
         """
-
         from .utils.version import sunholo_version
-
-        log_text = f"[{sunholo_version()}] {log_text}"
-
+        
+        if log_text is not None:
+            log_text = f"[{sunholo_version()}] {log_text}"
+            # Apply trace ID to log text
+            log_text = self._append_trace_id(log_text)
+        
+        if log_struct is not None:
+            # Add trace ID to structured log
+            log_struct = self._add_trace_to_struct(log_struct)
+        
         if not logger_name and not self.logger_name:
             raise ValueError("Must provide a logger name e.g. 'run.googleapis.com%2Fstderr'")
         
         from .utils.gcp import is_running_on_gcp, is_gcp_logged_in
         if not is_running_on_gcp() and not is_gcp_logged_in():
+            import logging as log
             log.basicConfig(level=log.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
             if log_text:
                 log.info(f"[{severity}][{logger_name or self.logger_name}][{self.version}] - {log_text}")
             elif log_struct:
                 log.info(f"[{severity}][{logger_name or self.logger_name}][{self.version}] - {str(log_struct)}")
-
+            return
+        
         logger = self.client.logger(logger_name or self.logger_name)
-
+        
         caller_info = self._get_caller_info()
-
+        
         if log_text:
-            if isinstance(log_struct, dict):
-                logger.log_struct(log_struct, severity=severity, source_location=caller_info)
-            elif isinstance(log_struct, str):
-                logger.log_text(log_text, severity=severity, source_location=caller_info)
+            try:
+                turn_to_text = str(log_text)
+                logger.log_text(turn_to_text, severity=severity, source_location=caller_info)
+            except Exception as err:
+                print(f"Could not log this: {log_text=} - {str(err)}")
+        
+        if log_struct:
+            if not isinstance(log_struct, dict):
+                print(f"Warning: log_struct must be a dictionary, got {type(log_struct)}")
             else:
                 try:
-                    turn_to_text = str(log_text)
-                    logger.log_text(turn_to_text, severity=severity, source_location=caller_info)
+                    logger.log_struct(log_struct, severity=severity, source_location=caller_info)
                 except Exception as err:
-                    print(f"Could not log this: {log_text=} - {str(err)}")
-
-        elif log_struct:
-            if not isinstance(log_struct, dict):
-                raise ValueError("log_struct must be a dictionary.")
-            logger.log_struct(log_struct, severity=severity, source_location=caller_info)
+                    print(f"Could not log struct: {log_struct=} - {str(err)}")
 
     def debug(self, log_text=None, log_struct=None):
 
@@ -217,6 +264,53 @@ def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
         # Now you can use Python's logging module as usual
         import logging
         log.info('This is an info message that will be sent to Google Cloud log.')
+
+        # Basic structured logging
+        log.info(log_struct={"action": "user_login", "user_id": "12345"})
+
+        # Structured logging with trace ID
+        log.update_trace_id("abc-123")
+        log.info(log_struct={"action": "process_started", "file_count": 42})
+        # This will include trace_id: "abc-123" in the logged structure
+
+        # Logging with both text and structure
+        log.info(
+            log_text="Processing completed successfully", 
+            log_struct={"duration_ms": 1234, "items_processed": 100}
+        )
+
+        # Logging error with structured context
+        try:
+            # Some operation
+            process_data()
+        except Exception as e:
+            log.error(
+                log_text=f"Error processing data: {str(e)}",
+                log_struct={
+                    "error_type": type(e).__name__,
+                    "file_name": "example.csv",
+                    "line_number": 42
+                }
+            )
+
+        # More complex structured logging
+        log.info(log_struct={
+            "request": {
+                "method": "POST",
+                "path": "/api/data",
+                "user_agent": "Mozilla/5.0...",
+                "ip": "192.168.1.1"
+            },
+            "response": {
+                "status_code": 200,
+                "processing_time_ms": 345,
+                "bytes_sent": 1024
+            },
+            "metadata": {
+                "version": "1.2.3",
+                "environment": "production"
+            }
+        })
         
     Note:
         This function requires that the 'google-cloud-logging' library is installed and
@@ -252,9 +346,22 @@ def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
 
         return log
     
-
-
-
+# for debugging
+def safe_log_struct(log, severity, message, struct):
+    try:
+        if severity == "INFO":
+            log.info(log_text=message, log_struct=struct)
+        elif severity == "ERROR":
+            log.error(log_text=message, log_struct=struct)
+        # Add other severity levels as needed
+    except Exception as e:
+        print(f"Logging error: {e}")
+        print(f"Failed to log structure: {struct}")
+        # Fallback to simple text logging
+        if severity == "INFO":
+            log.info(f"{message} (struct logging failed)")
+        elif severity == "ERROR":
+            log.error(f"{message} (struct logging failed)")
 
 def log_folder_location(folder_name):
     # Get the current working directory
@@ -278,3 +385,52 @@ def get_logger():
     return _logger
 
 log = get_logger()
+
+"""
+# Basic structured logging
+log.info(log_struct={"action": "user_login", "user_id": "12345"})
+
+# Structured logging with trace ID
+log.update_trace_id("abc-123")
+log.info(log_struct={"action": "process_started", "file_count": 42})
+# This will include trace_id: "abc-123" in the logged structure
+
+# Logging with both text and structure
+log.info(
+    log_text="Processing completed successfully", 
+    log_struct={"duration_ms": 1234, "items_processed": 100}
+)
+
+# Logging error with structured context
+try:
+    # Some operation
+    process_data()
+except Exception as e:
+    log.error(
+        log_text=f"Error processing data: {str(e)}",
+        log_struct={
+            "error_type": type(e).__name__,
+            "file_name": "example.csv",
+            "line_number": 42
+        }
+    )
+
+# More complex structured logging
+log.info(log_struct={
+    "request": {
+        "method": "POST",
+        "path": "/api/data",
+        "user_agent": "Mozilla/5.0...",
+        "ip": "192.168.1.1"
+    },
+    "response": {
+        "status_code": 200,
+        "processing_time_ms": 345,
+        "bytes_sent": 1024
+    },
+    "metadata": {
+        "version": "1.2.3",
+        "environment": "production"
+    }
+})
+"""
