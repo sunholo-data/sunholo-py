@@ -22,6 +22,9 @@ except ImportError:
     discoveryengine = None
     Chunk = None
     SearchResponse = None
+    SearchAsyncPager = None
+    SearchPager = None
+
 
 class DiscoveryEngineClient:
     """
@@ -880,7 +883,7 @@ class DiscoveryEngineClient:
         user_pseudo_id: Optional[str] = None,
         custom_fine_tuning_spec: Optional["discoveryengine.SearchRequest.CustomFineTuningSpec"] = None, # Okay if default is None # type: ignore
         collection_id: str = "default_collection" # Needed for engine path
-    ) -> Optional["SearchPager"]:
+    ):
         """
         Performs a search against a specified Discovery Engine Search Engine.
 
@@ -1064,7 +1067,7 @@ class DiscoveryEngineClient:
         user_pseudo_id: Optional[str] = None,
         custom_fine_tuning_spec: Optional["discoveryengine.SearchRequest.CustomFineTuningSpec"] = None, # Okay if default is None # type: ignore
         collection_id: str = "default_collection"
-    ) -> Optional[SearchAsyncPager]:
+    ):
         """
         Performs an asynchronous search against a specified Discovery Engine Search Engine.
 
