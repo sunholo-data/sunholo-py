@@ -297,7 +297,7 @@ def search_engine_command(args):
         }
         spell_correction_map = {
             "AUTO": discoveryengine.SearchRequest.SpellCorrectionSpec.Mode.AUTO,
-            "SUGGEST": discoveryengine.SearchRequest.SpellCorrectionSpec.Mode.SUGGEST,
+            "SUGGEST": discoveryengine.SearchRequest.SpellCorrectionSpec.Mode.SUGGESTION_ONLY,
         }
 
         query_expansion_level = query_expansion_map.get(args.query_expansion, discoveryengine.SearchRequest.QueryExpansionSpec.Condition.AUTO)
