@@ -881,7 +881,6 @@ class DiscoveryEngineClient:
         boost_spec: Optional["discoveryengine.SearchRequest.BoostSpec"] = None, # Okay if default is None # type: ignore
         params: Optional[Dict[str, Any]] = None,
         user_pseudo_id: Optional[str] = None,
-        custom_fine_tuning_spec: Optional["discoveryengine.SearchRequest.CustomFineTuningSpec"] = None, # Okay if default is None # type: ignore
         collection_id: str = "default_collection" # Needed for engine path
     ):
         """
@@ -1027,7 +1026,6 @@ class DiscoveryEngineClient:
                 boost_spec=boost_spec,
                 params=params,
                 user_pseudo_id=user_pseudo_id,
-                custom_fine_tuning_spec=custom_fine_tuning_spec,
                 # Add other relevant fields like facet_specs if needed
             )
 
@@ -1065,7 +1063,6 @@ class DiscoveryEngineClient:
         boost_spec: Optional["discoveryengine.SearchRequest.BoostSpec"] = None, # Okay if default is None # type: ignore
         params: Optional[Dict[str, Any]] = None,
         user_pseudo_id: Optional[str] = None,
-        custom_fine_tuning_spec: Optional["discoveryengine.SearchRequest.CustomFineTuningSpec"] = None, # Okay if default is None # type: ignore
         collection_id: str = "default_collection"
     ):
         """
@@ -1139,7 +1136,6 @@ class DiscoveryEngineClient:
                 boost_spec=boost_spec,
                 params=params,
                 user_pseudo_id=user_pseudo_id,
-                custom_fine_tuning_spec=custom_fine_tuning_spec,
             )
 
             log.info(f"Async searching engine '{engine_id}' with request: {request}")
