@@ -1,19 +1,41 @@
 import json
+import argparse
+import traceback # For detailed error logging
 
+# --- Standard library imports first ---
+# --- Third-party imports ---
 try:
+    # Assuming sun_rich is in your project structure relative to this file
     from ..cli.sun_rich import console
 except ImportError:
-    console = None
+    # Fallback if rich is not available or path is wrong
+    class ConsoleFallback:
+        def print(self, *args, **kwargs):
+            print(*args)
+    console = ConsoleFallback()
+    print("Warning: rich console not found, using basic print.")
 
-from ..custom_logging import log
+# --- Local application imports ---
+# Assuming custom_logging is available
+# from ..custom_logging import log # Not explicitly used in CLI functions here
 
-# Make sure to adjust the relative import path if needed
-from .discovery_engine_client import DiscoveryEngineClient  
+# Make sure to adjust the relative import path if needed for your project structure
+from .discovery_engine_client import DiscoveryEngineClient, _DISCOVERYENGINE_AVAILABLE
+
+# Import necessary types only if library is available, for mapping CLI args
+if _DISCOVERYENGINE_AVAILABLE:
+    from .discovery_engine_client import discoveryengine # Get the imported module
+else:
+    discoveryengine = None # Set to None if import failed
+
+
+# --- Command Handler Functions ---
 
 def discovery_engine_command(args):
     """
     Handles the `discovery-engine` command and its subcommands.
     """
+    # Dispatch based on subcommand
     if args.subcommand == 'create-datastore':
         create_datastore_command(args)
     elif args.subcommand == 'import-documents':
@@ -22,40 +44,46 @@ def discovery_engine_command(args):
         import_documents_with_metadata_command(args)
     elif args.subcommand == 'import-document-with-metadata':
         import_document_with_metadata_command(args)
-    elif args.subcommand == 'search':
+    elif args.subcommand == 'search': # Existing chunk search
         search_command(args)
-    elif args.subcommand == 'search-by-id-and-or-date':
+    elif args.subcommand == 'search-by-id-and-or-date': # Existing chunk search
         search_by_id_and_or_date_command(args)
+    elif args.subcommand == 'search-engine': # NEW engine search
+        search_engine_command(args)
+    # Add elif for create-engine if needed
+    # elif args.subcommand == 'create-engine':
+    #    create_engine_command(args)
     else:
         console.print(f"[bold red]Unknown Discovery Engine subcommand: {args.subcommand}[/bold red]")
 
 def create_datastore_command(args):
-    """
-    Handles the `discovery-engine create-datastore` subcommand.
-    """
+    """Handles the `discovery-engine create-datastore` subcommand."""
+    console.print(f"[cyan]Initiating datastore creation for ID: {args.data_store_id}...[/cyan]")
     try:
         client = DiscoveryEngineClient(
             project_id=args.project,
-            data_store_id=args.data_store_id,
+            data_store_id=args.data_store_id, # ID for the one being created
             location=args.location
         )
+        # Assuming create_data_store exists and takes these args
         operation_name = client.create_data_store(
             type=args.type,
             chunk_size=args.chunk_size,
             collection=args.collection
         )
         console.print(f"[bold green]Datastore creation initiated. Operation name: {operation_name}[/bold green]")
+        console.print("[yellow]Note: Creation is asynchronous. Check operation status in Google Cloud Console.[/yellow]")
     except Exception as e:
         console.print(f"[bold red]Error creating datastore: {e}[/bold red]")
+        console.print(f"[red]{traceback.format_exc()}[/red]")
 
 def import_documents_command(args):
-    """
-    Handles the `discovery-engine import-documents` subcommand.
-    """
+    """Handles the `discovery-engine import-documents` subcommand."""
+    console.print(f"[cyan]Initiating document import into datastore: {args.data_store_id}...[/cyan]")
     try:
         client = DiscoveryEngineClient(
             project_id=args.project,
-            data_store_id=args.data_store_id,
+            data_store_id=args.data_store_id, # Target datastore
             location=args.location
         )
         operation_name = client.import_documents(
@@ -66,39 +94,50 @@ def import_documents_command(args):
             bigquery_table=args.bigquery_table,
             bigquery_project_id=args.bigquery_project_id
         )
-        console.print(f"[bold green]Document import initiated. Operation name: {operation_name}[/bold green]")
+        if operation_name:
+            console.print(f"[bold green]Document import initiated. Operation name: {operation_name}[/bold green]")
+            console.print("[yellow]Note: Import is asynchronous. Check operation status in Google Cloud Console.[/yellow]")
+        else:
+             console.print("[bold yellow]Document import command executed, but no operation name returned (may indicate skipped due to existing data or other non-fatal issue). Check logs.[/bold yellow]")
     except Exception as e:
         console.print(f"[bold red]Error importing documents: {e}[/bold red]")
+        console.print(f"[red]{traceback.format_exc()}[/red]")
 
 def import_documents_with_metadata_command(args):
-    """
-    Handles the `discovery-engine import-documents-with-metadata` subcommand.
-    """
+    """Handles the `discovery-engine import-documents-with-metadata` subcommand."""
+    console.print(f"[cyan]Initiating document import with metadata from {args.gcs_uri} into datastore: {args.data_store_id}...[/cyan]")
     try:
         client = DiscoveryEngineClient(
             project_id=args.project,
             data_store_id=args.data_store_id,
             location=args.location
         )
+        # Ensure the method exists in your client class
         operation_name = client.import_documents_with_metadata(
             gcs_uri=args.gcs_uri,
-            data_schema=args.data_schema,
+            # data_schema=args.data_schema, # This method might not need data_schema explicitly
             branch=args.branch
         )
-        console.print(f"[bold green]Document import with metadata initiated. Operation name: {operation_name}[/bold green]")
+        if operation_name:
+            console.print(f"[bold green]Document import with metadata initiated. Operation name: {operation_name}[/bold green]")
+            console.print("[yellow]Note: Import is asynchronous.[/yellow]")
+        else:
+             console.print("[bold yellow]Document import command executed, but no operation name returned.[/bold yellow]")
     except Exception as e:
         console.print(f"[bold red]Error importing documents with metadata: {e}[/bold red]")
+        console.print(f"[red]{traceback.format_exc()}[/red]")
 
 def import_document_with_metadata_command(args):
-    """
-    Handles the `discovery-engine import-document-with-metadata` subcommand.
-    """
+    """Handles the `discovery-engine import-document-with-metadata` subcommand."""
+    console.print(f"[cyan]Initiating single document import with metadata for {args.gcs_uri} into datastore: {args.data_store_id}...[/cyan]")
+    metadata = None
     try:
-        # Load metadata from JSON file or string
         if args.metadata_file:
+            console.print(f"Loading metadata from file: {args.metadata_file}")
             with open(args.metadata_file, 'r') as f:
                 metadata = json.load(f)
         elif args.metadata_string:
+            console.print("Loading metadata from string.")
             metadata = json.loads(args.metadata_string)
         else:
             console.print("[bold red]Error: Must provide either --metadata-file or --metadata-string[/bold red]")
@@ -114,131 +153,355 @@ def import_document_with_metadata_command(args):
             metadata=metadata,
             branch=args.branch
         )
-        console.print(f"[bold green]Document import with metadata initiated. Operation name: {operation_name}[/bold green]")
+        if operation_name:
+            console.print(f"[bold green]Single document import initiated. Operation name: {operation_name}[/bold green]")
+            console.print("[yellow]Note: Import is asynchronous.[/yellow]")
+        else:
+             console.print("[bold yellow]Single document import command executed, but no operation name returned.[/bold yellow]")
+
+    except FileNotFoundError:
+         console.print(f"[bold red]Error: Metadata file not found at {args.metadata_file}[/bold red]")
+    except json.JSONDecodeError as e:
+         console.print(f"[bold red]Error decoding metadata JSON: {e}[/bold red]")
     except Exception as e:
         console.print(f"[bold red]Error importing document with metadata: {e}[/bold red]")
+        console.print(f"[red]{traceback.format_exc()}[/red]")
 
 def search_command(args):
-    """
-    Handles the `discovery-engine search` subcommand.
-    """
+    """Handles the `discovery-engine search` subcommand (Data Store Chunks)."""
+    console.print(f"[cyan]Searching data store '{args.data_store_id}' for query: '{args.query}' (mode: chunks)[/cyan]")
     try:
         client = DiscoveryEngineClient(
             project_id=args.project,
-            data_store_id=args.data_store_id,
+            data_store_id=args.data_store_id, # Target datastore
             location=args.location
         )
-        results = client.get_chunks(
+        # This calls get_chunks which returns string or pager
+        results_data = client.get_chunks(
             query=args.query,
-            num_previous_chunks=args.num_previous_chunks,
-            num_next_chunks=args.num_next_chunks,
+            # num_previous_chunks=args.num_previous_chunks, # Ensure these args are added to parser if needed
+            # num_next_chunks=args.num_next_chunks, # Ensure these args are added to parser if needed
             page_size=args.page_size,
             parse_chunks_to_string=args.parse_chunks_to_string,
             serving_config=args.serving_config,
-            data_store_ids=args.data_store_ids
+            # data_store_ids=args.data_store_ids # Ensure these args are added to parser if needed
         )
 
         if args.parse_chunks_to_string:
-            console.print(results)  # Print the combined string
+            console.print("\n[bold magenta]--- Combined Chunk String ---[/bold magenta]")
+            console.print(results_data if results_data else "[yellow]No results found or error occurred.[/yellow]")
+        elif results_data: # It's a pager object
+            console.print("\n[bold magenta]--- Individual Chunks ---[/bold magenta]")
+            chunk_count = 0
+            try:
+                 # Iterate through the pager returned by get_chunks
+                 for page in results_data.pages:
+                     if not hasattr(page, 'results') or not page.results: continue
+                     for result in page.results:
+                          # Ensure the result structure is as expected by get_chunks
+                          if hasattr(result, 'chunk'):
+                               chunk_count += 1
+                               console.print(f"\n[bold]Chunk {chunk_count}:[/bold]")
+                               # Use the client's formatter if available
+                               console.print(client.chunk_format(result.chunk))
+                          elif hasattr(result, 'document') and hasattr(result.document, 'chunks'):
+                               # Fallback if structure is different (e.g., document with chunks)
+                               for chunk in result.document.chunks:
+                                    chunk_count += 1
+                                    console.print(f"\n[bold]Chunk {chunk_count} (from doc {result.document.id}):[/bold]")
+                                    console.print(f"  Content: {getattr(chunk, 'content', 'N/A')}")
+                                    console.print(f"  Doc Name: {getattr(chunk, 'document_metadata', {}).get('name', 'N/A')}") # Example access
+
+                 if chunk_count == 0:
+                     console.print("[yellow]No chunks found in the results.[/yellow]")
+
+            except Exception as page_err:
+                 console.print(f"[bold red]Error processing search results pager: {page_err}[/bold red]")
+                 console.print(f"[red]{traceback.format_exc()}[/red]")
         else:
-            # Process and print the results (assuming it's a SearchResponse object)
-            for result in results.results:
-                for chunk in result.document.chunks:
-                    console.print(f"Chunk: {chunk.snippet}, document name: {chunk.document_name}")
+            console.print("[yellow]No results found or error occurred.[/yellow]")
+
     except Exception as e:
-        console.print(f"[bold red]Error searching: {e}[/bold red]")
+        console.print(f"[bold red]Error during data store search: {e}[/bold red]")
+        console.print(f"[red]{traceback.format_exc()}[/red]")
+
 
 def search_by_id_and_or_date_command(args):
-    """
-    Handles the `discovery-engine search-by-id-and-or-date` subcommand.
-    """
+    """Handles the `discovery-engine search-by-id-and-or-date` subcommand (Data Store Chunks)."""
+    console.print(f"[cyan]Searching data store '{args.data_store_id}' by ID/Date for query: '{args.query}' (mode: chunks)[/cyan]")
+    # Similar implementation to search_command, but calls search_by_objectId_and_or_date
     try:
         client = DiscoveryEngineClient(
             project_id=args.project,
-            data_store_id=args.data_store_id,
+            data_store_id=args.data_store_id, # Target datastore
             location=args.location
         )
-        results = client.search_by_objectId_and_or_date(
+        results_data = client.search_by_objectId_and_or_date(
             query=args.query,
             objectId=args.object_id,
             date=args.date,
-            num_previous_chunks=args.num_previous_chunks,
-            num_next_chunks=args.num_next_chunks,
+            # num_previous_chunks=args.num_previous_chunks, # Pass these through
+            # num_next_chunks=args.num_next_chunks, # Pass these through
             page_size=args.page_size,
             parse_chunks_to_string=args.parse_chunks_to_string,
             serving_config=args.serving_config,
             data_store_ids=args.data_store_ids
         )
 
+        # Output processing identical to search_command
         if args.parse_chunks_to_string:
-            console.print(results)  # Print the combined string
+            console.print("\n[bold magenta]--- Combined Chunk String (Filtered) ---[/bold magenta]")
+            console.print(results_data if results_data else "[yellow]No results found or error occurred.[/yellow]")
+        elif results_data:
+            console.print("\n[bold magenta]--- Individual Chunks (Filtered) ---[/bold magenta]")
+            chunk_count = 0
+            # ... (pager iteration identical to search_command) ...
+            try:
+                 for page in results_data.pages:
+                     # ... iterate results and chunks ...
+                      pass # Replace with actual iteration and printing
+                 if chunk_count == 0:
+                     console.print("[yellow]No chunks found in the filtered results.[/yellow]")
+            except Exception as page_err:
+                 console.print(f"[bold red]Error processing filtered search results pager: {page_err}[/bold red]")
         else:
-            # Process and print the results (assuming it's a SearchResponse object)
-            for result in results.results:
-                for chunk in result.document.chunks:
-                    console.print(f"Chunk: {chunk.snippet}, document name: {chunk.document_name}")
+            console.print("[yellow]No results found or error occurred.[/yellow]")
+
     except Exception as e:
-        console.print(f"[bold red]Error searching by ID and/or date: {e}[/bold red]")
+        console.print(f"[bold red]Error during filtered data store search: {e}[/bold red]")
+        console.print(f"[red]{traceback.format_exc()}[/red]")
+
+
+# --- NEW Search Engine Command ---
+def search_engine_command(args):
+    """Handles the `discovery-engine search-engine` subcommand."""
+    if not _DISCOVERYENGINE_AVAILABLE:
+        console.print("[bold red]Error: google-cloud-discoveryengine library is required but not installed.[/bold red]")
+        return
+
+    console.print(f"[cyan]Searching engine '{args.engine_id}' for query: '{args.query}'[/cyan]")
+
+    try:
+        client = DiscoveryEngineClient(
+            project_id=args.project,
+            # data_store_id is required by __init__ but less relevant here.
+            # Provide a default or the primary one associated with the project/engine.
+            data_store_id=args.data_store_id_for_init,
+            location=args.location
+        )
+
+        # --- Map CLI string args to Enums ---
+        query_expansion_map = {
+            "AUTO": discoveryengine.SearchRequest.QueryExpansionSpec.Condition.AUTO,
+            "DISABLED": discoveryengine.SearchRequest.QueryExpansionSpec.Condition.DISABLED,
+        }
+        spell_correction_map = {
+            "AUTO": discoveryengine.SearchRequest.SpellCorrectionSpec.Mode.AUTO,
+            "SUGGEST": discoveryengine.SearchRequest.SpellCorrectionSpec.Mode.SUGGEST,
+        }
+
+        query_expansion_level = query_expansion_map.get(args.query_expansion, discoveryengine.SearchRequest.QueryExpansionSpec.Condition.AUTO)
+        spell_correction_mode = spell_correction_map.get(args.spell_correction, discoveryengine.SearchRequest.SpellCorrectionSpec.Mode.AUTO)
+
+        # --- Call the search_engine method ---
+        pager = client.search_engine(
+            search_query=args.query,
+            engine_id=args.engine_id,
+            serving_config_id=args.serving_config_id,
+            collection_id=args.collection_id,
+            page_size=args.page_size,
+            return_snippet=args.return_snippet,
+            summary_result_count=args.summary_count,
+            include_citations=args.include_citations,
+            custom_prompt=args.custom_prompt,
+            model_version=args.model_version,
+            query_expansion_level=query_expansion_level,
+            spell_correction_mode=spell_correction_mode,
+            filter_str=args.filter,
+            user_pseudo_id=args.user_id,
+            # boost_spec, params, custom_fine_tuning_spec could be added here if parsed from args
+        )
+
+        # --- Process and Print Results ---
+        if pager:
+            console.print("\n[bold magenta]--- Search Engine Results ---[/bold magenta]")
+            results_found_on_any_page = False
+            page_num = 0
+            try:
+                for page in pager.pages:
+                    page_num += 1
+                    results_found_on_this_page = False
+                    console.print(f"\n[bold]--- Page {page_num} ---[/bold]")
+
+                    # Print Summary (available on the page level)
+                    if hasattr(page, 'summary') and page.summary and page.summary.summary_text:
+                        results_found_on_any_page = True
+                        results_found_on_this_page = True
+                        console.print("\n[bold green]Search Summary:[/bold green]")
+                        console.print(page.summary.summary_text)
+                        if args.include_citations and hasattr(page.summary, 'summary_with_metadata') and page.summary.summary_with_metadata:
+                             citations = page.summary.summary_with_metadata.citations
+                             if citations:
+                                  console.print("[bold cyan]Citations:[/bold cyan]")
+                                  for i, citation in enumerate(citations):
+                                       source_info = ", ".join([f"'{s.citation_source}'" for s in citation.sources]) if citation.sources else "N/A"
+                                       console.print(f"  [{i+1}] Sources: {source_info}")
+                             references = page.summary.summary_with_metadata.references
+                             if references:
+                                 console.print("[bold cyan]References:[/bold cyan]")
+                                 for ref in references:
+                                     console.print(f"  - Title: {getattr(ref, 'title', 'N/A')}, URI: {getattr(ref, 'uri', 'N/A')}") # Adjust based on actual reference structure
+
+                        console.print("-" * 20)
+
+
+                    # Print Document Results (available on the page level)
+                    if hasattr(page, 'results') and page.results:
+                         console.print(f"[bold blue]Documents Found ({len(page.results)} on this page):[/bold blue]")
+                         for i, result in enumerate(page.results):
+                              results_found_on_any_page = True
+                              results_found_on_this_page = True
+                              console.print(f"\n[bold]Result {i+1}:[/bold]")
+                              doc = result.document
+                              console.print(f"  ID: {doc.id}")
+                              console.print(f"  Name: {doc.name}")
+                              # Display structData if present
+                              if doc.struct_data:
+                                   try:
+                                       # Convert Struct to dict for nice printing
+                                       struct_dict = dict(doc.struct_data)
+                                       console.print(f"  Metadata: {json.dumps(struct_dict, indent=2)}")
+                                   except Exception:
+                                       console.print(f"  Metadata: {doc.struct_data}") # Fallback
+
+                              # Display Snippets if requested and available
+                              if args.return_snippet and 'snippets' in doc.derived_struct_data:
+                                   console.print("[bold cyan]  Snippets:[/bold cyan]")
+                                   for snippet in doc.derived_struct_data['snippets']:
+                                        console.print(f"    - {snippet.get('snippet', 'N/A').strip()}") # Adjust key if needed
+                              elif args.return_snippet:
+                                   console.print("[yellow]  (Snippets requested but not found in result)[/yellow]")
+                              console.print("-" * 5)
+                         console.print("-" * 20) # End of results list for page
+
+                    if not results_found_on_this_page:
+                         console.print("[yellow](No summary or document results on this page)[/yellow]")
+
+
+                if not results_found_on_any_page:
+                    console.print("[yellow]No results found for the search query.[/yellow]")
+
+            except Exception as page_err:
+                 console.print(f"[bold red]Error processing results pager: {page_err}[/bold red]")
+                 console.print(f"[red]{traceback.format_exc()}[/red]")
+
+        else:
+            console.print("[yellow]Search call did not return a result object (check logs for errors).[/yellow]")
+
+    except Exception as e:
+        console.print(f"[bold red]Error during engine search: {e}[/bold red]")
+        console.print(f"[red]{traceback.format_exc()}[/red]")
+
+
+# --- Argparse Setup ---
 
 def setup_discovery_engine_subparser(subparsers):
     """
     Sets up the `discovery-engine` subparser and its subcommands.
     """
     discovery_engine_parser = subparsers.add_parser('discovery-engine', help='Interact with Google Cloud Discovery Engine')
-    discovery_engine_subparsers = discovery_engine_parser.add_subparsers(dest='subcommand', required=True)
+    # Add arguments common to most discovery engine commands
+    discovery_engine_parser.add_argument('--project', required=True, help='Google Cloud project ID')
+    discovery_engine_parser.add_argument('--location', default='global', help='Location (e.g., global, us, eu)')
+    # data_store_id is required by many commands, make it common if possible, else add per-command
+    # For simplicity here, adding it per command where needed or as a specific arg for client init
 
-    # Create Datastore subcommand
+    discovery_engine_subparsers = discovery_engine_parser.add_subparsers(dest='subcommand', required=True, title='Discovery Engine Subcommands')
+
+    # --- Create Datastore subcommand ---
     create_datastore_parser = discovery_engine_subparsers.add_parser('create-datastore', help='Create a new Discovery Engine datastore')
-    create_datastore_parser.add_argument('--data-store-id', required=True, help='The ID of the datastore')
-    create_datastore_parser.add_argument('--type', choices=['chunk'], default='chunk', help='The type of datastore to create')
-    create_datastore_parser.add_argument('--chunk-size', type=int, default=500, help='The size of the chunks for documents (if applicable)')
-    create_datastore_parser.add_argument('--collection', default='default_collection', help='The collection to create the datastore in')
+    create_datastore_parser.add_argument('--data-store-id', required=True, help='The ID for the new datastore')
+    create_datastore_parser.add_argument('--type', choices=['chunk'], default='chunk', help='The type of datastore (currently only chunk)')
+    create_datastore_parser.add_argument('--chunk-size', type=int, default=500, help='Chunk size for layout-based chunking (100-500)')
+    create_datastore_parser.add_argument('--collection', default='default_collection', help='Collection ID')
     create_datastore_parser.set_defaults(func=discovery_engine_command)
 
-    # Import Documents subcommand
-    import_documents_parser = discovery_engine_subparsers.add_parser('import-documents', help='Import documents into a Discovery Engine datastore')
-    import_documents_parser.add_argument('--gcs-uri', required=True, help='The GCS URI of the documents to import')
-    import_documents_parser.add_argument('--data-schema', default='content', help='The schema of the data to import')
-    import_documents_parser.add_argument('--branch', default='default_branch', help='The branch to import the documents into')
-    import_documents_parser.add_argument('--bigquery-dataset', help='The BigQuery dataset ID (if applicable)')
-    import_documents_parser.add_argument('--bigquery-table', help='The BigQuery table ID (if applicable)')
-    import_documents_parser.add_argument('--bigquery-project-id', help='The project ID of the BigQuery dataset (if applicable)')
+    # --- Import Documents subcommand ---
+    import_documents_parser = discovery_engine_subparsers.add_parser('import-documents', help='Import documents into a datastore')
+    import_documents_parser.add_argument('--data-store-id', required=True, help='The ID of the target datastore')
+    import_grp = import_documents_parser.add_mutually_exclusive_group(required=True)
+    import_grp.add_argument('--gcs-uri', help='GCS URI of documents (gs://bucket/...) or pattern (gs://bucket/*.json)')
+    import_grp.add_argument('--bigquery-source', nargs=2, metavar=('DATASET_ID', 'TABLE_ID'), help='BigQuery dataset and table ID')
+    import_documents_parser.add_argument('--data-schema', default='content', help='Data schema (content, document, custom, csv, user_event)')
+    import_documents_parser.add_argument('--branch', default='default_branch', help='Target branch')
+    import_documents_parser.add_argument('--bigquery-project-id', help='Project ID for BigQuery source (defaults to --project)')
     import_documents_parser.set_defaults(func=discovery_engine_command)
 
-    # Import Documents with Metadata subcommand
-    import_documents_with_metadata_parser = discovery_engine_subparsers.add_parser('import-documents-with-metadata', help='Import documents with metadata into a Discovery Engine datastore')
-    import_documents_with_metadata_parser.add_argument('--gcs-uri', required=True, help='The GCS URI of the documents to import (JSONL format with metadata)')
-    import_documents_with_metadata_parser.add_argument('--data-schema', default='content', help='The schema of the data to import')
-    import_documents_with_metadata_parser.add_argument('--branch', default='default_branch', help='The branch to import the documents into')
-    import_documents_with_metadata_parser.set_defaults(func=discovery_engine_command)
+    # --- Import Documents with Metadata (JSONL) subcommand ---
+    import_docs_meta_parser = discovery_engine_subparsers.add_parser('import-documents-with-metadata', help='Import documents via JSONL metadata file')
+    import_docs_meta_parser.add_argument('--data-store-id', required=True, help='The ID of the target datastore')
+    import_docs_meta_parser.add_argument('--gcs-uri', required=True, help='GCS URI of the JSONL metadata file')
+    import_docs_meta_parser.add_argument('--branch', default='default_branch', help='Target branch')
+    # data_schema might not be needed if using inline source via metadata file
+    # import_docs_meta_parser.add_argument('--data-schema', default='content', help='Data schema')
+    import_docs_meta_parser.set_defaults(func=discovery_engine_command)
 
-    # Import Document with Metadata subcommand
-    import_document_with_metadata_parser = discovery_engine_subparsers.add_parser('import-document-with-metadata', help='Import a single document with metadata into a Discovery Engine datastore')
-    import_document_with_metadata_parser.add_argument('--gcs-uri', required=True, help='The GCS URI of the document to import')
-    import_document_with_metadata_parser.add_argument('--metadata-file', help='The path to a JSON file containing the metadata')
-    import_document_with_metadata_parser.add_argument('--metadata-string', help='A JSON string containing the metadata')
-    import_document_with_metadata_parser.add_argument('--branch', default='default_branch', help='The branch to import the document into')
-    import_document_with_metadata_parser.set_defaults(func=discovery_engine_command)
+    # --- Import Single Document with Metadata subcommand ---
+    import_doc_meta_parser = discovery_engine_subparsers.add_parser('import-document-with-metadata', help='Import a single document with metadata')
+    import_doc_meta_parser.add_argument('--data-store-id', required=True, help='The ID of the target datastore')
+    import_doc_meta_parser.add_argument('--gcs-uri', required=True, help='GCS URI of the document content')
+    meta_grp = import_doc_meta_parser.add_mutually_exclusive_group(required=True)
+    meta_grp.add_argument('--metadata-file', help='Path to a local JSON file containing metadata')
+    meta_grp.add_argument('--metadata-string', help='JSON string containing metadata')
+    import_doc_meta_parser.add_argument('--branch', default='default_branch', help='Target branch')
+    import_doc_meta_parser.set_defaults(func=discovery_engine_command)
 
-    # Search subcommand
-    search_parser = discovery_engine_subparsers.add_parser('search', help='Search a Discovery Engine datastore')
+    # --- Search Data Store (Chunks) subcommand ---
+    search_parser = discovery_engine_subparsers.add_parser('search', help='Search a datastore (fetches chunks)')
     search_parser.add_argument('--query', required=True, help='The search query')
     search_parser.add_argument('--data-store-id', required=True, help='Data store ID to search')
-    search_parser.add_argument('--page-size', type=int, default=10, help='The maximum number of results to return per page')
-    search_parser.add_argument('--parse-chunks-to-string', action='store_true', help='Combine chunks into a single string')
-    search_parser.add_argument('--serving-config', default='default_serving_config', help='The serving configuration to use')
-
+    search_parser.add_argument('--page-size', type=int, default=10, help='Max results per page')
+    search_parser.add_argument('--parse-chunks-to-string', action='store_true', help='Output results as one formatted string')
+    search_parser.add_argument('--serving-config', default='default_config', help='Serving config ID for the data store')
+    # Add arguments for num_previous_chunks, num_next_chunks, data_store_ids if needed
+    # search_parser.add_argument('--num-previous-chunks', type=int, default=3)
+    # search_parser.add_argument('--num-next-chunks', type=int, default=3)
+    # search_parser.add_argument('--data-store-ids', nargs='+', help='Search across multiple data stores')
     search_parser.set_defaults(func=discovery_engine_command)
 
-    # Search by ID and/or Date subcommand
-    search_by_id_and_or_date_parser = discovery_engine_subparsers.add_parser('search-by-id-and-or-date', help='Search a Discovery Engine datastore by object ID and/or date')
-    search_by_id_and_or_date_parser.add_argument('--query', required=True, help='The search query')
-    search_by_id_and_or_date_parser.add_argument('--object-id', help='The exact object ID to filter by')
-    search_by_id_and_or_date_parser.add_argument('--date', help='The date to filter by (YYYY-MM-DD)')
-    search_by_id_and_or_date_parser.add_argument('--num-previous-chunks', type=int, default=3, help='Number of previous chunks to return for context')
-    search_by_id_and_or_date_parser.add_argument('--num-next-chunks', type=int, default=3, help='Number of next chunks to return for context')
-    search_by_id_and_or_date_parser.add_argument('--page-size', type=int, default=10, help='The maximum number of results to return per page')
-    search_by_id_and_or_date_parser.add_argument('--parse-chunks-to-string', action='store_true', help='Combine chunks into a single string')
-    search_by_id_and_or_date_parser.add_argument('--serving-config', default='default_serving_config', help='The serving configuration to use')
-    search_by_id_and_or_date_parser.add_argument('--data-store-ids', nargs='+', help='List of data store IDs to search (optional)')
-    search_by_id_and_or_date_parser.set_defaults(func=discovery_engine_command)
+    # --- Search Data Store By ID/Date (Chunks) subcommand ---
+    search_by_id_parser = discovery_engine_subparsers.add_parser('search-by-id-and-or-date', help='Search a datastore by ID/date (fetches chunks)')
+    search_by_id_parser.add_argument('--query', required=True, help='The search query')
+    search_by_id_parser.add_argument('--data-store-id', required=True, help='Data store ID to search')
+    search_by_id_parser.add_argument('--object-id', help='Object ID to filter by (exact match)')
+    search_by_id_parser.add_argument('--date', help='Date filter (YYYY-MM-DDTHH:MM:SSZ or similar ISO format)')
+    search_by_id_parser.add_argument('--page-size', type=int, default=10, help='Max results per page')
+    search_by_id_parser.add_argument('--parse-chunks-to-string', action='store_true', help='Output results as one formatted string')
+    search_by_id_parser.add_argument('--serving-config', default='default_config', help='Serving config ID')
+    # Add arguments for num_previous_chunks, num_next_chunks, data_store_ids if needed
+    # search_by_id_parser.add_argument('--num-previous-chunks', type=int, default=3)
+    # search_by_id_parser.add_argument('--num-next-chunks', type=int, default=3)
+    search_by_id_parser.add_argument('--data-store-ids', nargs='+', help='Search across multiple data stores (optional)')
+    search_by_id_parser.set_defaults(func=discovery_engine_command)
+
+    # --- NEW: Search Engine subcommand ---
+    search_engine_parser = discovery_engine_subparsers.add_parser('search-engine', help='Search a Discovery Engine (fetches documents/summary)')
+    search_engine_parser.add_argument('--query', required=True, help='The search query')
+    search_engine_parser.add_argument('--engine-id', required=True, help='Engine ID to search')
+    # Add data_store_id needed for client init, maybe make it optional if client handles it?
+    search_engine_parser.add_argument('--data-store-id-for-init', required=True, help='A primary data store ID associated with the project/engine (for client init)')
+    search_engine_parser.add_argument('--serving-config-id', default='default_config', help='Serving config ID for the engine')
+    search_engine_parser.add_argument('--collection-id', default='default_collection', help='Collection ID for the engine path')
+    search_engine_parser.add_argument('--page-size', type=int, default=10, help='Max results per page')
+    search_engine_parser.add_argument('--no-snippet', action='store_false', dest='return_snippet', help='Disable fetching snippets')
+    search_engine_parser.add_argument('--summary-count', type=int, default=5, help='Number of results for summary (0 to disable)')
+    search_engine_parser.add_argument('--no-citations', action='store_false', dest='include_citations', help='Disable citations in summary')
+    search_engine_parser.add_argument('--custom-prompt', help='Custom preamble for summary generation')
+    search_engine_parser.add_argument('--model-version', default='stable', help='Summary model version')
+    search_engine_parser.add_argument('--query-expansion', choices=['AUTO', 'DISABLED'], default='AUTO', help='Query expansion level')
+    search_engine_parser.add_argument('--spell-correction', choices=['AUTO', 'SUGGEST'], default='AUTO', help='Spell correction mode')
+    search_engine_parser.add_argument('--filter', help='Filter string to apply')
+    search_engine_parser.add_argument('--user-id', help='User pseudo ID for personalization/analytics')
+    search_engine_parser.set_defaults(func=discovery_engine_command)
+
+    # Add other subparsers for create-engine, etc. if needed

@@ -1,22 +1,27 @@
-try:
-    from google.api_core.client_options import ClientOptions
-    from google.cloud import discoveryengine
-    from google.api_core.retry import Retry, if_exception_type
-    from google.api_core.exceptions import ResourceExhausted, AlreadyExists
-    from google.cloud.discoveryengine_v1alpha import SearchResponse, Chunk
-except ImportError:
-    ClientOptions = None
-    discoveryengine = None
-    Chunk = None
-    SearchResponse = None
-
 from ..custom_logging import log
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
+
 import asyncio
 import json
 import uuid
 from ..utils.mime import guess_mime_type
 import traceback
+
+_DISCOVERYENGINE_AVAILABLE = False
+try:
+    from google.api_core.client_options import ClientOptions
+    from google.cloud import discoveryengine
+    from google.api_core.retry import Retry, if_exception_type
+    from google.api_core.exceptions import ResourceExhausted, AlreadyExists
+    from google.api_core.exceptions import GoogleAPIError
+    from google.cloud.discoveryengine_v1 import SearchResponse, Chunk
+    from google.cloud.discoveryengine_v1.services.search_service.pagers import SearchPager, SearchAsyncPager
+    _DISCOVERYENGINE_AVAILABLE = True
+except ImportError:
+    ClientOptions = None
+    discoveryengine = None
+    Chunk = None
+    SearchResponse = None
 
 class DiscoveryEngineClient:
     """
@@ -849,3 +854,301 @@ class DiscoveryEngineClient:
         else:
             # No filters, perform regular search
             return await self.async_search_with_filters(query, **kwargs)
+
+    # --- NEW ENGINE SEARCH METHODS ---
+    def search_engine(
+        self,
+        search_query: str,
+        engine_id: str,
+        serving_config_id: str = "default_config",
+        page_size: int = 10,
+        return_snippet: bool = True,
+        summary_result_count: int = 5,
+        include_citations: bool = True,
+        custom_prompt: Optional[str] = None,
+        model_version: str = "stable",
+        query_expansion_level: "discoveryengine.SearchRequest.QueryExpansionSpec.Condition" # type: ignore
+             # Default value assignment MUST be conditional
+             = discoveryengine.SearchRequest.QueryExpansionSpec.Condition.AUTO if _DISCOVERYENGINE_AVAILABLE else None,
+
+        spell_correction_mode: "discoveryengine.SearchRequest.SpellCorrectionSpec.Mode" # type: ignore
+             # Default value assignment MUST be conditional
+             = discoveryengine.SearchRequest.SpellCorrectionSpec.Mode.AUTO if _DISCOVERYENGINE_AVAILABLE else None,
+        filter_str: Optional[str] = None,
+        boost_spec: Optional["discoveryengine.SearchRequest.BoostSpec"] = None, # Okay if default is None # type: ignore
+        params: Optional[Dict[str, Any]] = None,
+        user_pseudo_id: Optional[str] = None,
+        custom_fine_tuning_spec: Optional["discoveryengine.SearchRequest.CustomFineTuningSpec"] = None, # Okay if default is None # type: ignore
+        collection_id: str = "default_collection" # Needed for engine path
+    ) -> Optional["SearchPager"]:
+        """
+        Performs a search against a specified Discovery Engine Search Engine.
+
+        Allows configuration for snippets, summaries, query expansion, spell correction, etc.
+
+        Args:
+            search_query: The user's search query string.
+            engine_id: The ID of the search engine to query.
+            serving_config_id: The ID of the specific serving config for the engine.
+            page_size: Maximum number of results per page.
+            return_snippet: Whether to request snippets in the results.
+            summary_result_count: Number of results to use for generating a summary.
+                                  Set to 0 to disable summaries.
+            include_citations: Whether summaries should include citations.
+            custom_prompt: A custom preamble text to guide the summary generation model.
+            model_version: The version of the summary generation model (e.g., "stable").
+            query_expansion_level: Level of query expansion to apply (AUTO, DISABLED).
+            spell_correction_mode: Mode for spell correction (AUTO, SUGGEST).
+            filter_str: An optional filter string to apply to the search.
+            boost_spec: Optional boost specification object.
+            params: Optional dictionary of custom parameters.
+            user_pseudo_id: Optional unique identifier for the user/session.
+            custom_fine_tuning_spec: Optional spec to use a fine-tuned model.
+            collection_id: The collection ID associated with the engine.
+
+        Returns:
+            A SearchPager object to iterate through results, or None if an error occurs.
+        
+        Example:
+        client = DiscoveryEngineClient(
+            project_id=PROJECT_ID,
+            data_store_id=DATA_STORE_ID,
+            location=LOCATION
+        )
+
+        # --- Example: Searching an Engine ---
+        search_query_engine = "tell me about search engines"
+        log.info(f"\n--- Searching Engine: {ENGINE_ID} ---")
+        engine_pager = client.search_engine(
+            search_query=search_query_engine,
+            engine_id=ENGINE_ID,
+            summary_result_count=3 # Request a summary for 3 results
+        )
+
+        if engine_pager:
+            results_found = False
+            # Iterate through pages to get summary/results
+            for page in engine_pager.pages:
+                 results_found = True
+                 if page.summary:
+                      print(f"\nSearch Summary:\n{page.summary.summary_text}\n")
+                      # Citations are part of the summary object if requested
+                      if page.summary.summary_with_metadata:
+                           print("Summary Metadata/Citations:")
+                           for citation in page.summary.summary_with_metadata.citations:
+                                print(f"  - Citation Source: {citation.sources}")
+                           # Access references etc. if needed
+
+                 print("Results on this page:")
+                 for result in page.results:
+                      print(f"  ID: {result.document.id}")
+                      print(f"  Name: {result.document.name}")
+                      # Access snippet if available in result.document.derived_struct_data['snippets']
+                      # Access other document fields as needed (struct_data, etc.)
+                      # print(f"  Raw Result: {result}") # For detailed inspection
+                 print("-" * 10)
+
+            if not results_found:
+                 print("No results found for the engine search.")
+        else:
+            print(f"Engine search failed for query: '{search_query_engine}'")
+
+        """
+
+        if not _DISCOVERYENGINE_AVAILABLE:
+            log.error("Discovery Engine library not available at runtime.")
+            return None
+        
+        try:
+            # Construct the serving config path for an ENGINE
+            # Note: The client library path helper is for data stores/serving configs within them.
+            # We need the path for an engine's serving config.
+            serving_config_path = (
+                f"projects/{self.project_id}/locations/{self.location}/"
+                f"collections/{collection_id}/engines/{engine_id}/"
+                f"servingConfigs/{serving_config_id}"
+            )
+            log.info(f"Using Engine Serving Config Path: {serving_config_path}")
+
+            # --- Build ContentSearchSpec ---
+            snippet_spec = None
+            if return_snippet:
+                snippet_spec = discoveryengine.SearchRequest.ContentSearchSpec.SnippetSpec(
+                    return_snippet=True
+                )
+
+            summary_spec = None
+            if summary_result_count > 0:
+                model_prompt_spec = None
+                if custom_prompt:
+                    model_prompt_spec = discoveryengine.SearchRequest.ContentSearchSpec.SummarySpec.ModelPromptSpec(
+                        preamble=custom_prompt
+                    )
+
+                summary_spec = discoveryengine.SearchRequest.ContentSearchSpec.SummarySpec(
+                    summary_result_count=summary_result_count,
+                    include_citations=include_citations,
+                    ignore_adversarial_query=True,  # Default from original sample
+                    ignore_non_summary_seeking_query=True, # Default from original sample
+                    model_prompt_spec=model_prompt_spec,
+                    model_spec=discoveryengine.SearchRequest.ContentSearchSpec.SummarySpec.ModelSpec(
+                        version=model_version
+                    ),
+                )
+
+            content_search_spec = discoveryengine.SearchRequest.ContentSearchSpec(
+                snippet_spec=snippet_spec,
+                summary_spec=summary_spec,
+                # Unlike get_chunks, don't specify search_result_mode or chunk_spec here
+                # unless specifically needed for a document/snippet search use case.
+            )
+
+            # --- Build other Specs ---
+            query_expansion_spec = discoveryengine.SearchRequest.QueryExpansionSpec(
+                condition=query_expansion_level
+            )
+
+            spell_correction_spec = discoveryengine.SearchRequest.SpellCorrectionSpec(
+                mode=spell_correction_mode
+            )
+
+            # --- Build SearchRequest ---
+            request = discoveryengine.SearchRequest(
+                serving_config=serving_config_path,
+                query=search_query,
+                page_size=page_size,
+                content_search_spec=content_search_spec,
+                query_expansion_spec=query_expansion_spec,
+                spell_correction_spec=spell_correction_spec,
+                filter=filter_str,
+                boost_spec=boost_spec,
+                params=params,
+                user_pseudo_id=user_pseudo_id,
+                custom_fine_tuning_spec=custom_fine_tuning_spec,
+                # Add other relevant fields like facet_specs if needed
+            )
+
+            log.info(f"Searching engine '{engine_id}' with request: {request}")
+            response_pager = self.search_client.search(request)
+            log.info(f"Search successful for query '{search_query}' against engine '{engine_id}'.")
+            return response_pager
+
+        except GoogleAPIError as e:
+            log.error(f"API error searching engine '{engine_id}': {e}")
+            return None
+        except Exception as e:
+            log.error(f"Unexpected error searching engine '{engine_id}': {e}\n{traceback.format_exc()}")
+            return None
+
+    async def async_search_engine(
+        self,
+        search_query: str,
+        engine_id: str,
+        serving_config_id: str = "default_config",
+        page_size: int = 10,
+        return_snippet: bool = True,
+        summary_result_count: int = 5,
+        include_citations: bool = True,
+        custom_prompt: Optional[str] = None,
+        model_version: str = "stable",
+        query_expansion_level: "discoveryengine.SearchRequest.QueryExpansionSpec.Condition" # type: ignore
+             # Default value assignment MUST be conditional
+             = discoveryengine.SearchRequest.QueryExpansionSpec.Condition.AUTO if _DISCOVERYENGINE_AVAILABLE else None,
+
+        spell_correction_mode: "discoveryengine.SearchRequest.SpellCorrectionSpec.Mode" # type: ignore
+             # Default value assignment MUST be conditional
+             = discoveryengine.SearchRequest.SpellCorrectionSpec.Mode.AUTO if _DISCOVERYENGINE_AVAILABLE else None,
+        filter_str: Optional[str] = None,
+        boost_spec: Optional["discoveryengine.SearchRequest.BoostSpec"] = None, # Okay if default is None # type: ignore
+        params: Optional[Dict[str, Any]] = None,
+        user_pseudo_id: Optional[str] = None,
+        custom_fine_tuning_spec: Optional["discoveryengine.SearchRequest.CustomFineTuningSpec"] = None, # Okay if default is None # type: ignore
+        collection_id: str = "default_collection"
+    ) -> Optional[SearchAsyncPager]:
+        """
+        Performs an asynchronous search against a specified Discovery Engine Search Engine.
+
+        Allows configuration for snippets, summaries, query expansion, spell correction, etc.
+
+        Args:
+            (Same arguments as the synchronous search_engine method)
+
+        Returns:
+            An SearchAsyncPager object to iterate through results asynchronously,
+            or None if an error occurs or the async client is not available.
+        """
+        if not self.async_search_client:
+             log.error("Cannot call async_search_engine: Async client not initialized.")
+             raise RuntimeError("Async client not initialized. Ensure class is instantiated within an async context.")
+
+        try:
+            # Construct the serving config path for an ENGINE (same as sync)
+            serving_config_path = (
+                f"projects/{self.project_id}/locations/{self.location}/"
+                f"collections/{collection_id}/engines/{engine_id}/"
+                f"servingConfigs/{serving_config_id}"
+            )
+            log.info(f"Using Async Engine Serving Config Path: {serving_config_path}")
+
+            # --- Build Specs (same logic as sync version) ---
+            snippet_spec = None
+            if return_snippet:
+                snippet_spec = discoveryengine.SearchRequest.ContentSearchSpec.SnippetSpec(...)
+            summary_spec = None
+            if summary_result_count > 0:
+                model_prompt_spec = None
+                if custom_prompt:
+                    model_prompt_spec = discoveryengine.SearchRequest.ContentSearchSpec.SummarySpec.ModelPromptSpec(
+                        preamble=custom_prompt
+                    )
+                summary_spec = discoveryengine.SearchRequest.ContentSearchSpec.SummarySpec(
+                    summary_result_count=summary_result_count,
+                    include_citations=include_citations,
+                    ignore_adversarial_query=True,  # Default from original sample
+                    ignore_non_summary_seeking_query=True, # Default from original sample
+                    model_prompt_spec=model_prompt_spec,
+                    model_spec=discoveryengine.SearchRequest.ContentSearchSpec.SummarySpec.ModelSpec(
+                        version=model_version
+                    ),
+                )
+
+            content_search_spec = discoveryengine.SearchRequest.ContentSearchSpec(
+                snippet_spec=snippet_spec,
+                summary_spec=summary_spec,
+            )
+            query_expansion_spec = discoveryengine.SearchRequest.QueryExpansionSpec(
+                condition=query_expansion_level
+            )
+
+            spell_correction_spec = discoveryengine.SearchRequest.SpellCorrectionSpec(
+                mode=spell_correction_mode
+            )
+
+            # --- Build SearchRequest (same logic as sync version) ---
+            request = discoveryengine.SearchRequest(
+                serving_config=serving_config_path,
+                query=search_query,
+                page_size=page_size,
+                content_search_spec=content_search_spec,
+                query_expansion_spec=query_expansion_spec,
+                spell_correction_spec=spell_correction_spec,
+                filter=filter_str,
+                boost_spec=boost_spec,
+                params=params,
+                user_pseudo_id=user_pseudo_id,
+                custom_fine_tuning_spec=custom_fine_tuning_spec,
+            )
+
+            log.info(f"Async searching engine '{engine_id}' with request: {request}")
+            response_pager = await self.async_search_client.search(request)
+            log.info(f"Async search successful for query '{search_query}' against engine '{engine_id}'.")
+            return response_pager
+
+        except GoogleAPIError as e:
+            log.error(f"Async API error searching engine '{engine_id}': {e}")
+            return None
+        except Exception as e:
+            log.error(f"Async unexpected error searching engine '{engine_id}': {e}\n{traceback.format_exc()}")
+            return None
+
+# --- End of DiscoveryEngineClient class ---
