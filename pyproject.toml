@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sunholo"
-version = "0.131.3"
-description = "Large Language Model DevOps - a package to help deploy LLMs to the Cloud."
+version = "0.131.4"
+description = "AI DevOps - a package to help deploy GenAI to the Cloud."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache License, Version 2.0" }

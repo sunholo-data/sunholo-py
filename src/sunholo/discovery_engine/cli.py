@@ -7,6 +7,8 @@ import traceback # For detailed error logging
 try:
     # Assuming sun_rich is in your project structure relative to this file
     from ..cli.sun_rich import console
+    from google.protobuf.json_format import MessageToDict
+
 except ImportError:
     # Fallback if rich is not available or path is wrong
     class ConsoleFallback:
@@ -340,11 +342,11 @@ def search_engine_command(args):
                         console.print("\n[bold green]Search Summary:[/bold green]")
                         console.print(page.summary.summary_text)
                         if args.include_citations and hasattr(page.summary, 'summary_with_metadata') and page.summary.summary_with_metadata:
-                             citations = page.summary.summary_with_metadata.citations
-                             if citations:
+                             citation_metadata = page.summary.summary_with_metadata.citation_metadata
+                             if citation_metadata:
                                   console.print("[bold cyan]Citations:[/bold cyan]")
-                                  for i, citation in enumerate(citations):
-                                       source_info = ", ".join([f"'{s.citation_source}'" for s in citation.sources]) if citation.sources else "N/A"
+                                  for i, citation in enumerate(citation_metadata):
+                                       source_info = ", ".join([f"'{s.reference_index}'" for s in citation.sources]) if citation.sources else "N/A"
                                        console.print(f"  [{i+1}] Sources: {source_info}")
                              references = page.summary.summary_with_metadata.references
                              if references:
@@ -369,9 +371,10 @@ def search_engine_command(args):
                               if doc.struct_data:
                                    try:
                                        # Convert Struct to dict for nice printing
-                                       struct_dict = dict(doc.struct_data)
+                                       struct_dict = MessageToDict(doc.struct_data._pb)
                                        console.print(f"  Metadata: {json.dumps(struct_dict, indent=2)}")
-                                   except Exception:
+                                   except Exception as json_err:
+                                       console.print(f"[yellow]  Warning: Could not convert metadata Struct to JSON: {json_err}[/yellow]")
                                        console.print(f"  Metadata: {doc.struct_data}") # Fallback
 
                               # Display Snippets if requested and available
