@@ -1167,7 +1167,7 @@ class AlloyDBClient:
             'total_rows': len(rows),
             'inserted_rows': 0,
             'failed_rows': 0,
-            'errors': []
+            'errors': [],
             'return_ids': []
         }
         
