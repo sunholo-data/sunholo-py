@@ -1168,6 +1168,7 @@ class AlloyDBClient:
             'inserted_rows': 0,
             'failed_rows': 0,
             'errors': []
+            'return_ids': []
         }
         
         for i, row in enumerate(rows):
@@ -1197,6 +1198,7 @@ class AlloyDBClient:
                 
                 # Insert the row
                 result = await self._insert_single_row(table_name, filtered_row, primary_key_column=primary_key_column)
+                results['return_ids'].append(result)
                 results['inserted_rows'] += 1
                 
             except Exception as e:

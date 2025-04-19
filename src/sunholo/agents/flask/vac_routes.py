@@ -238,12 +238,10 @@ if __name__ == "__main__":
 
         log.info(f'Streaming data with: {all_input}')
         if span:
-            generation = span.generation(
+            span.update(
                 name="start_streaming_chat",
                 metadata=vac_config.configs_by_kind,
-                input=all_input,
-                completion_start_time=str(int(datetime.datetime.now().timestamp())),
-                model=vac_config.vacConfig("model") or vac_config.vacConfig("llm")
+                input=all_input
             )
 
         def generate_response_content():
@@ -272,7 +270,6 @@ if __name__ == "__main__":
                                         if trace:
                                             chunk["trace_id"] = trace.id
                                             chunk["trace_url"] = trace.get_trace_url()
-                                            generation.end(output=json.dumps(chunk))
                                             span.end(output=json.dumps(chunk))
                                             trace.update(output=json.dumps(chunk))
                                         archive_qa(chunk, vector_name)
@@ -314,7 +311,6 @@ if __name__ == "__main__":
                                 chunk["trace_url"] = trace.get_trace_url()
                             archive_qa(chunk, vector_name)
                             if trace:
-                                generation.end(output=json.dumps(chunk))
                                 span.end(output=json.dumps(chunk))
                                 trace.update(output=json.dumps(chunk))
                             yield json.dumps(chunk)
@@ -330,7 +326,6 @@ if __name__ == "__main__":
 
         log.debug(f"streaming response: {response}")
         if trace:
-            generation.end(output=response)
             span.end(output=response)
             trace.update(output=response)
             self.langfuse_eval_response(trace_id=trace.id, eval_percent=all_input.get('eval_percent'))
