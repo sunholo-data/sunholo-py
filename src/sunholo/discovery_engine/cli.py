@@ -401,13 +401,14 @@ def search_engine_command(args):
 
                                     struct_dict = doc.struct_data.to_dict()
                                     metadata_output = json.dumps(struct_dict, indent=2)
-                                elif MessageToDict:
+                                else:
                                     try:
                                         # Convert Struct to dict for nice printing
-                                        struct_dict = MessageToDict(doc.struct_data._pb)
+                                        struct_dict = str(doc.struct_data)
+                                        metadata_output = json.dumps(struct_dict, indent=2)
                                     except Exception as json_err:
                                         console.print(f"[yellow]  Warning: Could not convert metadata Struct to JSON: {json_err}[/yellow]")
-                                        metadata_output = struct_dict
+                                        metadata_output = doc.struct_data
                             console.print(f"  Metadata: {json.dumps(metadata_output, indent=2)}")
                             # Display Snippets if requested and available
                             if args.return_snippet and 'snippets' in doc.derived_struct_data:
