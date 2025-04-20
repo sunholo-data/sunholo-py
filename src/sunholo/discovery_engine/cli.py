@@ -386,7 +386,7 @@ def search_engine_command(args):
                             if references:
                                 console.print("[bold cyan]References:[/bold cyan]")
                                 for ref in references:
-                                    console.print(f"  - Title: {getattr(ref, 'title', 'N/A')}, URI: {getattr(ref, 'uri', 'N/A')}") # Adjust based on actual reference structure
+                                    console.print(f"  - {ref}")
 
                         console.print("-" * 20)
 
