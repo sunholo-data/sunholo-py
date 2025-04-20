@@ -375,7 +375,7 @@ def search_engine_command(args):
                                         for source in citation.sources:
                                             # source is a CitationSource object with reference_index
                                             ref_idx = getattr(source, 'reference_index', 'N/A')
-                                            source_details.append(f"RefIdx:{ref_idx}") # Append details of each source
+                                            source_details.append(f"RefIdx:{ref_idx+1}") # Append details of each source
 
                                     source_info = ", ".join(source_details) if source_details else "No Source Info"
                                     start_idx = getattr(citation, 'start_index', 'N/A')
@@ -385,8 +385,8 @@ def search_engine_command(args):
                             references = page.summary.summary_with_metadata.references
                             if references:
                                 console.print("[bold cyan]References:[/bold cyan]")
-                                for ref in references:
-                                    console.print(f"  - {ref}")
+                                for i, ref in enumerate(references):
+                                    console.print(f"  - {i+1} {ref}")
 
                         console.print("-" * 20)
 
@@ -399,7 +399,7 @@ def search_engine_command(args):
                             console.print(f"\n[bold]Result {i+1}:[/bold]")
                             doc = result.document
                             console.print(f"  ID: {doc.id}")
-                            console.print(f"  Name: {doc.name}")
+                            console.print(f"  Content: {doc.content}")
                             # Display structData if present
                             if doc.struct_data:
                                 try:
