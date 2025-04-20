@@ -8,7 +8,7 @@ try:
     # Assuming sun_rich is in your project structure relative to this file
     from ..cli.sun_rich import console
     from google.protobuf.json_format import MessageToDict
-
+    import proto
 except ImportError:
     # Fallback if rich is not available or path is wrong
     class ConsoleFallback:
@@ -30,6 +30,26 @@ if _DISCOVERYENGINE_AVAILABLE:
 else:
     discoveryengine = None # Set to None if import failed
 
+
+def convert_composite_to_native(value):
+    """
+    Recursively converts a proto MapComposite or RepeatedComposite object to native Python types.
+
+    Args:
+        value: The proto object, which could be a MapComposite, RepeatedComposite, or a primitive.
+
+    Returns:
+        The equivalent Python dictionary, list, or primitive type.
+    """
+    if isinstance(value, proto.marshal.collections.maps.MapComposite):
+        # Convert MapComposite to a dictionary, recursively processing its values
+        return {key: convert_composite_to_native(val) for key, val in value.items()}
+    elif isinstance(value, proto.marshal.collections.repeated.RepeatedComposite):
+        # Convert RepeatedComposite to a list, recursively processing its elements
+        return [convert_composite_to_native(item) for item in value]
+    else:
+        # If it's a primitive value, return it as is
+        return value
 
 # --- Command Handler Functions ---
 
@@ -403,9 +423,8 @@ def search_engine_command(args):
                                     metadata_output = json.dumps(struct_dict, indent=2)
                                 else:
                                     try:
-                                        # Convert Struct to dict for nice printing
-                                        struct_dict = str(doc.struct_data)
-                                        metadata_output = json.dumps(struct_dict, indent=2)
+                                        struct_dict = convert_composite_to_native(doc.struct_data)
+                                        metadata_output = struct_dict
                                     except Exception as json_err:
                                         console.print(f"[yellow]  Warning: Could not convert metadata Struct to JSON: {json_err}[/yellow]")
                                         metadata_output = doc.struct_data
