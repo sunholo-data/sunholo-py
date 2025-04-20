@@ -370,36 +370,55 @@ def search_engine_command(args):
 
                         console.print("-" * 20)
 
-
                     # Print Document Results (available on the page level)
                     if hasattr(page, 'results') and page.results:
-                         console.print(f"[bold blue]Documents Found ({len(page.results)} on this page):[/bold blue]")
-                         for i, result in enumerate(page.results):
-                              results_found_on_any_page = True
-                              results_found_on_this_page = True
-                              console.print(f"\n[bold]Result {i+1}:[/bold]")
-                              doc = result.document
-                              console.print(f"  ID: {doc.id}")
-                              console.print(f"  Name: {doc.name}")
-                              # Display structData if present
-                              if doc.struct_data:
-                                   try:
-                                       # Convert Struct to dict for nice printing
-                                       struct_dict = MessageToDict(doc.struct_data._pb)
-                                       console.print(f"  Metadata: {json.dumps(struct_dict, indent=2)}")
-                                   except Exception as json_err:
-                                       console.print(f"[yellow]  Warning: Could not convert metadata Struct to JSON: {json_err}[/yellow]")
-                                       console.print(f"  Metadata: {doc.struct_data}") # Fallback
+                        console.print(f"[bold blue]Documents Found ({len(page.results)} on this page):[/bold blue]")
+                        for i, result in enumerate(page.results):
+                            results_found_on_any_page = True
+                            results_found_on_this_page = True
+                            console.print(f"\n[bold]Result {i+1}:[/bold]")
+                            doc = result.document
+                            console.print(f"  ID: {doc.id}")
+                            console.print(f"  Name: {doc.name}")
+                            # Display structData if present
+                            if doc.struct_data:
+                                # Attempt 1: Preferred - Use proto-plus .to_json() if available
+                                if hasattr(doc.struct_data, 'to_json'):
+                                    console.print(f"[yellow]  to_json[/yellow]")
+                                    # Pass indent directly if the method supports it
+                                    try:
+                                        metadata_output = doc.struct_data.to_json(indent=2)
+                                    except TypeError: # In case to_json doesn't accept indent
+                                        metadata_output = doc.struct_data.to_json()
+                                        # Optionally re-parse and indent if needed, but often okay as is
+                                        # parsed_json = json.loads(metadata_output)
+                                        # metadata_output = json.dumps(parsed_json, indent=2)
 
-                              # Display Snippets if requested and available
-                              if args.return_snippet and 'snippets' in doc.derived_struct_data:
+
+                                # Attempt 2: Use proto-plus .to_dict() then json.dumps
+                                elif hasattr(doc.struct_data, 'to_dict'):
+                                    console.print(f"[yellow]  to_dict[/yellow]")
+
+                                    struct_dict = doc.struct_data.to_dict()
+                                    metadata_output = json.dumps(struct_dict, indent=2)
+                                elif MessageToDict:
+                                    try:
+                                        # Convert Struct to dict for nice printing
+                                        struct_dict = MessageToDict(doc.struct_data._pb)
+                                    except Exception as json_err:
+                                        console.print(f"[yellow]  Warning: Could not convert metadata Struct to JSON: {json_err}[/yellow]")
+                                        metadata_output = struct_dict
+                            console.print(f"  Metadata: {json.dumps(metadata_output, indent=2)}")
+                            # Display Snippets if requested and available
+                            if args.return_snippet and 'snippets' in doc.derived_struct_data:
                                    console.print("[bold cyan]  Snippets:[/bold cyan]")
                                    for snippet in doc.derived_struct_data['snippets']:
                                         console.print(f"    - {snippet.get('snippet', 'N/A').strip()}") # Adjust key if needed
-                              elif args.return_snippet:
+                            elif args.return_snippet:
                                    console.print("[yellow]  (Snippets requested but not found in result)[/yellow]")
-                              console.print("-" * 5)
-                         console.print("-" * 20) # End of results list for page
+                            console.print("-" * 5)
+                        
+                        console.print("-" * 20) # End of results list for page
 
                     if not results_found_on_this_page:
                          console.print("[yellow](No summary or document results on this page)[/yellow]")
