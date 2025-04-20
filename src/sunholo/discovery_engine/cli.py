@@ -342,17 +342,31 @@ def search_engine_command(args):
                         console.print("\n[bold green]Search Summary:[/bold green]")
                         console.print(page.summary.summary_text)
                         if args.include_citations and hasattr(page.summary, 'summary_with_metadata') and page.summary.summary_with_metadata:
-                             citation_metadata = page.summary.summary_with_metadata.citation_metadata
-                             if citation_metadata:
-                                  console.print("[bold cyan]Citations:[/bold cyan]")
-                                  for i, citation in enumerate(citation_metadata):
-                                       source_info = ", ".join([f"'{s.reference_index}'" for s in citation.sources]) if citation.sources else "N/A"
-                                       console.print(f"  [{i+1}] Sources: {source_info}")
-                             references = page.summary.summary_with_metadata.references
-                             if references:
-                                 console.print("[bold cyan]References:[/bold cyan]")
-                                 for ref in references:
-                                     console.print(f"  - Title: {getattr(ref, 'title', 'N/A')}, URI: {getattr(ref, 'uri', 'N/A')}") # Adjust based on actual reference structure
+                            citation_metadata = page.summary.summary_with_metadata.citation_metadata
+                            if citation_metadata and hasattr(citation_metadata, 'citations'):
+                                # Get the actual list of Citation objects
+                                citation_list = citation_metadata.citations
+                                console.print("[bold cyan]Citations:[/bold cyan]")
+                                for i, citation in enumerate(citation_list):
+                                    # citation is now a Citation object with start_index, end_index, sources
+                                    source_details = []
+                                    # Check if the citation has sources and iterate through them
+                                    if hasattr(citation, 'sources') and citation.sources:
+                                        for source in citation.sources:
+                                            # source is a CitationSource object with reference_index
+                                            ref_idx = getattr(source, 'reference_index', 'N/A')
+                                            source_details.append(f"RefIdx:{ref_idx}") # Append details of each source
+
+                                    source_info = ", ".join(source_details) if source_details else "No Source Info"
+                                    start_idx = getattr(citation, 'start_index', 'N/A')
+                                    end_idx = getattr(citation, 'end_index', 'N/A')
+                                    console.print(f"  Citation {i+1}: Segment [{start_idx}-{end_idx}], Sources [{source_info}]")
+
+                            references = page.summary.summary_with_metadata.references
+                            if references:
+                                console.print("[bold cyan]References:[/bold cyan]")
+                                for ref in references:
+                                    console.print(f"  - Title: {getattr(ref, 'title', 'N/A')}, URI: {getattr(ref, 'uri', 'N/A')}") # Adjust based on actual reference structure
 
                         console.print("-" * 20)
 
