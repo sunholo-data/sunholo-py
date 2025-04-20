@@ -402,32 +402,12 @@ def search_engine_command(args):
                             console.print(f"  Name: {doc.name}")
                             # Display structData if present
                             if doc.struct_data:
-                                # Attempt 1: Preferred - Use proto-plus .to_json() if available
-                                if hasattr(doc.struct_data, 'to_json'):
-                                    console.print(f"[yellow]  to_json[/yellow]")
-                                    # Pass indent directly if the method supports it
-                                    try:
-                                        metadata_output = doc.struct_data.to_json(indent=2)
-                                    except TypeError: # In case to_json doesn't accept indent
-                                        metadata_output = doc.struct_data.to_json()
-                                        # Optionally re-parse and indent if needed, but often okay as is
-                                        # parsed_json = json.loads(metadata_output)
-                                        # metadata_output = json.dumps(parsed_json, indent=2)
-
-
-                                # Attempt 2: Use proto-plus .to_dict() then json.dumps
-                                elif hasattr(doc.struct_data, 'to_dict'):
-                                    console.print(f"[yellow]  to_dict[/yellow]")
-
-                                    struct_dict = doc.struct_data.to_dict()
-                                    metadata_output = json.dumps(struct_dict, indent=2)
-                                else:
-                                    try:
-                                        struct_dict = convert_composite_to_native(doc.struct_data)
-                                        metadata_output = struct_dict
-                                    except Exception as json_err:
-                                        console.print(f"[yellow]  Warning: Could not convert metadata Struct to JSON: {json_err}[/yellow]")
-                                        metadata_output = doc.struct_data
+                                try:
+                                    struct_dict = convert_composite_to_native(doc.struct_data)
+                                    metadata_output = struct_dict.get("structData", {})
+                                except Exception as json_err:
+                                    console.print(f"[yellow]  Warning: Could not convert metadata Struct to JSON: {json_err}[/yellow]")
+                                    metadata_output = doc.struct_data
                             console.print(f"  Metadata: {json.dumps(metadata_output, indent=2)}")
                             # Display Snippets if requested and available
                             if args.return_snippet and 'snippets' in doc.derived_struct_data:
