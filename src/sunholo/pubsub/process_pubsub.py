@@ -34,7 +34,7 @@ def decode_pubsub_message(data: dict) -> tuple:
         attributes['vector_name'] = vector_name
 
     log.info(f"Process Pub/Sub was triggered by messageId {messageId} published at {publishTime}")
-    log.debug(f"Process Pub/Sub data: {message_data}")
+    log.debug("Processing Pub/Sub data", log_struct=message_data)
 
     return message_data, attributes, vector_name
 
