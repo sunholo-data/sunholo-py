@@ -67,12 +67,19 @@ class DiscoveryEngineClient:
                 print(f"Document Name: {chunk_document_name}")
         ```
     """
-    def __init__(self, data_store_id, project_id, location="eu"):
+    def __init__(self, data_store_id=None, engine_id=None, project_id=None, location="eu"):
         if not discoveryengine:
             raise ImportError("Google Cloud Discovery Engine not available, install via `pip install sunholo[gcp]`")
+        
+        if project_id is None:
+            raise ValueError("Must specify project_id")
+        
+        if data_store_id is None and engine_id is None:
+            raise ValueError("Must specify at least one of data_store_id or engine_id")
 
         self.project_id = project_id
         self.data_store_id = data_store_id
+        self.engine_id = engine_id
         self.location = location
         client_options = (
             ClientOptions(api_endpoint=f"{location}-discoveryengine.googleapis.com")
@@ -469,7 +476,7 @@ class DiscoveryEngineClient:
             operation = self.engine_client.create_engine(request=request)
         except AlreadyExists as err:
             log.info(f"Engine already exists: - {str(err)}")
-
+            self.engine_id = engine_id
             return engine_id
         
         log.info(f"Waiting for create vertex ai search operation to complete: {operation.operation.name}")
@@ -481,7 +488,7 @@ class DiscoveryEngineClient:
 
         # Handle the response
         log.info(f"{response=} {metadata=}")
-
+        self.engine_id = engine_id
         return operation.operation.name
 
     def _import_document_request(self,
@@ -862,7 +869,7 @@ class DiscoveryEngineClient:
     def search_engine(
         self,
         search_query: str,
-        engine_id: str,
+        engine_id: str = None,
         serving_config_id: str = "default_config",
         page_size: int = 10,
         return_snippet: bool = True,
@@ -890,7 +897,7 @@ class DiscoveryEngineClient:
 
         Args:
             search_query: The user's search query string.
-            engine_id: The ID of the search engine to query.
+            engine_id: The ID of the search engine to query or uses class engine_id it init with.
             serving_config_id: The ID of the specific serving config for the engine.
             page_size: Maximum number of results per page.
             return_snippet: Whether to request snippets in the results.
@@ -961,13 +968,20 @@ class DiscoveryEngineClient:
             log.error("Discovery Engine library not available at runtime.")
             return None
         
+        if engine_id:
+            self.engine_id = engine_id
+        
+        if engine_id is None and self.engine_id is None:
+            raise ValueError("Could not find self.engine_id")
+        
+        
         try:
             # Construct the serving config path for an ENGINE
             # Note: The client library path helper is for data stores/serving configs within them.
             # We need the path for an engine's serving config.
             serving_config_path = (
                 f"projects/{self.project_id}/locations/{self.location}/"
-                f"collections/{collection_id}/engines/{engine_id}/"
+                f"collections/{collection_id}/engines/{self.engine_id}/"
                 f"servingConfigs/{serving_config_id}"
             )
             log.info(f"Using Engine Serving Config Path: {serving_config_path}")
@@ -1029,22 +1043,22 @@ class DiscoveryEngineClient:
                 # Add other relevant fields like facet_specs if needed
             )
 
-            log.info(f"Searching engine '{engine_id}' with request: {request}")
+            log.info(f"Searching engine '{self.engine_id}' with request: {request}")
             response_pager = self.search_client.search(request)
-            log.info(f"Search successful for query '{search_query}' against engine '{engine_id}'.")
+            log.info(f"Search successful for query '{search_query}' against engine '{self.engine_id}'.")
             return response_pager
 
         except GoogleAPIError as e:
-            log.error(f"API error searching engine '{engine_id}': {e}")
+            log.error(f"API error searching engine '{self.engine_id}': {e}")
             return None
         except Exception as e:
-            log.error(f"Unexpected error searching engine '{engine_id}': {e}\n{traceback.format_exc()}")
+            log.error(f"Unexpected error searching engine '{self.engine_id}': {e}\n{traceback.format_exc()}")
             return None
 
     async def async_search_engine(
         self,
         search_query: str,
-        engine_id: str,
+        engine_id: str=None,
         serving_config_id: str = "default_config",
         page_size: int = 10,
         return_snippet: bool = True,
@@ -1077,6 +1091,12 @@ class DiscoveryEngineClient:
             An SearchAsyncPager object to iterate through results asynchronously,
             or None if an error occurs or the async client is not available.
         """
+        if engine_id:
+            self.engine_id = engine_id
+        
+        if engine_id is None and self.engine_id is None:
+            raise ValueError("Could not find self.engine_id")
+        
         if not self.async_search_client:
              log.error("Cannot call async_search_engine: Async client not initialized.")
              raise RuntimeError("Async client not initialized. Ensure class is instantiated within an async context.")
@@ -1085,7 +1105,7 @@ class DiscoveryEngineClient:
             # Construct the serving config path for an ENGINE (same as sync)
             serving_config_path = (
                 f"projects/{self.project_id}/locations/{self.location}/"
-                f"collections/{collection_id}/engines/{engine_id}/"
+                f"collections/{collection_id}/engines/{self.engine_id}/"
                 f"servingConfigs/{serving_config_id}"
             )
             log.info(f"Using Async Engine Serving Config Path: {serving_config_path}")
@@ -1138,16 +1158,16 @@ class DiscoveryEngineClient:
                 user_pseudo_id=user_pseudo_id,
             )
 
-            log.info(f"Async searching engine '{engine_id}' with request: {request}")
+            log.info(f"Async searching engine '{self.engine_id}' with request: {request}")
             response_pager = await self.async_search_client.search(request)
-            log.info(f"Async search successful for query '{search_query}' against engine '{engine_id}'.")
+            log.info(f"Async search successful for query '{search_query}' against engine '{self.engine_id}'.")
             return response_pager
 
         except GoogleAPIError as e:
-            log.error(f"Async API error searching engine '{engine_id}': {e}")
+            log.error(f"Async API error searching engine '{self.engine_id}': {e}")
             return None
         except Exception as e:
-            log.error(f"Async unexpected error searching engine '{engine_id}': {e}\n{traceback.format_exc()}")
+            log.error(f"Async unexpected error searching engine '{self.engine_id}': {e}\n{traceback.format_exc()}")
             return None
 
 # --- End of DiscoveryEngineClient class ---

@@ -306,9 +306,7 @@ def search_engine_command(args):
     try:
         client = DiscoveryEngineClient(
             project_id=args.project,
-            # data_store_id is required by __init__ but less relevant here.
-            # Provide a default or the primary one associated with the project/engine.
-            data_store_id=args.data_store_id_for_init,
+            engine_id=args.engine_id,
             location=args.location
         )
 
@@ -525,8 +523,6 @@ def setup_discovery_engine_subparser(subparsers):
     search_engine_parser = discovery_engine_subparsers.add_parser('search-engine', help='Search a Discovery Engine (fetches documents/summary)')
     search_engine_parser.add_argument('--query', required=True, help='The search query')
     search_engine_parser.add_argument('--engine-id', required=True, help='Engine ID to search')
-    # Add data_store_id needed for client init, maybe make it optional if client handles it?
-    search_engine_parser.add_argument('--data-store-id-for-init', required=True, help='A primary data store ID associated with the project/engine (for client init)')
     search_engine_parser.add_argument('--serving-config-id', default='default_config', help='Serving config ID for the engine')
     search_engine_parser.add_argument('--collection-id', default='default_collection', help='Collection ID for the engine path')
     search_engine_parser.add_argument('--page-size', type=int, default=10, help='Max results per page')
