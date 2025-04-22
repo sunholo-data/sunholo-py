@@ -309,8 +309,11 @@ class DiscoveryEngineClient:
         
         # Iterate through each result in the response
         for result in response.results:
-            chunk = result.chunk
-            chunk_metadata = chunk.ChunkMetadata
+            if hasattr(result, 'chunk'):      
+                chunk = result.chunk
+                chunk_metadata = chunk.ChunkMetadata
+            else:
+                log.warning("No chunk found in result")
 
             if hasattr(chunk_metadata, 'previous_chunks'):
                 # Process previous chunks
@@ -339,8 +342,11 @@ class DiscoveryEngineClient:
         
         # Iterate through each result in the response
         for result in response.results:
-            chunk = result.chunk
-            chunk_metadata = chunk.ChunkMetadata
+            if hasattr(result, 'chunk'):      
+                chunk = result.chunk
+                chunk_metadata = chunk.ChunkMetadata
+            else:
+                log.warning("No chunk found in result")
 
             if hasattr(chunk_metadata, 'previous_chunks'):
                 # Process previous chunks
@@ -431,6 +437,83 @@ class DiscoveryEngineClient:
             data_store_ids=data_store_ids,
             content_search_spec_type="documents"
         )
+
+    def document_format(self, document):
+        """Format a document for string output."""
+        # Extract useful fields from the document
+        document_id = document.id
+        document_name = document.name
+        
+        # Get content if available
+        content = ""
+        if hasattr(document, 'content') and document.content:
+            if hasattr(document.content, 'uri') and document.content.uri:
+                content = f"Content URI: {document.content.uri}\n"
+            if hasattr(document.content, 'mime_type') and document.content.mime_type:
+                content += f"Content Type: {document.content.mime_type}\n"
+        
+        # Get structured data if available
+        struct_data = ""
+        if hasattr(document, 'struct_data') and document.struct_data:
+            struct_data = f"Structured Data: {dict(document.struct_data)}\n"
+        
+        # Get derived structured data if available
+        derived_data = ""
+        if hasattr(document, 'derived_struct_data') and document.derived_struct_data:
+            derived_data = f"Derived Data: {dict(document.derived_struct_data)}\n"
+        
+        # Return formatted document string
+        return (
+            f"# Document: {document_id}\n"
+            f"Resource Name: {document_name}\n"
+            f"{content}"
+            f"{struct_data}"
+            f"{derived_data}"
+        )
+
+    def process_documents(self, response):
+        """Process a search response containing documents into a formatted string."""
+        all_documents = []
+
+        # Check if the response contains results
+        if not hasattr(response, 'results') or not response.results:
+            log.info(f'No results found in response: {response=}')
+            return []
+        
+        # Iterate through each result in the response
+        for result in response.results:
+            if hasattr(result, 'document'):
+                document = result.document
+                all_documents.append(self.document_format(document))
+            else:
+                log.warning("No document found in result")
+        
+        # Combine all documents into one long string
+        result_string = "\n\n".join(all_documents)
+        
+        return result_string
+
+    async def async_process_documents(self, response):
+        """Process a search response containing documents into a formatted string asynchronously."""
+        all_documents = []
+
+        # Check if the response contains results
+        if not hasattr(response, 'results') or not response.results:
+            log.info(f'No results found in response: {response=}')
+            return []
+        
+        # Iterate through each result in the response
+        for result in response.results:
+            if hasattr(result, 'document'):
+                document = result.document
+                all_documents.append(self.document_format(document))
+            else:
+                log.warning("No document found in result")
+        
+        # Combine all documents into one long string
+        result_string = "\n\n".join(all_documents)
+        
+        return result_string
     
     def create_engine(self,
         engine_id: str, 
@@ -753,9 +836,14 @@ class DiscoveryEngineClient:
             log.info(f"No results {search_request.data_store_specs=}: {str(e)}")
             return None
         
-        if parse_chunks_to_string:
-            big_string = self.process_chunks(search_response)
-            log.info(f"Discovery engine chunks string sample: {big_string[:100]}")
+        if content_search_spec_type=="chunks":
+            if parse_chunks_to_string:
+                big_string = self.process_chunks(search_response)
+                log.info(f"Discovery engine chunks string sample: {big_string[:100]}")
+                return big_string
+        elif content_search_spec_type=="documents":
+            big_string = self.process_documents(search_response)
+            log.info(f"Discovery engine documents string sample: {big_string[:100]}")
             return big_string
         
         log.info("Discovery engine response object")
@@ -824,9 +912,14 @@ class DiscoveryEngineClient:
             log.info(f"No results {search_request.data_store_specs=}: {str(e)}")
             return None
         
-        if parse_chunks_to_string:
-            big_string = await self.async_process_chunks(search_response)
-            log.info(f"Discovery engine chunks string sample: {big_string[:100]}")
+        if content_search_spec_type=="chunks":
+            if parse_chunks_to_string:
+                big_string = self.process_chunks(search_response)
+                log.info(f"Discovery engine chunks string sample: {big_string[:100]}")
+                return big_string
+        elif content_search_spec_type=="documents":
+            big_string = self.process_documents(search_response)
+            log.info(f"Discovery engine documents string sample: {big_string[:100]}")
             return big_string
         
         log.info("Discovery engine response object")
