@@ -224,34 +224,56 @@ def search_command(args):
         if args.parse_chunks_to_string:
             console.print("\n[bold magenta]--- Combined Chunk String ---[/bold magenta]")
             console.print(results_data if results_data else "[yellow]No results found or error occurred.[/yellow]")
+        elif isinstance(results_data, str):
+            # Handle string result when parse_chunks_to_string is False but a string was returned anyway
+            console.print("\n[bold magenta]--- Results String ---[/bold magenta]")
+            console.print(results_data)
         elif results_data: # It's a pager object
-            console.print("\n[bold magenta]--- Individual Chunks ---[/bold magenta]")
-            chunk_count = 0
-            try:
-                 # Iterate through the pager returned by get_chunks
-                 for page in results_data.pages:
-                     if not hasattr(page, 'results') or not page.results: continue
-                     for result in page.results:
-                          # Ensure the result structure is as expected by get_chunks
-                          if hasattr(result, 'chunk'):
-                               chunk_count += 1
-                               console.print(f"\n[bold]Chunk {chunk_count}:[/bold]")
-                               # Use the client's formatter if available
-                               console.print(client.chunk_format(result.chunk))
-                          elif hasattr(result, 'document') and hasattr(result.document, 'chunks'):
-                               # Fallback if structure is different (e.g., document with chunks)
-                               for chunk in result.document.chunks:
-                                    chunk_count += 1
-                                    console.print(f"\n[bold]Chunk {chunk_count} (from doc {result.document.id}):[/bold]")
-                                    console.print(f"  Content: {getattr(chunk, 'content', 'N/A')}")
-                                    console.print(f"  Doc Name: {getattr(chunk, 'document_metadata', {}).get('name', 'N/A')}") # Example access
+            if args.content_search_spec_type == "chunks":
+                console.print("\n[bold magenta]--- Individual Chunks ---[/bold magenta]")
+                chunk_count = 0
+                try:
+                    # Iterate through the pager returned by get_chunks
+                    for page in results_data.pages:
+                        if not hasattr(page, 'results') or not page.results: continue
+                        for result in page.results:
+                            # Ensure the result structure is as expected by get_chunks
+                            if hasattr(result, 'chunk'):
+                                chunk_count += 1
+                                console.print(f"\n[bold]Chunk {chunk_count}:[/bold]")
+                                # Use the client's formatter if available
+                                console.print(client.chunk_format(result.chunk))
+                            elif hasattr(result, 'document') and hasattr(result.document, 'chunks'):
+                                # Fallback if structure is different (e.g., document with chunks)
+                                for chunk in result.document.chunks:
+                                        chunk_count += 1
+                                        console.print(f"\n[bold]Chunk {chunk_count} (from doc {result.document.id}):[/bold]")
+                                        console.print(f"  Content: {getattr(chunk, 'content', 'N/A')}")
+                                        console.print(f"  Doc Name: {getattr(chunk, 'document_metadata', {}).get('name', 'N/A')}") 
+                    if chunk_count == 0:
+                        console.print("[yellow]No chunks found in the results.[/yellow]")
 
-                 if chunk_count == 0:
-                     console.print("[yellow]No chunks found in the results.[/yellow]")
-
-            except Exception as page_err:
-                 console.print(f"[bold red]Error processing search results pager: {page_err}[/bold red]")
-                 console.print(f"[red]{traceback.format_exc()}[/red]")
+                except Exception as page_err:
+                    console.print(f"[bold red]Error processing search results pager: {page_err}[/bold red]")
+                    console.print(f"[red]{traceback.format_exc()}[/red]")
+            elif args.content_search_spec_type == "documents":
+                console.print("\n[bold magenta]--- Individual Documents ---[/bold magenta]")
+                doc_count = 0
+                try:
+                    # Iterate through the pager returned by get_documents
+                    for page in results_data.pages:
+                        if not hasattr(page, 'results') or not page.results: continue
+                        for result in page.results:
+                            if hasattr(result, 'document'):
+                                doc_count += 1
+                                console.print(f"\n[bold]Document {doc_count}:[/bold]")
+                                console.print(client.document_format(result.document))
+                    
+                    if doc_count == 0:
+                        console.print("[yellow]No documents found in the results.[/yellow]")
+                except Exception as page_err:
+                    console.print(f"[bold red]Error processing document results: {page_err}[/bold red]")
+                    console.print(f"[red]{traceback.format_exc()}[/red]")
         else:
             console.print("[yellow]No results found or error occurred.[/yellow]")
 
