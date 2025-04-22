@@ -941,6 +941,65 @@ class AlloyDBClient:
         log.info(f"Updated row in {table_name} with {primary_key_column}={primary_key_value}")
         
         return result
+
+    async def check_row(self, table_name: str, primary_key_column: str, primary_key_value: str, 
+                    columns: list = None, condition: str = None):
+        """
+        Retrieves a row from the specified table based on the primary key.
+        
+        Args:
+            table_name (str): Name of the table to query
+            primary_key_column (str): Name of the primary key column (e.g., 'id')
+            primary_key_value (str): Value of the primary key for the row to retrieve
+            columns (list, optional): List of column names to retrieve. If None, retrieves all columns
+            condition (str, optional): Additional condition for the WHERE clause
+            
+        Returns:
+            The row data if found, None otherwise
+        """
+        # Determine which columns to select
+        if columns and isinstance(columns, list):
+            columns_str = ", ".join([f'"{col}"' for col in columns])
+        else:
+            columns_str = "*"  # Select all columns if none specified
+        
+        # Create the WHERE clause
+        where_clause = f'"{primary_key_column}" = :pk_value'
+        values = {'pk_value': primary_key_value}
+        
+        if condition:
+            where_clause += f" AND ({condition})"
+        
+        # Construct the SQL statement
+        sql = f'SELECT {columns_str} FROM "{table_name}" WHERE {where_clause} LIMIT 1'
+        
+        log.info(f"Checking row in {table_name} with {primary_key_column}={primary_key_value}")
+        
+        # Execute SQL based on engine type
+        try:
+            if self.engine_type == "pg8000":
+                # Use the synchronous method for pg8000
+                result = self._execute_sql_pg8000(sql, values)
+                # Extract the row data from the result
+                if result and hasattr(result, 'fetchone'):
+                    row = result.fetchone()
+                    if row:
+                        # If we have column names, convert to dictionary
+                        if hasattr(result, 'keys'):
+                            column_names = result.keys()
+                            return dict(zip(column_names, row))
+                        return row
+                return None
+            else:
+                # Use the async method for langchain
+                result = await self._execute_sql_async_langchain(sql, values)
+                # For langchain engine, check result format and return first row if exists
+                if result and len(result) > 0:
+                    return result[0]
+                return None
+        except Exception as e:
+            log.error(f"Error checking row: {e}")
+            return None
     
     async def get_table_columns(self, table_name, schema="public"):
         """
