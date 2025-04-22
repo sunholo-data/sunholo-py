@@ -277,11 +277,25 @@ def search_by_id_and_or_date_command(args):
         elif results_data:
             console.print("\n[bold magenta]--- Individual Chunks (Filtered) ---[/bold magenta]")
             chunk_count = 0
-            # ... (pager iteration identical to search_command) ...
             try:
+                 # Iterate through the pager returned by get_chunks
                  for page in results_data.pages:
-                     # ... iterate results and chunks ...
-                      pass # Replace with actual iteration and printing
+                     if not hasattr(page, 'results') or not page.results: continue
+                     for result in page.results:
+                          # Ensure the result structure is as expected by get_chunks
+                          if hasattr(result, 'chunk'):
+                               chunk_count += 1
+                               console.print(f"\n[bold]Chunk {chunk_count}:[/bold]")
+                               # Use the client's formatter if available
+                               console.print(client.chunk_format(result.chunk))
+                          elif hasattr(result, 'document') and hasattr(result.document, 'chunks'):
+                               # Fallback if structure is different (e.g., document with chunks)
+                               for chunk in result.document.chunks:
+                                    chunk_count += 1
+                                    console.print(f"\n[bold]Chunk {chunk_count} (from doc {result.document.id}):[/bold]")
+                                    console.print(f"  Content: {getattr(chunk, 'content', 'N/A')}")
+                                    console.print(f"  Doc Name: {getattr(chunk, 'document_metadata', {}).get('name', 'N/A')}") # Example access
+
                  if chunk_count == 0:
                      console.print("[yellow]No chunks found in the filtered results.[/yellow]")
             except Exception as page_err:
