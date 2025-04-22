@@ -218,16 +218,16 @@ class DiscoveryEngineClient:
 
         Args:
             query (str): The search query.
-            collection_id (str): The ID of the collection to search.
             num_previous_chunks (int, optional): Number of previous chunks to return for context (default is 3).
             num_next_chunks (int, optional): Number of next chunks to return for context (default is 3).
             page_size (int, optional): The maximum number of results to return per page (default is 10).
             parse_chunks_to_string: If True will put chunks in one big string, False will return object
             serving_config: The resource name of the Search serving config 
-            data_store_ids: If you want to search over many data stores, not just the one that was used to init the class. They should be of the format projects/{project}/locations/{location}/collections/{collection_id}/dataStores/{data_store_id}
+            data_store_ids: If you want to search over many data stores, not just the one that was used to init the class.
+                            They should be of the format projects/{project}/locations/{location}/collections/{collection_id}/dataStores/{data_store_id}
 
         Returns:
-            discoveryengine.SearchResponse: The search response object containing the search results.
+            discoveryengine.SearchResponse or str: The search response object or string of chunks.
 
         Example:
             ```python
@@ -237,51 +237,18 @@ class DiscoveryEngineClient:
                     print(f"Chunk: {chunk.snippet}, document name: {chunk.document_name}")
             ```
         """
-
-        serving_config_path = self.search_client.serving_config_path(
-            self.project_id,
-            self.location,
-            self.data_store_id,
-            serving_config
-        )
-
-        search_request = discoveryengine.SearchRequest(
-            serving_config=serving_config_path,
+        # Use search_with_filters with filter_str=None to perform a regular search
+        return self.search_with_filters(
             query=query,
-            page_size=page_size, 
-            content_search_spec=discoveryengine.SearchRequest.ContentSearchSpec(
-                search_result_mode="CHUNKS", 
-                chunk_spec=discoveryengine.SearchRequest.ContentSearchSpec.ChunkSpec(
-                    num_previous_chunks=num_previous_chunks,
-                    num_next_chunks=num_next_chunks,
-                ),
-            ),
+            filter_str=None,
+            num_previous_chunks=num_previous_chunks,
+            num_next_chunks=num_next_chunks,
+            page_size=page_size,
+            parse_chunks_to_string=parse_chunks_to_string,
+            serving_config=serving_config,
+            data_store_ids=data_store_ids,
+            content_search_spec_type="chunks"
         )
-
-        if data_store_ids:
-            search_request.data_store_specs = [
-                discoveryengine.SearchRequest.DataStoreSpec(
-                    data_store=self._search_data_store_path(data_store_id, serving_config=serving_config)
-                )
-                for data_store_id in data_store_ids
-            ]
-
-        try:
-            log.info(f"Discovery engine request: {search_request=}")
-            search_response = self.search_client.search(search_request)
-        except Exception as err:
-            log.warning(f"Error searching {search_request=} - no results found? {str(err)}")
-            search_response = []
-
-        if parse_chunks_to_string:
-
-            big_string = self.process_chunks(search_response)
-            log.info(f"Discovery engine chunks string sample: {big_string[:100]}")
-
-            return big_string
-        
-        log.info("Discovery engine response object")
-        return search_response
 
     async def async_get_chunks(
         self,
@@ -293,73 +260,32 @@ class DiscoveryEngineClient:
         serving_config: str = "default_serving_config",
         data_store_ids: Optional[List[str]] = None,
     ):
-        """Retrieves chunks or documents based on a query.
+        """Asynchronously retrieves chunks or documents based on a query.
 
         Args:
             query (str): The search query.
-            collection_id (str): The ID of the collection to search.
             num_previous_chunks (int, optional): Number of previous chunks to return for context (default is 3).
             num_next_chunks (int, optional): Number of next chunks to return for context (default is 3).
             page_size (int, optional): The maximum number of results to return per page (default is 10).
             parse_chunks_to_string: If True will put chunks in one big string, False will return object
             serving_config: The resource name of the Search serving config 
-            data_store_ids: If you want to search over many data stores, not just the one that was used to init the class. They should be of the format projects/{project}/locations/{location}/collections/{collection_id}/dataStores/{data_store_id}
+            data_store_ids: If you want to search over many data stores, not just the one that was used to init the class.
+                            They should be of the format projects/{project}/locations/{location}/collections/{collection_id}/dataStores/{data_store_id}
 
         Returns:
-            discoveryengine.SearchResponse: The search response object containing the search results.
-
-        Example:
-            ```python
-            search_response = client.get_chunks('your query', 'your_collection_id')
-            for result in search_response.results:
-                for chunk in result.document.chunks:
-                    print(f"Chunk: {chunk.snippet}, document name: {chunk.document_name}")
-            ```
+            discoveryengine.SearchResponse or str: The search response object or string of chunks.
         """
-
-        serving_config_path = self.async_search_client.serving_config_path(
-            self.project_id,
-            self.location,
-            self.data_store_id,
-            serving_config
-        )
-
-
-        search_request = discoveryengine.SearchRequest(
-            serving_config=serving_config_path,
+        # Use async_search_with_filters with filter_str=None to perform a regular search
+        return await self.async_search_with_filters(
             query=query,
-            page_size=page_size, 
-            content_search_spec=discoveryengine.SearchRequest.ContentSearchSpec(
-                search_result_mode="CHUNKS", 
-                chunk_spec=discoveryengine.SearchRequest.ContentSearchSpec.ChunkSpec(
-                    num_previous_chunks=num_previous_chunks,
-                    num_next_chunks=num_next_chunks,
-                ),
-            ),
+            filter_str=None,
+            num_previous_chunks=num_previous_chunks,
+            num_next_chunks=num_next_chunks,
+            page_size=page_size,
+            parse_chunks_to_string=parse_chunks_to_string,
+            serving_config=serving_config,
+            data_store_ids=data_store_ids
         )
-
-        if data_store_ids:
-            search_request.data_store_specs = [
-                discoveryengine.SearchRequest.DataStoreSpec(data_store=data_store_id)
-                for data_store_id in data_store_ids
-            ]
-
-        try:
-            log.info(f"Discovery engine request: {search_request=}")
-            search_response = self.async_search_client.search(search_request)
-        except Exception as err:
-            log.warning(f"Error searching {search_request=} - no results found? {str(err)}")
-            search_response = []
-
-        if parse_chunks_to_string:
-
-            big_string = await self.async_process_chunks(search_response)
-            log.info(f"Discovery engine chunks string sample: {big_string[:100]}")
-
-            return big_string
-        
-        log.info("Discovery engine response object")
-        return search_response
     
     def chunk_format(self, chunk):
 
@@ -432,6 +358,79 @@ class DiscoveryEngineClient:
         result_string = "\n".join(all_chunks)
 
         return result_string
+
+    def get_documents(
+        self,
+        query: str,
+        page_size: int = 10,
+        parse_documents_to_string: bool = True,
+        serving_config: str = "default_serving_config",
+        data_store_ids: Optional[List[str]] = None,
+    ):
+        """Retrieves entire documents based on a query.
+
+        Args:
+            query (str): The search query.
+            page_size (int, optional): The maximum number of results to return per page (default is 10).
+            parse_documents_to_string: If True will put documents in one big string, False will return object
+            serving_config: The resource name of the Search serving config 
+            data_store_ids: If you want to search over many data stores, not just the one that was used to init the class.
+                            They should be of the format projects/{project}/locations/{location}/collections/{collection_id}/dataStores/{data_store_id}
+
+        Returns:
+            discoveryengine.SearchResponse or str: The search response object or string of documents.
+
+        Example:
+            ```python
+            search_response = client.get_documents('your query')
+            for result in search_response.results:
+                doc = result.document
+                print(f"Document: {doc.name}, Title: {doc.derived_struct_data.get('title')}")
+            ```
+        """
+        # Use search_with_filters with content_search_spec_type="documents" to get documents instead of chunks
+        return self.search_with_filters(
+            query=query,
+            filter_str=None,
+            page_size=page_size,
+            parse_chunks_to_string=parse_documents_to_string,
+            serving_config=serving_config,
+            data_store_ids=data_store_ids,
+            content_search_spec_type="documents"
+        )
+
+    async def async_get_documents(
+        self,
+        query: str,
+        page_size: int = 10,
+        parse_documents_to_string: bool = True,
+        serving_config: str = "default_serving_config",
+        data_store_ids: Optional[List[str]] = None,
+    ):
+        """Asynchronously retrieves entire documents based on a query.
+
+        Args:
+            query (str): The search query.
+            page_size (int, optional): The maximum number of results to return per page (default is 10).
+            parse_documents_to_string: If True will put documents in one big string, False will return object
+            serving_config: The resource name of the Search serving config 
+            data_store_ids: If you want to search over many data stores, not just the one that was used to init the class.
+                            They should be of the format projects/{project}/locations/{location}/collections/{collection_id}/dataStores/{data_store_id}
+
+        Returns:
+            discoveryengine.SearchResponse or str: The search response object or string of documents.
+        """
+        # Note: You'll need to update async_search_with_filters to handle content_search_spec_type
+        # as it doesn't currently have that parameter
+        return await self.async_search_with_filters(
+            query=query,
+            filter_str=None,
+            page_size=page_size,
+            parse_chunks_to_string=parse_documents_to_string, 
+            serving_config=serving_config,
+            data_store_ids=data_store_ids,
+            content_search_spec_type="documents"
+        )
     
     def create_engine(self,
         engine_id: str, 
@@ -693,7 +692,8 @@ class DiscoveryEngineClient:
                         num_previous_chunks=3, num_next_chunks=3, 
                         page_size=10, parse_chunks_to_string=True, 
                         serving_config="default_serving_config",
-                        data_store_ids: Optional[List[str]] = None):
+                        data_store_ids: Optional[List[str]] = None,
+                        content_search_spec_type="chunks"):
         """
         Searches with a generic filter string.
 
@@ -713,17 +713,26 @@ class DiscoveryEngineClient:
             serving_config
         )
 
+        if content_search_spec_type == "chunks":
+            content_search_spec=discoveryengine.SearchRequest.ContentSearchSpec(
+                            search_result_mode="CHUNKS", 
+                            chunk_spec=discoveryengine.SearchRequest.ContentSearchSpec.ChunkSpec(
+                                num_previous_chunks=num_previous_chunks,
+                                num_next_chunks=num_next_chunks,
+                            ),
+                        )
+        elif content_search_spec_type == "documents":
+            content_search_spec=discoveryengine.SearchRequest.ContentSearchSpec(
+                            search_result_mode="DOCUMENTS"
+                            )
+        else:
+            raise ValueError(f"Unknown content_search_spec_type={content_search_spec_type}")
+
         search_request = discoveryengine.SearchRequest(
             serving_config=serving_config_path,
             query=query,
             page_size=page_size, 
-            content_search_spec=discoveryengine.SearchRequest.ContentSearchSpec(
-                search_result_mode="CHUNKS", 
-                chunk_spec=discoveryengine.SearchRequest.ContentSearchSpec.ChunkSpec(
-                    num_previous_chunks=num_previous_chunks,
-                    num_next_chunks=num_next_chunks,
-                ),
-            ),
+            content_search_spec=content_search_spec,
             filter=filter_str # name:'ANY("king kong")'
         )
 
@@ -756,7 +765,8 @@ class DiscoveryEngineClient:
                             num_previous_chunks=3, num_next_chunks=3, 
                             page_size=10, parse_chunks_to_string=True, 
                             serving_config="default_serving_config",
-                            data_store_ids: Optional[List[str]] = None):
+                            data_store_ids: Optional[List[str]] = None,
+                            content_search_spec_type="chunks"):
         """
         Searches with a generic filter string asynchronously.
 
@@ -776,17 +786,26 @@ class DiscoveryEngineClient:
             serving_config
         )
 
+        if content_search_spec_type == "chunks":
+            content_search_spec=discoveryengine.SearchRequest.ContentSearchSpec(
+                            search_result_mode="CHUNKS", 
+                            chunk_spec=discoveryengine.SearchRequest.ContentSearchSpec.ChunkSpec(
+                                num_previous_chunks=num_previous_chunks,
+                                num_next_chunks=num_next_chunks,
+                            ),
+                        )
+        elif content_search_spec_type == "documents":
+            content_search_spec=discoveryengine.SearchRequest.ContentSearchSpec(
+                            search_result_mode="DOCUMENTS"
+                            )
+        else:
+            raise ValueError(f"Unknown content_search_spec_type={content_search_spec_type}")
+
         search_request = discoveryengine.SearchRequest(
             serving_config=serving_config_path,
             query=query,
             page_size=page_size, 
-            content_search_spec=discoveryengine.SearchRequest.ContentSearchSpec(
-                search_result_mode="CHUNKS", 
-                chunk_spec=discoveryengine.SearchRequest.ContentSearchSpec.ChunkSpec(
-                    num_previous_chunks=num_previous_chunks,
-                    num_next_chunks=num_next_chunks,
-                ),
-            ),
+            content_search_spec=content_search_spec,
             filter=filter_str # name:'ANY("king kong")'
         )
 

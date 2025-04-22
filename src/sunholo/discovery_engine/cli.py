@@ -198,16 +198,28 @@ def search_command(args):
             data_store_id=args.data_store_id, # Target datastore
             location=args.location
         )
-        # This calls get_chunks which returns string or pager
-        results_data = client.get_chunks(
-            query=args.query,
-            # num_previous_chunks=args.num_previous_chunks, # Ensure these args are added to parser if needed
-            # num_next_chunks=args.num_next_chunks, # Ensure these args are added to parser if needed
-            page_size=args.page_size,
-            parse_chunks_to_string=args.parse_chunks_to_string,
-            serving_config=args.serving_config,
-            # data_store_ids=args.data_store_ids # Ensure these args are added to parser if needed
-        )
+
+        if args.content_search_spec_type == "chunks":
+            # This calls get_chunks which returns string or pager
+            results_data = client.get_chunks(
+                query=args.query,
+                # num_previous_chunks=args.num_previous_chunks, # Ensure these args are added to parser if needed
+                # num_next_chunks=args.num_next_chunks, # Ensure these args are added to parser if needed
+                page_size=args.page_size,
+                parse_chunks_to_string=args.parse_chunks_to_string,
+                serving_config=args.serving_config,
+                # data_store_ids=args.data_store_ids # Ensure these args are added to parser if needed
+            )
+        elif args.content_search_spec_type == "documents":
+            results_data = client.get_documents(
+                query=args.query,
+                page_size=args.page_size,
+                parse_documents_to_string=args.parse_chunks_to_string,
+                serving_config=args.serving_config,
+                # data_store_ids=args.data_store_ids # Ensure these args are added to parser if needed
+            )  
+        else:
+            raise ValueError("Invalid content_search_spec_type. Must be 'chunks' or 'documents'.")          
 
         if args.parse_chunks_to_string:
             console.print("\n[bold magenta]--- Combined Chunk String ---[/bold magenta]")
@@ -512,8 +524,9 @@ def setup_discovery_engine_subparser(subparsers):
     search_parser.add_argument('--query', required=True, help='The search query')
     search_parser.add_argument('--data-store-id', required=True, help='Data store ID to search')
     search_parser.add_argument('--page-size', type=int, default=10, help='Max results per page')
-    search_parser.add_argument('--parse-chunks-to-string', action='store_true', help='Output results as one formatted string')
+    search_parser.add_argument('--parse-chunks-to-string', action='store_true', help='Output results as one formatted string. Only applicable for "chunks"')
     search_parser.add_argument('--serving-config', default='default_config', help='Serving config ID for the data store')
+    search_parser.add_argument('--content_search_spec_type', default="chunks", help='"chunks" or "documents" depending on data store type')
     # Add arguments for num_previous_chunks, num_next_chunks, data_store_ids if needed
     # search_parser.add_argument('--num-previous-chunks', type=int, default=3)
     # search_parser.add_argument('--num-next-chunks', type=int, default=3)
@@ -529,6 +542,8 @@ def setup_discovery_engine_subparser(subparsers):
     search_by_id_parser.add_argument('--page-size', type=int, default=10, help='Max results per page')
     search_by_id_parser.add_argument('--parse-chunks-to-string', action='store_true', help='Output results as one formatted string')
     search_by_id_parser.add_argument('--serving-config', default='default_config', help='Serving config ID')
+    search_by_id_parser.add_argument('--content_search_spec_type', default="chunks", help='"chunks" or "documents" depending on data store type')
+
     # Add arguments for num_previous_chunks, num_next_chunks, data_store_ids if needed
     # search_by_id_parser.add_argument('--num-previous-chunks', type=int, default=3)
     # search_by_id_parser.add_argument('--num-next-chunks', type=int, default=3)
