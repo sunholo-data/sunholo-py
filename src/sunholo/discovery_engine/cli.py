@@ -191,7 +191,7 @@ def import_document_with_metadata_command(args):
 
 def search_command(args):
     """Handles the `discovery-engine search` subcommand (Data Store Chunks)."""
-    console.print(f"[cyan]Searching data store '{args.data_store_id}' for query: '{args.query}' (mode: chunks)[/cyan]")
+    console.print(f"[cyan]Searching data store '{args.data_store_id}' for query: '{args.query}' (mode: {args.content_search_spec_type})[/cyan]")
     try:
         client = DiscoveryEngineClient(
             project_id=args.project,
@@ -208,7 +208,7 @@ def search_command(args):
                 page_size=args.page_size,
                 parse_chunks_to_string=args.parse_chunks_to_string,
                 serving_config=args.serving_config,
-                # data_store_ids=args.data_store_ids # Ensure these args are added to parser if needed
+                filter_str=args.filter,
             )
         elif args.content_search_spec_type == "documents":
             results_data = client.get_documents(
@@ -216,7 +216,7 @@ def search_command(args):
                 page_size=args.page_size,
                 parse_documents_to_string=args.parse_chunks_to_string,
                 serving_config=args.serving_config,
-                # data_store_ids=args.data_store_ids # Ensure these args are added to parser if needed
+                filter_str=args.filter,
             )  
         else:
             raise ValueError("Invalid content_search_spec_type. Must be 'chunks' or 'documents'.")          
@@ -541,14 +541,17 @@ def setup_discovery_engine_subparser(subparsers):
     import_doc_meta_parser.add_argument('--branch', default='default_branch', help='Target branch')
     import_doc_meta_parser.set_defaults(func=discovery_engine_command)
 
-    # --- Search Data Store (Chunks) subcommand ---
-    search_parser = discovery_engine_subparsers.add_parser('search', help='Search a datastore (fetches chunks)')
+    # --- Search Data Store (Chunks/Documents) subcommand ---
+    search_parser = discovery_engine_subparsers.add_parser('search', help='Search a datastore (fetches chunks or documents)')
     search_parser.add_argument('--query', required=True, help='The search query')
     search_parser.add_argument('--data-store-id', required=True, help='Data store ID to search')
     search_parser.add_argument('--page-size', type=int, default=10, help='Max results per page')
     search_parser.add_argument('--parse-chunks-to-string', action='store_true', help='Output results as one formatted string. Only applicable for "chunks"')
     search_parser.add_argument('--serving-config', default='default_config', help='Serving config ID for the data store')
     search_parser.add_argument('--content_search_spec_type', default="chunks", help='"chunks" or "documents" depending on data store type')
+    search_parser.add_argument('--filter', help='filter for the search')
+
+
     # Add arguments for num_previous_chunks, num_next_chunks, data_store_ids if needed
     # search_parser.add_argument('--num-previous-chunks', type=int, default=3)
     # search_parser.add_argument('--num-next-chunks', type=int, default=3)

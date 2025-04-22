@@ -213,6 +213,7 @@ class DiscoveryEngineClient:
         parse_chunks_to_string: bool = True,
         serving_config: str = "default_serving_config",
         data_store_ids: Optional[List[str]] = None,
+        filter_str:str=None
     ):
         """Retrieves chunks or documents based on a query.
 
@@ -237,10 +238,10 @@ class DiscoveryEngineClient:
                     print(f"Chunk: {chunk.snippet}, document name: {chunk.document_name}")
             ```
         """
-        # Use search_with_filters with filter_str=None to perform a regular search
+
         return self.search_with_filters(
             query=query,
-            filter_str=None,
+            filter_str=filter_str,
             num_previous_chunks=num_previous_chunks,
             num_next_chunks=num_next_chunks,
             page_size=page_size,
@@ -259,6 +260,7 @@ class DiscoveryEngineClient:
         parse_chunks_to_string: bool = True,
         serving_config: str = "default_serving_config",
         data_store_ids: Optional[List[str]] = None,
+        filter_str:str=None
     ):
         """Asynchronously retrieves chunks or documents based on a query.
 
@@ -372,6 +374,7 @@ class DiscoveryEngineClient:
         parse_documents_to_string: bool = True,
         serving_config: str = "default_serving_config",
         data_store_ids: Optional[List[str]] = None,
+        filter_str:str=None
     ):
         """Retrieves entire documents based on a query.
 
@@ -397,7 +400,7 @@ class DiscoveryEngineClient:
         # Use search_with_filters with content_search_spec_type="documents" to get documents instead of chunks
         return self.search_with_filters(
             query=query,
-            filter_str=None,
+            filter_str=filter_str,
             page_size=page_size,
             parse_chunks_to_string=parse_documents_to_string,
             serving_config=serving_config,
@@ -412,6 +415,7 @@ class DiscoveryEngineClient:
         parse_documents_to_string: bool = True,
         serving_config: str = "default_serving_config",
         data_store_ids: Optional[List[str]] = None,
+        filter_str:str=None
     ):
         """Asynchronously retrieves entire documents based on a query.
 
@@ -430,7 +434,7 @@ class DiscoveryEngineClient:
         # as it doesn't currently have that parameter
         return await self.async_search_with_filters(
             query=query,
-            filter_str=None,
+            filter_str=filter_str,
             page_size=page_size,
             parse_chunks_to_string=parse_documents_to_string, 
             serving_config=serving_config,
@@ -836,17 +840,22 @@ class DiscoveryEngineClient:
             log.info(f"No results {search_request.data_store_specs=}: {str(e)}")
             return None
         
-        if content_search_spec_type=="chunks":
-            if parse_chunks_to_string:
-                big_string = self.process_chunks(search_response)
-                log.info(f"Discovery engine chunks string sample: {big_string[:100]}")
+        if parse_chunks_to_string:
+            if content_search_spec_type=="chunks":
+                if parse_chunks_to_string:
+                    big_string = self.process_chunks(search_response)
+                    log.info(f"Discovery engine chunks string sample: {big_string[:100]}")
+
+                    return big_string
+                
+            elif content_search_spec_type=="documents":
+                big_string = self.process_documents(search_response)
+                log.info(f"Discovery engine documents string sample: {big_string[:100]}")
+
                 return big_string
-        elif content_search_spec_type=="documents":
-            big_string = self.process_documents(search_response)
-            log.info(f"Discovery engine documents string sample: {big_string[:100]}")
-            return big_string
         
         log.info("Discovery engine response object")
+        
         return search_response
 
     async def async_search_with_filters(self, query, filter_str=None,
