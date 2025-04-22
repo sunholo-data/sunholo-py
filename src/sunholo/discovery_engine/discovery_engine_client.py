@@ -445,6 +445,7 @@ class DiscoveryEngineClient:
     def document_format(self, document):
         """Format a document for string output."""
         # Extract useful fields from the document
+
         document_id = document.id
         document_name = document.name
         
@@ -855,7 +856,7 @@ class DiscoveryEngineClient:
                 return big_string
         
         log.info("Discovery engine response object")
-        
+
         return search_response
 
     async def async_search_with_filters(self, query, filter_str=None,
@@ -921,15 +922,19 @@ class DiscoveryEngineClient:
             log.info(f"No results {search_request.data_store_specs=}: {str(e)}")
             return None
         
-        if content_search_spec_type=="chunks":
-            if parse_chunks_to_string:
-                big_string = self.process_chunks(search_response)
-                log.info(f"Discovery engine chunks string sample: {big_string[:100]}")
+        if parse_chunks_to_string:
+            if content_search_spec_type=="chunks":
+                if parse_chunks_to_string:
+                    big_string = self.async_process_chunks(search_response)
+                    log.info(f"Discovery engine chunks string sample: {big_string[:100]}")
+
+                    return big_string
+                
+            elif content_search_spec_type=="documents":
+                big_string = self.async_process_documents(search_response)
+                log.info(f"Discovery engine documents string sample: {big_string[:100]}")
+
                 return big_string
-        elif content_search_spec_type=="documents":
-            big_string = self.process_documents(search_response)
-            log.info(f"Discovery engine documents string sample: {big_string[:100]}")
-            return big_string
         
         log.info("Discovery engine response object")
         return search_response
