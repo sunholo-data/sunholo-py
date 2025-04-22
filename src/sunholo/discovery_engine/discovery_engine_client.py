@@ -925,18 +925,19 @@ class DiscoveryEngineClient:
         if parse_chunks_to_string:
             if content_search_spec_type=="chunks":
                 if parse_chunks_to_string:
-                    big_string = self.async_process_chunks(search_response)
+                    big_string = await self.async_process_chunks(search_response)
                     log.info(f"Discovery engine chunks string sample: {big_string[:100]}")
 
                     return big_string
                 
             elif content_search_spec_type=="documents":
-                big_string = self.async_process_documents(search_response)
+                big_string = await self.async_process_documents(search_response)
                 log.info(f"Discovery engine documents string sample: {big_string[:100]}")
 
                 return big_string
         
         log.info("Discovery engine response object")
+        
         return search_response
 
     def search_by_objectId_and_or_date(self, query, objectId=None, date=None, **kwargs):
