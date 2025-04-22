@@ -193,6 +193,26 @@ class GoogleCloudLogging:
             except Exception as text_err:
                 print(f"Even fallback text logging failed: {text_err}")
 
+    def log(self, message, *args, **kwargs):
+        """
+        Some weird bug keeps calling this method - do not use normally
+
+        A catch-all method to handle unexpected .log() calls on this class.
+        Routes the call to the appropriate logging method based on severity level.
+        """
+        severity = kwargs.get('severity', 'INFO')
+        # Remove severity from kwargs if it exists to avoid passing it twice
+        if 'severity' in kwargs:
+            del kwargs['severity']
+        
+        # Determine if this is a structured log or simple message
+        if isinstance(message, dict):
+            # Assume this is a structured log
+            return self.structured_log(log_struct=message, severity=severity)
+        else:
+            # Assume this is a text log
+            return self.structured_log(log_text=message, severity=severity)
+
     def debug(self, log_text=None, log_struct=None):
 
         """

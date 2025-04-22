@@ -416,8 +416,8 @@ def search_engine_command(args):
                                 try:
                                     struct_dict = convert_composite_to_native(doc.struct_data)
                                     metadata_output = struct_dict.get("structData", {})
-                                    console.print(f"  Title: {struct_dict.get("title", "")}")
-                                    console.print(f"  Content: {struct_dict.get("content", "")}")
+                                    console.print(f'  Title: {struct_dict.get("title", "")}')
+                                    console.print(f'  Content: {struct_dict.get("content", "")}')
                                 except Exception as json_err:
                                     console.print(f"[yellow]  Warning: Could not convert metadata Struct to JSON: {json_err}[/yellow]")
                                     metadata_output = doc.struct_data
