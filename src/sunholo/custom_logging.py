@@ -22,6 +22,8 @@ from .utils.version import sunholo_version
 import logging
 import inspect
 import os
+import json
+from functools import wraps
 
 class GoogleCloudLogging:
     
@@ -270,6 +272,91 @@ class GoogleCloudLogging:
         """
         self.structured_log(log_text=log_text, log_struct=log_struct, severity="CRITICAL")
 
+class StandardLoggerWrapper:
+    """
+    A wrapper for standard Python logger that mimics the interface of GoogleCloudLogging.
+    """
+    def __init__(self, logger):
+        self.logger = logger
+        self.trace_id = None
+        self.version = None
+
+    def _format_message(self, log_text=None, log_struct=None, severity=None):
+        """Format message to include structured data as JSON"""
+        parts = []
+        
+        # Add severity if provided
+        if severity:
+            parts.append(f"[{severity}]")
+            
+        # Add trace ID if available
+        if self.trace_id:
+            parts.append(f"[trace_id:{self.trace_id}]")
+            
+        # Add version if available
+        if self.version:
+            parts.append(f"[version:{self.version}]")
+            
+        # Add the log text if provided
+        if log_text:
+            parts.append(log_text)
+            
+        # Add structured data as JSON if provided
+        if log_struct:
+            if self.trace_id and isinstance(log_struct, dict):
+                log_struct["trace_id"] = self.trace_id
+            if self.version and isinstance(log_struct, dict):
+                log_struct["version"] = self.version
+            parts.append(f"STRUCT: {json.dumps(log_struct, default=str)}")
+            
+        return " ".join(parts)
+
+    def update_trace_id(self, trace_id):
+        """Set trace ID to be included in all logs."""
+        self.trace_id = trace_id
+        
+    def set_version(self, version):
+        """Set version to be included in all logs."""
+        self.version = version
+        
+    def structured_log(self, log_text=None, log_struct=None, logger_name=None, severity="INFO"):
+        """
+        Emulates Google Cloud's structured_log method using standard logging.
+        """
+        message = self._format_message(log_text, log_struct, severity)
+        
+        if severity == "DEBUG":
+            self.logger.debug(message)
+        elif severity == "INFO":
+            self.logger.info(message)
+        elif severity == "WARNING":
+            self.logger.warning(message)
+        elif severity == "ERROR":
+            self.logger.error(message)
+        elif severity == "CRITICAL":
+            self.logger.critical(message)
+        else:
+            self.logger.info(message)  # Default to info
+            
+    def debug(self, log_text=None, log_struct=None):
+        self.structured_log(log_text=log_text, log_struct=log_struct, severity="DEBUG")
+        
+    def info(self, log_text=None, log_struct=None):
+        self.structured_log(log_text=log_text, log_struct=log_struct, severity="INFO")
+        
+    def warning(self, log_text=None, log_struct=None):
+        self.structured_log(log_text=log_text, log_struct=log_struct, severity="WARNING")
+        
+    def error(self, log_text=None, log_struct=None):
+        self.structured_log(log_text=log_text, log_struct=log_struct, severity="ERROR")
+        
+    def exception(self, log_text=None, log_struct=None):
+        self.structured_log(log_text=log_text, log_struct=log_struct, severity="CRITICAL")
+        
+    # Forward any other standard logging methods to the underlying logger
+    def __getattr__(self, name):
+        return getattr(self.logger, name)
+    
 def is_logging_setup(logger=None):
     logger = logger or logging.getLogger()  # If no logger is specified, use the root logger
     return bool(logger.handlers)
@@ -352,7 +439,14 @@ def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
 
     logger = logging.getLogger(logger_name)
     if is_logging_setup(logger):
-        return logger
+        # Check if it's already our wrapper
+        if hasattr(logger, 'structured_log'):
+            return logger
+        else:
+            # Wrap the existing logger
+            wrapper = StandardLoggerWrapper(logger)
+            wrapper.set_version(sunholo_version())
+            return wrapper
     
     if logger_name is None:
         logger_name = "sunholo"
@@ -370,10 +464,13 @@ def setup_logging(logger_name=None, log_level=logging.INFO, project_id=None):
         return gc_logger.setup_logging()
     else:
         if not logging.getLogger().hasHandlers():
-            logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            logging.basicConfig(level=log_level, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         log = logging.getLogger(logger_name)
-
-        return log
+        
+        # Wrap the standard logger to support log_struct parameter
+        wrapper = StandardLoggerWrapper(log)
+        wrapper.set_version(sunholo_version())
+        return wrapper
     
 # for debugging
 def safe_log_struct(log, severity, message, struct):
