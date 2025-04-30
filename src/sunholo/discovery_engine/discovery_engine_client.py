@@ -884,33 +884,6 @@ class DiscoveryEngineClient:
         except Exception as e:
             log.info(f"No results {search_request.data_store_specs=}: {str(e)}")
             return None
-
-        # Apply max_limit if needed
-        if content_search_spec_type=="documents" and max_limit is not None:
-            # For raw response objects (when parse_chunks_to_string=False)
-            if not parse_chunks_to_string:
-                # We need to limit the pager results before returning
-                limited_response = search_response
-                # Store the original pages iterator method
-                original_pages = limited_response.pages
-                
-                # Override the pages property with a custom iterator that respects max_limit
-                def limited_pages_iterator():
-                    results_count = 0
-                    for page in original_pages:
-                        yield page
-                        
-                        # Count results in this page
-                        if hasattr(page, 'results'):
-                            results_count += len(page.results)
-                        
-                        # Stop if we've reached max_limit
-                        if results_count >= max_limit:
-                            break
-                
-                # Replace the pages property with our custom iterator
-                limited_response.pages = limited_pages_iterator()
-                return limited_response
         
         if parse_chunks_to_string:
             if content_search_spec_type=="chunks":
@@ -995,33 +968,6 @@ class DiscoveryEngineClient:
         except Exception as e:
             log.info(f"No results {search_request.data_store_specs=}: {str(e)}")
             return None
-        
-        # Apply max_limit if needed
-        if content_search_spec_type=="documents" and max_limit is not None:
-            # For raw response objects (when parse_chunks_to_string=False)
-            if not parse_chunks_to_string:
-                # We need to limit the pager results before returning
-                limited_response = search_response
-                # Store the original pages iterator method
-                original_pages = limited_response.pages
-                
-                # Override the pages property with a custom iterator that respects max_limit
-                async def limited_pages_iterator():
-                    results_count = 0
-                    async for page in original_pages:
-                        yield page
-                        
-                        # Count results in this page
-                        if hasattr(page, 'results'):
-                            results_count += len(page.results)
-                        
-                        # Stop if we've reached max_limit
-                        if results_count >= max_limit:
-                            break
-                
-                # Replace the pages property with our custom iterator
-                limited_response.pages = limited_pages_iterator()
-                return limited_response
             
         if parse_chunks_to_string:
             if content_search_spec_type=="chunks":
