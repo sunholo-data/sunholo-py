@@ -487,23 +487,34 @@ class DiscoveryEngineClient:
         all_documents = []
         result_count = 0
         # Check if the response contains results
-        if not hasattr(response, 'results') or not response.results:
+        if not response or not hasattr(response, 'results') or not response.results:
             log.info(f'No results found in response: {response=}')
             return []
         
-        # Iterate through each result in the page
-        for result in response.results:
-            if hasattr(result, 'document'):
-                document = result.document
-                all_documents.append(self.document_format(document))
-                result_count += 1
-                
-                # Check if we've reached max_limit
-                if max_limit is not None and result_count >= max_limit:
-                    log.info(f"Reached max_limit of {max_limit} results, stopping processing")
-                    break
-            else:
-                log.warning("No document found in result")
+        should_break=False
+        # Process the pager properly
+        for page in response.pages:
+            if should_break:
+                break
+            if hasattr(page, 'results') and page.results:
+                for result in page.results:
+                    if result_count >= max_limit:
+                        log.info("Breaking results loop as max limit reached")
+                        should_break = True  # Set flag to break outer loop
+                        break
+
+                if hasattr(result, 'document'):
+                    document = result.document
+                    all_documents.append(self.document_format(document))
+                    result_count += 1
+                    
+                    # Check if we've reached max_limit
+                    if max_limit is not None and result_count >= max_limit:
+                        log.info(f"Reached max_limit of {max_limit} results, stopping processing")
+                        should_break = True
+                        break
+                else:
+                    log.warning("No document found in result")
         
         # Combine all documents into one long string
         result_string = "\n\n".join(all_documents)
@@ -516,23 +527,34 @@ class DiscoveryEngineClient:
         result_count = 0
 
         # Check if the response contains results
-        if not hasattr(response, 'results') or not response.results:
+        if not response or not hasattr(response, 'results') or not response.results:
             log.info(f'No results found in response: {response=}')
             return []
-        
-        # Iterate through each result in the page
-        for result in response.results:
-            if hasattr(result, 'document'):
-                document = result.document
-                all_documents.append(self.document_format(document))
-                result_count += 1
-                
-                # Check if we've reached max_limit
-                if max_limit is not None and result_count >= max_limit:
-                    log.info(f"Reached max_limit of {max_limit} results, stopping processing")
-                    break
-            else:
-                log.warning("No document found in result")
+
+        should_break=False
+        # Process the pager properly
+        async for page in response.pages:
+            if should_break:
+                break
+            if hasattr(page, 'results') and page.results:
+                for result in page.results:
+                    if result_count >= max_limit:
+                        log.info("Breaking results loop as max limit reached")
+                        should_break = True  # Set flag to break outer loop
+                        break
+
+                if hasattr(result, 'document'):
+                    document = result.document
+                    all_documents.append(self.document_format(document))
+                    result_count += 1
+                    
+                    # Check if we've reached max_limit
+                    if max_limit is not None and result_count >= max_limit:
+                        log.info(f"Reached max_limit of {max_limit} results, stopping processing")
+                        should_break = True
+                        break
+                else:
+                    log.warning("No document found in result")
         
         # Combine all documents into one long string
         result_string = "\n\n".join(all_documents)
