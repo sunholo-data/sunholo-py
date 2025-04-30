@@ -374,7 +374,8 @@ class DiscoveryEngineClient:
         parse_documents_to_string: bool = True,
         serving_config: str = "default_serving_config",
         data_store_ids: Optional[List[str]] = None,
-        filter_str:str=None
+        filter_str:str=None,
+        max_limit:int=None
     ):
         """Retrieves entire documents based on a query.
 
@@ -405,7 +406,8 @@ class DiscoveryEngineClient:
             parse_chunks_to_string=parse_documents_to_string,
             serving_config=serving_config,
             data_store_ids=data_store_ids,
-            content_search_spec_type="documents"
+            content_search_spec_type="documents",
+            max_limit=max_limit
         )
 
     async def async_get_documents(
@@ -415,7 +417,9 @@ class DiscoveryEngineClient:
         parse_documents_to_string: bool = True,
         serving_config: str = "default_serving_config",
         data_store_ids: Optional[List[str]] = None,
-        filter_str:str=None
+        filter_str:str=None,
+        max_limit:int=None
+
     ):
         """Asynchronously retrieves entire documents based on a query.
 
@@ -439,7 +443,9 @@ class DiscoveryEngineClient:
             parse_chunks_to_string=parse_documents_to_string, 
             serving_config=serving_config,
             data_store_ids=data_store_ids,
-            content_search_spec_type="documents"
+            content_search_spec_type="documents",
+            max_limit=max_limit
+
         )
 
     def document_format(self, document):
@@ -476,20 +482,26 @@ class DiscoveryEngineClient:
             f"{derived_data}"
         )
 
-    def process_documents(self, response):
+    def process_documents(self, response, max_limit:int=None):
         """Process a search response containing documents into a formatted string."""
         all_documents = []
-
+        result_count = 0
         # Check if the response contains results
         if not hasattr(response, 'results') or not response.results:
             log.info(f'No results found in response: {response=}')
             return []
         
-        # Iterate through each result in the response
+        # Iterate through each result in the page
         for result in response.results:
             if hasattr(result, 'document'):
                 document = result.document
                 all_documents.append(self.document_format(document))
+                result_count += 1
+                
+                # Check if we've reached max_limit
+                if max_limit is not None and result_count >= max_limit:
+                    log.info(f"Reached max_limit of {max_limit} results, stopping processing")
+                    break
             else:
                 log.warning("No document found in result")
         
@@ -498,20 +510,27 @@ class DiscoveryEngineClient:
         
         return result_string
 
-    async def async_process_documents(self, response):
+    async def async_process_documents(self, response, max_limit:int=None):
         """Process a search response containing documents into a formatted string asynchronously."""
         all_documents = []
+        result_count = 0
 
         # Check if the response contains results
         if not hasattr(response, 'results') or not response.results:
             log.info(f'No results found in response: {response=}')
             return []
         
-        # Iterate through each result in the response
+        # Iterate through each result in the page
         for result in response.results:
             if hasattr(result, 'document'):
                 document = result.document
                 all_documents.append(self.document_format(document))
+                result_count += 1
+                
+                # Check if we've reached max_limit
+                if max_limit is not None and result_count >= max_limit:
+                    log.info(f"Reached max_limit of {max_limit} results, stopping processing")
+                    break
             else:
                 log.warning("No document found in result")
         
@@ -781,7 +800,8 @@ class DiscoveryEngineClient:
                         page_size=10, parse_chunks_to_string=True, 
                         serving_config="default_serving_config",
                         data_store_ids: Optional[List[str]] = None,
-                        content_search_spec_type="chunks"):
+                        content_search_spec_type="chunks",
+                        max_limit=None):
         """
         Searches with a generic filter string.
 
@@ -793,6 +813,8 @@ class DiscoveryEngineClient:
         Returns:
             discoveryengine.SearchResponse or str: The search response object or string of chunks.
         """
+        if max_limit is not None and max_limit < page_size:
+            page_size = max_limit
 
         serving_config_path = self.search_client.serving_config_path(
             self.project_id,
@@ -840,6 +862,33 @@ class DiscoveryEngineClient:
         except Exception as e:
             log.info(f"No results {search_request.data_store_specs=}: {str(e)}")
             return None
+
+        # Apply max_limit if needed
+        if content_search_spec_type=="documents" and max_limit is not None:
+            # For raw response objects (when parse_chunks_to_string=False)
+            if not parse_chunks_to_string:
+                # We need to limit the pager results before returning
+                limited_response = search_response
+                # Store the original pages iterator method
+                original_pages = limited_response.pages
+                
+                # Override the pages property with a custom iterator that respects max_limit
+                def limited_pages_iterator():
+                    results_count = 0
+                    for page in original_pages:
+                        yield page
+                        
+                        # Count results in this page
+                        if hasattr(page, 'results'):
+                            results_count += len(page.results)
+                        
+                        # Stop if we've reached max_limit
+                        if results_count >= max_limit:
+                            break
+                
+                # Replace the pages property with our custom iterator
+                limited_response.pages = limited_pages_iterator()
+                return limited_response
         
         if parse_chunks_to_string:
             if content_search_spec_type=="chunks":
@@ -850,7 +899,7 @@ class DiscoveryEngineClient:
                     return big_string
                 
             elif content_search_spec_type=="documents":
-                big_string = self.process_documents(search_response)
+                big_string = self.process_documents(search_response, max_limit=max_limit)
                 log.info(f"Discovery engine documents string sample: {big_string[:100]}")
 
                 return big_string
@@ -864,7 +913,8 @@ class DiscoveryEngineClient:
                             page_size=10, parse_chunks_to_string=True, 
                             serving_config="default_serving_config",
                             data_store_ids: Optional[List[str]] = None,
-                            content_search_spec_type="chunks"):
+                            content_search_spec_type="chunks",
+                            max_limit=None):
         """
         Searches with a generic filter string asynchronously.
 
@@ -876,6 +926,8 @@ class DiscoveryEngineClient:
         Returns:
             discoveryengine.SearchResponse or str: The search response object or string of chunks.
         """
+        if max_limit is not None and max_limit < page_size:
+            page_size = max_limit
 
         serving_config_path = self.async_search_client.serving_config_path(
             self.project_id,
@@ -922,6 +974,33 @@ class DiscoveryEngineClient:
             log.info(f"No results {search_request.data_store_specs=}: {str(e)}")
             return None
         
+        # Apply max_limit if needed
+        if content_search_spec_type=="documents" and max_limit is not None:
+            # For raw response objects (when parse_chunks_to_string=False)
+            if not parse_chunks_to_string:
+                # We need to limit the pager results before returning
+                limited_response = search_response
+                # Store the original pages iterator method
+                original_pages = limited_response.pages
+                
+                # Override the pages property with a custom iterator that respects max_limit
+                async def limited_pages_iterator():
+                    results_count = 0
+                    async for page in original_pages:
+                        yield page
+                        
+                        # Count results in this page
+                        if hasattr(page, 'results'):
+                            results_count += len(page.results)
+                        
+                        # Stop if we've reached max_limit
+                        if results_count >= max_limit:
+                            break
+                
+                # Replace the pages property with our custom iterator
+                limited_response.pages = limited_pages_iterator()
+                return limited_response
+            
         if parse_chunks_to_string:
             if content_search_spec_type=="chunks":
                 if parse_chunks_to_string:
@@ -931,7 +1010,7 @@ class DiscoveryEngineClient:
                     return big_string
                 
             elif content_search_spec_type=="documents":
-                big_string = await self.async_process_documents(search_response)
+                big_string = await self.async_process_documents(search_response, max_limit=max_limit)
                 log.info(f"Discovery engine documents string sample: {big_string[:100]}")
 
                 return big_string
