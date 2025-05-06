@@ -8,11 +8,12 @@ from tenacity import AsyncRetrying, retry_if_exception_type, wait_random_exponen
 log = setup_logging("sunholo_AsyncTaskRunner")
 
 class AsyncTaskRunner:
-    def __init__(self, retry_enabled=False, retry_kwargs=None, timeout=120):
+    def __init__(self, retry_enabled:bool=False, retry_kwargs:dict=None, timeout:int=120, max_concurrency:int=20):
         self.tasks = []
         self.retry_enabled = retry_enabled
         self.retry_kwargs = retry_kwargs or {}
         self.timeout = timeout
+        self.semaphore = asyncio.Semaphore(max_concurrency)
 
     def add_task(self, func: Callable[..., Any], *args: Any, **kwargs: Any):
         """
@@ -136,10 +137,11 @@ class AsyncTaskRunner:
         Returns:
             Any: The result of the task.
         """
-        if asyncio.iscoroutinefunction(func):
-            return await func(*args, **kwargs)
-        else:
-            return await asyncio.to_thread(func, *args, **kwargs)
+        async with self.semaphore:  # Use semaphore to limit concurrent executions
+            if asyncio.iscoroutinefunction(func):
+                return await func(*args, **kwargs)
+            else:
+                return await asyncio.to_thread(func, *args, **kwargs)
 
     async def _send_heartbeat(self, func_name: str, completion_event: asyncio.Event, queue: asyncio.Queue, interval: int = 2):
         """
