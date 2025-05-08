@@ -104,7 +104,7 @@ def reload_config_file(config_file, filename):
     Helper function to load a config file and update the cache.
     """
     from ..custom_logging import log
-    with open(config_file, 'r') as file:
+    with open(config_file, 'r', encoding='utf-8') as file:
         if filename.endswith('.json'):
             config = json.load(file)
         else:
