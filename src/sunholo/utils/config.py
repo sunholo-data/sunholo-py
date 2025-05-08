@@ -58,12 +58,12 @@ def load_all_configs():
     """
     from ..custom_logging import log
 
-    if not os.getenv("_CONFIG_FOLDER"):
-        log.debug("_CONFIG_FOLDER is not set, using os.getcwd() instead")
+    if not os.getenv("VAC_CONFIG_FOLDER"):
+        log.warning("VAC_CONFIG_FOLDER is not set, using os.getcwd() instead")
     else:
-        log.debug(f"_CONFIG_FOLDER set to: {os.getenv('_CONFIG_FOLDER')}")
+        log.warning(f"VAC_CONFIG_FOLDER set to: {os.getenv('VAC_CONFIG_FOLDER')}")
 
-    config_folder = os.getenv("_CONFIG_FOLDER", os.getcwd())
+    config_folder = os.getenv("VAC_CONFIG_FOLDER", os.getcwd())
     config_folder = os.path.join(config_folder, "config")
 
     log.debug(f"Loading all configs from folder: {config_folder}")
@@ -119,7 +119,7 @@ def reload_config_file(config_file, filename):
 def load_config(filename: str=None) -> tuple[dict, str]:
     """
     Load configuration from a yaml or json file.
-    Will look relative to `_CONFIG_FOLDER` environment variable if available, else current directory.
+    Will look relative to `VAC_CONFIG_FOLDER` environment variable if available, else current directory.
 
     Args:
         filename (str, optional): The name of the configuration file. Defaults to the `_CONFIG_FILE` environment variable.
@@ -154,11 +154,11 @@ def load_config(filename: str=None) -> tuple[dict, str]:
             log.debug(f"Cache expired for {filename}, reloading...")
 
     
-    if os.getenv("_CONFIG_FOLDER"):
-        log.debug(f"_CONFIG_FOLDER: {os.getenv('_CONFIG_FOLDER')}")
+    if os.getenv("VAC_CONFIG_FOLDER"):
+        log.debug(f"VAC_CONFIG_FOLDER: {os.getenv('VAC_CONFIG_FOLDER')}")
                   
     # Join the script directory with the filename
-    config_folder = os.getenv("_CONFIG_FOLDER") if os.getenv("_CONFIG_FOLDER") else os.getcwd()
+    config_folder = os.getenv("VAC_CONFIG_FOLDER") if os.getenv("VAC_CONFIG_FOLDER") else os.getcwd()
 
     config_file = os.path.join(config_folder, filename)
     log.debug(f"Loading config file {config_file}")

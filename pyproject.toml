@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sunholo"
-version = "0.138.0"
+version = "0.138.1"
 description = "AI DevOps - a package to help deploy GenAI to the Cloud."
 readme = "README.md"
 requires-python = ">=3.10"

@@ -25,7 +25,7 @@ from ..database import delete_row_from_source, return_sources_last24
 from ..utils.parsers import contains_url, extract_urls
 from ..chunker.publish import publish_text
 from ..gcs.add_file import add_file_to_gcs
-from ..utils.config import load_config_key
+from ..utils import ConfigManager
 from ..custom_logging import log
 
 # config file?
@@ -48,8 +48,9 @@ def handle_special_commands(user_input,
 
     user_input = user_input.strip()
 
+    config = ConfigManager("vector_name")
     if not cmds:
-        cmds = load_config_key("user_special_cmds", vector_name=vector_name, kind="vacConfig")
+        cmds = config.vacConfig("user_special_cmds")
         if not cmds:
             return None
 
