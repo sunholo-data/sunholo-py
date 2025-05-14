@@ -3,12 +3,21 @@ import json
 
 from ..custom_logging import log
 from ..utils.mime import get_mime_type_gemini
+from .metadata import check_gcs_file_size
 from .download_url import get_bytes_from_gcs
 
-def download_gcs_source_to_string(source:str) -> str:
+def download_gcs_source_to_string(source:str, max_size_bytes: int = 1024*1024) -> str:
     """
-    source: str The Google Cloud Storage URI of the file to download (e.g., 'gs://bucket_name/file_name').
+    Download a file from Google Cloud Storage and convert it to a string.
+    
+    Args:
+        source: str The Google Cloud Storage URI of the file to download (e.g., 'gs://bucket_name/file_name').
+        max_size_bytes: int Maximum file size to download, defaults to 1MB (1024*1024 bytes)
+        
+    Returns:
+        str: The contents of the file as a string, or an empty string if the file could not be downloaded.
     """
+
     mime_type = get_mime_type_gemini(source)
     if mime_type == "":
         log.warning(f"Can not download to string file source {source}")
@@ -52,6 +61,15 @@ def download_gcs_source_to_string(source:str) -> str:
 
     try:
         log.info(f"Extracting text for {source}")
+        # Check file size before downloading
+        file_size = check_gcs_file_size(source)
+        if file_size == -1:
+            log.warning(f"Could not determine file size for {source}")
+            return ""
+        elif file_size > max_size_bytes:
+            log.warning(f"File size {file_size} bytes exceeds maximum size limit of {max_size_bytes} bytes for {source}")
+            return ""
+        
         bytes = get_bytes_from_gcs(source)
         string = bytes.decode('utf-8', errors='replace')
         log.info(f"Extracted {len(string)} characters from {source}: {string[:100]}")
