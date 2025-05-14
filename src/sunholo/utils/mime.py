@@ -66,3 +66,53 @@ def guess_mime_type(file_path: str) -> str:
 
     return mime
 
+
+def get_mime_type_gemini(file_path:str) -> str:
+    """
+    Determine the MIME type based on file extension.
+    Only returns valid Gemini formats, or None if they are not supported.
+    
+    Args:
+        file_path (str): Path to the file
+        
+    Returns:
+        str: The appropriate MIME type for the file
+    """
+    # Extract the file extension (lowercase)
+    ext = os.path.splitext(file_path)[1].lower().lstrip('.')
+    
+    # Define the mapping of extensions to MIME types
+    mime_types = {
+
+        # Images
+        'png': 'image/png',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'gif': 'image/gif',
+        'webp': 'image/webp',
+
+        # Document formats
+        'pdf': 'application/pdf',
+        
+        # Programming languages
+        'js': 'text/javascript',
+        'py': 'text/x-python',
+        
+        # Web formats
+        'html': 'text/html',
+        'htm': 'text/html',
+        'css': 'text/css',
+        
+        # Text formats
+        'txt': 'text/plain',
+        'md': 'text/md',
+        'csv': 'text/csv',
+        'xml': 'text/xml',
+        'rtf': 'text/rtf',
+        
+        # Special case: JSON files are treated as plain text
+        'json': 'text/plain'
+    }
+    
+    # Return the appropriate MIME type, defaulting to None if unknown
+    return mime_types.get(ext, "")
