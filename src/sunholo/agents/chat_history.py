@@ -1,6 +1,69 @@
 import json
 from ..custom_logging import log
 
+
+async def extract_chat_history_async(chat_history=None):
+    """
+    Extracts paired chat history between human and AI messages.
+    
+    For this lightweight processing, we use a simpler approach that minimizes overhead.
+    
+    Args:
+        chat_history (list): List of chat messages.
+    
+    Returns:
+        list: List of tuples with paired human and AI messages.
+    """
+    if not chat_history:
+        log.info("No chat history found")
+        return []
+
+    log.info(f"Extracting chat history: {chat_history}")
+    paired_messages = []
+    
+    # Handle special case of initial bot message
+    if chat_history and is_bot(chat_history[0]):
+        first_message = chat_history[0]
+        log.info(f"Extracting first_message: {first_message}")
+        blank_human_message = {"name": "Human", "content": "", "embeds": []}
+        
+        # Since create_message_element is so lightweight, we don't need async here
+        blank_element = create_message_element(blank_human_message)
+        bot_element = create_message_element(first_message)
+        
+        paired_messages.append((blank_element, bot_element))
+        chat_history = chat_history[1:]
+    
+    # Pre-process all messages in one batch (more efficient than one-by-one)
+    message_types = []
+    message_contents = []
+    
+    for message in chat_history:
+        is_human_msg = is_human(message)
+        is_bot_msg = is_bot(message)
+        
+        # Extract content for all messages at once
+        content = create_message_element(message)
+        
+        message_types.append((is_human_msg, is_bot_msg))
+        message_contents.append(content)
+    
+    # Pair messages efficiently
+    last_human_message = ""
+    for i, ((is_human_msg, is_bot_msg), content) in enumerate(zip(message_types, message_contents)):
+        if is_human_msg:
+            last_human_message = content
+            log.info(f"Extracted human message: {last_human_message}")
+        elif is_bot_msg:
+            ai_message = content
+            log.info(f"Extracted AI message: {ai_message}")
+            paired_messages.append((last_human_message, ai_message))
+            last_human_message = ""
+    
+    log.info(f"Paired messages: {paired_messages}")
+    return paired_messages
+
+
 def extract_chat_history(chat_history=None):
     """
     Extracts paired chat history between human and AI messages.
