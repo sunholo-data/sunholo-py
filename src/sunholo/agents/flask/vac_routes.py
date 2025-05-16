@@ -57,7 +57,7 @@ if __name__ == "__main__":
 ```
     
     """
-    def __init__(self, app, stream_interpreter, vac_interpreter=None, additional_routes=None):
+    def __init__(self, app, stream_interpreter: callable, vac_interpreter:callable=None, additional_routes:dict=None, async_stream:bool=False):
         self.app = app
         self.stream_interpreter = stream_interpreter
         self.vac_interpreter = vac_interpreter or partial(self.vac_interpreter_default)
