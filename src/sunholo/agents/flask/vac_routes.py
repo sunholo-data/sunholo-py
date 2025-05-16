@@ -7,7 +7,8 @@ from functools import partial
 import inspect
 import asyncio
 
-from ...agents import extract_chat_history, handle_special_commands, extract_chat_history_async
+from ...agents import extract_chat_history, handle_special_commands
+from ..chat_history import extract_chat_history_async
 from ...qna.parsers import parse_output
 from ...streaming import start_streaming_chat, start_streaming_chat_async
 from ...archive import archive_qa
