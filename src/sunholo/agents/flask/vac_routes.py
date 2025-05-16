@@ -62,6 +62,7 @@ if __name__ == "__main__":
         self.stream_interpreter = stream_interpreter
         self.vac_interpreter = vac_interpreter or partial(self.vac_interpreter_default)
         self.additional_routes = additional_routes if additional_routes is not None else []
+        self.async_stream = async_stream
         self.register_routes()
         
 
@@ -99,7 +100,15 @@ if __name__ == "__main__":
         self.app.route('/vac/streaming/<vector_name>', 
                        methods=['POST'], 
                        provide_automatic_options=False)(self.handle_stream_vac)
-
+        
+        if self.async_stream:  # Use async treatment
+            self.app.route('/vac/streaming/<vector_name>', 
+                        methods=['POST'], 
+                        provide_automatic_options=False)(self.handle_stream_vac_async)
+        else:
+            self.app.route('/vac/streaming/<vector_name>', 
+                        methods=['POST'], 
+                        provide_automatic_options=False)(self.handle_stream_vac)
         # Static VAC
         self.app.route('/vac/<vector_name>', 
                        methods=['POST'], 
@@ -336,106 +345,44 @@ if __name__ == "__main__":
         observed_stream_interpreter = self.stream_interpreter
         is_async = inspect.iscoroutinefunction(self.stream_interpreter)
 
-        if is_async:
-            log.info(f"Stream interpreter is async: {observed_stream_interpreter}")
+        if not is_async:
+            raise ValueError(f"Stream interpreter must be async: {observed_stream_interpreter}")
 
         # Use the async version of prep_vac
         prep = await self.prep_vac_async(request, vector_name)
         log.info(f"Processing prep: {prep}")
-        trace = prep["trace"]
-        span = prep["span"]
-        command_response = prep["command_response"]
-        vac_config = prep["vac_config"]
         all_input = prep["all_input"]
 
-        if command_response:
-            return jsonify(command_response)
-
         log.info(f'Streaming data with: {all_input}')
-        if span:
-            span.update(
-                name="start_streaming_chat",
-                metadata=vac_config.configs_by_kind,
-                input=all_input
-            )
 
         async def generate_response_content():
             try:
-                if is_async:
-                    # Direct async handling without the queue/thread approach
-                    async_gen = start_streaming_chat_async(
-                        question=all_input["user_input"],
-                        vector_name=vector_name,
-                        qna_func_async=observed_stream_interpreter,
-                        chat_history=all_input["chat_history"],
-                        wait_time=all_input["stream_wait_time"],
-                        timeout=all_input["stream_timeout"],
-                        trace_id=trace.id if trace else None,
-                        **all_input["kwargs"]
-                    )
-                    
-                    log.info(f"{async_gen=}")
-                    async for chunk in async_gen:
-                        if isinstance(chunk, dict) and 'answer' in chunk:
-                            if trace:
-                                chunk["trace_id"] = trace.id
-                                chunk["trace_url"] = trace.get_trace_url()
-                                await span.end_async(output=json.dumps(chunk))
-                                await trace.update_async(output=json.dumps(chunk))
-                            await archive_qa(chunk, vector_name)
-                            yield json.dumps(chunk)
-                        else:
-                            yield chunk
-                else:
-                    # Handle sync interpreter in async context
-                    log.info("sync streaming response in async context")
-                    
-                    # Use asyncio to run the sync function in a thread pool
-                    def run_sync():
-                        return list(start_streaming_chat(
-                            question=all_input["user_input"],
-                            vector_name=vector_name,
-                            qna_func=observed_stream_interpreter,
-                            chat_history=all_input["chat_history"],
-                            wait_time=all_input["stream_wait_time"],
-                            timeout=all_input["stream_timeout"],
-                            trace_id=trace.id if trace else None,
-                            **all_input["kwargs"]
-                        ))
-                    
-                    # Run sync code in thread pool
-                    chunks = await asyncio.to_thread(run_sync)
-                    
-                    for chunk in chunks:
-                        if isinstance(chunk, dict) and 'answer' in chunk:
-                            if trace:
-                                chunk["trace_id"] = trace.id
-                                chunk["trace_url"] = trace.get_trace_url()
-                            await archive_qa(chunk, vector_name)
-                            if trace:
-                                await span.end_async(output=json.dumps(chunk))
-                                await trace.update_async(output=json.dumps(chunk))
-                            yield json.dumps(chunk)
-                        else:
-                            yield chunk
+                # Direct async handling without the queue/thread approach
+                async_gen = start_streaming_chat_async(
+                    question=all_input["user_input"],
+                    vector_name=vector_name,
+                    qna_func_async=observed_stream_interpreter,
+                    chat_history=all_input["chat_history"],
+                    wait_time=all_input["stream_wait_time"],
+                    timeout=all_input["stream_timeout"],
+                    **all_input["kwargs"]
+                )
+                
+                log.info(f"{async_gen=}")
+                async for chunk in async_gen:
+                    if isinstance(chunk, dict) and 'answer' in chunk:
+                        await archive_qa(chunk, vector_name)
+                        yield json.dumps(chunk)
+                    else:
+                        yield chunk
 
             except Exception as e:
                 yield f"Streaming Error: {str(e)} {traceback.format_exc()}"
 
-        # Create a StreamResponse for asyncio web frameworks
-        # Note: The exact implementation depends on your web framework (Flask, FastAPI, etc.)
-        # This is a generic example
         response = Response(generate_response_content(), content_type='text/plain; charset=utf-8')
         response.headers['Transfer-Encoding'] = 'chunked'
 
         log.debug(f"streaming response: {response}")
-        if trace:
-            await span.end_async(output=response)
-            await trace.update_async(output=response)
-            await self.langfuse_eval_response_async(
-                trace_id=trace.id, 
-                eval_percent=all_input.get('eval_percent')
-            )
 
         return response
 
@@ -836,26 +783,11 @@ if __name__ == "__main__":
         # Run these operations concurrently
         tasks = []
         
-        # Task 1: Create trace (if trace creation is I/O bound)
-        trace_id = data.get('trace_id')
-        create_trace_task = asyncio.create_task(
-            self.create_langfuse_trace_async(request, vector_name, trace_id)
-        )
-        tasks.append(create_trace_task)
-        
-        # Task 2: Load config
-        try:
-            config_task = asyncio.create_task(self.load_config_async(vector_name))
-            tasks.append(config_task)
-        except Exception as e:
-            raise ValueError(f"Unable to find vac_config for {vector_name} - {str(e)}")
-        
         # Extract other data while configs load
         user_input = data.pop('user_input').strip()
         stream_wait_time = data.pop('stream_wait_time', 7)
         stream_timeout = data.pop('stream_timeout', 120)
         chat_history = data.pop('chat_history', None)
-        eval_percent = data.pop('eval_percent', 0.01)
         vector_name_param = data.pop('vector_name', vector_name)
         data.pop('trace_id', None)  # to ensure not in kwargs
         
@@ -865,59 +797,21 @@ if __name__ == "__main__":
         
         # Await all tasks concurrently
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        # Process results
-        trace = results[0] if not isinstance(results[0], Exception) else None
-        vac_config = results[1] if not isinstance(results[1], Exception) else None
-        paired_messages = results[2] if not isinstance(results[2], Exception) else []
+
+        paired_messages = results[0] if not isinstance(results[0], Exception) else []
         
         # Only create span after we have trace
-        span = None
-        if trace:
-            all_input = {
-                'user_input': user_input, 
-                'vector_name': vector_name_param, 
-                'chat_history': paired_messages, 
-                'stream_wait_time': stream_wait_time,
-                'stream_timeout': stream_timeout,
-                'eval_percent': eval_percent,
-                'kwargs': data
-            }
-            
-            this_vac_config = vac_config.configs_by_kind.get("vacConfig")
-            metadata_config = None
-            if this_vac_config:
-                metadata_config = this_vac_config.get(vector_name)
-
-            trace.update(input=data, metadata=metadata_config)
-            
-            span = trace.span(
-                name="VAC",
-                metadata=vac_config.configs_by_kind,
-                input=all_input
-            )
-        else:
-            all_input = {
-                'user_input': user_input, 
-                'vector_name': vector_name_param, 
-                'chat_history': paired_messages, 
-                'stream_wait_time': stream_wait_time,
-                'stream_timeout': stream_timeout,
-                'eval_percent': eval_percent,
-                'kwargs': data
-            }
-        
-        # Handle special commands (make this async if needed)
-        command_response = await handle_special_commands(user_input, vector_name, paired_messages)
-        if command_response is not None and trace:
-            trace.update(output=jsonify(command_response))
+        all_input = {
+            'user_input': user_input, 
+            'vector_name': vector_name_param, 
+            'chat_history': paired_messages, 
+            'stream_wait_time': stream_wait_time,
+            'stream_timeout': stream_timeout,
+            'kwargs': data
+        }
         
         return {
-            "trace": trace,
-            "span": span,
-            "command_response": command_response,
-            "all_input": all_input,
-            "vac_config": vac_config
+            "all_input": all_input
         }
 
     def handle_file_upload(self, file, vector_name):
