@@ -96,13 +96,9 @@ if __name__ == "__main__":
         # Basic routes
         self.app.route("/", methods=['GET'])(self.home)
         self.app.route("/health", methods=['GET'])(self.health)
-
-        # Streaming VAC
-        self.app.route('/vac/streaming/<vector_name>', 
-                       methods=['POST'], 
-                       provide_automatic_options=False)(self.handle_stream_vac)
         
         if self.async_stream:  # Use async treatment
+            log.info("async_stream enabled")
             self.app.route('/vac/streaming/<vector_name>', 
                         methods=['POST'], 
                         provide_automatic_options=False)(self.handle_stream_vac_async)
@@ -351,10 +347,10 @@ if __name__ == "__main__":
 
         # Use the async version of prep_vac
         prep = await self.prep_vac_async(request, vector_name)
-        log.info(f"Processing prep: {prep}")
+        log.info(f"Processing async prep: {prep}")
         all_input = prep["all_input"]
 
-        log.info(f'Streaming data with: {all_input}')
+        log.info(f'Streaming async data with: {all_input}')
 
         async def generate_response_content():
             try:
@@ -378,12 +374,12 @@ if __name__ == "__main__":
                         yield chunk
 
             except Exception as e:
-                yield f"Streaming Error: {str(e)} {traceback.format_exc()}"
+                yield f"Streaming async Error: {str(e)} {traceback.format_exc()}"
 
         response = Response(generate_response_content(), content_type='text/plain; charset=utf-8')
         response.headers['Transfer-Encoding'] = 'chunked'
 
-        log.debug(f"streaming response: {response}")
+        log.debug(f"streaming async response: {response}")
 
         return response
 
