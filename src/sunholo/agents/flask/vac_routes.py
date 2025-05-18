@@ -7,7 +7,6 @@ from functools import partial
 import inspect
 import asyncio
 
-from ...agents import handle_special_commands
 from ..chat_history import extract_chat_history_with_cache, extract_chat_history_async_cached
 from ...qna.parsers import parse_output
 from ...streaming import start_streaming_chat, start_streaming_chat_async
@@ -241,12 +240,8 @@ if __name__ == "__main__":
         log.info(f"Processing prep: {prep}")
         trace = prep["trace"]
         span = prep["span"]
-        command_response = prep["command_response"]
         vac_config = prep["vac_config"]
         all_input = prep["all_input"]
-
-        if command_response:
-            return jsonify(command_response)
 
         log.info(f'Streaming data with: {all_input}')
         if span:
@@ -432,12 +427,8 @@ if __name__ == "__main__":
         log.debug(f"Processing prep: {prep}")
         trace = prep["trace"]
         span = prep["span"]
-        command_response = prep["command_response"]
         vac_config: ConfigManager = prep["vac_config"]
         all_input = prep["all_input"]
-
-        if command_response:
-            return jsonify(command_response)
 
         try:
             if span:
@@ -536,8 +527,6 @@ if __name__ == "__main__":
         image_uri = None
         mime_type = None
 
-
-
         for msg in reversed(messages):
             if msg['role'] == 'user':
                 if isinstance(msg['content'], list):
@@ -555,14 +544,6 @@ if __name__ == "__main__":
             return jsonify({"error": "No user message provided"}), 400
         else:
             log.info(f"User message: {user_message}")
-    
-        paired_messages = extract_chat_history_with_cache(chat_history)
-
-        command_response = handle_special_commands(user_message, vector_name, paired_messages)
-
-        if command_response is not None:
-
-            return self.make_openai_response(user_message, vector_name, command_response)
     
         if image_uri:
             data["image_uri"] = image_uri
