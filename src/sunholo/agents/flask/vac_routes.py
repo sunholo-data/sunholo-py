@@ -780,14 +780,6 @@ if __name__ == "__main__":
         except Exception as e:
             raise ValueError(f"Unable to find vac_config for {vector_name} - {str(e)}")
 
-        # Initialize trace variables
-        trace = None
-        span = None
-        if self.add_langfuse_eval:
-            trace_id = data.get('trace_id')
-            # Create trace in background - don't block
-            trace_future = _thread_pool.submit(self._create_langfuse_trace_background, request, vector_name, trace_id)
-
         # Extract data (keep original logic)
         user_input = data.pop('user_input').strip()
         stream_wait_time = data.pop('stream_wait_time', 7)
@@ -811,7 +803,7 @@ if __name__ == "__main__":
             finally:
                 data.pop("_upload_future", None)
 
-        # Build final input
+        # BUILD all_input BEFORE trace creation (this was moved inside try/catch by mistake)
         all_input = {
             'user_input': user_input, 
             'vector_name': vector_name_param, 
@@ -822,8 +814,15 @@ if __name__ == "__main__":
             'kwargs': data
         }
 
-        # Try to get trace result if available (don't block long)
+        # Initialize trace variables
+        trace = None
+        span = None
         if self.add_langfuse_eval:
+            trace_id = data.get('trace_id')
+            # Create trace in background - don't block
+            trace_future = _thread_pool.submit(self._create_langfuse_trace_background, request, vector_name, trace_id)
+
+            # Try to get trace result if available (don't block long)
             try:
                 trace = trace_future.result(timeout=0.1)  # Very short timeout
                 if trace:
@@ -851,67 +850,6 @@ if __name__ == "__main__":
             "span": span,
             "all_input": all_input,
             "vac_config": vac_config
-        }
-
-    async def prep_vac_async(self, request, vector_name):
-        """Async version of prep_vac."""
-        # Parse request data
-        if request.content_type.startswith('application/json'):
-            data = request.get_json()
-        elif request.content_type.startswith('multipart/form-data'):
-            data = request.form.to_dict()
-            if 'file' in request.files:
-                file = request.files['file']
-                if file.filename != '':
-                    log.info(f"Found file: {file.filename} to upload to GCS")
-                    try:
-                        # Make file upload async if possible
-                        image_uri, mime_type = await self.handle_file_upload_async(file, vector_name)
-                        data["image_uri"] = image_uri
-                        data["mime"] = mime_type
-                    except Exception as e:
-                        log.error(traceback.format_exc())
-                        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
-                else:
-                    log.error("No file selected")
-                    return jsonify({"error": "No file selected"}), 400
-        else:
-            return jsonify({"error": "Unsupported content type"}), 400
-
-        log.info(f"vac/{vector_name} got data: {data}")
-
-        # Run these operations concurrently
-        tasks = []
-        
-        # Extract other data while configs load
-        user_input = data.pop('user_input').strip()
-        stream_wait_time = data.pop('stream_wait_time', 7)
-        stream_timeout = data.pop('stream_timeout', 120)
-        chat_history = data.pop('chat_history', None)
-        vector_name_param = data.pop('vector_name', vector_name)
-        data.pop('trace_id', None)  # to ensure not in kwargs
-        
-        # Task 3: Process chat history
-        chat_history_task = asyncio.create_task(extract_chat_history_async_cached(chat_history))
-        tasks.append(chat_history_task)
-        
-        # Await all tasks concurrently
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        paired_messages = results[0] if not isinstance(results[0], Exception) else []
-        
-        # Only create span after we have trace
-        all_input = {
-            'user_input': user_input, 
-            'vector_name': vector_name_param, 
-            'chat_history': paired_messages, 
-            'stream_wait_time': stream_wait_time,
-            'stream_timeout': stream_timeout,
-            'kwargs': data
-        }
-        
-        return {
-            "all_input": all_input
         }
 
     def handle_file_upload(self, file, vector_name):
