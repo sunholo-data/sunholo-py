@@ -286,30 +286,20 @@ if __name__ == "__main__":
             log.warning(f"Background trace finalization failed: {e}")
 
     def handle_stream_vac(self, vector_name):
-        request_start = time.time()
         observed_stream_interpreter = self.stream_interpreter
         is_async = inspect.iscoroutinefunction(self.stream_interpreter)
 
         if is_async:
             log.info(f"Stream interpreter is async: {observed_stream_interpreter}")
 
-        # Call prep_vac and handle errors properly
-        try:
-            prep = self.prep_vac(request, vector_name)
-        except Exception as e:
-            log.error(f"prep_vac failed: {e}")
-            error_response = {'error': f'Prep error: {str(e)}'}
-            return jsonify(error_response), 500
-        
-        log.info(f"Processing prep completed in {time.time() - request_start:.3f}s")
-        
-        trace = prep.get("trace")
-        span = prep.get("span")
+        prep = self.prep_vac(request, vector_name)
+        log.info(f"Processing prep: {prep}")
+        trace = prep["trace"]
+        span = prep["span"]
         vac_config = prep["vac_config"]
         all_input = prep["all_input"]
 
-        log.info(f'Starting stream with: {all_input["user_input"][:100]}...')
-        
+        log.info(f'Streaming data with: {all_input}')
         if span:
             span.update(
                 name="start_streaming_chat",
@@ -320,7 +310,7 @@ if __name__ == "__main__":
         def generate_response_content():
             try:
                 if is_async:
-                    from queue import Queue
+                    from queue import Queue, Empty
                     result_queue = Queue()
                     import threading
 
@@ -337,7 +327,7 @@ if __name__ == "__main__":
                                     trace_id=trace.id if trace else None,
                                     **all_input["kwargs"]
                                 )
-                                
+                                log.info(f"{async_gen=}")
                                 async for chunk in async_gen:
                                     if isinstance(chunk, dict) and 'answer' in chunk:
                                         if trace:
@@ -350,12 +340,9 @@ if __name__ == "__main__":
                                     else:
                                         result_queue.put(chunk)
                             except Exception as e:
-                                error_msg = f"Streaming Error: {str(e)} {traceback.format_exc()}"
-                                log.error(error_msg)
-                                result_queue.put(error_msg)
+                                result_queue.put(f"Streaming Error: {str(e)} {traceback.format_exc()}")
                             finally:
                                 result_queue.put(None)  # Sentinel
-                        
                         asyncio.run(process_async())
 
                     thread = threading.Thread(target=run_async)
@@ -370,7 +357,7 @@ if __name__ == "__main__":
 
                     thread.join()
                 else:
-                    log.info("Starting sync streaming response")
+                    log.info("sync streaming response")
                     for chunk in start_streaming_chat(
                         question=all_input["user_input"],
                         vector_name=vector_name,
@@ -394,19 +381,17 @@ if __name__ == "__main__":
                             yield chunk
 
             except Exception as e:
-                error_msg = f"Streaming Error: {str(e)} {traceback.format_exc()}"
-                log.error(error_msg)
-                yield error_msg
+                yield f"Streaming Error: {str(e)} {traceback.format_exc()}"
 
-        # Create streaming response
+        # Here, the generator function will handle streaming the content to the client.
         response = Response(generate_response_content(), content_type='text/plain; charset=utf-8')
         response.headers['Transfer-Encoding'] = 'chunked'
 
-        log.info(f"Streaming response created in {time.time() - request_start:.3f}s")
-        
-        # Do final trace operations in background (don't block the response)
+        log.debug(f"streaming response: {response}")
         if trace:
-            _thread_pool.submit(self._finalize_trace_background, trace, span, response, all_input)
+            span.end(output=response)
+            trace.update(output=response)
+            self.langfuse_eval_response(trace_id=trace.id, eval_percent=all_input.get('eval_percent'))
 
         return response
 
