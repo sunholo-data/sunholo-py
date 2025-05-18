@@ -36,7 +36,7 @@ except ImportError:
 # Cache dictionary to store validated API keys
 api_key_cache = {}
 cache_duration = timedelta(minutes=5)  # Cache duration
-# Global caches and thread pool (add these after your existing globals)
+# Global caches and thread pool 
 _config_cache = {}
 _config_lock = threading.Lock()
 _thread_pool = ThreadPoolExecutor(max_workers=4)
@@ -94,17 +94,24 @@ if __name__ == "__main__":
             except Exception as e:
                 log.warning(f"Failed to pre-load config for {vector_name}: {e}")
 
-
-    @lru_cache(maxsize=100)
     def _get_cached_config(self, vector_name: str):
-        """Cached config loader with thread safety"""
+        """Cached config loader with thread safety - CORRECTED VERSION"""
+        # Check cache first (without lock for read)
+        if vector_name in _config_cache:
+            log.debug(f"Using cached config for {vector_name}")
+            return _config_cache[vector_name]
+        
+        # Need to load config
         with _config_lock:
+            # Double-check inside lock (another thread might have loaded it)
             if vector_name in _config_cache:
                 return _config_cache[vector_name]
             
             try:
+                log.info(f"Loading fresh config for {vector_name}")
                 config = ConfigManager(vector_name)
                 _config_cache[vector_name] = config
+                log.info(f"Cached config for {vector_name}")
                 return config
             except Exception as e:
                 log.error(f"Error loading config for {vector_name}: {e}")
@@ -286,13 +293,13 @@ if __name__ == "__main__":
         if is_async:
             log.info(f"Stream interpreter is async: {observed_stream_interpreter}")
 
-        # Fast prep
-        prep = self.prep_vac(request, vector_name)
-        
-        # Check for prep errors
-        if isinstance(prep, tuple) and len(prep) == 2:
-            error_response, status_code = prep
-            return jsonify(error_response), status_code
+        # Call prep_vac and handle errors properly
+        try:
+            prep = self.prep_vac(request, vector_name)
+        except Exception as e:
+            log.error(f"prep_vac failed: {e}")
+            error_response = {'error': f'Prep error: {str(e)}'}
+            return jsonify(error_response), 500
         
         log.info(f"Processing prep completed in {time.time() - request_start:.3f}s")
         
@@ -343,7 +350,9 @@ if __name__ == "__main__":
                                     else:
                                         result_queue.put(chunk)
                             except Exception as e:
-                                result_queue.put(f"Streaming Error: {str(e)} {traceback.format_exc()}")
+                                error_msg = f"Streaming Error: {str(e)} {traceback.format_exc()}"
+                                log.error(error_msg)
+                                result_queue.put(error_msg)
                             finally:
                                 result_queue.put(None)  # Sentinel
                         
@@ -385,16 +394,18 @@ if __name__ == "__main__":
                             yield chunk
 
             except Exception as e:
-                yield f"Streaming Error: {str(e)} {traceback.format_exc()}"
+                error_msg = f"Streaming Error: {str(e)} {traceback.format_exc()}"
+                log.error(error_msg)
+                yield error_msg
 
         # Create streaming response
         response = Response(generate_response_content(), content_type='text/plain; charset=utf-8')
         response.headers['Transfer-Encoding'] = 'chunked'
 
-        log.debug(f"Streaming response created in {time.time() - request_start:.3f}s")
+        log.info(f"Streaming response created in {time.time() - request_start:.3f}s")
         
+        # Do final trace operations in background (don't block the response)
         if trace:
-            # Do final trace operations in background
             _thread_pool.submit(self._finalize_trace_background, trace, span, response, all_input)
 
         return response
@@ -744,59 +755,50 @@ if __name__ == "__main__":
     def prep_vac(self, request, vector_name):
         start_time = time.time()
         
-        # Fast request parsing
-        try:
-            if request.content_type.startswith('application/json'):
-                data = request.get_json()
-            elif request.content_type.startswith('multipart/form-data'):
-                data = request.form.to_dict()
-                # Handle file upload in background if present
-                if 'file' in request.files:
-                    file = request.files['file']
-                    if file.filename != '':
-                        log.info(f"Found file: {file.filename} - uploading in background")
-                        # Start file upload in background, don't block
-                        upload_future = _thread_pool.submit(self._handle_file_upload_background, file, vector_name)
-                        data["_upload_future"] = upload_future
-            else:
-                return {"error": "Unsupported content type"}, 400
-        except Exception as e:
-            return {"error": f"Request parsing error: {str(e)}"}, 400
+        # Fast request parsing - KEEP ORIGINAL ERROR HANDLING STYLE
+        if request.content_type.startswith('application/json'):
+            data = request.get_json()
+        elif request.content_type.startswith('multipart/form-data'):
+            data = request.form.to_dict()
+            # Handle file upload in background if present
+            if 'file' in request.files:
+                file = request.files['file']
+                if file.filename != '':
+                    log.info(f"Found file: {file.filename} - uploading in background")
+                    # Start file upload in background, don't block
+                    upload_future = _thread_pool.submit(self._handle_file_upload_background, file, vector_name)
+                    data["_upload_future"] = upload_future
+        else:
+            # KEEP ORIGINAL STYLE - return the error response directly
+            raise ValueError("Unsupported content type")
 
         log.info(f"vac/{vector_name} got data keys: {list(data.keys())}")
 
-        # Extract essential data first
-        try:
-            user_input = data.pop('user_input').strip()
-            stream_wait_time = data.pop('stream_wait_time', 7)
-            stream_timeout = data.pop('stream_timeout', 120)
-            chat_history = data.pop('chat_history', None)
-            eval_percent = data.pop('eval_percent', 0.01)
-            vector_name_param = data.pop('vector_name', vector_name)
-            trace_id = data.pop('trace_id', None)
-            
-            if not user_input:
-                return {"error": "No user input provided"}, 400
-                
-        except Exception as e:
-            return {"error": f"Required field missing: {str(e)}"}, 400
-
-        # Get config from cache (should be very fast)
+        # Get config from cache first (before processing other data)
         try:
             vac_config = self._get_cached_config(vector_name)
         except Exception as e:
-            log.error(f"Config error: {e}")
-            return {"error": f"Unable to find vac_config for {vector_name} - {str(e)}"}, 500
+            raise ValueError(f"Unable to find vac_config for {vector_name} - {str(e)}")
 
-        # Process chat history with caching (should be fast)
-        paired_messages = extract_chat_history_with_cache(chat_history)
-
-        # Start tracing in background (don't block)
+        # Initialize trace variables
         trace = None
         span = None
         if self.add_langfuse_eval:
+            trace_id = data.get('trace_id')
+            # Create trace in background - don't block
             trace_future = _thread_pool.submit(self._create_langfuse_trace_background, request, vector_name, trace_id)
-            # We'll get the trace result later if needed
+
+        # Extract data (keep original logic)
+        user_input = data.pop('user_input').strip()
+        stream_wait_time = data.pop('stream_wait_time', 7)
+        stream_timeout = data.pop('stream_timeout', 120)
+        chat_history = data.pop('chat_history', None)
+        eval_percent = data.pop('eval_percent', 0.01)
+        vector_name_param = data.pop('vector_name', vector_name)
+        data.pop('trace_id', None)  # to ensure not in kwargs
+
+        # Process chat history with caching
+        paired_messages = extract_chat_history_with_cache(chat_history)
 
         # Wait for file upload if it was started (with timeout)
         if "_upload_future" in data:
@@ -823,7 +825,7 @@ if __name__ == "__main__":
         # Try to get trace result if available (don't block long)
         if self.add_langfuse_eval:
             try:
-                trace = trace_future.result(timeout=0.5)  # 500ms max wait
+                trace = trace_future.result(timeout=0.1)  # Very short timeout
                 if trace:
                     this_vac_config = vac_config.configs_by_kind.get("vacConfig")
                     metadata_config = None
