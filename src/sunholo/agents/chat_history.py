@@ -1,5 +1,282 @@
 import json
 from ..custom_logging import log
+import time
+import hashlib
+from functools import lru_cache
+from typing import List, Tuple, Optional
+
+
+class ChatHistoryCache:
+    """
+    Incremental cache for chat history processing.
+    
+    Caches processed message pairs and only processes new messages
+    when the chat history is extended.
+    """
+    
+    def __init__(self, max_cache_size: int = 1000):
+        self.cache = {}
+        self.max_cache_size = max_cache_size
+    
+    def _get_cache_key(self, chat_history: List[dict]) -> str:
+        """Generate a cache key based on the chat history content."""
+        # Use the hash of the serialized chat history for the key
+        # Only hash the first few and last few messages to balance performance vs accuracy
+        if len(chat_history) <= 10:
+            content = str(chat_history)
+        else:
+            # Hash first 5 and last 5 messages + length
+            content = str(chat_history[:5] + chat_history[-5:] + [len(chat_history)])
+        
+        return hashlib.md5(content.encode()).hexdigest()
+    
+    def _find_cached_prefix(self, current_history: List[dict]) -> Tuple[Optional[List[Tuple]], int]:
+        """
+        Find the longest cached prefix of the current chat history.
+        
+        Returns:
+            Tuple of (cached_pairs, cache_length) or (None, 0) if no cache found
+        """
+        current_length = len(current_history)
+        
+        # Check for cached versions of prefixes, starting from longest
+        for cache_length in range(current_length - 1, 0, -1):
+            prefix = current_history[:cache_length]
+            cache_key = self._get_cache_key(prefix)
+            
+            if cache_key in self.cache:
+                cached_data = self.cache[cache_key]
+                cached_pairs = cached_data['pairs']
+                
+                # Verify the cache is still valid by checking a few messages
+                if self._verify_cache_validity(prefix, cached_data['original_history']):
+                    return cached_pairs, cache_length
+                else:
+                    # Cache is stale, remove it
+                    del self.cache[cache_key]
+        
+        return None, 0
+    
+    def _verify_cache_validity(self, current_prefix: List[dict], cached_prefix: List[dict]) -> bool:
+        """Quick verification that cached data is still valid."""
+        if len(current_prefix) != len(cached_prefix):
+            return False
+        
+        # Check first and last few messages for equality
+        check_indices = [0, -1] if len(current_prefix) >= 2 else [0]
+        
+        for i in check_indices:
+            if current_prefix[i] != cached_prefix[i]:
+                return False
+        
+        return True
+    
+    def extract_chat_history_incremental(self, chat_history: List[dict]) -> List[Tuple]:
+        """
+        Extract chat history with incremental caching.
+        
+        Args:
+            chat_history: List of chat message dictionaries
+            
+        Returns:
+            List of (human_message, ai_message) tuples
+        """
+        if not chat_history:
+            return []
+        
+        # Try to find cached prefix
+        cached_pairs, cache_length = self._find_cached_prefix(chat_history)
+        
+        if cached_pairs is not None:
+            log.debug(f"Found cached pairs for {cache_length} messages, processing {len(chat_history) - cache_length} new messages")
+            
+            # Process only the new messages
+            new_messages = chat_history[cache_length:]
+            new_pairs = self._process_new_messages(new_messages, cached_pairs)
+            
+            # Combine cached and new pairs
+            all_pairs = cached_pairs + new_pairs
+        else:
+            log.debug(f"No cache found, processing all {len(chat_history)} messages")
+            # Process all messages from scratch
+            all_pairs = self._extract_chat_history_full(chat_history)
+        
+        # Cache the result
+        self._update_cache(chat_history, all_pairs)
+        
+        return all_pairs
+    
+    def _process_new_messages(self, new_messages: List[dict], cached_pairs: List[Tuple]) -> List[Tuple]:
+        """
+        Process only the new messages, considering the state from cached pairs.
+        
+        Args:
+            new_messages: New messages to process
+            cached_pairs: Previously processed message pairs
+            
+        Returns:
+            List of new message pairs
+        """
+        if not new_messages:
+            return []
+        
+        new_pairs = []
+        
+        # Determine if we're waiting for a bot response based on cached pairs
+        waiting_for_bot = True
+        if cached_pairs:
+            last_pair = cached_pairs[-1]
+            # If last pair has both human and AI message, we're ready for a new human message
+            waiting_for_bot = not (last_pair[0] and last_pair[1])
+        
+        # If we ended with an unpaired human message, get it
+        last_human_message = ""
+        if cached_pairs and waiting_for_bot:
+            last_human_message = cached_pairs[-1][0]
+        
+        # Process new messages
+        for message in new_messages:
+            try:
+                is_human_msg = is_human(message)
+                content = create_message_element(message)
+                
+                if is_human_msg:
+                    last_human_message = content
+                    waiting_for_bot = True
+                else:  # Bot message
+                    if waiting_for_bot and last_human_message:
+                        new_pairs.append((last_human_message, content))
+                        last_human_message = ""
+                        waiting_for_bot = False
+                    # If not waiting for bot or no human message, this is an orphaned bot message
+                    
+            except (KeyError, TypeError) as e:
+                log.warning(f"Error processing new message: {e}")
+                continue
+        
+        return new_pairs
+    
+    def _extract_chat_history_full(self, chat_history: List[dict]) -> List[Tuple]:
+        """Full extraction when no cache is available."""
+        # Use the optimized version from before
+        paired_messages = []
+        
+        # Handle initial bot message
+        start_idx = 0
+        if chat_history and is_bot(chat_history[0]):
+            try:
+                first_message = chat_history[0]
+                blank_element = ""
+                bot_element = create_message_element(first_message)
+                paired_messages.append((blank_element, bot_element))
+                start_idx = 1
+            except (KeyError, TypeError):
+                pass
+        
+        # Process remaining messages
+        last_human_message = ""
+        for i in range(start_idx, len(chat_history)):
+            message = chat_history[i]
+            
+            try:
+                is_human_msg = is_human(message)
+                content = create_message_element(message)
+                
+                if is_human_msg:
+                    last_human_message = content
+                else:  # Bot message
+                    if last_human_message:
+                        paired_messages.append((last_human_message, content))
+                        last_human_message = ""
+                        
+            except (KeyError, TypeError) as e:
+                log.warning(f"Error processing message {i}: {e}")
+                continue
+        
+        return paired_messages
+    
+    def _update_cache(self, chat_history: List[dict], pairs: List[Tuple]):
+        """Update cache with new result."""
+        # Only cache if the history is of reasonable size
+        if len(chat_history) < 2:
+            return
+        
+        cache_key = self._get_cache_key(chat_history)
+        
+        # Implement simple LRU by removing oldest entries
+        if len(self.cache) >= self.max_cache_size:
+            # Remove 20% of oldest entries
+            remove_count = self.max_cache_size // 5
+            oldest_keys = list(self.cache.keys())[:remove_count]
+            for key in oldest_keys:
+                del self.cache[key]
+        
+        self.cache[cache_key] = {
+            'pairs': pairs,
+            'original_history': chat_history.copy(),  # Store copy for validation
+            'timestamp': time.time()
+        }
+        
+        log.debug(f"Cached {len(pairs)} pairs for history of length {len(chat_history)}")
+    
+    def clear_cache(self):
+        """Clear the entire cache."""
+        self.cache.clear()
+        log.info("Chat history cache cleared")
+
+
+# Global cache instance
+_chat_history_cache = ChatHistoryCache()
+
+
+def extract_chat_history_with_cache(chat_history: List[dict] = None) -> List[Tuple]:
+    """
+    Main function to replace the original extract_chat_history.
+    
+    Uses incremental caching for better performance with growing chat histories.
+    """
+    if not chat_history:
+        log.debug("No chat history found")
+        return []
+    
+    return _chat_history_cache.extract_chat_history_incremental(chat_history)
+
+
+# Async version that wraps the cached version
+async def extract_chat_history_async_cached(chat_history: List[dict] = None) -> List[Tuple]:
+    """
+    Async version that uses the cache and runs in a thread pool if needed.
+    """
+    import asyncio
+    
+    if not chat_history:
+        return []
+    
+    # For very large histories, run in thread pool to avoid blocking
+    if len(chat_history) > 1000:
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None, 
+            extract_chat_history_with_cache, 
+            chat_history
+        )
+    else:
+        # For smaller histories, just run directly
+        return extract_chat_history_with_cache(chat_history)
+
+
+# Utility function to warm up the cache
+def warm_up_cache(chat_histories: List[List[dict]]):
+    """
+    Pre-populate cache with common chat histories.
+    
+    Args:
+        chat_histories: List of chat history lists to cache
+    """
+    for history in chat_histories:
+        extract_chat_history_with_cache(history)
+    
+    log.info(f"Warmed up cache with {len(chat_histories)} chat histories")
 
 
 async def extract_chat_history_async(chat_history=None):
@@ -243,3 +520,4 @@ def is_ai(message: dict):
         return message['role'] == 'assistant'
     else:
         return 'bot_id' in message  # Slack
+

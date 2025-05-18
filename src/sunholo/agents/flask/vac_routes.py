@@ -7,8 +7,8 @@ from functools import partial
 import inspect
 import asyncio
 
-from ...agents import extract_chat_history, handle_special_commands
-from ..chat_history import extract_chat_history_async
+from ...agents import handle_special_commands
+from ..chat_history import extract_chat_history_with_cache, extract_chat_history_async_cached
 from ...qna.parsers import parse_output
 from ...streaming import start_streaming_chat, start_streaming_chat_async
 from ...archive import archive_qa
@@ -58,12 +58,18 @@ if __name__ == "__main__":
 ```
     
     """
-    def __init__(self, app, stream_interpreter: callable, vac_interpreter:callable=None, additional_routes:dict=None, async_stream:bool=False):
+    def __init__(self, app, 
+                 stream_interpreter: callable, 
+                 vac_interpreter:callable=None, 
+                 additional_routes:dict=None, 
+                 async_stream:bool=False,
+                 add_langfuse_eval:bool=True):
         self.app = app
         self.stream_interpreter = stream_interpreter
         self.vac_interpreter = vac_interpreter or partial(self.vac_interpreter_default)
         self.additional_routes = additional_routes if additional_routes is not None else []
         self.async_stream = async_stream
+        self.add_langfuse_eval = add_langfuse_eval
         self.register_routes()
         
 
@@ -550,7 +556,8 @@ if __name__ == "__main__":
         else:
             log.info(f"User message: {user_message}")
     
-        paired_messages = extract_chat_history(chat_history)
+        paired_messages = extract_chat_history_with_cache(chat_history)
+
         command_response = handle_special_commands(user_message, vector_name, paired_messages)
 
         if command_response is not None:
@@ -694,10 +701,10 @@ if __name__ == "__main__":
 
         trace = None
         span = None
-
-        trace_id = data.get('trace_id')
-        trace = self.create_langfuse_trace(request, vector_name, trace_id)
-        log.info(f"Using existing langfuse trace: {trace_id}")
+        if self.add_langfuse_eval:
+            trace_id = data.get('trace_id')
+            trace = self.create_langfuse_trace(request, vector_name, trace_id)
+            log.info(f"Using existing langfuse trace: {trace_id}")
         
         #config, _ = load_config("config/llm_config.yaml")
         try:
@@ -721,7 +728,7 @@ if __name__ == "__main__":
         vector_name = data.pop('vector_name', vector_name)
         data.pop('trace_id', None) # to ensure not in kwargs
 
-        paired_messages = extract_chat_history(chat_history)
+        paired_messages = extract_chat_history_with_cache(chat_history)
 
         all_input = {'user_input': user_input, 
                      'vector_name': vector_name, 
@@ -737,15 +744,10 @@ if __name__ == "__main__":
                 metadata=vac_config.configs_by_kind,
                 input = all_input
             )
-        command_response = handle_special_commands(user_input, vector_name, paired_messages)
-        if command_response is not None:
-            if trace:
-                trace.update(output=jsonify(command_response))
     
         return {
             "trace": trace,
             "span": span,
-            "command_response": command_response,
             "all_input": all_input,
             "vac_config": vac_config
         }
@@ -789,7 +791,7 @@ if __name__ == "__main__":
         data.pop('trace_id', None)  # to ensure not in kwargs
         
         # Task 3: Process chat history
-        chat_history_task = asyncio.create_task(extract_chat_history_async(chat_history))
+        chat_history_task = asyncio.create_task(extract_chat_history_async_cached(chat_history))
         tasks.append(chat_history_task)
         
         # Await all tasks concurrently
