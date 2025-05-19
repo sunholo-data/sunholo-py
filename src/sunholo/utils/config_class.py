@@ -6,7 +6,38 @@ from collections import defaultdict
 from .timedelta import format_timedelta
 
 class ConfigManager:
-    def __init__(self, vector_name: str, validate:bool=True):
+    # Class-level cache for instances
+    _instances = {}
+    _instance_cache_time = {}
+    _instance_cache_duration = timedelta(minutes=30)  # Cache instances for 30 minutes
+    
+    def __new__(cls, vector_name: str, validate: bool = True):
+        """
+        Override __new__ to implement instance caching.
+        Returns existing instance if available and not expired.
+        """
+        current_time = datetime.now()
+        cache_key = (vector_name, validate)
+        
+        # Check if we have a cached instance
+        if cache_key in cls._instances:
+            cached_time = cls._instance_cache_time.get(cache_key)
+            if cached_time and (current_time - cached_time) < cls._instance_cache_duration:
+                # Return cached instance
+                return cls._instances[cache_key]
+            else:
+                # Cache expired, remove from cache
+                del cls._instances[cache_key]
+                if cache_key in cls._instance_cache_time:
+                    del cls._instance_cache_time[cache_key]
+        
+        # Create new instance
+        instance = super().__new__(cls)
+        cls._instances[cache_key] = instance
+        cls._instance_cache_time[cache_key] = current_time
+        return instance
+    
+    def __init__(self, vector_name: str, validate: bool = True):
         """
         Initialize the ConfigManager with a vector name.
         Requires a local config/ folder holding your configuration files or the env var VAC_CONFIG_FOLDER to be set.
@@ -24,6 +55,10 @@ class ConfigManager:
         agent = config.vacConfig("agent")
         ```
         """
+        # Prevent re-initialization of cached instances
+        if hasattr(self, '_initialized'):
+            return
+        
         if os.getenv("VAC_CONFIG_FOLDER") is None:
             print("WARNING: No VAC_CONFIG_FOLDER environment variable was specified")
         local_config_folder = os.path.join(os.getcwd(), "config")
@@ -39,10 +74,67 @@ class ConfigManager:
         self.local_config_folder = local_config_folder
         self.configs_by_kind = self.load_all_configs()
         self.validate = validate
+        self._initialized = True
 
         test_agent = self.vacConfig("agent")
         if not test_agent and self.vector_name != "global" and self.validate:
             print(f"WARNING: No vacConfig.agent found for {self.vector_name} - are you in right folder? {local_config_folder=} {self.config_folder=}")
+
+    @classmethod
+    def get_instance(cls, vector_name: str, validate: bool = True):
+        """
+        Alternative class method to get an instance. This is more explicit than using __new__.
+        
+        Args:
+            vector_name (str): The name of the vector in the configuration files.
+            validate (bool): Whether to validate the configurations
+            
+        Returns:
+            ConfigManager: The ConfigManager instance (cached or new)
+        """
+        return cls(vector_name, validate)
+    
+    @classmethod
+    def clear_instance_cache(cls, vector_name: str = None, validate: bool = None):
+        """
+        Clear the instance cache. Useful for forcing fresh instances.
+        
+        Args:
+            vector_name (str, optional): If provided, only clear cache for this vector_name
+            validate (bool, optional): If provided along with vector_name, clear specific cache entry
+        """
+        if vector_name is not None:
+            if validate is not None:
+                # Clear specific cache entry
+                cache_key = (vector_name, validate)
+                if cache_key in cls._instances:
+                    del cls._instances[cache_key]
+                if cache_key in cls._instance_cache_time:
+                    del cls._instance_cache_time[cache_key]
+            else:
+                # Clear all entries for this vector_name
+                keys_to_remove = [key for key in cls._instances.keys() if key[0] == vector_name]
+                for key in keys_to_remove:
+                    del cls._instances[key]
+                    if key in cls._instance_cache_time:
+                        del cls._instance_cache_time[key]
+        else:
+            # Clear all cache
+            cls._instances.clear()
+            cls._instance_cache_time.clear()
+    
+    @classmethod
+    def get_cached_instances(cls):
+        """
+        Get information about currently cached instances.
+        
+        Returns:
+            dict: Dictionary with cache keys and their creation times
+        """
+        return {
+            key: cls._instance_cache_time.get(key) 
+            for key in cls._instances.keys()
+        }
 
     def load_all_configs(self):
         """
