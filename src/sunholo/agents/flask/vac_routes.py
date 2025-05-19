@@ -6,10 +6,6 @@ import random
 from functools import partial
 import inspect
 import asyncio
-import time
-import threading
-from functools import lru_cache
-from concurrent.futures import ThreadPoolExecutor
 
 from ..chat_history import extract_chat_history_with_cache, extract_chat_history_async_cached
 from ...qna.parsers import parse_output
@@ -36,11 +32,6 @@ except ImportError:
 # Cache dictionary to store validated API keys
 api_key_cache = {}
 cache_duration = timedelta(minutes=5)  # Cache duration
-# Global caches and thread pool 
-_config_cache = {}
-_config_lock = threading.Lock()
-_thread_pool = ThreadPoolExecutor(max_workers=4)
-
 
 class VACRoutes:
     """
@@ -78,44 +69,8 @@ if __name__ == "__main__":
         self.additional_routes = additional_routes if additional_routes is not None else []
         self.async_stream = async_stream
         self.add_langfuse_eval = add_langfuse_eval
-
-        # Pre-warm common configs
-        self._preload_common_configs()   
-
         self.register_routes()
-
-    def _preload_common_configs(self):
-        """Pre-load commonly used configurations to cache"""
-        common_vector_names = ["aitana3"]  # Add your common vector names 
-        for vector_name in common_vector_names:
-            try:
-                self._get_cached_config(vector_name)
-                log.info(f"Pre-loaded config for {vector_name}")
-            except Exception as e:
-                log.warning(f"Failed to pre-load config for {vector_name}: {e}")
-
-    def _get_cached_config(self, vector_name: str):
-        """Cached config loader with thread safety - CORRECTED VERSION"""
-        # Check cache first (without lock for read)
-        if vector_name in _config_cache:
-            log.debug(f"Using cached config for {vector_name}")
-            return _config_cache[vector_name]
         
-        # Need to load config
-        with _config_lock:
-            # Double-check inside lock (another thread might have loaded it)
-            if vector_name in _config_cache:
-                return _config_cache[vector_name]
-            
-            try:
-                log.info(f"Loading fresh config for {vector_name}")
-                config = ConfigManager(vector_name)
-                _config_cache[vector_name] = config
-                log.info(f"Cached config for {vector_name}")
-                return config
-            except Exception as e:
-                log.error(f"Error loading config for {vector_name}: {e}")
-                raise
 
     def vac_interpreter_default(self, question: str, vector_name: str, chat_history=[], **kwargs):
         # Create a callback that does nothing for streaming if you don't want intermediate outputs
@@ -273,18 +228,7 @@ if __name__ == "__main__":
 
         log.info(f"OpenAI response: {openai_response}")
         return jsonify(openai_response)
-
-    def _finalize_trace_background(self, trace, span, response, all_input):
-        """Finalize trace operations in background"""
-        try:
-            if span:
-                span.end(output=str(response))
-            if trace:
-                trace.update(output=str(response))
-                self.langfuse_eval_response(trace_id=trace.id, eval_percent=all_input.get('eval_percent'))
-        except Exception as e:
-            log.warning(f"Background trace finalization failed: {e}")
-
+        
     def handle_stream_vac(self, vector_name):
         observed_stream_interpreter = self.stream_interpreter
         is_async = inspect.iscoroutinefunction(self.stream_interpreter)
@@ -710,131 +654,144 @@ if __name__ == "__main__":
             tags = tags,
             release = package_version
         )
-    
-    def _create_langfuse_trace_background(self, request, vector_name, trace_id):
-        """Create Langfuse trace in background"""
-        try:
-            return self.create_langfuse_trace(request, vector_name, trace_id)
-        except Exception as e:
-            log.warning(f"Background trace creation failed: {e}")
-            return None
 
-    def _handle_file_upload_background(self, file, vector_name):
-        """Handle file upload in background thread"""
-        try:
-            # Save with timestamp to avoid conflicts
-            temp_filename = f"temp_{int(time.time() * 1000)}_{file.filename}"
-            file.save(temp_filename)
-            
-            # Upload to GCS
-            image_uri = add_file_to_gcs(temp_filename, vector_name)
-            
-            # Clean up
-            os.remove(temp_filename)
-            
-            return {"image_uri": image_uri, "mime": file.mimetype}
-        except Exception as e:
-            log.error(f"Background file upload failed: {e}")
-            return {}
-    
     def prep_vac(self, request, vector_name):
-        start_time = time.time()
-        
-        # Fast request parsing - KEEP ORIGINAL ERROR HANDLING STYLE
+
         if request.content_type.startswith('application/json'):
             data = request.get_json()
         elif request.content_type.startswith('multipart/form-data'):
             data = request.form.to_dict()
-            # Handle file upload in background if present
             if 'file' in request.files:
                 file = request.files['file']
                 if file.filename != '':
-                    log.info(f"Found file: {file.filename} - uploading in background")
-                    # Start file upload in background, don't block
-                    upload_future = _thread_pool.submit(self._handle_file_upload_background, file, vector_name)
-                    data["_upload_future"] = upload_future
+                    log.info(f"Found file: {file.filename} to upload to GCS")
+                    try:
+                        image_uri, mime_type = self.handle_file_upload(file, vector_name)
+                        data["image_uri"] = image_uri
+                        data["mime"] = mime_type
+                    except Exception as e:
+                        log.error(traceback.format_exc())
+                        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
+                else:
+                    log.error("No file selected")
+                    return jsonify({"error": "No file selected"}), 400
         else:
-            # KEEP ORIGINAL STYLE - return the error response directly
-            raise ValueError("Unsupported content type")
+            return jsonify({"error": "Unsupported content type"}), 400
 
-        log.info(f"vac/{vector_name} got data keys: {list(data.keys())}")
+        log.info(f"vac/{vector_name} got data: {data}")
 
-        # Get config from cache first (before processing other data)
+        trace = None
+        span = None
+        if self.add_langfuse_eval:
+            trace_id = data.get('trace_id')
+            trace = self.create_langfuse_trace(request, vector_name, trace_id)
+            log.info(f"Using existing langfuse trace: {trace_id}")
+        
+        #config, _ = load_config("config/llm_config.yaml")
         try:
-            vac_config = self._get_cached_config(vector_name)
+            vac_config = ConfigManager(vector_name)
         except Exception as e:
             raise ValueError(f"Unable to find vac_config for {vector_name} - {str(e)}")
 
-        # Extract data (keep original logic)
+        if trace:
+            this_vac_config = vac_config.configs_by_kind.get("vacConfig")
+            metadata_config=None
+            if this_vac_config:
+                metadata_config = this_vac_config.get(vector_name)
+
+            trace.update(input=data, metadata=metadata_config)
+
         user_input = data.pop('user_input').strip()
         stream_wait_time = data.pop('stream_wait_time', 7)
         stream_timeout = data.pop('stream_timeout', 120)
         chat_history = data.pop('chat_history', None)
         eval_percent = data.pop('eval_percent', 0.01)
-        vector_name_param = data.pop('vector_name', vector_name)
-        data.pop('trace_id', None)  # to ensure not in kwargs
+        vector_name = data.pop('vector_name', vector_name)
+        data.pop('trace_id', None) # to ensure not in kwargs
 
-        # Process chat history with caching
         paired_messages = extract_chat_history_with_cache(chat_history)
 
-        # Wait for file upload if it was started (with timeout)
-        if "_upload_future" in data:
-            try:
-                upload_result = data["_upload_future"].result(timeout=3.0)  # 3 sec max wait
-                data.update(upload_result)
-                log.info(f"File upload completed: {upload_result.get('image_uri', 'no uri')}")
-            except Exception as e:
-                log.warning(f"File upload failed or timed out: {e}")
-            finally:
-                data.pop("_upload_future", None)
+        all_input = {'user_input': user_input, 
+                     'vector_name': vector_name, 
+                     'chat_history': paired_messages, 
+                     'stream_wait_time': stream_wait_time,
+                     'stream_timeout': stream_timeout,
+                     'eval_percent': eval_percent,
+                     'kwargs': data}
 
-        # BUILD all_input BEFORE trace creation (this was moved inside try/catch by mistake)
+        if trace:
+            span = trace.span(
+                name="VAC",
+                metadata=vac_config.configs_by_kind,
+                input = all_input
+            )
+    
+        return {
+            "trace": trace,
+            "span": span,
+            "all_input": all_input,
+            "vac_config": vac_config
+        }
+
+    async def prep_vac_async(self, request, vector_name):
+        """Async version of prep_vac."""
+        # Parse request data
+        if request.content_type.startswith('application/json'):
+            data = request.get_json()
+        elif request.content_type.startswith('multipart/form-data'):
+            data = request.form.to_dict()
+            if 'file' in request.files:
+                file = request.files['file']
+                if file.filename != '':
+                    log.info(f"Found file: {file.filename} to upload to GCS")
+                    try:
+                        # Make file upload async if possible
+                        image_uri, mime_type = await self.handle_file_upload_async(file, vector_name)
+                        data["image_uri"] = image_uri
+                        data["mime"] = mime_type
+                    except Exception as e:
+                        log.error(traceback.format_exc())
+                        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
+                else:
+                    log.error("No file selected")
+                    return jsonify({"error": "No file selected"}), 400
+        else:
+            return jsonify({"error": "Unsupported content type"}), 400
+
+        log.info(f"vac/{vector_name} got data: {data}")
+
+        # Run these operations concurrently
+        tasks = []
+        
+        # Extract other data while configs load
+        user_input = data.pop('user_input').strip()
+        stream_wait_time = data.pop('stream_wait_time', 7)
+        stream_timeout = data.pop('stream_timeout', 120)
+        chat_history = data.pop('chat_history', None)
+        vector_name_param = data.pop('vector_name', vector_name)
+        data.pop('trace_id', None)  # to ensure not in kwargs
+        
+        # Task 3: Process chat history
+        chat_history_task = asyncio.create_task(extract_chat_history_async_cached(chat_history))
+        tasks.append(chat_history_task)
+        
+        # Await all tasks concurrently
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        paired_messages = results[0] if not isinstance(results[0], Exception) else []
+        
+        # Only create span after we have trace
         all_input = {
             'user_input': user_input, 
             'vector_name': vector_name_param, 
             'chat_history': paired_messages, 
             'stream_wait_time': stream_wait_time,
             'stream_timeout': stream_timeout,
-            'eval_percent': eval_percent,
             'kwargs': data
         }
-
-        # Initialize trace variables
-        trace = None
-        span = None
-        if self.add_langfuse_eval:
-            trace_id = data.get('trace_id')
-            # Create trace in background - don't block
-            trace_future = _thread_pool.submit(self._create_langfuse_trace_background, request, vector_name, trace_id)
-
-            # Try to get trace result if available (don't block long)
-            try:
-                trace = trace_future.result(timeout=0.1)  # Very short timeout
-                if trace:
-                    this_vac_config = vac_config.configs_by_kind.get("vacConfig")
-                    metadata_config = None
-                    if this_vac_config:
-                        metadata_config = this_vac_config.get(vector_name)
-                    trace.update(input=data, metadata=metadata_config)
-                    
-                    span = trace.span(
-                        name="VAC",
-                        metadata=vac_config.configs_by_kind,
-                        input=all_input
-                    )
-            except Exception as e:
-                log.warning(f"Langfuse trace creation timed out or failed: {e}")
-                trace = None
-                span = None
-
-        prep_time = time.time() - start_time
-        log.info(f"prep_vac completed in {prep_time:.3f}s")
-
+        
         return {
-            "trace": trace,
-            "span": span,
-            "all_input": all_input,
-            "vac_config": vac_config
+            "all_input": all_input
         }
 
     def handle_file_upload(self, file, vector_name):
@@ -845,5 +802,4 @@ if __name__ == "__main__":
             return image_uri, file.mimetype
         except Exception as e:
             raise Exception(f'File upload failed: {str(e)}')
-
 
