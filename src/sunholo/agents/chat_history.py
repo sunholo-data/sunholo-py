@@ -441,10 +441,10 @@ def create_message_element(message: dict):
     ```
     """
     if 'text' in message:  # This is a Slack or Google Chat message
-        log.info(f"Found text element - {message['text']}")
+        #log.info(f"Found text element - {message['text']}")
         return message['text']
     elif 'content' in message: # Discord or OpenAI history message
-        log.info(f"Found content element - {message['content']}")
+        #log.info(f"Found content element - {message['content']}")
         return message['content']
     else:  
         raise KeyError(f"Could not extract 'content' or 'text' element from message: {message}, {type(message)}")

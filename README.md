@@ -207,28 +207,90 @@ sunholo proxy list                      # List running proxies
 
 ## 📝 Examples
 
-### Vertex AI Chat with Memory
+### Chat with History Extraction
 
 ```python
 from sunholo.utils import ConfigManager
 from sunholo.components import pick_llm
-from sunholo.agents import memory_client
+from sunholo.agents import extract_chat_history
 
 config = ConfigManager('my-agent')
 llm = pick_llm(config=config)
-memory = memory_client(config=config)
 
-# Chat with context
-response = llm.invoke("What is Google Cloud?")
-memory.add_message("user", "What is Google Cloud?")
-memory.add_message("assistant", response)
+# Extract chat history from messages
+chat_history = [
+    {"role": "user", "content": "Hello"},
+    {"role": "assistant", "content": "Hi there!"}
+]
+history_str = extract_chat_history(chat_history)
+
+# Use in prompt
+response = llm.invoke(f"Given this history:\n{history_str}\n\nUser: How are you?")
 ```
 
-### Document Processing with Discovery Engine
+### Document Processing with Chunker
+
+```python
+from sunholo.chunker import direct_file_to_embed
+from sunholo.utils import ConfigManager
+
+config = ConfigManager('my-agent')
+
+# Process a file directly
+result = direct_file_to_embed(
+    "document.pdf",
+    embed_prefix="doc",
+    metadata={"source": "user_upload"},
+    vectorstore=config.vacConfig("vectorstore")
+)
+```
+
+### Vertex AI with Memory Tools
+
+```python
+from sunholo.vertex import get_vertex_memories
+from sunholo.utils import ConfigManager
+
+config = ConfigManager('my-agent')
+
+# Get Vertex AI memory configuration
+memory_config = get_vertex_memories(config)
+
+# Use with Vertex AI
+if memory_config:
+    print(f"Memory tools configured: {memory_config}")
+```
+
+### Streaming Response with Flask
+
+```python
+from sunholo.agents import send_to_qa
+from flask import Response, request
+
+@app.route('/vac/streaming/<vac_name>', methods=['POST'])
+def streaming_endpoint(vac_name):
+    question = request.json.get('user_input')
+    
+    def generate():
+        # Stream responses from the QA system
+        response = send_to_qa(
+            question, 
+            vac_name=vac_name,
+            stream=True
+        )
+        if hasattr(response, '__iter__'):
+            for chunk in response:
+                yield f"data: {chunk}\n\n"
+        else:
+            yield f"data: {response}\n\n"
+    
+    return Response(generate(), content_type='text/event-stream')
+```
+
+### Discovery Engine Integration
 
 ```python
 from sunholo.discovery_engine import DiscoveryEngineClient
-from sunholo.chunker import chunk_doc
 
 # Initialize client
 client = DiscoveryEngineClient(
@@ -236,49 +298,11 @@ client = DiscoveryEngineClient(
     data_store_id='my-datastore'
 )
 
-# Process and index document
-chunks = chunk_doc.chunk_file("document.pdf", chunk_size=1000)
-client.import_documents(chunks)
-
-# Search
-results = client.search("What is the main topic?")
-```
-
-### Streaming Flask API
-
-```python
-from sunholo.agents import dispatch_to_qa
-
-@app.route('/vac/streaming/<vac_name>', methods=['POST'])
-def streaming_endpoint(vac_name):
-    question = request.json.get('user_input')
-    
-    def generate():
-        for chunk in dispatch_to_qa(
-            question, 
-            vac_name=vac_name,
-            stream=True
-        ):
-            yield f"data: {chunk}\n\n"
-    
-    return Response(generate(), content_type='text/event-stream')
-```
-
-### Deploy from Template
-
-```bash
-# Create from template
-sunholo init my-api --template agent
-
-# Customize configuration
-cd my-api
-vi config/vac_config.yaml
-
-# Test locally
-sunholo vac chat my-agent --local
-
-# Deploy to production
-sunholo deploy my-agent
+# Search documents
+results = client.search("What is Vertex AI?")
+for result in results:
+    print(f"Content: {result.chunk.content}")
+    print(f"Score: {result.relevance_score}")
 ```
 
 ## 🧪 Testing
