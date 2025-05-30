@@ -280,7 +280,7 @@ class DiscoveryEngineClient:
         # Use async_search_with_filters with filter_str=None to perform a regular search
         return await self.async_search_with_filters(
             query=query,
-            filter_str=None,
+            filter_str=filter_str,
             num_previous_chunks=num_previous_chunks,
             num_next_chunks=num_next_chunks,
             page_size=page_size,

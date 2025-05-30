@@ -83,7 +83,6 @@ def get_mime_type_gemini(file_path:str) -> str:
     
     # Define the mapping of extensions to MIME types
     mime_types = {
-
         # Images
         'png': 'image/png',
         'jpg': 'image/jpeg',
@@ -111,7 +110,20 @@ def get_mime_type_gemini(file_path:str) -> str:
         'rtf': 'text/rtf',
         
         # Special case: JSON files are treated as plain text
-        'json': 'text/plain'
+        'json': 'text/plain',
+        
+        # Audio
+        'mp3': 'audio/mp3',
+        'mpeg': 'audio/mpeg',
+        'wav': 'audio/wav',
+        
+        # Video
+        'mov': 'video/mov',
+        'mp4': 'video/mp4',
+        'mpg': 'video/mpeg',
+        'avi': 'video/avi',
+        'wmv': 'video/wmv',
+        'flv': 'video/flv'
     }
     
     # Return the appropriate MIME type, defaulting to None if unknown

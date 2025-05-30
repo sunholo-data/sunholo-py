@@ -69,7 +69,7 @@ vac:
 sunholo vac chat my-agent
 ```
 
-4. **Deploy to Google Cloud Run:**
+4. **Run your agent as a local Flask app:**
 ```bash
 sunholo deploy my-agent
 ```
@@ -183,26 +183,32 @@ vac:
 
 ```bash
 # Project Management
-sunholo init <project-name>              # Create new project
+sunholo init <project-name>              # Create new project from template
 sunholo list-configs                     # List all configurations
-sunholo list-configs --validate          # Validate configs
+sunholo list-configs --validate          # Validate configurations
 
 # Development
 sunholo vac chat <vac-name>             # Chat with a VAC locally
-sunholo vac list                        # List available VACs
+sunholo vac list                        # List available VACs  
+sunholo vac get-url <vac-name>          # Get Cloud Run URL for a VAC
 sunholo proxy start <service>           # Start local proxy to cloud service
-
-# Deployment
-sunholo deploy <vac-name>               # Deploy to Cloud Run
-sunholo deploy <vac-name> --dev         # Deploy to dev environment
+sunholo proxy list                      # List running proxies
+sunholo deploy <vac-name>               # Run Flask app locally
 
 # Document Processing
-sunholo embed <vac-name>                # Embed documents
+sunholo embed <vac-name>                # Process and embed documents
 sunholo merge-text <folder> <output>    # Merge files for context
 
 # Cloud Services
-sunholo discovery-engine create <name>   # Create Discovery Engine
-sunholo proxy list                      # List running proxies
+sunholo discovery-engine create <name>   # Create Discovery Engine instance
+sunholo vertex list-extensions          # List Vertex AI extensions
+sunholo swagger <vac-name>              # Generate OpenAPI spec
+
+# Integration Tools
+sunholo excel-init                      # Initialize Excel plugin
+sunholo llamaindex <query>              # Query with LlamaIndex
+sunholo mcp list-tools                  # List MCP tools
+sunholo tts <text>                      # Text-to-speech synthesis
 ```
 
 ## 📝 Examples
