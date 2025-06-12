@@ -8,12 +8,39 @@ from tenacity import AsyncRetrying, retry_if_exception_type, wait_random_exponen
 log = setup_logging("sunholo_AsyncTaskRunner")
 
 class AsyncTaskRunner:
-    def __init__(self, retry_enabled:bool=False, retry_kwargs:dict=None, timeout:int=120, max_concurrency:int=20):
+    def __init__(self, 
+                 retry_enabled: bool = False, 
+                 retry_kwargs: dict = None, 
+                 timeout: int = 120, 
+                 max_concurrency: int = 20,
+                 heartbeat_extends_timeout: bool = False,
+                 hard_timeout: int = None):
+        """
+        Initialize AsyncTaskRunner with configurable timeout behavior.
+        
+        Args:
+            retry_enabled: Whether to enable retries
+            retry_kwargs: Retry configuration
+            timeout: Base timeout for tasks (seconds)
+            max_concurrency: Maximum concurrent tasks
+            heartbeat_extends_timeout: If True, heartbeats reset the timeout timer
+            hard_timeout: Maximum absolute timeout regardless of heartbeats (seconds).
+                         If None, defaults to timeout * 5 when heartbeat_extends_timeout=True
+        """
         self.tasks = []
         self.retry_enabled = retry_enabled
         self.retry_kwargs = retry_kwargs or {}
         self.timeout = timeout
         self.semaphore = asyncio.Semaphore(max_concurrency)
+        self.heartbeat_extends_timeout = heartbeat_extends_timeout
+        
+        # Set hard timeout
+        if hard_timeout is not None:
+            self.hard_timeout = hard_timeout
+        elif heartbeat_extends_timeout:
+            self.hard_timeout = timeout * 5  # Default to 5x base timeout
+        else:
+            self.hard_timeout = timeout  # Same as regular timeout
 
     def add_task(self, func: Callable[..., Any], *args: Any, **kwargs: Any):
         """
@@ -39,9 +66,11 @@ class AsyncTaskRunner:
         for name, func, args, kwargs in self.tasks:
             log.info(f"Executing task: {name=}, {func=} with args: {args}, kwargs: {kwargs}")
             completion_event = asyncio.Event()
-            task_coro = self._run_with_retries_and_timeout(name, func, args, kwargs, queue, completion_event)            
+            last_heartbeat = {'time': time.time()}  # Shared mutable object for heartbeat tracking
+            
+            task_coro = self._run_with_retries_and_timeout(name, func, args, kwargs, queue, completion_event, last_heartbeat)            
             task = asyncio.create_task(task_coro)
-            heartbeat_coro = self._send_heartbeat(name, completion_event, queue)
+            heartbeat_coro = self._send_heartbeat(name, completion_event, queue, last_heartbeat)
             heartbeat_task = asyncio.create_task(heartbeat_coro)
             task_infos.append({
                 'name': name,
@@ -93,9 +122,12 @@ class AsyncTaskRunner:
                                             args: tuple,
                                             kwargs: dict,
                                             queue: asyncio.Queue, 
-                                            completion_event: asyncio.Event) -> None:
+                                            completion_event: asyncio.Event,
+                                            last_heartbeat: dict) -> None:
         try:
             log.info(f"run_with_retries_and_timeout: {name=}, {func=} with args: {args}, kwargs: {kwargs}")
+            log.info(f"Timeout mode: heartbeat_extends_timeout={self.heartbeat_extends_timeout}, timeout={self.timeout}s, hard_timeout={self.hard_timeout}s")
+            
             if self.retry_enabled:
                 retry_kwargs = {
                     'wait': wait_random_exponential(multiplier=1, max=60),
@@ -106,13 +138,13 @@ class AsyncTaskRunner:
                 async for attempt in AsyncRetrying(**retry_kwargs):
                     with attempt:
                         log.info(f"Starting task '{name}' with retry")
-                        result = await asyncio.wait_for(self._execute_task(func, *args, **kwargs), timeout=self.timeout)
+                        result = await self._execute_task_with_timeout(func, name, last_heartbeat, *args, **kwargs)
                         await queue.put({'type': 'task_complete', 'func_name': name, 'result': result})
                         log.info(f"Sent 'task_complete' message for task '{name}'")
                         return
             else:
                 log.info(f"Starting task '{name}' with no retry")
-                result = await asyncio.wait_for(self._execute_task(func, *args, **kwargs), timeout=self.timeout)
+                result = await self._execute_task_with_timeout(func, name, last_heartbeat, *args, **kwargs)
                 await queue.put({'type': 'task_complete', 'func_name': name, 'result': result})
                 log.info(f"Sent 'task_complete' message for task '{name}'")
         except asyncio.TimeoutError:
@@ -124,6 +156,55 @@ class AsyncTaskRunner:
         finally:
             log.info(f"Task '{name}' completed.")
             completion_event.set()
+
+    async def _execute_task_with_timeout(self, func: Callable[..., Any], name: str, last_heartbeat: dict, *args: Any, **kwargs: Any) -> Any:
+        """
+        Execute task with either fixed timeout or heartbeat-extendable timeout.
+        """
+        if not self.heartbeat_extends_timeout:
+            # Original behavior - fixed timeout
+            return await asyncio.wait_for(self._execute_task(func, *args, **kwargs), timeout=self.timeout)
+        else:
+            # New behavior - heartbeat extends timeout
+            return await self._execute_task_with_heartbeat_timeout(func, name, last_heartbeat, *args, **kwargs)
+
+    async def _execute_task_with_heartbeat_timeout(self, func: Callable[..., Any], name: str, last_heartbeat: dict, *args: Any, **kwargs: Any) -> Any:
+        """
+        Execute task with heartbeat-extendable timeout and hard timeout limit.
+        """
+        start_time = time.time()
+        task = asyncio.create_task(self._execute_task(func, *args, **kwargs))
+        
+        while not task.done():
+            current_time = time.time()
+            
+            # Check hard timeout first (absolute limit)
+            if current_time - start_time > self.hard_timeout:
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
+                raise asyncio.TimeoutError(f"Hard timeout exceeded ({self.hard_timeout}s)")
+            
+            # Check soft timeout (extends with heartbeats)
+            time_since_heartbeat = current_time - last_heartbeat['time']
+            if time_since_heartbeat > self.timeout:
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
+                raise asyncio.TimeoutError(f"Timeout exceeded - no heartbeat for {self.timeout}s")
+            
+            # Wait a bit before checking again
+            try:
+                await asyncio.wait_for(asyncio.shield(task), timeout=1.0)
+                break  # Task completed
+            except asyncio.TimeoutError:
+                continue  # Check timeouts again
+        
+        return await task
 
     async def _execute_task(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         """
@@ -143,14 +224,16 @@ class AsyncTaskRunner:
             else:
                 return await asyncio.to_thread(func, *args, **kwargs)
 
-    async def _send_heartbeat(self, func_name: str, completion_event: asyncio.Event, queue: asyncio.Queue, interval: int = 2):
+    async def _send_heartbeat(self, func_name: str, completion_event: asyncio.Event, queue: asyncio.Queue, last_heartbeat: dict, interval: int = 2):
         """
         Sends periodic heartbeat updates to indicate the task is still in progress.
+        Updates last_heartbeat time if heartbeat_extends_timeout is enabled.
 
         Args:
             func_name (str): The name of the task function.
             completion_event (asyncio.Event): Event to signal when the task is completed.
             queue (asyncio.Queue): The queue to send heartbeat messages to.
+            last_heartbeat (dict): Mutable dict containing the last heartbeat time.
             interval (int): How frequently to send heartbeat messages (in seconds).
         """
         start_time = time.time()
@@ -158,7 +241,14 @@ class AsyncTaskRunner:
         try:
             while not completion_event.is_set():
                 await asyncio.sleep(interval)
-                elapsed_time = int(time.time() - start_time)
+                current_time = time.time()
+                elapsed_time = int(current_time - start_time)
+                
+                # Update last heartbeat time if heartbeat extends timeout
+                if self.heartbeat_extends_timeout:
+                    last_heartbeat['time'] = current_time
+                    log.debug(f"Updated heartbeat time for task '{func_name}' at {current_time}")
+                
                 heartbeat_message = {
                     'type': 'heartbeat',
                     'name': func_name,
