@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sunholo"
-version = "0.142.0"
+version = "0.143.0"
 description = "AI DevOps - a package to help deploy GenAI to the Cloud."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -26,10 +26,11 @@ classifiers = [
 
 dependencies = [
     "aiohttp",
+    "flask>=3.1.0",
     "google-auth",
-    "ollama>=0.4.7",
-    "pillow>=11.0.0",
+    "mcp>=1.1.1",
     "pydantic",
+    "pytest-asyncio>=1.0.0",
     "requests",
     "ruamel.yaml",
     "tenacity",
@@ -100,7 +101,7 @@ all = [
     "langchain-google-vertexai",
     "langchain-unstructured",
     "langfuse",
-    "mcp",
+    "mcp>=1.1.1",
     "numpy",
     "opencv-python",
     "pg8000",
@@ -195,7 +196,7 @@ openai = [
 ]
 anthropic = [
     "langchain-anthropic>=0.1.23",
-    "mcp"
+    "mcp>=1.1.1"
 ]
 tools = [
     "openapi-spec-validator",

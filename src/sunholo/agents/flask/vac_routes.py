@@ -6,6 +6,8 @@ import random
 from functools import partial
 import inspect
 import asyncio
+from typing import Dict, List, Optional, Callable, Any
+
 
 from ..chat_history import extract_chat_history_with_cache, extract_chat_history_async_cached
 from ...qna.parsers import parse_output
@@ -28,6 +30,12 @@ try:
     from ...pubsub import PubSubManager
 except ImportError:
     PubSubManager = None
+
+try:
+    from ...mcp.mcp_manager import MCPClientManager
+except ImportError:
+    MCPClientManager = None
+
 
 # Cache dictionary to store validated API keys
 api_key_cache = {}
@@ -61,11 +69,20 @@ if __name__ == "__main__":
                  stream_interpreter: callable, 
                  vac_interpreter:callable=None, 
                  additional_routes:dict=None, 
+                 mcp_servers: List[Dict[str, Any]] = None,
                  async_stream:bool=False,
                  add_langfuse_eval:bool=True):
         self.app = app
         self.stream_interpreter = stream_interpreter
         self.vac_interpreter = vac_interpreter or partial(self.vac_interpreter_default)
+
+        # MCP initialization
+        self.mcp_servers = mcp_servers or []
+        self.mcp_client_manager = MCPClientManager()    
+        # Initialize MCP connections
+        if self.mcp_servers and self.mcp_client_manager:
+            asyncio.create_task(self._initialize_mcp_servers())
+
         self.additional_routes = additional_routes if additional_routes is not None else []
         self.async_stream = async_stream
         self.add_langfuse_eval = add_langfuse_eval
@@ -129,6 +146,14 @@ if __name__ == "__main__":
         # OpenAI compatible endpoint
         self.app.route('/openai/v1/chat/completions', methods=['POST'])(self.handle_openai_compatible_endpoint)
         self.app.route('/openai/v1/chat/completions/<vector_name>', methods=['POST'])(self.handle_openai_compatible_endpoint)
+
+        # MCP routes
+        if self.mcp_servers:
+            self.app.route('/mcp/tools', methods=['GET'])(self.handle_mcp_list_tools)
+            self.app.route('/mcp/tools/<server_name>', methods=['GET'])(self.handle_mcp_list_tools)
+            self.app.route('/mcp/call', methods=['POST'])(self.handle_mcp_call_tool)
+            self.app.route('/mcp/resources', methods=['GET'])(self.handle_mcp_list_resources)
+            self.app.route('/mcp/resources/read', methods=['POST'])(self.handle_mcp_read_resource)
     
         self.register_additional_routes()
 
@@ -803,3 +828,134 @@ if __name__ == "__main__":
         except Exception as e:
             raise Exception(f'File upload failed: {str(e)}')
 
+    async def _initialize_mcp_servers(self):
+        """Initialize connections to configured MCP servers."""
+        for server_config in self.mcp_servers:
+            try:
+                await self.mcp_client_manager.connect_to_server(
+                    server_name=server_config["name"],
+                    command=server_config["command"],
+                    args=server_config.get("args", [])
+                )
+                log.info(f"Connected to MCP server: {server_config['name']}")
+            except Exception as e:
+                log.error(f"Failed to connect to MCP server {server_config['name']}: {e}")
+
+    
+    def handle_mcp_list_tools(self, server_name: Optional[str] = None):
+        """List available MCP tools."""
+        async def get_tools():
+            tools = await self.mcp_client_manager.list_tools(server_name)
+            return [
+                {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "inputSchema": tool.inputSchema,
+                    "server": tool.metadata.get("server") if tool.metadata else server_name
+                }
+                for tool in tools
+            ]
+        
+        # Run async in sync context
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            tools = loop.run_until_complete(get_tools())
+            return jsonify({"tools": tools})
+        finally:
+            loop.close()
+    
+    def handle_mcp_call_tool(self):
+        """Call an MCP tool."""
+        data = request.get_json()
+        server_name = data.get("server")
+        tool_name = data.get("tool")
+        arguments = data.get("arguments", {})
+        
+        if not server_name or not tool_name:
+            return jsonify({"error": "Missing 'server' or 'tool' parameter"}), 400
+        
+        async def call_tool():
+            try:
+                result = await self.mcp_client_manager.call_tool(server_name, tool_name, arguments)
+                
+                # Convert result to JSON-serializable format
+                if hasattr(result, 'content'):
+                    # Handle different content types
+                    if hasattr(result.content, 'text'):
+                        return {"result": result.content.text}
+                    elif hasattr(result.content, 'data'):
+                        return {"result": result.content.data}
+                    else:
+                        return {"result": str(result.content)}
+                else:
+                    return {"result": str(result)}
+                    
+            except Exception as e:
+                return {"error": str(e)}
+        
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(call_tool())
+            if "error" in result:
+                return jsonify(result), 500
+            return jsonify(result)
+        finally:
+            loop.close()
+    
+    def handle_mcp_list_resources(self):
+        """List available MCP resources."""
+        server_name = request.args.get("server")
+        
+        async def get_resources():
+            resources = await self.mcp_client_manager.list_resources(server_name)
+            return [
+                {
+                    "uri": resource.uri,
+                    "name": resource.name,
+                    "description": resource.description,
+                    "mimeType": resource.mimeType,
+                    "server": resource.metadata.get("server") if resource.metadata else server_name
+                }
+                for resource in resources
+            ]
+        
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            resources = loop.run_until_complete(get_resources())
+            return jsonify({"resources": resources})
+        finally:
+            loop.close()
+    
+    def handle_mcp_read_resource(self):
+        """Read an MCP resource."""
+        data = request.get_json()
+        server_name = data.get("server")
+        uri = data.get("uri")
+        
+        if not server_name or not uri:
+            return jsonify({"error": "Missing 'server' or 'uri' parameter"}), 400
+        
+        async def read_resource():
+            try:
+                contents = await self.mcp_client_manager.read_resource(server_name, uri)
+                return {
+                    "contents": [
+                        {"text": content.text} if hasattr(content, 'text') else {"data": str(content)}
+                        for content in contents
+                    ]
+                }
+            except Exception as e:
+                return {"error": str(e)}
+        
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            result = loop.run_until_complete(read_resource())
+            if "error" in result:
+                return jsonify(result), 500
+            return jsonify(result)
+        finally:
+            loop.close()
