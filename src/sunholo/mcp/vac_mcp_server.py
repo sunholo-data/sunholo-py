@@ -22,13 +22,8 @@ import json
 import asyncio
 from functools import partial
 
-try:
-    from mcp.server import Server
-    from mcp.types import Tool, TextContent, ImageContent, EmbeddedResource
-except ImportError:
-    Server = None
-    Tool = None
-    TextContent = None
+from mcp.server import Server
+from mcp.types import Tool, TextContent, ImageContent, EmbeddedResource
 
 from ..custom_logging import log
 from ..streaming import start_streaming_chat_async
@@ -45,8 +40,7 @@ class VACMCPServer:
             stream_interpreter: The streaming interpreter function
             vac_interpreter: The static VAC interpreter function (optional)
         """
-        if Server is None:
-            raise ImportError("MCP server requires `pip install sunholo[anthropic]`")
+        # MCP server is always available with current SDK
         
         self.stream_interpreter = stream_interpreter
         self.vac_interpreter = vac_interpreter

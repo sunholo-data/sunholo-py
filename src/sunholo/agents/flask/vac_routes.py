@@ -38,12 +38,14 @@ except ImportError:
 
 try:
     from ...mcp.vac_mcp_server import VACMCPServer
-    from mcp.server.models import InitializationOptions
-    from mcp import JSONRPCMessage, ErrorData, INTERNAL_ERROR
+    from mcp.server import Server
+    from mcp.types import JSONRPCMessage, ErrorData, INTERNAL_ERROR
 except ImportError:
     VACMCPServer = None
-    InitializationOptions = None
+    Server = None
     JSONRPCMessage = None
+    ErrorData = None
+    INTERNAL_ERROR = None
 
 try:
     from ...a2a.vac_a2a_agent import VACA2AAgent
@@ -1062,11 +1064,8 @@ if __name__ == "__main__":
                     
                     try:
                         # Process the request through the server
-                        await server.run(
-                            read_messages(),
-                            write_queue,
-                            InitializationOptions() if InitializationOptions else None
-                        )
+                        # Use the server's run method with HTTP transport
+                        await server.run()
                     except Exception as e:
                         log.error(f"Error processing MCP request: {e}")
                         await write_queue.put(None)
@@ -1084,15 +1083,8 @@ if __name__ == "__main__":
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 try:
-                    responses = loop.run_until_complete(process_request())
-                    
-                    # Parse and return the response
-                    if responses:
-                        # The response should be a single JSON-RPC response
-                        response_data = json_module.loads(responses[0])
-                        return jsonify(response_data)
-                    else:
-                        return jsonify({"error": "No response from MCP server"}), 500
+                    response_data = loop.run_until_complete(process_request())
+                    return jsonify(response_data)
 
                 except Exception as e:
                     log.error(f"MCP server error: {str(e)}")

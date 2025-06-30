@@ -14,7 +14,16 @@
 
 """MCP (Model Context Protocol) integration for Sunholo."""
 
-from .mcp_manager import MCPClientManager
-from .vac_mcp_server import VACMCPServer
+try:
+    from .mcp_manager import MCPClientManager
+except ImportError as e:
+    print(f"Warning: MCPClientManager not available - {e}")
+    MCPClientManager = None
+
+try:
+    from .vac_mcp_server import VACMCPServer
+except ImportError as e:
+    print(f"Warning: VACMCPServer not available - {e}")
+    VACMCPServer = None
 
 __all__ = ['MCPClientManager', 'VACMCPServer']

@@ -4,10 +4,11 @@ This shows how to integrate MCP servers with your Flask/VACRoutes application.
 """
 
 from typing import Dict, Any, List, Optional
+import asyncio
 
-# Official MCP imports
-from mcp import StdioServerParameters, ClientSession
-from mcp.client.stdio import stdio_client
+# MCP SDK imports - current version only
+from mcp.client.stdio import StdioClientTransport
+from mcp.client.session import ClientSession
 from mcp.types import Tool, Resource, TextContent, CallToolResult
 
 
@@ -23,41 +24,39 @@ class MCPClientManager:
         if server_name in self.sessions:
             return self.sessions[server_name]
         
-        # Create server parameters
-        server_params = StdioServerParameters(
+        # Create transport and session
+        transport = StdioClientTransport(
             command=command,
             args=args or []
         )
+        session = ClientSession(transport)
+        await session.initialize()
         
-        # Connect to the server
-        async with stdio_client(server_params) as (read, write):
-            # Create and initialize client session directly
-            session = ClientSession(read, write)
-            await session.initialize()
-            self.sessions[server_name] = session
-            self.server_configs[server_name] = {
-                "command": command,
-                "args": args
-            }
-            return session
+        self.sessions[server_name] = session
+        self.server_configs[server_name] = {
+            "command": command,
+            "args": args
+        }
+        return session
     
     async def list_tools(self, server_name: Optional[str] = None) -> List[Tool]:
         """List available tools from one or all connected servers."""
         if server_name:
             session = self.sessions.get(server_name)
             if session:
-                return await session.list_tools()
+                result = await session.list_tools()
+                return result.tools
             return []
         
         # List from all servers
         all_tools = []
         for name, session in self.sessions.items():
-            tools = await session.list_tools()
+            result = await session.list_tools()
             # Add server name to tool metadata
-            for tool in tools:
+            for tool in result.tools:
                 tool.metadata = tool.metadata or {}
                 tool.metadata["server"] = name
-            all_tools.extend(tools)
+            all_tools.extend(result.tools)
         return all_tools
     
     async def call_tool(self, server_name: str, tool_name: str, arguments: Dict[str, Any]) -> CallToolResult:
@@ -67,7 +66,9 @@ class MCPClientManager:
             raise ValueError(f"Not connected to server: {server_name}")
         
         # Call the tool
-        result = await session.call_tool(tool_name, arguments)
+        from mcp.types import CallToolRequest
+        request = CallToolRequest(name=tool_name, arguments=arguments)
+        result = await session.call_tool(request)
         return result
     
     async def list_resources(self, server_name: Optional[str] = None) -> List[Resource]:
@@ -75,17 +76,18 @@ class MCPClientManager:
         if server_name:
             session = self.sessions.get(server_name)
             if session:
-                return await session.list_resources()
+                result = await session.list_resources()
+                return result.resources
             return []
         
         # List from all servers
         all_resources = []
         for name, session in self.sessions.items():
-            resources = await session.list_resources()
-            for resource in resources:
+            result = await session.list_resources()
+            for resource in result.resources:
                 resource.metadata = resource.metadata or {}
                 resource.metadata["server"] = name
-            all_resources.extend(resources)
+            all_resources.extend(result.resources)
         return all_resources
     
     async def read_resource(self, server_name: str, uri: str) -> List[TextContent]:
@@ -94,5 +96,7 @@ class MCPClientManager:
         if not session:
             raise ValueError(f"Not connected to server: {server_name}")
         
-        result = await session.read_resource(uri)
+        from mcp.types import ReadResourceRequest
+        request = ReadResourceRequest(uri=uri)
+        result = await session.read_resource(request)
         return result.contents

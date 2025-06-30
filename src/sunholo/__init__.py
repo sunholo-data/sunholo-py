@@ -15,7 +15,10 @@ from . import invoke
 from . import langfuse
 from . import llamaindex
 from . import lookup
-from . import mcp
+try:
+    from . import mcp
+except ImportError:
+    mcp = None
 from . import ollama
 from . import pubsub
 from . import qna
