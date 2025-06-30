@@ -202,18 +202,18 @@ class A2ATaskManager:
         log.info(f"Canceled A2A task {task_id}")
         return True
     
-    async def subscribe_to_task(self, task_id: str) -> Optional[AsyncGenerator[Dict[str, Any], None]]:
+    async def subscribe_to_task(self, task_id: str):
         """
         Subscribe to task updates via async generator.
         
         Args:
             task_id: ID of the task to subscribe to
             
-        Returns:
-            Async generator yielding task updates
+        Yields:
+            Task update dictionaries
         """
         if task_id not in self.tasks:
-            return None
+            return  # Early return for async generator
         
         queue = asyncio.Queue()
         self.task_subscribers[task_id].append(queue)

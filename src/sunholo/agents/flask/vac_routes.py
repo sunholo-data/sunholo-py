@@ -47,7 +47,7 @@ except ImportError:
 
 try:
     from ...a2a.vac_a2a_agent import VACA2AAgent
-except ImportError:
+except (ImportError, SyntaxError):
     VACA2AAgent = None
 
 

@@ -16,10 +16,10 @@
 
 try:
     from .agent_card import AgentCardGenerator
-    from .vac_a2a_agent import VACA2AAgent
     from .task_manager import A2ATaskManager
-except ImportError as e:
-    # Handle missing dependencies gracefully
+    from .vac_a2a_agent import VACA2AAgent
+except (ImportError, SyntaxError) as e:
+    # Handle missing dependencies or syntax errors gracefully
     AgentCardGenerator = None
     VACA2AAgent = None
     A2ATaskManager = None
