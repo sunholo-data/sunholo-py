@@ -15,6 +15,10 @@ from flask import Flask
 # Import the classes under test
 from sunholo.agents.flask.vac_routes import VACRoutes
 from sunholo.mcp.mcp_manager import MCPClientManager
+try:
+    from sunholo.mcp.vac_mcp_server import VACMCPServer
+except ImportError:
+    VACMCPServer = None
 
 
 @pytest.fixture
@@ -65,14 +69,15 @@ class TestMCPClientManager:
         """Test connecting to an MCP server."""
         manager = MCPClientManager()
         
-        # Mock the MCP client components
-        with patch('sunholo.mcp.mcp_manager.stdio_client') as mock_stdio, \
+        # Mock the MCP client components for current SDK
+        with patch('sunholo.mcp.mcp_manager.StdioClientTransport') as mock_transport_class, \
              patch('sunholo.mcp.mcp_manager.ClientSession') as mock_session_class:
             
             # Setup mocks
+            mock_transport = Mock()
+            mock_transport_class.return_value = mock_transport
             mock_session = AsyncMock()
             mock_session_class.return_value = mock_session
-            mock_stdio.return_value.__aenter__.return_value = (Mock(), Mock())
             
             # Test connection
             result = await manager.connect_to_server("test_server", "python", ["-m", "test"])
@@ -81,19 +86,25 @@ class TestMCPClientManager:
             assert result == mock_session
             assert "test_server" in manager.sessions
             assert manager.server_configs["test_server"]["command"] == "python"
+            mock_transport_class.assert_called_once_with(command="python", args=["-m", "test"])
+            mock_session.initialize.assert_called_once()
     
     @pytest.mark.asyncio
     async def test_list_tools(self):
         """Test listing tools from MCP servers."""
         manager = MCPClientManager()
         
-        # Mock session with tools
+        # Mock session with tools for current SDK
         mock_session = AsyncMock()
         mock_tool = Mock()
         mock_tool.name = "test_tool"
         mock_tool.description = "Test tool"
         mock_tool.metadata = {}
-        mock_session.list_tools.return_value = [mock_tool]
+        
+        # Current SDK returns a result object with .tools attribute
+        mock_result = Mock()
+        mock_result.tools = [mock_tool]
+        mock_session.list_tools.return_value = mock_result
         
         manager.sessions["test_server"] = mock_session
         
@@ -112,17 +123,23 @@ class TestMCPClientManager:
         """Test calling a tool on an MCP server."""
         manager = MCPClientManager()
         
-        # Mock session
+        # Mock session for current SDK
         mock_session = AsyncMock()
         mock_result = Mock()
         mock_session.call_tool.return_value = mock_result
         manager.sessions["test_server"] = mock_session
         
-        # Test calling tool
-        result = await manager.call_tool("test_server", "test_tool", {"arg": "value"})
-        
-        assert result == mock_result
-        mock_session.call_tool.assert_called_once_with("test_tool", {"arg": "value"})
+        # Mock the CallToolRequest for current SDK
+        with patch('sunholo.mcp.mcp_manager.CallToolRequest') as mock_request_class:
+            mock_request = Mock()
+            mock_request_class.return_value = mock_request
+            
+            # Test calling tool
+            result = await manager.call_tool("test_server", "test_tool", {"arg": "value"})
+            
+            assert result == mock_result
+            mock_request_class.assert_called_once_with(name="test_tool", arguments={"arg": "value"})
+            mock_session.call_tool.assert_called_once_with(mock_request)
     
     @pytest.mark.asyncio
     async def test_call_tool_server_not_found(self):
@@ -131,6 +148,115 @@ class TestMCPClientManager:
         
         with pytest.raises(ValueError, match="Not connected to server: nonexistent"):
             await manager.call_tool("nonexistent", "test_tool", {})
+    
+    @pytest.mark.asyncio
+    async def test_list_resources(self):
+        """Test listing resources from MCP servers."""
+        manager = MCPClientManager()
+        
+        # Mock session with resources for current SDK
+        mock_session = AsyncMock()
+        mock_resource = Mock()
+        mock_resource.uri = "file://test.txt"
+        mock_resource.name = "test_resource"
+        mock_resource.metadata = {}
+        
+        # Current SDK returns a result object with .resources attribute
+        mock_result = Mock()
+        mock_result.resources = [mock_resource]
+        mock_session.list_resources.return_value = mock_result
+        
+        manager.sessions["test_server"] = mock_session
+        
+        # Test listing resources from specific server
+        resources = await manager.list_resources("test_server")
+        assert len(resources) == 1
+        assert resources[0].uri == "file://test.txt"
+        
+        # Test listing all resources
+        all_resources = await manager.list_resources()
+        assert len(all_resources) == 1
+        assert all_resources[0].metadata["server"] == "test_server"
+    
+    @pytest.mark.asyncio
+    async def test_read_resource(self):
+        """Test reading a resource from an MCP server."""
+        manager = MCPClientManager()
+        
+        # Mock session for current SDK
+        mock_session = AsyncMock()
+        mock_content = Mock()
+        mock_result = Mock()
+        mock_result.contents = [mock_content]
+        mock_session.read_resource.return_value = mock_result
+        manager.sessions["test_server"] = mock_session
+        
+        # Mock the ReadResourceRequest for current SDK
+        with patch('sunholo.mcp.mcp_manager.ReadResourceRequest') as mock_request_class:
+            mock_request = Mock()
+            mock_request_class.return_value = mock_request
+            
+            # Test reading resource
+            result = await manager.read_resource("test_server", "file://test.txt")
+            
+            assert result == [mock_content]
+            mock_request_class.assert_called_once_with(uri="file://test.txt")
+            mock_session.read_resource.assert_called_once_with(mock_request)
+
+
+class TestVACMCPServer:
+    """Test the VACMCPServer class."""
+    
+    @pytest.mark.skipif(VACMCPServer is None, reason="MCP server not available")
+    def test_init(self):
+        """Test VACMCPServer initialization."""
+        mock_stream_interpreter = Mock()
+        mock_vac_interpreter = Mock()
+        
+        with patch('sunholo.mcp.vac_mcp_server.Server') as mock_server_class:
+            mock_server = Mock()
+            mock_server_class.return_value = mock_server
+            
+            server = VACMCPServer(mock_stream_interpreter, mock_vac_interpreter)
+            
+            assert server.stream_interpreter == mock_stream_interpreter
+            assert server.vac_interpreter == mock_vac_interpreter
+            assert server.server == mock_server
+    
+    @pytest.mark.skipif(VACMCPServer is None, reason="MCP server not available")
+    @pytest.mark.asyncio
+    async def test_handle_vac_stream(self):
+        """Test handling VAC stream requests."""
+        mock_stream_interpreter = AsyncMock()
+        
+        with patch('sunholo.mcp.vac_mcp_server.Server'), \
+             patch('sunholo.mcp.vac_mcp_server.start_streaming_chat_async') as mock_streaming:
+            
+            # Mock streaming response
+            async def mock_stream():
+                yield {"answer": "Test response"}
+            
+            mock_streaming.return_value = mock_stream()
+            
+            server = VACMCPServer(mock_stream_interpreter)
+            
+            # Test the stream handler
+            arguments = {
+                "vector_name": "test_vac",
+                "user_input": "Hello",
+                "chat_history": [],
+                "stream_wait_time": 1,
+                "stream_timeout": 60
+            }
+            
+            with patch('sunholo.mcp.vac_mcp_server.TextContent') as mock_text_content:
+                mock_content = Mock()
+                mock_text_content.return_value = mock_content
+                
+                result = await server._handle_vac_stream(arguments)
+                
+                assert len(result) == 1
+                mock_text_content.assert_called_once_with(type="text", text="Test response")
 
 
 class TestVACRoutes:
@@ -232,14 +358,17 @@ class TestVACRoutes:
         mock_manager = Mock()
         mock_manager_class.return_value = mock_manager
         
-        # Mock async method
+        # Mock async method for current SDK
         async def mock_list_tools(server_name=None):
             mock_tool = Mock()
             mock_tool.name = "test_tool"
             mock_tool.description = "Test tool description"
             mock_tool.inputSchema = {"type": "object"}
             mock_tool.metadata = {"server": "test_server"}
-            return [mock_tool]
+            # Current SDK returns result object with .tools attribute
+            mock_result = Mock()
+            mock_result.tools = [mock_tool]
+            return mock_result.tools
         
         mock_manager.list_tools = mock_list_tools
         
@@ -265,7 +394,7 @@ class TestVACRoutes:
         mock_manager = Mock()
         mock_manager_class.return_value = mock_manager
         
-        # Mock async method
+        # Mock async method for current SDK  
         async def mock_call_tool(server_name, tool_name, arguments):
             mock_result = Mock()
             mock_result.content = Mock()
@@ -333,7 +462,48 @@ class TestVACRoutes:
         
         assert result is not None
         # The default interpreter should call the stream interpreter with a NoOpCallback
+    
+    @pytest.mark.skipif(VACMCPServer is None, reason="MCP server not available")
+    def test_mcp_server_initialization(self, app, mock_stream_interpreter):
+        """Test MCP server initialization in VACRoutes."""
+        with patch('sunholo.mcp.vac_mcp_server.VACMCPServer') as mock_server_class:
+            mock_server = Mock()
+            mock_server_class.return_value = mock_server
+            
+            vac_routes = VACRoutes(
+                app, 
+                mock_stream_interpreter,
+                enable_mcp_server=True
+            )
+            
+            assert vac_routes.vac_mcp_server == mock_server
+            mock_server_class.assert_called_once_with(
+                stream_interpreter=mock_stream_interpreter,
+                vac_interpreter=vac_routes.vac_interpreter
+            )
+    
+    @pytest.mark.skipif(VACMCPServer is None, reason="MCP server not available")
+    def test_mcp_server_endpoint(self, app, mock_stream_interpreter):
+        """Test MCP server endpoint registration."""
+        with patch('sunholo.mcp.vac_mcp_server.VACMCPServer'):
+            vac_routes = VACRoutes(
+                app, 
+                mock_stream_interpreter,
+                enable_mcp_server=True
+            )
+            
+            # Check that MCP server route is registered
+            rules = [rule.rule for rule in app.url_map.iter_rules()]
+            assert '/mcp' in rules
+            
+            # Test GET request for server info
+            with app.test_client() as client:
+                response = client.get('/mcp')
+                assert response.status_code == 200
+                data = response.get_json()
+                assert data['name'] == 'sunholo-vac-server'
+                assert data['transport'] == 'http'
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    pytest.main([__file__, "-v", "-k", "not test_mcp" if VACMCPServer is None else ""])
