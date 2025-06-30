@@ -1068,7 +1068,7 @@ if __name__ == "__main__":
                         return jsonify(response_data)
                     else:
                         return jsonify({"error": "No response from MCP server"}), 500
-                        
+
                 except Exception as e:
                     log.error(f"MCP server error: {str(e)}")
                     return jsonify({
@@ -1081,6 +1081,17 @@ if __name__ == "__main__":
                     }), 500
                 finally:
                     loop.close()
+                        
+            except Exception as e:
+                log.error(f"MCP server error: {str(e)}")
+                return jsonify({
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32603,
+                        "message": f"Internal error: {str(e)}"
+                    },
+                    "id": data.get("id") if isinstance(data, dict) else None
+                }), 500
                     
         else:
             # GET request - return server information
