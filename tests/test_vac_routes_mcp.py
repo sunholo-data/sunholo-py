@@ -13,8 +13,16 @@ from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from flask import Flask
 
 # Import the classes under test
-from sunholo.agents.flask.vac_routes import VACRoutes
-from sunholo.mcp.mcp_manager import MCPClientManager
+try:
+    from sunholo.agents.flask.vac_routes import VACRoutes
+except ImportError:
+    VACRoutes = None
+
+try:
+    from sunholo.mcp.mcp_manager import MCPClientManager
+except ImportError:
+    MCPClientManager = None
+
 try:
     from sunholo.mcp.vac_mcp_server import VACMCPServer
 except ImportError:
@@ -55,6 +63,7 @@ def mcp_servers_config():
     ]
 
 
+@pytest.mark.skipif(MCPClientManager is None, reason="MCP client manager not available")
 class TestMCPClientManager:
     """Test the MCPClientManager class."""
     
@@ -204,10 +213,10 @@ class TestMCPClientManager:
             mock_session.read_resource.assert_called_once_with(mock_request)
 
 
+@pytest.mark.skipif(VACMCPServer is None, reason="MCP server not available")
 class TestVACMCPServer:
     """Test the VACMCPServer class."""
     
-    @pytest.mark.skipif(VACMCPServer is None, reason="MCP server not available")
     def test_init(self):
         """Test VACMCPServer initialization."""
         mock_stream_interpreter = Mock()
@@ -223,7 +232,6 @@ class TestVACMCPServer:
             assert server.vac_interpreter == mock_vac_interpreter
             assert server.server == mock_server
     
-    @pytest.mark.skipif(VACMCPServer is None, reason="MCP server not available")
     @pytest.mark.asyncio
     async def test_handle_vac_stream(self):
         """Test handling VAC stream requests."""
@@ -259,6 +267,7 @@ class TestVACMCPServer:
                 mock_text_content.assert_called_once_with(type="text", text="Test response")
 
 
+@pytest.mark.skipif(VACRoutes is None, reason="VACRoutes not available")
 class TestVACRoutes:
     """Test the VACRoutes class."""
     
@@ -463,7 +472,6 @@ class TestVACRoutes:
         assert result is not None
         # The default interpreter should call the stream interpreter with a NoOpCallback
     
-    @pytest.mark.skipif(VACMCPServer is None, reason="MCP server not available")
     def test_mcp_server_initialization(self, app, mock_stream_interpreter):
         """Test MCP server initialization in VACRoutes."""
         with patch('sunholo.mcp.vac_mcp_server.VACMCPServer') as mock_server_class:
@@ -482,7 +490,6 @@ class TestVACRoutes:
                 vac_interpreter=vac_routes.vac_interpreter
             )
     
-    @pytest.mark.skipif(VACMCPServer is None, reason="MCP server not available")
     def test_mcp_server_endpoint(self, app, mock_stream_interpreter):
         """Test MCP server endpoint registration."""
         with patch('sunholo.mcp.vac_mcp_server.VACMCPServer'):

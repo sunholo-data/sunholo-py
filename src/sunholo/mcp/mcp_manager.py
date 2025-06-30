@@ -6,10 +6,32 @@ This shows how to integrate MCP servers with your Flask/VACRoutes application.
 from typing import Dict, Any, List, Optional
 import asyncio
 
-# MCP SDK imports - current version only
-from mcp.client.stdio import StdioClientTransport
-from mcp.client.session import ClientSession
-from mcp.types import Tool, Resource, TextContent, CallToolResult
+# MCP SDK imports - try different import paths
+try:
+    from mcp.client.stdio import StdioClientTransport
+    from mcp.client.session import ClientSession
+except ImportError:
+    try:
+        # Alternative import paths
+        from mcp.client import StdioClientTransport, ClientSession
+    except ImportError:
+        try:
+            # Another alternative
+            from mcp import StdioClientTransport, ClientSession
+        except ImportError:
+            StdioClientTransport = None
+            ClientSession = None
+
+try:
+    from mcp.types import Tool, Resource, TextContent, CallToolResult
+except ImportError:
+    try:
+        from mcp import Tool, Resource, TextContent, CallToolResult
+    except ImportError:
+        Tool = None
+        Resource = None
+        TextContent = None
+        CallToolResult = None
 
 
 class MCPClientManager:
@@ -23,6 +45,9 @@ class MCPClientManager:
         """Connect to an MCP server via stdio."""
         if server_name in self.sessions:
             return self.sessions[server_name]
+        
+        if not StdioClientTransport or not ClientSession:
+            raise ImportError("MCP client dependencies not available")
         
         # Create transport and session
         transport = StdioClientTransport(
@@ -66,9 +91,13 @@ class MCPClientManager:
             raise ValueError(f"Not connected to server: {server_name}")
         
         # Call the tool
-        from mcp.types import CallToolRequest
-        request = CallToolRequest(name=tool_name, arguments=arguments)
-        result = await session.call_tool(request)
+        try:
+            from mcp.types import CallToolRequest
+            request = CallToolRequest(name=tool_name, arguments=arguments)
+            result = await session.call_tool(request)
+        except ImportError:
+            # Try direct call if Request types not available
+            result = await session.call_tool(tool_name, arguments)
         return result
     
     async def list_resources(self, server_name: Optional[str] = None) -> List[Resource]:
@@ -96,7 +125,12 @@ class MCPClientManager:
         if not session:
             raise ValueError(f"Not connected to server: {server_name}")
         
-        from mcp.types import ReadResourceRequest
-        request = ReadResourceRequest(uri=uri)
-        result = await session.read_resource(request)
-        return result.contents
+        try:
+            from mcp.types import ReadResourceRequest
+            request = ReadResourceRequest(uri=uri)
+            result = await session.read_resource(request)
+        except ImportError:
+            # Try direct call if Request types not available
+            result = await session.read_resource(uri)
+        
+        return result.contents if hasattr(result, 'contents') else result
