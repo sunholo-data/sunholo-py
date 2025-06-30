@@ -1037,13 +1037,44 @@ if __name__ == "__main__":
                     try:
                         # Handle different MCP methods
                         if method == "tools/list":
-                            # Get the server and call list_tools handler
-                            server = self.vac_mcp_server.get_server()
-                            tools = await server._request_handlers["tools/list"]()
+                            # Create mock tools list based on VACMCPServer capabilities
+                            tools = [
+                                {
+                                    "name": "vac_stream",
+                                    "description": "Stream responses from a Sunholo VAC (Virtual Agent Computer)",
+                                    "inputSchema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "vector_name": {"type": "string", "description": "Name of the VAC to interact with"},
+                                            "user_input": {"type": "string", "description": "The user's question or input"},
+                                            "chat_history": {"type": "array", "description": "Previous conversation history", "default": []},
+                                            "stream_wait_time": {"type": "number", "description": "Time to wait between stream chunks", "default": 7},
+                                            "stream_timeout": {"type": "number", "description": "Maximum time to wait for response", "default": 120}
+                                        },
+                                        "required": ["vector_name", "user_input"]
+                                    }
+                                }
+                            ]
+                            
+                            # Add vac_query tool if interpreter is available
+                            if self.vac_mcp_server.vac_interpreter:
+                                tools.append({
+                                    "name": "vac_query",
+                                    "description": "Query a Sunholo VAC (non-streaming)",
+                                    "inputSchema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "vector_name": {"type": "string", "description": "Name of the VAC to interact with"},
+                                            "user_input": {"type": "string", "description": "The user's question or input"},
+                                            "chat_history": {"type": "array", "description": "Previous conversation history", "default": []}
+                                        },
+                                        "required": ["vector_name", "user_input"]
+                                    }
+                                })
                             
                             return {
                                 "jsonrpc": "2.0",
-                                "result": {"tools": [tool.model_dump() for tool in tools]},
+                                "result": {"tools": tools},
                                 "id": request_id
                             }
                             
@@ -1055,8 +1086,13 @@ if __name__ == "__main__":
                             if not tool_name:
                                 raise ValueError("Missing tool name")
                             
-                            server = self.vac_mcp_server.get_server()
-                            result = await server._request_handlers["tools/call"](tool_name, arguments)
+                            # Call the appropriate handler method
+                            if tool_name == "vac_stream":
+                                result = await self.vac_mcp_server._handle_vac_stream(arguments)
+                            elif tool_name == "vac_query" and self.vac_mcp_server.vac_interpreter:
+                                result = await self.vac_mcp_server._handle_vac_query(arguments)
+                            else:
+                                raise ValueError(f"Unknown tool: {tool_name}")
                             
                             return {
                                 "jsonrpc": "2.0", 
