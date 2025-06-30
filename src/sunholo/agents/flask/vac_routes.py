@@ -45,6 +45,11 @@ except ImportError:
     InitializationOptions = None
     JSONRPCMessage = None
 
+try:
+    from ...a2a.vac_a2a_agent import VACA2AAgent
+except ImportError:
+    VACA2AAgent = None
+
 
 # Cache dictionary to store validated API keys
 api_key_cache = {}
@@ -81,7 +86,9 @@ if __name__ == "__main__":
                  mcp_servers: List[Dict[str, Any]] = None,
                  async_stream:bool=False,
                  add_langfuse_eval:bool=True,
-                 enable_mcp_server:bool=False):
+                 enable_mcp_server:bool=False,
+                 enable_a2a_agent:bool=False,
+                 a2a_vac_names: List[str] = None):
         self.app = app
         self.stream_interpreter = stream_interpreter
         self.vac_interpreter = vac_interpreter or partial(self.vac_interpreter_default)
@@ -101,6 +108,15 @@ if __name__ == "__main__":
                 stream_interpreter=self.stream_interpreter,
                 vac_interpreter=self.vac_interpreter
             )
+
+        # A2A agent initialization  
+        self.enable_a2a_agent = enable_a2a_agent
+        self.vac_a2a_agent = None
+        self.a2a_vac_names = a2a_vac_names
+        if self.enable_a2a_agent and VACA2AAgent:
+            # Extract base URL from request context during route handling
+            # For now, initialize with placeholder - will be updated in route handlers
+            self.vac_a2a_agent = None  # Initialized lazily in route handlers
 
         self.additional_routes = additional_routes if additional_routes is not None else []
         self.async_stream = async_stream
@@ -177,6 +193,15 @@ if __name__ == "__main__":
         # MCP server endpoint
         if self.enable_mcp_server and self.vac_mcp_server:
             self.app.route('/mcp', methods=['POST', 'GET'])(self.handle_mcp_server)
+        
+        # A2A agent endpoints
+        if self.enable_a2a_agent:
+            self.app.route('/.well-known/agent.json', methods=['GET'])(self.handle_a2a_agent_card)
+            self.app.route('/a2a/tasks/send', methods=['POST'])(self.handle_a2a_task_send)
+            self.app.route('/a2a/tasks/sendSubscribe', methods=['POST'])(self.handle_a2a_task_send_subscribe)
+            self.app.route('/a2a/tasks/get', methods=['POST'])(self.handle_a2a_task_get)
+            self.app.route('/a2a/tasks/cancel', methods=['POST'])(self.handle_a2a_task_cancel)
+            self.app.route('/a2a/tasks/pushNotification/set', methods=['POST'])(self.handle_a2a_push_notification)
     
         self.register_additional_routes()
 
@@ -1102,3 +1127,223 @@ if __name__ == "__main__":
                 "endpoint": "/mcp",
                 "tools": ["vac_stream", "vac_query"] if self.vac_interpreter else ["vac_stream"]
             })
+    
+    def _get_or_create_a2a_agent(self):
+        """Get or create the A2A agent instance with current request context."""
+        if not self.enable_a2a_agent or not VACA2AAgent:
+            return None
+        
+        if self.vac_a2a_agent is None:
+            # Extract base URL from current request
+            base_url = request.url_root.rstrip('/')
+            
+            self.vac_a2a_agent = VACA2AAgent(
+                base_url=base_url,
+                stream_interpreter=self.stream_interpreter,
+                vac_interpreter=self.vac_interpreter,
+                vac_names=self.a2a_vac_names
+            )
+        
+        return self.vac_a2a_agent
+    
+    def handle_a2a_agent_card(self):
+        """Handle A2A agent card discovery request."""
+        agent = self._get_or_create_a2a_agent()
+        if not agent:
+            return jsonify({"error": "A2A agent not enabled"}), 501
+        
+        return jsonify(agent.get_agent_card())
+    
+    def handle_a2a_task_send(self):
+        """Handle A2A task send request."""
+        agent = self._get_or_create_a2a_agent()
+        if not agent:
+            return jsonify({"error": "A2A agent not enabled"}), 501
+        
+        try:
+            data = request.get_json()
+            if not data:
+                return jsonify({
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32700,
+                        "message": "Parse error: Invalid JSON"
+                    },
+                    "id": None
+                }), 400
+            
+            # Run async handler
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                response = loop.run_until_complete(agent.handle_task_send(data))
+                return jsonify(response)
+            finally:
+                loop.close()
+                
+        except Exception as e:
+            log.error(f"A2A task send error: {e}")
+            return jsonify({
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32603,
+                    "message": f"Internal error: {str(e)}"
+                },
+                "id": data.get("id") if 'data' in locals() else None
+            }), 500
+    
+    def handle_a2a_task_send_subscribe(self):
+        """Handle A2A task send with subscription (SSE)."""
+        agent = self._get_or_create_a2a_agent()
+        if not agent:
+            return jsonify({"error": "A2A agent not enabled"}), 501
+        
+        try:
+            data = request.get_json()
+            if not data:
+                def error_generator():
+                    yield "data: {\"error\": \"Parse error: Invalid JSON\"}\n\n"
+                
+                return Response(error_generator(), content_type='text/event-stream')
+            
+            # Create async generator for SSE
+            async def sse_generator():
+                async for chunk in agent.handle_task_send_subscribe(data):
+                    yield chunk
+            
+            def sync_generator():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    async_gen = sse_generator()
+                    while True:
+                        try:
+                            chunk = loop.run_until_complete(async_gen.__anext__())
+                            yield chunk
+                        except StopAsyncIteration:
+                            break
+                finally:
+                    loop.close()
+            
+            return Response(sync_generator(), content_type='text/event-stream')
+            
+        except Exception as e:
+            log.error(f"A2A task send subscribe error: {e}")
+            def error_generator(err):
+                yield f"data: {{\"error\": \"Internal error: {str(err)}\"}}\n\n"
+            
+            return Response(error_generator(e), content_type='text/event-stream')
+    
+    def handle_a2a_task_get(self):
+        """Handle A2A task get request."""
+        agent = self._get_or_create_a2a_agent()
+        if not agent:
+            return jsonify({"error": "A2A agent not enabled"}), 501
+        
+        try:
+            data = request.get_json()
+            if not data:
+                return jsonify({
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32700,
+                        "message": "Parse error: Invalid JSON"
+                    },
+                    "id": None
+                }), 400
+            
+            # Run async handler
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                response = loop.run_until_complete(agent.handle_task_get(data))
+                return jsonify(response)
+            finally:
+                loop.close()
+                
+        except Exception as e:
+            log.error(f"A2A task get error: {e}")
+            return jsonify({
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32603,
+                    "message": f"Internal error: {str(e)}"
+                },
+                "id": data.get("id") if 'data' in locals() else None
+            }), 500
+    
+    def handle_a2a_task_cancel(self):
+        """Handle A2A task cancel request."""
+        agent = self._get_or_create_a2a_agent()
+        if not agent:
+            return jsonify({"error": "A2A agent not enabled"}), 501
+        
+        try:
+            data = request.get_json()
+            if not data:
+                return jsonify({
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32700,
+                        "message": "Parse error: Invalid JSON"
+                    },
+                    "id": None
+                }), 400
+            
+            # Run async handler
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                response = loop.run_until_complete(agent.handle_task_cancel(data))
+                return jsonify(response)
+            finally:
+                loop.close()
+                
+        except Exception as e:
+            log.error(f"A2A task cancel error: {e}")
+            return jsonify({
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32603,
+                    "message": f"Internal error: {str(e)}"
+                },
+                "id": data.get("id") if 'data' in locals() else None
+            }), 500
+    
+    def handle_a2a_push_notification(self):
+        """Handle A2A push notification settings."""
+        agent = self._get_or_create_a2a_agent()
+        if not agent:
+            return jsonify({"error": "A2A agent not enabled"}), 501
+        
+        try:
+            data = request.get_json()
+            if not data:
+                return jsonify({
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32700,
+                        "message": "Parse error: Invalid JSON"
+                    },
+                    "id": None
+                }), 400
+            
+            # Run async handler
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                response = loop.run_until_complete(agent.handle_push_notification_set(data))
+                return jsonify(response)
+            finally:
+                loop.close()
+                
+        except Exception as e:
+            log.error(f"A2A push notification error: {e}")
+            return jsonify({
+                "jsonrpc": "2.0",
+                "error": {
+                    "code": -32603,
+                    "message": f"Internal error: {str(e)}"
+                },
+                "id": data.get("id") if 'data' in locals() else None
+            }), 500

@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sunholo"
-version = "0.143.1"
+version = "0.143.2"
 description = "AI DevOps - a package to help deploy GenAI to the Cloud."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache License, Version 2.0" }
 authors = [
     { name = "Holosun ApS", email = "multivac@sunholo.com" },
@@ -25,6 +25,7 @@ classifiers = [
 ]
 
 dependencies = [
+    "a2a-python>=0.0.1",
     "aiohttp",
     "flask>=3.1.0",
     "google-auth",
@@ -163,6 +164,7 @@ pipeline = [
     "unstructured[local-inference,all-docs]"
 ]
 gcp = [
+    "a2a-python",
     "aiofiles",
     "anthropic[vertex]",
     "google-api-python-client",
