@@ -36,6 +36,15 @@ try:
 except ImportError:
     MCPClientManager = None
 
+try:
+    from ...mcp.vac_mcp_server import VACMCPServer
+    from mcp.server.models import InitializationOptions
+    from mcp import JSONRPCMessage, ErrorData, INTERNAL_ERROR
+except ImportError:
+    VACMCPServer = None
+    InitializationOptions = None
+    JSONRPCMessage = None
+
 
 # Cache dictionary to store validated API keys
 api_key_cache = {}
@@ -71,17 +80,27 @@ if __name__ == "__main__":
                  additional_routes:dict=None, 
                  mcp_servers: List[Dict[str, Any]] = None,
                  async_stream:bool=False,
-                 add_langfuse_eval:bool=True):
+                 add_langfuse_eval:bool=True,
+                 enable_mcp_server:bool=False):
         self.app = app
         self.stream_interpreter = stream_interpreter
         self.vac_interpreter = vac_interpreter or partial(self.vac_interpreter_default)
 
-        # MCP initialization
+        # MCP client initialization
         self.mcp_servers = mcp_servers or []
         self.mcp_client_manager = MCPClientManager()    
         # Initialize MCP connections
         if self.mcp_servers and self.mcp_client_manager:
             asyncio.create_task(self._initialize_mcp_servers())
+
+        # MCP server initialization
+        self.enable_mcp_server = enable_mcp_server
+        self.vac_mcp_server = None
+        if self.enable_mcp_server and VACMCPServer:
+            self.vac_mcp_server = VACMCPServer(
+                stream_interpreter=self.stream_interpreter,
+                vac_interpreter=self.vac_interpreter
+            )
 
         self.additional_routes = additional_routes if additional_routes is not None else []
         self.async_stream = async_stream
@@ -147,13 +166,17 @@ if __name__ == "__main__":
         self.app.route('/openai/v1/chat/completions', methods=['POST'])(self.handle_openai_compatible_endpoint)
         self.app.route('/openai/v1/chat/completions/<vector_name>', methods=['POST'])(self.handle_openai_compatible_endpoint)
 
-        # MCP routes
+        # MCP client routes
         if self.mcp_servers:
             self.app.route('/mcp/tools', methods=['GET'])(self.handle_mcp_list_tools)
             self.app.route('/mcp/tools/<server_name>', methods=['GET'])(self.handle_mcp_list_tools)
             self.app.route('/mcp/call', methods=['POST'])(self.handle_mcp_call_tool)
             self.app.route('/mcp/resources', methods=['GET'])(self.handle_mcp_list_resources)
             self.app.route('/mcp/resources/read', methods=['POST'])(self.handle_mcp_read_resource)
+        
+        # MCP server endpoint
+        if self.enable_mcp_server and self.vac_mcp_server:
+            self.app.route('/mcp', methods=['POST', 'GET'])(self.handle_mcp_server)
     
         self.register_additional_routes()
 
@@ -959,3 +982,112 @@ if __name__ == "__main__":
             return jsonify(result)
         finally:
             loop.close()
+    
+    def handle_mcp_server(self):
+        """Handle MCP server requests using HTTP transport."""
+        if not self.vac_mcp_server:
+            return jsonify({"error": "MCP server not enabled"}), 501
+        
+        import json as json_module
+        
+        # Handle streaming for HTTP transport
+        if request.method == 'POST':
+            try:
+                # Get the JSON-RPC request
+                data = request.get_json()
+                log.info(f"MCP server received: {data}")
+                
+                # Create an async handler for the request
+                async def process_request():
+                    # Create mock read/write streams for the server
+                    from io import StringIO
+                    import asyncio
+                    
+                    # Convert request to proper format
+                    request_str = json_module.dumps(data) + '\n'
+                    
+                    # Create read queue with the request
+                    read_queue = asyncio.Queue()
+                    await read_queue.put(request_str.encode())
+                    await read_queue.put(None)  # EOF signal
+                    
+                    # Create write queue for response
+                    write_queue = asyncio.Queue()
+                    
+                    # Create async iterators
+                    async def read_messages():
+                        while True:
+                            msg = await read_queue.get()
+                            if msg is None:
+                                break
+                            yield msg
+                    
+                    responses = []
+                    async def write_messages():
+                        async for msg in write_queue:
+                            if msg is None:
+                                break
+                            responses.append(msg.decode())
+                    
+                    # Run the server with these streams
+                    server = self.vac_mcp_server.get_server()
+                    
+                    # Start write handler
+                    write_task = asyncio.create_task(write_messages())
+                    
+                    try:
+                        # Process the request through the server
+                        await server.run(
+                            read_messages(),
+                            write_queue,
+                            InitializationOptions() if InitializationOptions else None
+                        )
+                    except Exception as e:
+                        log.error(f"Error processing MCP request: {e}")
+                        await write_queue.put(None)
+                        await write_task
+                        raise
+                    
+                    # Signal end and wait for write task
+                    await write_queue.put(None)
+                    await write_task
+                    
+                    # Return collected responses
+                    return responses
+                
+                # Run the async handler
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    responses = loop.run_until_complete(process_request())
+                    
+                    # Parse and return the response
+                    if responses:
+                        # The response should be a single JSON-RPC response
+                        response_data = json_module.loads(responses[0])
+                        return jsonify(response_data)
+                    else:
+                        return jsonify({"error": "No response from MCP server"}), 500
+                        
+                except Exception as e:
+                    log.error(f"MCP server error: {str(e)}")
+                    return jsonify({
+                        "jsonrpc": "2.0",
+                        "error": {
+                            "code": -32603,
+                            "message": f"Internal error: {str(e)}"
+                        },
+                        "id": data.get("id") if isinstance(data, dict) else None
+                    }), 500
+                finally:
+                    loop.close()
+                    
+        else:
+            # GET request - return server information
+            return jsonify({
+                "name": "sunholo-vac-server",
+                "version": "1.0.0",
+                "transport": "http",
+                "endpoint": "/mcp",
+                "tools": ["vac_stream", "vac_query"] if self.vac_interpreter else ["vac_stream"]
+            })
