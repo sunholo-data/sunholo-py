@@ -1036,7 +1036,30 @@ if __name__ == "__main__":
                     
                     try:
                         # Handle different MCP methods
-                        if method == "tools/list":
+                        if method == "initialize":
+                            # Handle MCP protocol initialization
+                            protocol_version = params.get("protocolVersion", "2025-06-18")
+                            capabilities = params.get("capabilities", {})
+                            client_info = params.get("clientInfo", {})
+                            
+                            log.info(f"MCP client initializing: {client_info} with protocol version: {protocol_version}")
+                            
+                            return {
+                                "jsonrpc": "2.0",
+                                "result": {
+                                    "protocolVersion": "2025-06-18",
+                                    "capabilities": {
+                                        "tools": {}
+                                    },
+                                    "serverInfo": {
+                                        "name": "sunholo-vac-server",
+                                        "version": sunholo_version()
+                                    }
+                                },
+                                "id": request_id
+                            }
+                            
+                        elif method == "tools/list":
                             # Create mock tools list based on VACMCPServer capabilities
                             tools = [
                                 {

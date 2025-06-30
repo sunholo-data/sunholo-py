@@ -41,6 +41,7 @@ npm run typecheck   # If configured in package.json
 - **database**: Support for AlloyDB, PostgreSQL, LanceDB, Supabase
 - **discovery_engine**: Google AI Search integration
 - **langchain/llamaindex**: Framework integrations
+- **mcp**: Model Context Protocol server and client integration (expose VACs as MCP tools)
 - **streaming**: Real-time response streaming
 - **chunker/embedder**: Document processing pipeline
 
@@ -109,6 +110,7 @@ All files should include the Apache 2.0 license header:
 - **Create custom agent**: Inherit from base classes in `agents/`
 - **Add vectorstore**: Configure in `vac_config.yaml` under `rag` section
 - **Enable streaming**: Set `stream: true` in VAC config
+- **Enable MCP server**: Set `enable_mcp_server=True` in VACRoutes for Claude Code integration
 - **Add authentication**: Configure in `platform_config.yaml`
 
 ### Testing Guidelines

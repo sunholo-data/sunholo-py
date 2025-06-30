@@ -24,7 +24,7 @@ vac_routes = VACRoutes(
 )
 ```
 
-This will create an MCP server endpoint at `/mcp` that handles the streamable-http transport protocol.
+This will create an MCP server endpoint at `/mcp` that handles HTTP-based JSON-RPC requests following the MCP protocol.
 
 ## Available MCP Tools
 
@@ -127,7 +127,43 @@ gcloud run deploy vac-mcp-server \
 
 ## Connecting MCP Clients
 
-Once deployed, MCP clients can connect to your server using the Cloud Run URL with proper authentication:
+### Claude Code Integration
+
+To use your VAC MCP server with Claude Code, add it using the MCP CLI:
+
+**1. Add your local MCP server:**
+```bash
+claude mcp add --transport http sunholo-vac http://127.0.0.1:1956/mcp
+```
+
+**2. For Cloud Run deployment:**
+```bash
+claude mcp add --transport http sunholo-vac https://vac-mcp-server-xxxxx-uc.a.run.app/mcp
+```
+
+**3. List configured MCP servers:**
+```bash
+claude mcp list
+```
+
+**4. Test the integration:**
+```bash
+claude mcp tools sunholo-vac
+```
+
+**5. Use in Claude Code:**
+- Your VAC tools will appear as available MCP tools
+- Use the tools directly: "Use the vac_stream tool with vector_name=my_vac and user_input=hello"
+- Available tools: `vac_stream` (streaming) and `vac_query` (non-streaming)
+
+**6. Remove if needed:**
+```bash
+claude mcp remove sunholo-vac
+```
+
+### Programming Client Integration
+
+For programmatic access using MCP client SDK:
 
 ```python
 # Example using MCP client SDK
@@ -194,12 +230,62 @@ The MCP server functionality integrates seamlessly with existing VAC routes:
 
 All endpoints share the same interpreter functions, ensuring consistent behavior across different access methods.
 
+## Testing Your MCP Server
+
+You can test your MCP server directly using HTTP requests:
+
+### Test Server Info
+```bash
+curl http://localhost:8080/mcp
+```
+
+Expected response:
+```json
+{
+  "endpoint": "/mcp",
+  "name": "sunholo-vac-server", 
+  "tools": ["vac_stream", "vac_query"],
+  "transport": "http",
+  "version": "1.0.0"
+}
+```
+
+### Test Tools List
+```bash
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
+```
+
+### Test Tool Execution
+```bash
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc":"2.0",
+    "id":2,
+    "method":"tools/call",
+    "params":{
+      "name":"vac_stream",
+      "arguments":{
+        "vector_name":"test",
+        "user_input":"Hello world",
+        "stream_timeout":10
+      }
+    }
+  }'
+```
+
 ## Troubleshooting
 
 ### MCP server not enabled error
 If you see "MCP server not enabled", ensure:
 1. You've installed the required dependencies: `pip install sunholo[anthropic]`
 2. You've set `enable_mcp_server=True` in VACRoutes initialization
+3. The MCP dependencies are properly installed: `pip install mcp`
+
+### "async for requires __aiter__ method" error
+This indicates an async streaming issue. Ensure you've updated to the latest version with async queue fixes.
 
 ### Authentication errors on Cloud Run
 Ensure the client has:
@@ -208,6 +294,12 @@ Ensure the client has:
 
 ### Connection timeouts
 Adjust the `stream_timeout` parameter when calling the `vac_stream` tool if your VAC needs more processing time.
+
+### Claude Code not detecting MCP server
+1. Check your `mcp_servers.json` configuration file location
+2. Ensure the HTTP proxy is installed: `npm install -g @anthropic-ai/mcp-proxy`
+3. Test the MCP endpoint directly using curl commands above
+4. Restart Claude Code after configuration changes
 
 ## See Also
 

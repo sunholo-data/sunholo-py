@@ -99,6 +99,7 @@ sunholo deploy my-agent
 
 - **Web Frameworks**: Flask and FastAPI templates
 - **AI Frameworks**: LangChain and LlamaIndex integration
+- **MCP Integration**: Model Context Protocol server and client support
 - **Observability**: Langfuse for tracing and monitoring
 - **API Standards**: OpenAI-compatible endpoints
 
