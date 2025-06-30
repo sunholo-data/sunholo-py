@@ -1026,58 +1026,57 @@ if __name__ == "__main__":
                 
                 # Create an async handler for the request
                 async def process_request():
-                    # Create mock read/write streams for the server
-                    from io import StringIO
-                    import asyncio
+                    # Handle JSON-RPC requests directly
+                    if not isinstance(data, dict) or "method" not in data:
+                        raise ValueError("Invalid JSON-RPC request")
                     
-                    # Convert request to proper format
-                    request_str = json_module.dumps(data) + '\n'
-                    
-                    # Create read queue with the request
-                    read_queue = asyncio.Queue()
-                    await read_queue.put(request_str.encode())
-                    await read_queue.put(None)  # EOF signal
-                    
-                    # Create write queue for response
-                    write_queue = asyncio.Queue()
-                    
-                    # Create async iterators
-                    async def read_messages():
-                        while True:
-                            msg = await read_queue.get()
-                            if msg is None:
-                                break
-                            yield msg
-                    
-                    responses = []
-                    async def write_messages():
-                        async for msg in write_queue:
-                            if msg is None:
-                                break
-                            responses.append(msg.decode())
-                    
-                    # Run the server with these streams
-                    server = self.vac_mcp_server.get_server()
-                    
-                    # Start write handler
-                    write_task = asyncio.create_task(write_messages())
+                    method = data["method"]
+                    params = data.get("params", {})
+                    request_id = data.get("id")
                     
                     try:
-                        # Process the request through the server
-                        # Use the server's run method with HTTP transport
-                        await server.run()
+                        # Handle different MCP methods
+                        if method == "tools/list":
+                            # Get the server and call list_tools handler
+                            server = self.vac_mcp_server.get_server()
+                            tools = await server._request_handlers["tools/list"]()
+                            
+                            return {
+                                "jsonrpc": "2.0",
+                                "result": {"tools": [tool.model_dump() for tool in tools]},
+                                "id": request_id
+                            }
+                            
+                        elif method == "tools/call":
+                            # Handle tool calls
+                            tool_name = params.get("name")
+                            arguments = params.get("arguments", {})
+                            
+                            if not tool_name:
+                                raise ValueError("Missing tool name")
+                            
+                            server = self.vac_mcp_server.get_server()
+                            result = await server._request_handlers["tools/call"](tool_name, arguments)
+                            
+                            return {
+                                "jsonrpc": "2.0", 
+                                "result": {"content": [item.model_dump() for item in result]},
+                                "id": request_id
+                            }
+                            
+                        else:
+                            raise ValueError(f"Unknown method: {method}")
+                            
                     except Exception as e:
-                        log.error(f"Error processing MCP request: {e}")
-                        await write_queue.put(None)
-                        await write_task
-                        raise
-                    
-                    # Signal end and wait for write task
-                    await write_queue.put(None)
-                    await write_task
-                    
-                    # Return collected responses
-                    return responses
+                        log.error(f"Error handling MCP method {method}: {e}")
+                        return {
+                            "jsonrpc": "2.0",
+                            "error": {
+                                "code": -32603,
+                                "message": str(e)
+                            },
+                            "id": request_id
+                        }
                 
                 # Run the async handler
                 loop = asyncio.new_event_loop()

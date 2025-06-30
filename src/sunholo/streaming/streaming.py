@@ -167,16 +167,16 @@ async def start_streaming_chat_async(question, vector_name, qna_func_async, chat
     content_buffer = ContentBuffer()
     chat_callback_handler = BufferStreamingStdOutCallbackHandlerAsync(content_buffer=content_buffer, tokens=".!?\n")
 
-    result_queue = Queue()
-    exception_queue = Queue()
-    stop_event = Event()
+    result_queue = asyncio.Queue()
+    exception_queue = asyncio.Queue()
+    stop_event = asyncio.Event()
 
     async def start_chat():
         try:
             final_result = await qna_func_async(question, vector_name, chat_history, callback=chat_callback_handler, **kwargs)
-            result_queue.put(final_result)
+            await result_queue.put(final_result)
         except Exception as e:
-            exception_queue.put(e)
+            await exception_queue.put(e)
 
     # Run start_chat asynchronously
     chat_task = asyncio.create_task(start_chat())
@@ -222,10 +222,10 @@ async def start_streaming_chat_async(question, vector_name, qna_func_async, chat
         final_yield = ""
     else:
         log.info("Sending final full message plus sources...")
-        if not result_queue.empty():
-            final_result = result_queue.get()
+        try:
+            final_result = result_queue.get_nowait()
             final_yield = parse_output(final_result)
-        else:
+        except asyncio.QueueEmpty:
             final_yield = ""
 
     # Match the non-async behavior - yield the parsed output directly, not as JSON

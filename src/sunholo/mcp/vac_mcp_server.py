@@ -166,18 +166,31 @@ class VACMCPServer:
             # Collect streaming responses
             full_response = ""
             
-            async for chunk in start_streaming_chat_async(
-                question=user_input,
-                vector_name=vector_name,
-                qna_func_async=self.stream_interpreter,
-                chat_history=chat_history,
-                wait_time=stream_wait_time,
-                timeout=stream_timeout
-            ):
-                if isinstance(chunk, dict) and 'answer' in chunk:
-                    full_response = chunk['answer']
-                elif isinstance(chunk, str):
-                    full_response += chunk
+            # Check if stream_interpreter is async
+            if asyncio.iscoroutinefunction(self.stream_interpreter):
+                async for chunk in start_streaming_chat_async(
+                    question=user_input,
+                    vector_name=vector_name,
+                    qna_func_async=self.stream_interpreter,
+                    chat_history=chat_history,
+                    wait_time=stream_wait_time,
+                    timeout=stream_timeout
+                ):
+                    if isinstance(chunk, dict) and 'answer' in chunk:
+                        full_response = chunk['answer']
+                    elif isinstance(chunk, str):
+                        full_response += chunk
+            else:
+                # Fall back to sync version for non-async interpreters
+                result = self.stream_interpreter(
+                    question=user_input,
+                    vector_name=vector_name,
+                    chat_history=chat_history
+                )
+                if isinstance(result, dict):
+                    full_response = result.get("answer", str(result))
+                else:
+                    full_response = str(result)
             
             return [
                 TextContent(
