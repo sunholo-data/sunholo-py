@@ -143,7 +143,8 @@ To use your VAC MCP server with Claude Desktop, you need to configure it in your
     "sunholo-vac": {
       "command": "sunholo",
       "args": [
-        "mcp-bridge",
+        "mcp",
+        "bridge",
         "http://127.0.0.1:1956/mcp"
       ]
     }
@@ -160,7 +161,8 @@ Or if you prefer using `uv`:
       "args": [
         "run",
         "sunholo",
-        "mcp-bridge",
+        "mcp",
+        "bridge",
         "http://127.0.0.1:1956/mcp"
       ]
     }
@@ -175,7 +177,8 @@ Or if you prefer using `uv`:
     "sunholo-vac": {
       "command": "sunholo",
       "args": [
-        "mcp-bridge",
+        "mcp",
+        "bridge",
         "https://vac-mcp-server-xxxxx-uc.a.run.app/mcp"
       ]
     }
@@ -196,12 +199,12 @@ For Claude Code (CLI), the configuration is different:
 
 **1. Add your local MCP server:**
 ```bash
-claude mcp add sunholo-vac sunholo mcp-bridge http://127.0.0.1:1956/mcp
+claude mcp add sunholo-vac sunholo mcp bridge http://127.0.0.1:1956/mcp
 ```
 
 **2. For Cloud Run deployment:**
 ```bash
-claude mcp add sunholo-vac sunholo mcp-bridge https://vac-mcp-server-xxxxx-uc.a.run.app/mcp
+claude mcp add sunholo-vac sunholo mcp bridge https://vac-mcp-server-xxxxx-uc.a.run.app/mcp
 ```
 
 **3. List configured MCP servers:**
@@ -377,21 +380,21 @@ This should not happen for local MCP servers. Check:
 3. The authentication check in `check_authentication()` only applies to `/openai/` paths
 
 ### HTTP vs stdio transport confusion
-- **Claude Desktop**: Requires stdio transport, use `sunholo mcp-bridge` command
+- **Claude Desktop**: Requires stdio transport, use `sunholo mcp bridge` command
 - **Direct HTTP clients**: Can connect directly to `http://localhost:1956/mcp`
-- **Bridge command**: `sunholo mcp-bridge [URL]` translates stdio to HTTP
+- **Bridge command**: `sunholo mcp bridge [URL]` translates stdio to HTTP
 - The bridge is built into Sunholo, no external npm packages needed
 
 ### Using the MCP Bridge
 
-The `sunholo mcp-bridge` command acts as a translator between stdio (what Claude Desktop expects) and HTTP (what your VAC server provides):
+The `sunholo mcp bridge` command acts as a translator between stdio (what Claude Desktop expects) and HTTP (what your VAC server provides):
 
 ```bash
 # Start the bridge manually (for testing)
-sunholo mcp-bridge http://127.0.0.1:1956/mcp
+sunholo mcp bridge http://127.0.0.1:1956/mcp
 
 # Or with uv
-uv run sunholo mcp-bridge http://127.0.0.1:1956/mcp
+uv run sunholo mcp bridge http://127.0.0.1:1956/mcp
 
 # The bridge will forward stdio messages to your HTTP server
 ```

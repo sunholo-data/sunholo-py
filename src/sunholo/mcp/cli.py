@@ -312,15 +312,27 @@ def setup_mcp_subparser(subparsers):
     ```
     """
     mcp_parser = subparsers.add_parser('mcp', 
-                                      help='Start an Anthropic MCP server that wraps `sunholo` functionality')
+                                      help='MCP (Model Context Protocol) commands')
     
-    mcp_parser.set_defaults(func=cli_mcp)
+    # Create subcommands for mcp
+    mcp_subparsers = mcp_parser.add_subparsers(title='mcp commands',
+                                               description='MCP subcommands',
+                                               help='MCP subcommands',
+                                               dest='mcp_command')
     
-    # Add mcp-bridge subcommand
-    mcp_bridge_parser = subparsers.add_parser('mcp-bridge',
+    # mcp server command (default)
+    server_parser = mcp_subparsers.add_parser('server',
+                                             help='Start an Anthropic MCP server that wraps sunholo functionality')
+    server_parser.set_defaults(func=cli_mcp)
+    
+    # mcp bridge command
+    bridge_parser = mcp_subparsers.add_parser('bridge',
                                              help='Start a stdio-to-HTTP bridge for MCP servers')
-    mcp_bridge_parser.add_argument('url',
+    bridge_parser.add_argument('url',
                                   nargs='?',
                                   default='http://127.0.0.1:1956/mcp',
                                   help='HTTP URL of the MCP server (default: http://127.0.0.1:1956/mcp)')
-    mcp_bridge_parser.set_defaults(func=cli_mcp_bridge)
+    bridge_parser.set_defaults(func=cli_mcp_bridge)
+    
+    # Set default behavior when no subcommand is provided
+    mcp_parser.set_defaults(func=cli_mcp)
