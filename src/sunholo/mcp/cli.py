@@ -281,6 +281,25 @@ def cli_mcp(args):
         logger.error(f"Error running MCP server: {str(e)}")
         raise
 
+def cli_mcp_bridge(args):
+    """CLI handler for the MCP bridge command"""
+    try:
+        from .stdio_http_bridge import run_bridge
+        
+        http_url = args.url
+        logger.info(f"Starting MCP stdio-to-HTTP bridge for {http_url}")
+        
+        if console:
+            console.print(f"Starting MCP bridge to {http_url}...")
+        
+        asyncio.run(run_bridge(http_url))
+        
+    except KeyboardInterrupt:
+        logger.info("Bridge stopped by user")
+    except Exception as e:
+        logger.error(f"Error running MCP bridge: {str(e)}")
+        raise
+
 def setup_mcp_subparser(subparsers):
     """
     Sets up an argparse subparser for the 'mcp' command 3.
@@ -296,3 +315,12 @@ def setup_mcp_subparser(subparsers):
                                       help='Start an Anthropic MCP server that wraps `sunholo` functionality')
     
     mcp_parser.set_defaults(func=cli_mcp)
+    
+    # Add mcp-bridge subcommand
+    mcp_bridge_parser = subparsers.add_parser('mcp-bridge',
+                                             help='Start a stdio-to-HTTP bridge for MCP servers')
+    mcp_bridge_parser.add_argument('url',
+                                  nargs='?',
+                                  default='http://127.0.0.1:1956/mcp',
+                                  help='HTTP URL of the MCP server (default: http://127.0.0.1:1956/mcp)')
+    mcp_bridge_parser.set_defaults(func=cli_mcp_bridge)

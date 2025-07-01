@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sunholo"
-version = "0.143.12"
+version = "0.143.13"
 description = "AI DevOps - a package to help deploy GenAI to the Cloud."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -101,7 +101,7 @@ all = [
     "langchain-anthropic>=0.1.23",
     "langchain-google-vertexai",
     "langchain-unstructured",
-    "langfuse",
+    "langfuse=2.60.9",
     "mcp>=1.1.1",
     "numpy",
     "opencv-python",
@@ -211,7 +211,7 @@ http = [
     "httpcore",
     "httpx",
     "langchain",
-    "langfuse",
+    "langfuse==2.60.9",
     "python-socketio",
     "requests",
     "tenacity"
