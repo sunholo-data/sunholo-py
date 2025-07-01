@@ -11,7 +11,7 @@ import aiohttp
 from typing import Optional
 
 from ..custom_logging import setup_logging
-logger = setup_logging("mcp-bridge")
+log = setup_logging("mcp-bridge")
 
 class MCPStdioHttpBridge:
     def __init__(self, http_url: str):
@@ -23,7 +23,7 @@ class MCPStdioHttpBridge:
         self.session = aiohttp.ClientSession()
         
         # Send initialization success to stderr for debugging
-        logger.info(f"MCP stdio-to-HTTP bridge started, forwarding to: {self.http_url}")
+        log.info(f"MCP stdio-to-HTTP bridge started, forwarding to: {self.http_url}")
         
         try:
             await self.process_messages()
@@ -51,9 +51,9 @@ class MCPStdioHttpBridge:
                 # Parse JSON-RPC message
                 try:
                     message = json.loads(line)
-                    logger.debug(f"Received from stdin: {message}")
+                    log.debug(f"Received from stdin: {message}")
                 except json.JSONDecodeError as e:
-                    logger.error(f"Invalid JSON: {e}")
+                    log.error(f"Invalid JSON: {e}")
                     continue
                 
                 # Forward to HTTP server
@@ -64,14 +64,14 @@ class MCPStdioHttpBridge:
                         headers={"Content-Type": "application/json"}
                     ) as response:
                         result = await response.json()
-                        logger.debug(f"Received from HTTP: {result}")
+                        log.debug(f"Received from HTTP: {result}")
                         
                         # Send response back to stdout
                         print(json.dumps(result))
                         sys.stdout.flush()
                         
                 except aiohttp.ClientError as e:
-                    logger.error(f"HTTP error: {e}")
+                    log.error(f"HTTP error: {e}")
                     error_response = {
                         "jsonrpc": "2.0",
                         "error": {
@@ -84,7 +84,7 @@ class MCPStdioHttpBridge:
                     sys.stdout.flush()
                     
             except Exception as e:
-                logger.error(f"Bridge error: {e}")
+                log.error(f"Bridge error: {e}")
                 continue
 
 async def run_bridge(http_url: str):
