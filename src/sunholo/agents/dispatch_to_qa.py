@@ -15,11 +15,16 @@ from ..custom_logging import log
 from ..utils import ConfigManager
 from ..auth import get_header
 import requests
-import aiohttp
 from .langserve import prepare_request_data
 import traceback
 from .route import route_endpoint
 import os
+
+try:
+    import aiohttp
+    AIOHTTP_AVAILABLE = True
+except ImportError:
+    AIOHTTP_AVAILABLE = False
 
 
 def prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs):
@@ -177,7 +182,16 @@ async def send_to_qa_async(user_input, vector_name, chat_history, stream=False, 
         async for response_chunk in send_to_qa_async("What is AI?", "my_vector", []):
             print(response_chunk)
     ```
-    """    
+    
+    Raises:
+        ImportError: If aiohttp is not installed.
+    """
+    if not AIOHTTP_AVAILABLE:
+        raise ImportError(
+            "aiohttp is required for async operations. "
+            "Install it with: pip install aiohttp or pip install sunholo[http]"
+        )
+    
     qna_endpoint, qna_data = prep_request_payload(user_input, chat_history, vector_name, stream, **kwargs)
     header = get_header(vector_name)
     header = add_header_ids(header, **kwargs)
