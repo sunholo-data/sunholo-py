@@ -22,6 +22,7 @@ import inspect
 import asyncio
 from typing import Dict, List, Optional, Callable, Any, TYPE_CHECKING
 from functools import partial
+from contextlib import asynccontextmanager
 
 if TYPE_CHECKING:
     from fastapi import FastAPI, Request, Response, HTTPException
@@ -253,12 +254,36 @@ class VACRoutesFastAPI:
                 methods=route.get("methods", ["GET"])
             )
         
-        # Register startup event for MCP initialization
-        @self.app.on_event("startup")
-        async def startup_event():
-            if self.mcp_servers and self.mcp_client_manager and not self._mcp_initialized:
+        # Set up lifespan for MCP initialization
+        self._setup_lifespan()
+    
+    def _setup_lifespan(self):
+        """Set up lifespan context manager for app initialization."""
+        # Only set lifespan if we have MCP servers to initialize
+        if not (self.mcp_servers and self.mcp_client_manager):
+            return
+        
+        # Store the existing lifespan if any
+        existing_lifespan = getattr(self.app, 'router', self.app).lifespan_context
+        
+        @asynccontextmanager
+        async def lifespan(app: FastAPI):
+            # Startup
+            if not self._mcp_initialized:
                 await self._initialize_mcp_servers()
                 self._mcp_initialized = True
+            
+            # Call existing lifespan startup if any
+            if existing_lifespan:
+                async with existing_lifespan(app) as lifespan_state:
+                    yield lifespan_state
+            else:
+                yield
+            
+            # Shutdown (no cleanup needed for now)
+        
+        # Set the new lifespan
+        self.app.router.lifespan_context = lifespan
     
     async def home(self):
         """Home endpoint."""

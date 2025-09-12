@@ -98,6 +98,37 @@ sunholo init your_vac_name
 - **Structure**: Keep functions focused; follow single responsibility principle
 - **Logging**: Use the custom logging module (`from sunholo.custom_logging import log`)
 
+### Type Hints with Optional Dependencies
+Many modules in this codebase have optional dependencies. We want to add comprehensive type hints throughout the codebase but haven't fully done so yet due to import issues with optional packages. When adding type hints for optional dependencies, use this pattern:
+
+```python
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from optional_package import OptionalType
+
+try:
+    from optional_package import OptionalType
+    PACKAGE_AVAILABLE = True
+except ImportError:
+    OptionalType = None
+    PACKAGE_AVAILABLE = False
+
+# Now you can use OptionalType in type hints without import errors
+def my_function(param: OptionalType) -> None:
+    if not PACKAGE_AVAILABLE:
+        raise ImportError("optional_package required. Install with: pip install sunholo[extra]")
+    # ... use param
+```
+
+This pattern ensures:
+- Type hints are preserved for IDE support and documentation
+- No import errors when optional dependencies are missing
+- Type checkers can still validate the code properly
+
+Please help add these type hints throughout the codebase where they're currently missing, especially in modules with optional dependencies like FastAPI, Flask, LangChain, LlamaIndex, etc.
+
 ## License Header
 All files should include the Apache 2.0 license header:
 ```python
