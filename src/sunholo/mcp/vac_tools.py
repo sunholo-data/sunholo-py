@@ -20,6 +20,7 @@ Provides core Sunholo VAC functionality as MCP tools.
 import asyncio
 import os
 import sys
+import traceback
 from typing import Dict, List, Optional, Any
 
 try:
@@ -39,14 +40,6 @@ except ImportError:
     ConfigManager = None
     CONFIG_AVAILABLE = False
 
-try:
-    from ..streaming import start_streaming_chat_async
-    STREAMING_AVAILABLE = True
-except ImportError:
-    start_streaming_chat_async = None
-    STREAMING_AVAILABLE = False
-
-
 def get_vac_config(vector_name: str = None) -> 'ConfigManager':
     """Get VAC configuration for the specified vector name."""
     if not CONFIG_AVAILABLE:
@@ -59,107 +52,16 @@ def get_vac_config(vector_name: str = None) -> 'ConfigManager':
     return ConfigManager(vac_name)
 
 
-async def call_vac_async(question: str, vector_name: str, chat_history: List[Dict[str, str]] = None) -> str:
-    """
-    Call VAC asynchronously using the streaming interface.
-    
-    Args:
-        question: The user's question
-        vector_name: Name of the VAC to query
-        chat_history: Previous conversation history
-        
-    Returns:
-        The VAC's response
-    """
-    if not STREAMING_AVAILABLE:
-        raise ImportError("Streaming functionality not available. Install sunholo with streaming support.")
-        
-    if chat_history is None:
-        chat_history = []
-    
-    try:
-        config = get_vac_config(vector_name)
-        
-        # Import the appropriate QNA function based on configuration
-        llm_str = config.vacConfig('llm')
-        
-        if llm_str and 'anthropic' in llm_str.lower():
-            try:
-                from ..agents.langchain.vertex_genai2 import qna_async
-            except ImportError:
-                log.warning("Anthropic integration not available, falling back to default")
-                from ..agents.langchain.vertex_genai2 import qna_async
-        elif llm_str and 'openai' in llm_str.lower():
-            try:
-                from ..agents.langchain.vertex_genai2 import qna_async
-            except ImportError:
-                log.warning("OpenAI integration not available, falling back to default")
-                from ..agents.langchain.vertex_genai2 import qna_async
-        else:
-            # Default to vertex AI
-            from ..agents.langchain.vertex_genai2 import qna_async
-        
-        # Use streaming interface to get response
-        full_response = ""
-        async for chunk in start_streaming_chat_async(
-            question=question,
-            vector_name=vector_name,
-            qna_func_async=qna_async,
-            chat_history=chat_history
-        ):
-            if isinstance(chunk, dict) and 'answer' in chunk:
-                full_response = chunk['answer']
-            elif isinstance(chunk, str):
-                full_response += chunk
-        
-        return full_response or "No response generated"
-        
-    except Exception as e:
-        log.error(f"Error calling VAC {vector_name}: {str(e)}")
-        return f"Error: {str(e)}"
-
-
-def register_vac_tools(server: 'FastMCP', registry: 'MCPToolRegistry' = None):
+def register_vac_tools(server: 'FastMCP', registry: Optional[Any] = None, stream_interpreter: Optional[Any] = None):
     """
     Register built-in VAC tools with a FastMCP server.
     
     Args:
         server: FastMCP server instance
         registry: Optional registry to track tools
+        stream_interpreter: The stream interpreter function from VACRoutesFastAPI
     """
     
-    @server.tool
-    async def vac_stream(
-        vector_name: str,
-        user_input: str,
-        chat_history: Optional[List[Dict[str, str]]] = None,
-        stream_wait_time: float = 7,
-        stream_timeout: float = 120
-    ) -> str:
-        """
-        Stream responses from a Sunholo VAC (Virtual Agent Computer).
-        
-        Args:
-            vector_name: Name of the VAC to interact with
-            user_input: The user's question or input  
-            chat_history: Previous conversation history
-            stream_wait_time: Time to wait between stream chunks (default: 7) 
-            stream_timeout: Maximum time to wait for response (default: 120)
-        
-        Returns:
-            The streamed response from the VAC
-        """
-        if chat_history is None:
-            chat_history = []
-        
-        log.info(f"MCP streaming request for VAC '{vector_name}': {user_input}")
-        
-        try:
-            return await call_vac_async(user_input, vector_name, chat_history)
-        except Exception as e:
-            log.error(f"Error in MCP VAC stream: {str(e)}")
-            return f"Error: {str(e)}"
-
     @server.tool  
     async def vac_query(
         vector_name: str,
@@ -183,9 +85,51 @@ def register_vac_tools(server: 'FastMCP', registry: 'MCPToolRegistry' = None):
         log.info(f"MCP query request for VAC '{vector_name}': {user_input}")
         
         try:
-            return await call_vac_async(user_input, vector_name, chat_history)
+            # If we have a stream_interpreter, use it directly
+            if stream_interpreter:
+                # Create a no-op callback for non-streaming
+                class NoOpCallback:
+                    async def async_on_llm_new_token(self, token): pass
+                    async def async_on_llm_end(self, response): pass
+                    def on_llm_new_token(self, token): pass
+                    def on_llm_end(self, response): pass
+                
+                callback = NoOpCallback()
+                
+                # Call the stream interpreter
+                import inspect
+                if inspect.iscoroutinefunction(stream_interpreter):
+                    result = await stream_interpreter(
+                        question=user_input,
+                        vector_name=vector_name,
+                        chat_history=chat_history,
+                        callback=callback
+                    )
+                else:
+                    # Run sync function in executor
+                    import asyncio
+                    loop = asyncio.get_event_loop()
+                    result = await loop.run_in_executor(
+                        None,
+                        stream_interpreter,
+                        user_input,
+                        vector_name,
+                        chat_history,
+                        callback
+                    )
+                
+                # Extract answer from result
+                if isinstance(result, dict):
+                    return result.get('answer', str(result))
+                else:
+                    return str(result)
+            else:
+                # Fallback to simple response if no interpreter provided
+                return f"VAC '{vector_name}' received: {user_input}"
+                
         except Exception as e:
             log.error(f"Error in MCP VAC query: {str(e)}")
+            log.error(f"Traceback: {traceback.format_exc()}")
             return f"Error: {str(e)}"
 
     @server.tool
@@ -239,7 +183,6 @@ def register_vac_tools(server: 'FastMCP', registry: 'MCPToolRegistry' = None):
     # Register tools in registry if provided
     if registry:
         # Extract the underlying function from FunctionTool objects
-        registry.register_tool("vac_stream", vac_stream.fn if hasattr(vac_stream, 'fn') else vac_stream)
         registry.register_tool("vac_query", vac_query.fn if hasattr(vac_query, 'fn') else vac_query) 
         registry.register_tool("list_available_vacs", list_available_vacs.fn if hasattr(list_available_vacs, 'fn') else list_available_vacs)
         registry.register_tool("get_vac_info", get_vac_info.fn if hasattr(get_vac_info, 'fn') else get_vac_info)
