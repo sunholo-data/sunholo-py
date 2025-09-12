@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sunholo"
-version = "0.143.16"
+version = "0.144.0"
 description = "AI DevOps - a package to help deploy GenAI to the Cloud."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -25,13 +25,8 @@ classifiers = [
 ]
 
 dependencies = [
-    "a2a-python>=0.0.1",
-    "aiohttp",
-    "flask>=3.1.0",
     "google-auth",
-    "mcp>=1.1.1",
     "pydantic",
-    "pytest-asyncio>=1.0.0",
     "requests",
     "ruamel.yaml",
     "tenacity",
@@ -59,10 +54,12 @@ include = ["*"]
 [project.optional-dependencies]
 test = [
     "pytest",
+    "pytest-asyncio>=1.0.0",
     "pytest-cov",
     # any other test dependencies
 ]
 all = [
+    "a2a-python>=0.0.1",
     "aiofiles",
     "aiohttp",
     "anthropic[vertex]",
@@ -70,7 +67,8 @@ all = [
     "azure-identity",
     "azure-storage-blob",
     "fastapi",
-    "flask",
+    "fastmcp>=2.12.0",
+    "flask>=3.1.0",
     "google-auth",
     "google-auth-httplib2",
     "google-auth-oauthlib",
@@ -113,6 +111,9 @@ all = [
     "psycopg2-binary",
     "pydantic",
     "pypdf",
+    "pytest",
+    "pytest-asyncio>=1.0.0",
+    "pytest-cov",
     "python-hcl2",
     "python-socketio",
     "pytesseract",
@@ -164,7 +165,7 @@ pipeline = [
     "unstructured[local-inference,all-docs]"
 ]
 gcp = [
-    "a2a-python",
+    "a2a-python>=0.0.1",
     "aiofiles",
     "anthropic[vertex]",
     "google-api-python-client",
@@ -197,6 +198,7 @@ openai = [
     "tiktoken"
 ]
 anthropic = [
+    "fastmcp>=2.12.0",
     "langchain-anthropic>=0.1.23",
     "mcp>=1.1.1"
 ]
@@ -205,8 +207,9 @@ tools = [
     "playwright"
 ]
 http = [
+    "aiohttp",
     "fastapi",
-    "flask",
+    "flask>=3.1.0",
     "gunicorn",
     "httpcore",
     "httpx",

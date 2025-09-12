@@ -191,12 +191,22 @@ async def start_streaming_chat_async(question, vector_name, qna_func_async, chat
         yield content_to_send
         await content_buffer.async_clear()
 
-    while not chat_callback_handler.stream_finished.is_set() and not stop_event.is_set():
+    # Continue streaming until timeout or stop event
+    start_time = asyncio.get_event_loop().time()
+    while not stop_event.is_set():
         try:
-            await asyncio.wait_for(content_buffer.content_available.wait(), timeout=timeout)
+            # Wait for content with a short timeout to check conditions periodically
+            await asyncio.wait_for(content_buffer.content_available.wait(), timeout=1.0)
         except asyncio.TimeoutError:
-            log.warning(f"Content production has timed out after {timeout} seconds")
-            break
+            # Check if we should continue waiting
+            if chat_callback_handler.stream_finished.is_set() and chat_task.done():
+                # Stream is finished and task is complete, exit loop
+                break
+            elapsed = asyncio.get_event_loop().time() - start_time
+            if elapsed > timeout:
+                log.warning(f"Content production has timed out after {timeout} seconds")
+                break
+            continue
 
         content_to_send = await content_buffer.async_read()
         if content_to_send:
@@ -223,13 +233,23 @@ async def start_streaming_chat_async(question, vector_name, qna_func_async, chat
     else:
         log.info("Sending final full message plus sources...")
         try:
-            final_result = result_queue.get_nowait()
+            # Use await with timeout instead of get_nowait to ensure we get the result
+            final_result = await asyncio.wait_for(result_queue.get(), timeout=5.0)
             final_yield = parse_output(final_result)
+            log.info(f"Got final result: {type(final_yield)}")
+        except asyncio.TimeoutError:
+            log.warning("Timeout waiting for final result from queue")
+            final_yield = ""
         except asyncio.QueueEmpty:
+            log.warning("Queue empty when trying to get final result")
             final_yield = ""
 
     # Match the non-async behavior - yield the parsed output directly, not as JSON
-    yield final_yield
+    if final_yield:  # Only yield if we have actual content
+        log.info(f"Yielding final_yield: type={type(final_yield)}, is_dict={isinstance(final_yield, dict)}, keys={list(final_yield.keys()) if isinstance(final_yield, dict) else 'N/A'}")
+        yield final_yield
+    else:
+        log.info("Final yield was empty, not yielding")
 
 
 def generate_proxy_stream(stream_to_f, user_input, vector_name, chat_history, generate_f_output, **kwargs):

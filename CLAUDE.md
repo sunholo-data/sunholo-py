@@ -9,21 +9,35 @@ Sunholo-py is a comprehensive toolkit for deploying GenAI apps (VACs - Virtual A
 
 ## Build & Test Commands
 ```bash
-# Install package in dev mode
-pip install -e ".[all]"  # or specific features: ".[test,gcp,langchain,azure,openai,anthropic]"
+# Install dependencies with uv
+uv pip install -e ".[all]"  # or specific features: ".[test,gcp,langchain,azure,openai,anthropic,fastapi]"
 
 # Run all tests
-pytest tests
+uv run pytest tests
 
 # Run specific test files
-pytest tests/test_config.py
-pytest tests/test_async_genai2.py
+uv run pytest tests/test_config.py
+uv run pytest tests/test_async_genai2.py
+uv run pytest tests/test_vac_routes_fastapi.py
 
 # Run specific test function
-pytest tests/test_config.py::test_load_config
+uv run pytest tests/test_config.py::test_load_config
 
 # Run tests with coverage
-pytest --cov=src/sunholo tests/
+uv run pytest --cov=src/sunholo tests/
+
+# Install specific packages
+uv pip install fastapi httpx
+
+# Run FastAPI demos and tests
+python examples/fastapi_vac_demo.py               # Full demo with all features
+python examples/fastapi_vac_demo.py --sync        # Test with sync interpreters
+uv run examples/fastapi_vac_demo_standalone.py    # Standalone demo with inline dependencies
+
+# Test SSE streaming endpoint
+curl -X POST http://localhost:8000/vac/streaming/demo/sse \
+    -H "Content-Type: application/json" \
+    -d '{"user_input": "Tell me a story"}'
 
 # Run type checking and linting
 npm run lint        # If configured in package.json
@@ -110,8 +124,9 @@ All files should include the Apache 2.0 license header:
 - **Create custom agent**: Inherit from base classes in `agents/`
 - **Add vectorstore**: Configure in `vac_config.yaml` under `rag` section
 - **Enable streaming**: Set `stream: true` in VAC config
-- **Enable MCP server**: Set `enable_mcp_server=True` in VACRoutes for Claude Code integration
+- **Enable MCP server**: Set `enable_mcp_server=True` in VACRoutes (Flask) or VACRoutesFastAPI (FastAPI) for Claude Code integration
 - **Add authentication**: Configure in `platform_config.yaml`
+- **Use FastAPI for async**: Use `VACRoutesFastAPI` from `sunholo.agents.fastapi` for async-first applications
 
 ### Testing Guidelines
 - Test files in `tests/` mirror source structure
