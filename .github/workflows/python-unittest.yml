@@ -4,12 +4,12 @@ on:
   push:
     paths:
       - 'src/sunholo/**'
-      - 'setup.py'
+      - 'pyproject.toml'
       - 'tests/**'
   pull_request:
     paths:
       - 'src/sunholo/**'
-      - 'setup.py'
+      - 'pyproject.toml'
       - 'tests/**'
 
 permissions:
