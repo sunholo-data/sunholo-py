@@ -543,7 +543,7 @@ class VACRoutesFastAPI:
             
             # Register built-in VAC tools directly with the stream interpreter
             from sunholo.mcp.vac_tools import register_vac_tools
-            register_vac_tools(mcp_server, None, stream_interpreter)
+            register_vac_tools(mcp_server, registry=None, stream_interpreter=stream_interpreter)
             
             # Get the MCP app with path="" so when mounted at /mcp it's accessible at /mcp
             mcp_app = mcp_server.http_app(path="", stateless_http=True)

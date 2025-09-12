@@ -52,7 +52,7 @@ def get_vac_config(vector_name: str = None) -> 'ConfigManager':
     return ConfigManager(vac_name)
 
 
-def register_vac_tools(server: 'FastMCP', registry: Optional[Any] = None, stream_interpreter: Optional[Any] = None):
+def register_vac_tools(server: 'FastMCP', registry: Optional[Any] = None, *, stream_interpreter: Optional[Any] = None):
     """
     Register built-in VAC tools with a FastMCP server.
     
