@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
-#     "sunholo[http,anthropic]",
+#     "sunholo[http,anthropic]>=0.144.6",
 #     "uvicorn",
 # ]
 # ///
@@ -507,7 +507,6 @@ def create_test_page():
                     <div style="margin-top: 10px;">
                         <label>VAC Name for testing:</label>
                         <input type="text" id="vacTestName" value="demo" style="width: 200px; margin-right: 10px;" />
-                        <button onclick="testVACStream()">Test vac_stream</button>
                         <button onclick="testVACQuery()">Test vac_query</button>
                     </div>
                     <h4>Response:</h4>
