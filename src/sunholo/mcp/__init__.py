@@ -26,4 +26,13 @@ except ImportError as e:
     print(f"Warning: VACMCPServer not available - {e}")
     VACMCPServer = None
 
-__all__ = ['MCPClientManager', 'VACMCPServer']
+# SSE utilities are always available
+from .sse_utils import parse_sse_response, is_sse_response, extract_sse_data
+
+__all__ = [
+    'MCPClientManager', 
+    'VACMCPServer',
+    'parse_sse_response',
+    'is_sse_response', 
+    'extract_sse_data'
+]

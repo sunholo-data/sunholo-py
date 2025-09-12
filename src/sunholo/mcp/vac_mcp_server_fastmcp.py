@@ -73,7 +73,8 @@ class VACMCPServer:
     
     def get_http_app(self):
         """Get the HTTP app for mounting in FastAPI."""
-        return self.server.http_app()
+        # Following FastMCP docs: when mounted at root "", path="/mcp" gives us /mcp endpoint
+        return self.server.http_app(path="/mcp")
     
     def add_tool(self, func: Callable, name: str = None, description: str = None):
         """

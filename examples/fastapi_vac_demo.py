@@ -1,15 +1,23 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "sunholo[http,anthropic]",
+#     "uvicorn",
+# ]
+# ///
 """
 FastAPI VAC Routes Demonstration Script
 
 This script demonstrates how to use the VACRoutesFastAPI class with both
 async and sync interpreters, including streaming and non-streaming endpoints.
 
-Prerequisites:
-    uv pip install -e ".[fastapi]"
-
-Run this script with:
-    python examples/fastapi_vac_demo.py
+Run this script with uv (dependencies are auto-installed):
+    uv run examples/fastapi_vac_demo.py
+    
+Or make it executable and run directly:
+    chmod +x examples/fastapi_vac_demo.py
+    ./examples/fastapi_vac_demo.py
 
 Then test with:
     # Plain text streaming
@@ -304,6 +312,76 @@ def create_demo_app(use_async: bool = True):
     app.description = "Demonstration of VACRoutesFastAPI with streaming support"
     app.version = "1.0.0"
     
+    # Add simple demo MCP tools that work without complex dependencies
+    @vac_routes.add_mcp_tool
+    async def demo_reverse_text(text: str) -> str:
+        """Reverse the input text as a demo."""
+        return text[::-1]
+    
+    @vac_routes.add_mcp_tool
+    async def demo_uppercase(text: str) -> str:
+        """Convert text to uppercase as a demo."""
+        return text.upper()
+    
+    @vac_routes.add_mcp_tool
+    async def demo_echo(message: str, count: int = 1) -> str:
+        """Echo a message multiple times."""
+        return " ".join([message] * count)
+    
+    @vac_routes.add_mcp_tool
+    async def demo_word_count(text: str) -> dict:
+        """Count words and characters in text."""
+        words = text.split()
+        return {
+            "word_count": len(words),
+            "char_count": len(text),
+            "char_count_no_spaces": len(text.replace(" ", ""))
+        }
+    
+    @vac_routes.add_mcp_tool  
+    async def demo_math(a: float, b: float, operation: str = "add") -> float:
+        """Perform basic math operations."""
+        operations = {
+            "add": a + b,
+            "subtract": a - b,
+            "multiply": a * b,
+            "divide": a / b if b != 0 else "Error: Division by zero"
+        }
+        return operations.get(operation, "Error: Unknown operation")
+    
+    # Simple VAC simulator that doesn't require any imports
+    @vac_routes.add_mcp_tool
+    async def demo_vac_chat(user_input: str, vac_name: str = "demo") -> str:
+        """
+        Simple VAC chat simulator for demo purposes.
+        This doesn't require any complex imports.
+        """
+        responses = {
+            "hello": f"Hello from {vac_name} VAC! How can I help you today?",
+            "help": f"I'm the {vac_name} VAC. I can answer questions and have conversations.",
+            "test": f"Test successful! The {vac_name} VAC is working properly."
+        }
+        
+        # Simple keyword matching
+        lower_input = user_input.lower()
+        for keyword, response in responses.items():
+            if keyword in lower_input:
+                return response
+        
+        # Default response
+        return f"The {vac_name} VAC received: '{user_input}'. This is a demo response."
+    
+    # Add MCP debug endpoint
+    @app.get("/mcp/debug")
+    async def mcp_debug():
+        """Debug endpoint to check MCP status."""
+        return {
+            "mcp_enabled": vac_routes.enable_mcp_server,
+            "has_mcp_server": vac_routes.vac_mcp_server is not None,
+            "mcp_tools_count": len(vac_routes._custom_mcp_tools) if hasattr(vac_routes, '_custom_mcp_tools') else 0,
+            "message": "MCP server should be available at /mcp endpoint"
+        }
+    
     # Add a custom info endpoint
     @app.get("/info")
     async def info():
@@ -315,13 +393,18 @@ def create_demo_app(use_async: bool = True):
                 "GET /health",
                 "GET /info",
                 "GET /docs",
+                "GET /test - Interactive test page with MCP testing",
                 "POST /vac/streaming/{vector_name}",
                 "POST /vac/streaming/{vector_name}/sse",
                 "POST /vac/{vector_name}",
                 "POST /openai/v1/chat/completions",
-                "GET /mcp (MCP server info)",
-                "POST /mcp (MCP server requests)"
+                "POST /mcp/mcp - MCP server (JSON-RPC endpoint)"
             ],
+            "mcp_info": {
+                "enabled": True,
+                "description": "MCP server is enabled for Claude Code integration",
+                "available_tools": ["vac_stream", "vac_query", "list_available_vacs", "get_vac_info"]
+            },
             "test_commands": {
                 "streaming": 'curl -X POST http://localhost:8000/vac/streaming/demo -H "Content-Type: application/json" -d \'{"user_input": "Hello!"}\'',
                 "sse": 'curl -X POST http://localhost:8000/vac/streaming/demo/sse -H "Content-Type: application/json" -d \'{"user_input": "Hello!"}\'',
@@ -340,30 +423,46 @@ def create_test_page():
 <!DOCTYPE html>
 <html>
 <head>
-    <title>VAC FastAPI Streaming Test 2</title>
+    <title>VAC FastAPI Demo with MCP</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        body { font-family: Arial, sans-serif; max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #007bff; }
+        .tab { padding: 10px 20px; cursor: pointer; background: #f0f0f0; border: none; font-size: 16px; }
+        .tab.active { background: #007bff; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
         .container { display: flex; gap: 20px; }
         .section { flex: 1; }
         h1 { color: #333; }
+        h2 { color: #555; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
         .input-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; font-size: 16px; }
-        button { background: #007bff; color: white; padding: 10px 20px; border: none; cursor: pointer; font-size: 16px; }
+        input, select, textarea { width: 100%; padding: 10px; font-size: 14px; box-sizing: border-box; }
+        textarea { min-height: 100px; font-family: monospace; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; cursor: pointer; font-size: 16px; margin-right: 10px; }
         button:hover { background: #0056b3; }
         button:disabled { background: #ccc; cursor: not-allowed; }
-        .response { border: 1px solid #ddd; padding: 15px; min-height: 200px; background: #f9f9f9; white-space: pre-wrap; }
+        .response { border: 1px solid #ddd; padding: 15px; min-height: 200px; background: #f9f9f9; white-space: pre-wrap; font-family: monospace; overflow-x: auto; }
         .streaming { background: #e8f5e9; }
         .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e9; color: #2e7d32; }
         .source { background: #fff3e0; padding: 10px; margin-top: 10px; border-left: 3px solid #ff9800; }
+        .tool-item { background: #f5f5f5; padding: 10px; margin: 10px 0; border-left: 3px solid #2196f3; }
+        .mcp-section { background: #f0f8ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
-    <h1>VAC FastAPI Streaming Test</h1>
+    <h1>VAC FastAPI Demo with MCP Server</h1>
     
-    <div class="container">
-        <div class="section">
-            <h2>Plain Text Streaming</h2>
+    <div class="tabs">
+        <button class="tab active" onclick="showTab(event, 'streaming')">Streaming Tests</button>
+        <button class="tab" onclick="showTab(event, 'mcp')">MCP Server</button>
+    </div>
+    
+    <div id="streaming" class="tab-content active">
+        <div class="container">
+            <div class="section">
+                <h2>Plain Text Streaming</h2>
             <div class="input-group">
                 <label>Vector Name:</label>
                 <input type="text" id="vectorName1" value="demo" />
@@ -391,9 +490,418 @@ def create_test_page():
             <h3>Response:</h3>
             <div id="response2" class="response"></div>
         </div>
+        </div>
+    </div>
+    
+    <div id="mcp" class="tab-content">
+        <div class="mcp-section">
+            <h2>MCP Server Testing</h2>
+            <p>The MCP (Model Context Protocol) server enables Claude and other AI assistants to interact with this VAC.</p>
+            
+            <div class="container">
+                <div class="section">
+                    <h3>MCP Tools & VACs</h3>
+                    <button onclick="listMCPTools()">List Tools</button>
+                    <button onclick="listAvailableVACs()">List VACs</button>
+                    <button onclick="testDemoTool()">Test Demo Tools</button>
+                    <div style="margin-top: 10px;">
+                        <label>VAC Name for testing:</label>
+                        <input type="text" id="vacTestName" value="demo" style="width: 200px; margin-right: 10px;" />
+                        <button onclick="testVACStream()">Test vac_stream</button>
+                        <button onclick="testVACQuery()">Test vac_query</button>
+                    </div>
+                    <h4>Response:</h4>
+                    <div id="mcpToolsList" class="response"></div>
+                </div>
+                
+                <div class="section">
+                    <h3>Call MCP Tool</h3>
+                    <div class="input-group">
+                        <label>Tool Name:</label>
+                        <input type="text" id="mcpToolName" value="demo_reverse_text" />
+                    </div>
+                    <div class="input-group">
+                        <label>Arguments (JSON):</label>
+                        <textarea id="mcpToolArgs">{
+  "text": "Hello from MCP!"
+}</textarea>
+                    </div>
+                    <button onclick="callMCPTool()">Call Tool</button>
+                    <h4>Response:</h4>
+                    <div id="mcpToolResponse" class="response"></div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px;">
+                <h3>Raw MCP Request</h3>
+                <div class="input-group">
+                    <label>JSON-RPC Request:</label>
+                    <textarea id="mcpRawRequest" style="min-height: 150px;">{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/list"
+}</textarea>
+                </div>
+                <button onclick="sendRawMCPRequest()">Send Raw Request</button>
+                <h4>Response:</h4>
+                <div id="mcpRawResponse" class="response"></div>
+            </div>
+        </div>
     </div>
     
     <script>
+        // Helper function to parse MCP responses (handles both JSON and SSE format)
+        // This mirrors the Python sunholo.mcp.parse_sse_response() function
+        function parseMCPResponse(text) {
+            // Check if it's SSE format
+            if (text.startsWith('event:') || text.startsWith('data:')) {
+                // Parse SSE format - extract JSON from data: line
+                const lines = text.split('\\n');
+                const dataLine = lines.find(line => line.startsWith('data:'));
+                if (dataLine) {
+                    const jsonStr = dataLine.substring(5).trim(); // Remove 'data:' prefix
+                    return JSON.parse(jsonStr);
+                } else {
+                    throw new Error('No data line found in SSE response');
+                }
+            } else {
+                // Try parsing as regular JSON
+                return JSON.parse(text);
+            }
+        }
+        
+        // Tab switching
+        function showTab(event, tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        // MCP Functions
+        async function listMCPTools() {
+            const responseDiv = document.getElementById('mcpToolsList');
+            responseDiv.textContent = 'Loading...';
+            responseDiv.className = 'response';
+            
+            try {
+                const response = await fetch('/mcp/mcp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json, text/event-stream'
+                    },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'tools/list'
+                    })
+                });
+                
+                console.log('MCP Response status:', response.status);
+                console.log('MCP Response headers:', response.headers.get('content-type'));
+                
+                if (!response.ok) {
+                    const text = await response.text();
+                    responseDiv.innerHTML = `<strong>MCP endpoint returned ${response.status}</strong><br><br>`;
+                    responseDiv.innerHTML += `<strong>Response:</strong><pre>${text}</pre>`;
+                    responseDiv.className = 'response error';
+                    return;
+                }
+                
+                // Check content type
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('text/html')) {
+                    const text = await response.text();
+                    responseDiv.innerHTML = `<strong>Error: Got HTML instead of JSON</strong><br><br>`;
+                    responseDiv.innerHTML += `<strong>Response:</strong><pre>${text.substring(0, 500)}...</pre>`;
+                    responseDiv.className = 'response error';
+                    return;
+                }
+                
+                const text = await response.text();
+                console.log('MCP Response text:', text);
+                
+                let data;
+                try {
+                    data = parseMCPResponse(text);
+                } catch (e) {
+                    responseDiv.innerHTML = `<strong>Error parsing response:</strong> ${e.message}<br><br>`;
+                    responseDiv.innerHTML += `<strong>Raw response:</strong><pre>${text}</pre>`;
+                    responseDiv.className = 'response error';
+                    return;
+                }
+                console.log('MCP Response data:', data);
+                responseDiv.innerHTML = '<strong>Available MCP Tools:</strong>\\n\\n';
+                
+                if (data.result && data.result.tools) {
+                    data.result.tools.forEach(tool => {
+                        responseDiv.innerHTML += `<div class="tool-item">
+                            <strong>${tool.name}</strong>
+                            <br>Description: ${tool.description || 'No description'}
+                            <br>Schema: <pre>${JSON.stringify(tool.inputSchema, null, 2)}</pre>
+                        </div>`;
+                    });
+                } else {
+                    responseDiv.textContent = JSON.stringify(data, null, 2);
+                }
+                responseDiv.className = 'response success';
+            } catch (error) {
+                console.error('MCP Error:', error);
+                responseDiv.textContent = 'Error: ' + error.message + '\\n\\nCheck browser console for details.';
+                responseDiv.className = 'response error';
+            }
+        }
+        
+        async function testDemoTool() {
+            const responseDiv = document.getElementById('mcpToolsList');
+            responseDiv.textContent = 'Testing demo tools...';
+            responseDiv.className = 'response';
+            
+            try {
+                // Test the simple demo tools
+                const response = await fetch('/mcp/mcp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json, text/event-stream'
+                    },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'tools/call',
+                        params: {
+                            name: 'demo_reverse_text',
+                            arguments: {
+                                text: 'Hello MCP!'
+                            }
+                        }
+                    })
+                });
+                
+                const text = await response.text();
+                const data = parseMCPResponse(text);
+                responseDiv.innerHTML = '<strong>Demo Tool Test Results:</strong>\\n\\n';
+                responseDiv.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                responseDiv.className = 'response success';
+            } catch (error) {
+                responseDiv.textContent = 'Error: ' + error.message;
+                responseDiv.className = 'response error';
+            }
+        }
+        
+        async function listAvailableVACs() {
+            const responseDiv = document.getElementById('mcpToolsList');
+            responseDiv.textContent = 'Listing available VACs...';
+            responseDiv.className = 'response';
+            
+            try {
+                const response = await fetch('/mcp/mcp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json, text/event-stream'
+                    },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'tools/call',
+                        params: {
+                            name: 'list_available_vacs',
+                            arguments: {}
+                        }
+                    })
+                });
+                
+                const text = await response.text();
+                const data = parseMCPResponse(text);
+                responseDiv.innerHTML = '<strong>Available VAC Configurations:</strong>\\n\\n';
+                
+                if (data.result && data.result.content && data.result.content[0]) {
+                    const vacs = JSON.parse(data.result.content[0].text || '[]');
+                    if (Array.isArray(vacs)) {
+                        responseDiv.innerHTML += '<ul>';
+                        vacs.forEach(vac => {
+                            responseDiv.innerHTML += `<li><strong>${vac}</strong> <button onclick="document.getElementById('vacTestName').value='${vac}'">Use for testing</button></li>`;
+                        });
+                        responseDiv.innerHTML += '</ul>';
+                    } else {
+                        responseDiv.innerHTML += `<pre>${data.result.content[0].text}</pre>`;
+                    }
+                }
+                
+                responseDiv.innerHTML += '\\n<strong>Full Response:</strong>\\n';
+                responseDiv.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                responseDiv.className = 'response success';
+            } catch (error) {
+                responseDiv.textContent = 'Error: ' + error.message;
+                responseDiv.className = 'response error';
+            }
+        }
+        
+        async function testVACStream() {
+            const responseDiv = document.getElementById('mcpToolsList');
+            const vacName = document.getElementById('vacTestName').value || 'demo';
+            responseDiv.textContent = `Testing vac_stream tool with VAC: ${vacName}...`;
+            responseDiv.className = 'response';
+            
+            try {
+                const response = await fetch('/mcp/mcp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json, text/event-stream'
+                    },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'tools/call',
+                        params: {
+                            name: 'vac_stream',
+                            arguments: {
+                                vector_name: vacName,
+                                user_input: 'Hello from vac_stream test!',
+                                chat_history: []
+                            }
+                        }
+                    })
+                });
+                
+                const text = await response.text();
+                const data = parseMCPResponse(text);
+                responseDiv.innerHTML = '<strong>vac_stream Tool Response:</strong>\\n\\n';
+                
+                // Extract the actual response from the MCP result
+                if (data.result && data.result.content && data.result.content[0]) {
+                    responseDiv.innerHTML += `<div class="tool-item">${data.result.content[0].text}</div>`;
+                }
+                responseDiv.innerHTML += '\\n<strong>Full Response:</strong>\\n';
+                responseDiv.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                responseDiv.className = 'response success';
+            } catch (error) {
+                responseDiv.textContent = 'Error: ' + error.message;
+                responseDiv.className = 'response error';
+            }
+        }
+        
+        async function testVACQuery() {
+            const responseDiv = document.getElementById('mcpToolsList');
+            const vacName = document.getElementById('vacTestName').value || 'demo';
+            responseDiv.textContent = `Testing vac_query tool with VAC: ${vacName}...`;
+            responseDiv.className = 'response';
+            
+            try {
+                const response = await fetch('/mcp/mcp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json, text/event-stream'
+                    },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'tools/call',
+                        params: {
+                            name: 'vac_query',
+                            arguments: {
+                                vector_name: vacName,
+                                user_input: 'What can you do?',
+                                chat_history: []
+                            }
+                        }
+                    })
+                });
+                
+                const text = await response.text();
+                const data = parseMCPResponse(text);
+                responseDiv.innerHTML = '<strong>vac_query Tool Response:</strong>\\n\\n';
+                
+                // Extract the actual response from the MCP result
+                if (data.result && data.result.content && data.result.content[0]) {
+                    responseDiv.innerHTML += `<div class="tool-item">${data.result.content[0].text}</div>`;
+                }
+                responseDiv.innerHTML += '\\n<strong>Full Response:</strong>\\n';
+                responseDiv.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                responseDiv.className = 'response success';
+            } catch (error) {
+                responseDiv.textContent = 'Error: ' + error.message;
+                responseDiv.className = 'response error';
+            }
+        }
+        
+        async function callMCPTool() {
+            const responseDiv = document.getElementById('mcpToolResponse');
+            const toolName = document.getElementById('mcpToolName').value;
+            const toolArgs = document.getElementById('mcpToolArgs').value;
+            
+            responseDiv.textContent = 'Calling tool...';
+            responseDiv.className = 'response';
+            
+            try {
+                const args = JSON.parse(toolArgs);
+                const response = await fetch('/mcp/mcp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json, text/event-stream'
+                    },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'tools/call',
+                        params: {
+                            name: toolName,
+                            arguments: args
+                        }
+                    })
+                });
+                
+                const text = await response.text();
+                const data = parseMCPResponse(text);
+                responseDiv.innerHTML = `<strong>Tool Response:</strong>\\n\\n<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                responseDiv.className = 'response success';
+            } catch (error) {
+                responseDiv.textContent = 'Error: ' + error.message;
+                responseDiv.className = 'response error';
+            }
+        }
+        
+        async function sendRawMCPRequest() {
+            const responseDiv = document.getElementById('mcpRawResponse');
+            const requestText = document.getElementById('mcpRawRequest').value;
+            
+            responseDiv.textContent = 'Sending request...';
+            responseDiv.className = 'response';
+            
+            try {
+                const requestData = JSON.parse(requestText);
+                const response = await fetch('/mcp/mcp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json, text/event-stream'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const text = await response.text();
+                const data = parseMCPResponse(text);
+                responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                responseDiv.className = 'response success';
+            } catch (error) {
+                responseDiv.textContent = 'Error: ' + error.message;
+                responseDiv.className = 'response error';
+            }
+        }
+        
+        // Streaming Functions
         async function testPlainStreaming() {
             const responseDiv = document.getElementById('response1');
             const vectorName = document.getElementById('vectorName1').value;
@@ -556,7 +1064,7 @@ def main():
     
     # Print startup information
     print("\n" + "="*60)
-    print("VAC Routes FastAPI Demo Server")
+    print("VAC Routes FastAPI Demo Server with MCP")
     print("="*60)
     print(f"Interpreter Type: {'SYNC' if args.sync else 'ASYNC'}")
     print(f"Server URL: http://{args.host}:{args.port}")
@@ -564,6 +1072,7 @@ def main():
     print(f"  - Interactive Test Page: http://localhost:{args.port}/test")
     print(f"  - API Documentation: http://localhost:{args.port}/docs")
     print(f"  - Server Info: http://localhost:{args.port}/info")
+    print(f"  - MCP Server: http://localhost:{args.port}/mcp")
     print("\nTest Commands:")
     print("  # Plain text streaming:")
     print(f'  curl -X POST http://localhost:{args.port}/vac/streaming/demo \\')
@@ -573,6 +1082,10 @@ def main():
     print(f'  curl -X POST http://localhost:{args.port}/vac/streaming/demo/sse \\')
     print('    -H "Content-Type: application/json" \\')
     print('    -d \'{"user_input": "Tell me a story"}\'')
+    print("\n  # MCP tools list:")
+    print(f'  curl -X POST http://localhost:{args.port}/mcp/mcp \\')
+    print('    -H "Content-Type: application/json" \\')
+    print('    -d \'{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}\'')
     print("\n" + "="*60 + "\n")
     
     # Run the server

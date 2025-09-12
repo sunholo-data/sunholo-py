@@ -534,44 +534,64 @@ class VACRoutesFastAPI:
             async def app_lifespan(app: FastAPI):
                 yield
         
-        # Create temporary app to get MCP app (always enabled for this method)
-        temp_app = FastAPI()
-        temp_routes = VACRoutesFastAPI(
-            temp_app,
-            stream_interpreter=stream_interpreter,
-            vac_interpreter=vac_interpreter,
-            enable_mcp_server=True,  # Always enabled for create_app_with_mcp
-            **kwargs
-        )
-        
-        mcp_app = None
-        if temp_routes.vac_mcp_server:
-            mcp_app = temp_routes.vac_mcp_server.get_http_app()
-        
-        # Create combined lifespan
-        @asynccontextmanager  
-        async def combined_lifespan(app: FastAPI):
-            async with app_lifespan(app):
-                if mcp_app:
+        # Import here to avoid circular imports
+        if VACMCPServer:
+            from fastmcp import FastMCP
+            
+            # Create MCP server directly to get its lifespan
+            mcp_server = FastMCP("sunholo-vac-fastapi-server")
+            
+            # Register built-in VAC tools directly
+            from sunholo.mcp.vac_tools import register_vac_tools
+            register_vac_tools(mcp_server, None)
+            
+            # Get the MCP app with path="" so when mounted at /mcp it's accessible at /mcp
+            mcp_app = mcp_server.http_app(path="", stateless_http=True)
+            
+            # Create combined lifespan
+            @asynccontextmanager  
+            async def combined_lifespan(app: FastAPI):
+                async with app_lifespan(app):
                     async with mcp_app.lifespan(app):
                         yield
-                else:
-                    yield
-        
-        # Create the actual app with combined lifespan
-        app = FastAPI(
-            title=title,
-            lifespan=combined_lifespan if mcp_app else app_lifespan
-        )
-        
-        # Initialize VAC routes (MCP always enabled for this method)
-        vac_routes = VACRoutesFastAPI(
-            app,
-            stream_interpreter=stream_interpreter,
-            vac_interpreter=vac_interpreter,
-            enable_mcp_server=True,  # Always enabled for create_app_with_mcp
-            **kwargs
-        )
+            
+            # Create the actual app with combined lifespan
+            app = FastAPI(
+                title=title,
+                lifespan=combined_lifespan
+            )
+            
+            # Mount the MCP app at /mcp
+            app.mount("/mcp", mcp_app)
+            
+            # Now create VAC routes WITHOUT MCP (since we already mounted it)
+            vac_routes = VACRoutesFastAPI(
+                app,
+                stream_interpreter=stream_interpreter,
+                vac_interpreter=vac_interpreter,
+                enable_mcp_server=False,  # Don't enable again since we manually mounted
+                **kwargs
+            )
+            
+            # Store reference to MCP server for tool registration
+            vac_routes.vac_mcp_server = type('MockMCPServer', (), {
+                'add_tool': lambda self, func, name=None, desc=None: mcp_server.tool(func) if name is None else mcp_server.tool(name=name)(func),
+                'server': mcp_server
+            })()
+        else:
+            # No MCP support available
+            app = FastAPI(
+                title=title,
+                lifespan=app_lifespan
+            )
+            
+            vac_routes = VACRoutesFastAPI(
+                app,
+                stream_interpreter=stream_interpreter,
+                vac_interpreter=vac_interpreter,
+                enable_mcp_server=False,
+                **kwargs
+            )
         
         return app, vac_routes
     
@@ -682,7 +702,8 @@ class VACRoutesFastAPI:
                 # so we can't easily check if it's configured. The error will be
                 # caught below if lifespan is missing.
                 
-                self.app.mount("/mcp", mcp_app)
+                # Mount at root - the MCP app already has /mcp path configured
+                self.app.mount("", mcp_app)
                 log.info("✅ MCP server mounted at /mcp endpoint")
                 
             except RuntimeError as e:

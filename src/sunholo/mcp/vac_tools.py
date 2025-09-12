@@ -54,12 +54,9 @@ def get_vac_config(vector_name: str = None) -> 'ConfigManager':
         
     default_vac = os.getenv("DEFAULT_VAC_NAME", "demo")
     vac_name = vector_name or default_vac
-    vac_config_folder = os.getenv("VAC_CONFIG_FOLDER")
     
-    if vac_config_folder:
-        return ConfigManager(vac_name, config_folder=vac_config_folder)
-    else:
-        return ConfigManager(vac_name)
+    # ConfigManager uses VAC_CONFIG_FOLDER env var automatically
+    return ConfigManager(vac_name)
 
 
 async def call_vac_async(question: str, vector_name: str, chat_history: List[Dict[str, str]] = None) -> str:
