@@ -44,6 +44,7 @@ import sys
 import time
 from typing import Any, List, Optional
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 import uvicorn
@@ -262,12 +263,6 @@ def create_demo_app(use_async: bool = True):
     Args:
         use_async: If True, use async interpreters; if False, use sync interpreters
     """
-    app = FastAPI(
-        title="VAC Routes FastAPI Demo",
-        description="Demonstration of VACRoutesFastAPI with streaming support",
-        version="1.0.0"
-    )
-    
     # Choose interpreters based on use_async flag
     if use_async:
         stream_interpreter = demo_async_stream_interpreter
@@ -285,15 +280,29 @@ def create_demo_app(use_async: bool = True):
         vac_interpreter = sync_vac_interpreter
         logger.info("Using SYNC interpreters")
     
-    # Initialize VACRoutesFastAPI
-    vac_routes = VACRoutesFastAPI(
-        app,
+    # Define app lifespan (could include startup/shutdown logic)
+    @asynccontextmanager
+    async def app_lifespan(app: FastAPI):
+        # Startup
+        logger.info("Starting up demo app...")
+        yield
+        # Shutdown
+        logger.info("Shutting down demo app...")
+    
+    # Use the simplified helper method for automatic lifespan management
+    # MCP server is automatically enabled when using create_app_with_mcp
+    app, vac_routes = VACRoutesFastAPI.create_app_with_mcp(
+        title="VAC Routes FastAPI Demo",
         stream_interpreter=stream_interpreter,
         vac_interpreter=vac_interpreter,
-        enable_mcp_server=True,  # Enable MCP server for Claude Code
-        enable_a2a_agent=False,   # Disable A2A for this demo
-        add_langfuse_eval=False   # Disable Langfuse for this demo
+        app_lifespan=app_lifespan,  # Optional: include your app's lifespan
+        enable_a2a_agent=False,      # Disable A2A for this demo
+        add_langfuse_eval=False      # Disable Langfuse for this demo
     )
+    
+    # Add description to the app
+    app.description = "Demonstration of VACRoutesFastAPI with streaming support"
+    app.version = "1.0.0"
     
     # Add a custom info endpoint
     @app.get("/info")

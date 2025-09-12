@@ -241,9 +241,10 @@ def register_vac_tools(server: 'FastMCP', registry: 'MCPToolRegistry' = None):
     
     # Register tools in registry if provided
     if registry:
-        registry.register_tool("vac_stream", vac_stream)
-        registry.register_tool("vac_query", vac_query) 
-        registry.register_tool("list_available_vacs", list_available_vacs)
-        registry.register_tool("get_vac_info", get_vac_info)
+        # Extract the underlying function from FunctionTool objects
+        registry.register_tool("vac_stream", vac_stream.fn if hasattr(vac_stream, 'fn') else vac_stream)
+        registry.register_tool("vac_query", vac_query.fn if hasattr(vac_query, 'fn') else vac_query) 
+        registry.register_tool("list_available_vacs", list_available_vacs.fn if hasattr(list_available_vacs, 'fn') else list_available_vacs)
+        registry.register_tool("get_vac_info", get_vac_info.fn if hasattr(get_vac_info, 'fn') else get_vac_info)
     
     log.info("Registered built-in VAC tools with MCP server")

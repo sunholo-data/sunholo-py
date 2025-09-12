@@ -73,7 +73,7 @@ class VACMCPServer:
     
     def get_http_app(self):
         """Get the HTTP app for mounting in FastAPI."""
-        return self.server.get_app()
+        return self.server.http_app()
     
     def add_tool(self, func: Callable, name: str = None, description: str = None):
         """

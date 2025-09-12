@@ -113,30 +113,91 @@ class VACRoutesFastAPI:
     
     ## Basic Usage
     
-    ```python
-    from fastapi import FastAPI
-    from sunholo.agents.fastapi import VACRoutesFastAPI
+    ### Simplified Setup (Recommended)
     
-    app = FastAPI()
+    Use the helper method for automatic lifespan management:
+    
+    ```python
+    from sunholo.agents.fastapi import VACRoutesFastAPI
     
     async def my_stream_interpreter(question, vector_name, chat_history, callback, **kwargs):
         # Your streaming VAC logic here
         # Use callback.async_on_llm_new_token(token) for streaming
-        # Return final result with sources
         return {"answer": "Response", "sources": []}
     
-    # Create VAC routes with MCP server enabled
+    # Single call sets up everything with MCP server and proper lifespan management
+    app, vac_routes = VACRoutesFastAPI.create_app_with_mcp(
+        title="My VAC Application",
+        stream_interpreter=my_stream_interpreter
+        # MCP server is automatically enabled when using this method
+    )
+    
+    # Add custom endpoints if needed
+    @app.get("/custom")
+    async def custom_endpoint():
+        return {"message": "Hello"}
+    
+    # Run the app
+    if __name__ == "__main__":
+        import uvicorn
+        uvicorn.run(app, host="0.0.0.0", port=8000)
+    ```
+    
+    ### Manual Setup (Advanced)
+    
+    For more control over lifespan management:
+    
+    ```python
+    from contextlib import asynccontextmanager
+    from fastapi import FastAPI
+    from sunholo.agents.fastapi import VACRoutesFastAPI
+    
+    async def my_stream_interpreter(question, vector_name, chat_history, callback, **kwargs):
+        return {"answer": "Response", "sources": []}
+    
+    # Define your app's lifespan
+    @asynccontextmanager
+    async def app_lifespan(app: FastAPI):
+        print("Starting up...")
+        yield
+        print("Shutting down...")
+    
+    # Create temp app to get MCP lifespan
+    temp_app = FastAPI()
+    vac_routes_temp = VACRoutesFastAPI(
+        temp_app,
+        stream_interpreter=my_stream_interpreter,
+        enable_mcp_server=True
+    )
+    
+    # Get MCP lifespan
+    mcp_lifespan = vac_routes_temp.get_mcp_lifespan()
+    
+    # Combine lifespans
+    @asynccontextmanager
+    async def combined_lifespan(app: FastAPI):
+        async with app_lifespan(app):
+            if mcp_lifespan:
+                async with mcp_lifespan(app):
+                    yield
+            else:
+                yield
+    
+    # Create app with combined lifespan
+    app = FastAPI(title="My VAC Application", lifespan=combined_lifespan)
+    
+    # Initialize VAC routes
     vac_routes = VACRoutesFastAPI(
         app=app,
         stream_interpreter=my_stream_interpreter,
-        enable_mcp_server=True  # Enable MCP server for Claude Desktop/Code
+        enable_mcp_server=True
     )
-    
-    # Your FastAPI app now includes:
-    # - All VAC endpoints
-    # - MCP server at /mcp (for Claude Desktop/Code to connect)
-    # - Built-in VAC tools: vac_stream, vac_query, list_available_vacs, get_vac_info
     ```
+    
+    Your FastAPI app now includes:
+    - All VAC endpoints  
+    - MCP server at /mcp (for Claude Desktop/Code to connect)
+    - Built-in VAC tools: vac_stream, vac_query, list_available_vacs, get_vac_info
     
     ## Adding Custom MCP Tools
     
@@ -416,6 +477,138 @@ class VACRoutesFastAPI:
         
         self.register_routes()
     
+    @staticmethod
+    def create_app_with_mcp(
+        title: str = "VAC Application",
+        stream_interpreter: Optional[callable] = None,
+        vac_interpreter: Optional[callable] = None,
+        app_lifespan: Optional[callable] = None,
+        **kwargs
+    ) -> tuple[FastAPI, 'VACRoutesFastAPI']:
+        """
+        Helper method to create a FastAPI app with proper MCP lifespan management.
+        
+        This method simplifies the setup process by handling the lifespan combination
+        automatically, avoiding the need for the double initialization pattern.
+        MCP server is automatically enabled when using this method.
+        
+        Args:
+            title: Title for the FastAPI app
+            stream_interpreter: Streaming interpreter function
+            vac_interpreter: Non-streaming interpreter function  
+            app_lifespan: Optional app lifespan context manager
+            **kwargs: Additional arguments passed to VACRoutesFastAPI (except enable_mcp_server)
+            
+        Returns:
+            Tuple of (FastAPI app, VACRoutesFastAPI instance)
+            
+        Example:
+            ```python
+            from sunholo.agents.fastapi import VACRoutesFastAPI
+            
+            async def my_interpreter(question, vector_name, chat_history, callback, **kwargs):
+                # Your logic here
+                return {"answer": "response", "sources": []}
+            
+            # Single call to set up everything (MCP is automatically enabled)
+            app, vac_routes = VACRoutesFastAPI.create_app_with_mcp(
+                title="My VAC App",
+                stream_interpreter=my_interpreter
+            )
+            
+            # Add custom endpoints
+            @app.get("/custom")
+            async def custom_endpoint():
+                return {"message": "Custom endpoint"}
+            
+            if __name__ == "__main__":
+                import uvicorn
+                uvicorn.run(app, host="0.0.0.0", port=8000)
+            ```
+        """
+        from contextlib import asynccontextmanager
+        
+        # Default app lifespan if not provided
+        if app_lifespan is None:
+            @asynccontextmanager
+            async def app_lifespan(app: FastAPI):
+                yield
+        
+        # Create temporary app to get MCP app (always enabled for this method)
+        temp_app = FastAPI()
+        temp_routes = VACRoutesFastAPI(
+            temp_app,
+            stream_interpreter=stream_interpreter,
+            vac_interpreter=vac_interpreter,
+            enable_mcp_server=True,  # Always enabled for create_app_with_mcp
+            **kwargs
+        )
+        
+        mcp_app = None
+        if temp_routes.vac_mcp_server:
+            mcp_app = temp_routes.vac_mcp_server.get_http_app()
+        
+        # Create combined lifespan
+        @asynccontextmanager  
+        async def combined_lifespan(app: FastAPI):
+            async with app_lifespan(app):
+                if mcp_app:
+                    async with mcp_app.lifespan(app):
+                        yield
+                else:
+                    yield
+        
+        # Create the actual app with combined lifespan
+        app = FastAPI(
+            title=title,
+            lifespan=combined_lifespan if mcp_app else app_lifespan
+        )
+        
+        # Initialize VAC routes (MCP always enabled for this method)
+        vac_routes = VACRoutesFastAPI(
+            app,
+            stream_interpreter=stream_interpreter,
+            vac_interpreter=vac_interpreter,
+            enable_mcp_server=True,  # Always enabled for create_app_with_mcp
+            **kwargs
+        )
+        
+        return app, vac_routes
+    
+    def get_mcp_lifespan(self):
+        """
+        Get the MCP app's lifespan for manual lifespan management.
+        
+        Returns:
+            The MCP app's lifespan if MCP server is enabled, None otherwise.
+            
+        Example:
+            ```python
+            from contextlib import asynccontextmanager
+            
+            # Create temp app to get MCP lifespan
+            temp_app = FastAPI()
+            vac_routes = VACRoutesFastAPI(temp_app, ..., enable_mcp_server=True)
+            mcp_lifespan = vac_routes.get_mcp_lifespan()
+            
+            # Combine with your app's lifespan
+            @asynccontextmanager
+            async def combined_lifespan(app: FastAPI):
+                async with my_app_lifespan(app):
+                    if mcp_lifespan:
+                        async with mcp_lifespan(app):
+                            yield
+                    else:
+                        yield
+            
+            app = FastAPI(lifespan=combined_lifespan)
+            ```
+        """
+        if self.vac_mcp_server:
+            mcp_app = self.vac_mcp_server.get_http_app()
+            return mcp_app.lifespan
+        return None
+    
     async def vac_interpreter_default(self, question: str, vector_name: str, chat_history=None, **kwargs):
         """Default VAC interpreter that uses the stream interpreter without streaming."""
         class NoOpCallback:
@@ -484,11 +677,34 @@ class VACRoutesFastAPI:
         if self.enable_mcp_server and self.vac_mcp_server:
             try:
                 mcp_app = self.vac_mcp_server.get_http_app()
+                
+                # Note: FastAPI doesn't expose lifespan as a public attribute,
+                # so we can't easily check if it's configured. The error will be
+                # caught below if lifespan is missing.
+                
                 self.app.mount("/mcp", mcp_app)
-                log.info("MCP server mounted at /mcp endpoint")
+                log.info("✅ MCP server mounted at /mcp endpoint")
+                
+            except RuntimeError as e:
+                if "Task group is not initialized" in str(e):
+                    error_msg = (
+                        "MCP server initialization failed: Lifespan not configured properly.\n"
+                        "The FastAPI app must be created with the MCP lifespan.\n\n"
+                        "Quick fix: Use the helper method:\n"
+                        "  app, vac_routes = VACRoutesFastAPI.create_app_with_mcp(\n"
+                        "      stream_interpreter=your_interpreter,\n"
+                        "      enable_mcp_server=True\n"
+                        "  )\n\n"
+                        "Or manually configure the lifespan - see documentation for details."
+                    )
+                    log.error(error_msg)
+                    raise RuntimeError(error_msg) from e
+                else:
+                    log.error(f"Failed to mount MCP server: {e}")
+                    raise RuntimeError(f"MCP server initialization failed: {e}") from e
             except Exception as e:
                 log.error(f"Failed to mount MCP server: {e}")
-                raise RuntimeError(f"MCP server initialization failed: {e}")
+                raise RuntimeError(f"MCP server initialization failed: {e}") from e
         
         # A2A agent endpoints
         if self.enable_a2a_agent:
