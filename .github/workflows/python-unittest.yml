@@ -3,12 +3,12 @@ name: Test Python Package
 on:
   push:
     paths:
-      - 'sunholo/**'
+      - 'src/sunholo/**'
       - 'setup.py'
       - 'tests/**'
   pull_request:
     paths:
-      - 'sunholo/**'
+      - 'src/sunholo/**'
       - 'setup.py'
       - 'tests/**'
 
