@@ -12,22 +12,36 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+from __future__ import annotations
+
 import json
 import traceback
 import datetime
 import uuid
 import inspect
 import asyncio
-from typing import Dict, List, Optional, Callable, Any
+from typing import Dict, List, Optional, Callable, Any, TYPE_CHECKING
 from functools import partial
+
+if TYPE_CHECKING:
+    from fastapi import FastAPI, Request, Response, HTTPException
+    from fastapi.responses import StreamingResponse, JSONResponse
+    from pydantic import BaseModel
 
 try:
     from fastapi import FastAPI, Request, Response, HTTPException
     from fastapi.responses import StreamingResponse, JSONResponse
     from pydantic import BaseModel
+    FASTAPI_AVAILABLE = True
 except ImportError:
     FastAPI = None
+    Request = None
+    Response = None
+    HTTPException = None
+    StreamingResponse = None
+    JSONResponse = None
     BaseModel = object
+    FASTAPI_AVAILABLE = False
 
 from ..chat_history import extract_chat_history_with_cache, extract_chat_history_async_cached
 from ...qna.parsers import parse_output
