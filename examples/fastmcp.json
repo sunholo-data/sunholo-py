@@ -1,0 +1,22 @@
+{
+  "name": "sunholo-vac",
+  "description": "Sunholo VAC (Virtual Agent Computer) MCP Server",
+  "version": "1.0.0",
+  "server": "sunholo_mcp_server.py",
+  "dependencies": [
+    "sunholo[anthropic]"
+  ],
+  "python": ">=3.11",
+  "environment": {
+    "DEFAULT_VAC_NAME": "demo",
+    "VAC_CONFIG_FOLDER": "./config"
+  },
+  "install": {
+    "claude-desktop": {
+      "command": "fastmcp install claude-desktop sunholo_mcp_server.py --with sunholo[anthropic]"
+    },
+    "claude-code": {
+      "command": "fastmcp install claude-code sunholo_mcp_server.py --with sunholo[anthropic]" 
+    }
+  }
+}

@@ -58,7 +58,7 @@ except ImportError:
     MCPClientManager = None
 
 try:
-    from ...mcp.vac_mcp_server import VACMCPServer
+    from ...mcp.vac_mcp_server_fastmcp import VACMCPServer
 except ImportError:
     VACMCPServer = None
 
@@ -81,31 +81,205 @@ class VACRequest(BaseModel):
 
 class VACRoutesFastAPI:
     """
-    FastAPI implementation of VAC routes with streaming support.
+    FastAPI implementation of VAC routes with streaming support and extensible MCP integration.
     
-    This class provides a FastAPI-compatible version of the Flask VACRoutes,
-    with proper async streaming support using callbacks.
+    This class provides a comprehensive FastAPI application with:
+    - VAC (Virtual Agent Computer) endpoints for AI chat and streaming
+    - OpenAI-compatible API endpoints
+    - Extensible MCP (Model Context Protocol) server integration for Claude Desktop/Code
+    - MCP client support for connecting to external MCP servers
+    - A2A (Agent-to-Agent) protocol support
+    - Server-Sent Events (SSE) streaming capabilities
     
-    Usage Example:
+    ## Key Features
+    
+    ### 1. VAC Endpoints
+    - `/vac/{vector_name}` - Non-streaming VAC responses
+    - `/vac/streaming/{vector_name}` - Plain text streaming responses
+    - `/vac/streaming/{vector_name}/sse` - Server-Sent Events streaming
+    
+    ### 2. OpenAI Compatible API
+    - `/openai/v1/chat/completions` - OpenAI-compatible chat completions
+    - Supports both streaming and non-streaming modes
+    
+    ### 3. MCP Integration
+    - **MCP Server**: Expose your VAC as MCP tools for Claude Desktop/Code
+    - **MCP Client**: Connect to external MCP servers and use their tools
+    - **Custom Tools**: Easily add your own MCP tools using decorators
+    
+    ### 4. A2A Agent Protocol
+    - Agent discovery and task execution
+    - Compatible with multi-agent workflows
+    
+    ## Basic Usage
+    
     ```python
     from fastapi import FastAPI
     from sunholo.agents.fastapi import VACRoutesFastAPI
     
     app = FastAPI()
     
-    async def stream_interpreter(question, vector_name, chat_history, callback, **kwargs):
-        # Implement your streaming logic with callbacks
-        ...
+    async def my_stream_interpreter(question, vector_name, chat_history, callback, **kwargs):
+        # Your streaming VAC logic here
+        # Use callback.async_on_llm_new_token(token) for streaming
+        # Return final result with sources
+        return {"answer": "Response", "sources": []}
     
-    async def vac_interpreter(question, vector_name, chat_history, **kwargs):
-        # Implement your static VAC logic
-        ...
+    # Create VAC routes with MCP server enabled
+    vac_routes = VACRoutesFastAPI(
+        app=app,
+        stream_interpreter=my_stream_interpreter,
+        enable_mcp_server=True  # Enable MCP server for Claude Desktop/Code
+    )
+    
+    # Your FastAPI app now includes:
+    # - All VAC endpoints
+    # - MCP server at /mcp (for Claude Desktop/Code to connect)
+    # - Built-in VAC tools: vac_stream, vac_query, list_available_vacs, get_vac_info
+    ```
+    
+    ## Adding Custom MCP Tools
+    
+    ### Method 1: Using Decorators
+    ```python
+    vac_routes = VACRoutesFastAPI(app, stream_interpreter, enable_mcp_server=True)
+    
+    @vac_routes.add_mcp_tool
+    async def get_weather(city: str) -> str:
+        '''Get weather information for a city.'''
+        # Your weather API logic
+        return f"Weather in {city}: Sunny, 22°C"
+    
+    @vac_routes.add_mcp_tool("custom_search", "Search our database")
+    async def search_database(query: str, limit: int = 10) -> list:
+        '''Search internal database with custom name and description.'''
+        # Your database search logic
+        return [{"result": f"Found: {query}"}]
+    ```
+    
+    ### Method 2: Programmatic Registration
+    ```python
+    async def my_business_tool(param: str) -> dict:
+        return {"processed": param}
+    
+    # Add tool with custom name and description
+    vac_routes.add_mcp_tool(
+        my_business_tool, 
+        "process_business_data", 
+        "Process business data with our custom logic"
+    )
+    ```
+    
+    ### Method 3: Advanced MCP Server Access
+    ```python
+    # Get direct access to MCP server for advanced customization
+    mcp_server = vac_routes.get_mcp_server()
+    
+    @mcp_server.add_tool
+    async def advanced_tool(complex_param: dict) -> str:
+        return f"Advanced processing: {complex_param}"
+    
+    # List all registered tools
+    print("Available MCP tools:", vac_routes.list_mcp_tools())
+    ```
+    
+    ## MCP Client Integration
+    
+    Connect to external MCP servers and use their tools:
+    
+    ```python
+    mcp_servers = [
+        {
+            "name": "filesystem-server",
+            "command": "npx",
+            "args": ["@modelcontextprotocol/server-filesystem", "/path/to/files"]
+        }
+    ]
     
     vac_routes = VACRoutesFastAPI(
-        app, 
-        stream_interpreter, 
-        vac_interpreter,
-        enable_mcp_server=True
+        app, stream_interpreter,
+        mcp_servers=mcp_servers,  # Connect to external MCP servers
+        enable_mcp_server=True    # Also expose our own MCP server
+    )
+    
+    # External MCP tools available at:
+    # GET /mcp/tools - List all external tools
+    # POST /mcp/call - Call external MCP tools
+    ```
+    
+    ## Claude Desktop Integration
+    
+    ### Option 1: Remote Integration (Recommended for Development)
+    ```python
+    # Run your FastAPI app
+    uvicorn.run(vac_routes.app, host="0.0.0.0", port=8000)
+    
+    # Configure Claude Desktop (Settings > Connectors > Add custom connector):
+    # URL: http://localhost:8000/mcp
+    ```
+    
+    ### Option 2: Local Integration
+    Create a standalone script for Claude Desktop:
+    ```python
+    # claude_mcp_server.py
+    from sunholo.mcp.extensible_mcp_server import create_mcp_server
+    
+    server = create_mcp_server("my-app", include_vac_tools=True)
+    
+    @server.add_tool
+    async def my_app_tool(param: str) -> str:
+        return f"My app processed: {param}"
+    
+    if __name__ == "__main__":
+        server.run()
+    
+    # Install: fastmcp install claude-desktop claude_mcp_server.py --with sunholo[anthropic]
+    ```
+    
+    ## Available Built-in MCP Tools
+    
+    When `enable_mcp_server=True`, these tools are automatically available:
+    
+    - **`vac_stream`**: Stream responses from any configured VAC
+    - **`vac_query`**: Query VACs with non-streaming responses
+    - **`list_available_vacs`**: List all available VAC configurations
+    - **`get_vac_info`**: Get detailed information about a specific VAC
+    
+    ## Error Handling and Best Practices
+    
+    ```python
+    @vac_routes.add_mcp_tool
+    async def robust_tool(user_input: str) -> str:
+        '''Example of robust tool implementation.'''
+        try:
+            # Validate input
+            if not user_input or len(user_input) > 1000:
+                return "Error: Invalid input length"
+            
+            # Your business logic
+            result = await process_user_input(user_input)
+            
+            return f"Processed: {result}"
+            
+        except Exception as e:
+            # Log error and return user-friendly message
+            log.error(f"Tool error: {e}")
+            return f"Error processing request: {str(e)}"
+    ```
+    
+    ## Configuration Options
+    
+    ```python
+    vac_routes = VACRoutesFastAPI(
+        app=app,
+        stream_interpreter=my_stream_func,
+        vac_interpreter=my_vac_func,           # Optional non-streaming function
+        additional_routes=[],                   # Custom FastAPI routes
+        mcp_servers=[],                        # External MCP servers to connect to
+        add_langfuse_eval=True,                # Enable Langfuse evaluation
+        enable_mcp_server=True,                # Enable MCP server for Claude
+        enable_a2a_agent=False,                # Enable A2A agent protocol
+        a2a_vac_names=None                     # VACs available for A2A
     )
     ```
     """
@@ -123,18 +297,86 @@ class VACRoutesFastAPI:
         a2a_vac_names: Optional[List[str]] = None
     ):
         """
-        Initialize FastAPI VAC routes.
+        Initialize FastAPI VAC routes with comprehensive AI and MCP integration.
         
         Args:
-            app: FastAPI application instance
-            stream_interpreter: Async or sync function for streaming responses
-            vac_interpreter: Optional function for non-streaming responses
-            additional_routes: List of additional routes to register
-            mcp_servers: List of MCP server configurations
-            add_langfuse_eval: Whether to add Langfuse evaluation
-            enable_mcp_server: Whether to enable MCP server endpoint
-            enable_a2a_agent: Whether to enable A2A agent endpoints
-            a2a_vac_names: List of VAC names for A2A agent
+            app: FastAPI application instance to register routes on
+            stream_interpreter: Function for streaming VAC responses. Can be async or sync.
+                               Called with (question, vector_name, chat_history, callback, **kwargs)
+            vac_interpreter: Optional function for non-streaming VAC responses. If not provided,
+                           will use stream_interpreter without streaming callbacks.
+            additional_routes: List of custom route dictionaries to register:
+                             [{"path": "/custom", "handler": func, "methods": ["GET"]}]
+            mcp_servers: List of external MCP server configurations to connect to:
+                       [{"name": "server-name", "command": "python", "args": ["server.py"]}]
+            add_langfuse_eval: Whether to enable Langfuse evaluation and tracing
+            enable_mcp_server: Whether to enable the MCP server at /mcp endpoint for 
+                             Claude Desktop/Code integration. When True, automatically
+                             includes built-in VAC tools and supports custom tool registration.
+            enable_a2a_agent: Whether to enable A2A (Agent-to-Agent) protocol endpoints
+            a2a_vac_names: List of VAC names available for A2A agent interactions
+        
+        ## Stream Interpreter Function
+        
+        Your stream_interpreter should handle streaming responses:
+        
+        ```python
+        async def my_stream_interpreter(question: str, vector_name: str, 
+                                      chat_history: list, callback, **kwargs):
+            # Process the question using your AI/RAG pipeline
+            
+            # For streaming tokens:
+            await callback.async_on_llm_new_token("partial response...")
+            
+            # Return final result with sources:
+            return {
+                "answer": "Final complete answer",
+                "sources": [{"title": "Source 1", "url": "..."}]
+            }
+        ```
+        
+        ## MCP Server Integration
+        
+        When enable_mcp_server=True, the following happens:
+        1. MCP server is mounted at /mcp endpoint
+        2. Built-in VAC tools are automatically registered:
+           - vac_stream, vac_query, list_available_vacs, get_vac_info
+        3. You can add custom MCP tools using add_mcp_tool()
+        4. Claude Desktop/Code can connect to http://your-server/mcp
+        
+        ## Complete Example
+        
+        ```python
+        app = FastAPI(title="My VAC Application")
+        
+        async def my_vac_logic(question, vector_name, chat_history, callback, **kwargs):
+            # Your AI/RAG implementation
+            result = await process_with_ai(question)
+            return {"answer": result, "sources": []}
+        
+        # External MCP servers to connect to
+        external_mcp = [
+            {"name": "filesystem", "command": "mcp-server-fs", "args": ["/data"]}
+        ]
+        
+        vac_routes = VACRoutesFastAPI(
+            app=app,
+            stream_interpreter=my_vac_logic,
+            mcp_servers=external_mcp,
+            enable_mcp_server=True  # Enable for Claude integration
+        )
+        
+        # Add custom MCP tools for your business logic
+        @vac_routes.add_mcp_tool
+        async def get_customer_info(customer_id: str) -> dict:
+            return await fetch_customer(customer_id)
+        
+        # Your app now has:
+        # - VAC endpoints: /vac/{vector_name}, /vac/streaming/{vector_name}
+        # - OpenAI API: /openai/v1/chat/completions
+        # - MCP server: /mcp (with built-in + custom tools)
+        # - MCP client: /mcp/tools, /mcp/call (for external servers)
+        ```
         """
         self.app = app
         self.stream_interpreter = stream_interpreter
@@ -152,11 +394,17 @@ class VACRoutesFastAPI:
         # MCP server initialization
         self.enable_mcp_server = enable_mcp_server
         self.vac_mcp_server = None
+        self._custom_mcp_tools = []
+        self._custom_mcp_resources = []
+        
         if self.enable_mcp_server and VACMCPServer:
             self.vac_mcp_server = VACMCPServer(
-                stream_interpreter=self.stream_interpreter,
-                vac_interpreter=self.vac_interpreter
+                server_name="sunholo-vac-fastapi-server",
+                include_vac_tools=True
             )
+            
+            # Add any pre-registered custom tools
+            self._register_custom_tools()
         
         # A2A agent initialization
         self.enable_a2a_agent = enable_a2a_agent
@@ -232,10 +480,15 @@ class VACRoutesFastAPI:
             self.app.get("/mcp/resources")(self.handle_mcp_list_resources)
             self.app.post("/mcp/resources/read")(self.handle_mcp_read_resource)
         
-        # MCP server endpoint
+        # MCP server endpoint - mount the FastMCP app
         if self.enable_mcp_server and self.vac_mcp_server:
-            self.app.post("/mcp")(self.handle_mcp_server)
-            self.app.get("/mcp")(self.handle_mcp_server_info)
+            try:
+                mcp_app = self.vac_mcp_server.get_http_app()
+                self.app.mount("/mcp", mcp_app)
+                log.info("MCP server mounted at /mcp endpoint")
+            except Exception as e:
+                log.error(f"Failed to mount MCP server: {e}")
+                raise RuntimeError(f"MCP server initialization failed: {e}")
         
         # A2A agent endpoints
         if self.enable_a2a_agent:
@@ -787,109 +1040,6 @@ class VACRoutesFastAPI:
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
     
-    async def handle_mcp_server(self, request: Request):
-        """Handle MCP server requests."""
-        if not self.vac_mcp_server:
-            raise HTTPException(status_code=501, detail="MCP server not enabled")
-        
-        data = await request.json()
-        log.info(f"MCP server received: {data}")
-        
-        # Process MCP request - simplified version
-        # Full implementation would handle all MCP protocol methods
-        method = data.get("method")
-        params = data.get("params", {})
-        request_id = data.get("id")
-        
-        try:
-            if method == "initialize":
-                response = {
-                    "jsonrpc": "2.0",
-                    "result": {
-                        "protocolVersion": "2025-06-18",
-                        "capabilities": {"tools": {}},
-                        "serverInfo": {
-                            "name": "sunholo-vac-server",
-                            "version": sunholo_version()
-                        }
-                    },
-                    "id": request_id
-                }
-            elif method == "tools/list":
-                tools = [
-                    {
-                        "name": "vac_stream",
-                        "description": "Stream responses from a Sunholo VAC",
-                        "inputSchema": {
-                            "type": "object",
-                            "properties": {
-                                "vector_name": {"type": "string"},
-                                "user_input": {"type": "string"},
-                                "chat_history": {"type": "array", "default": []}
-                            },
-                            "required": ["vector_name", "user_input"]
-                        }
-                    }
-                ]
-                if self.vac_interpreter:
-                    tools.append({
-                        "name": "vac_query",
-                        "description": "Query a Sunholo VAC (non-streaming)",
-                        "inputSchema": {
-                            "type": "object",
-                            "properties": {
-                                "vector_name": {"type": "string"},
-                                "user_input": {"type": "string"},
-                                "chat_history": {"type": "array", "default": []}
-                            },
-                            "required": ["vector_name", "user_input"]
-                        }
-                    })
-                response = {
-                    "jsonrpc": "2.0",
-                    "result": {"tools": tools},
-                    "id": request_id
-                }
-            elif method == "tools/call":
-                tool_name = params.get("name")
-                arguments = params.get("arguments", {})
-                
-                if tool_name == "vac_stream":
-                    result = await self.vac_mcp_server._handle_vac_stream(arguments)
-                elif tool_name == "vac_query":
-                    result = await self.vac_mcp_server._handle_vac_query(arguments)
-                else:
-                    raise ValueError(f"Unknown tool: {tool_name}")
-                
-                response = {
-                    "jsonrpc": "2.0",
-                    "result": {"content": [item.model_dump() for item in result]},
-                    "id": request_id
-                }
-            else:
-                raise ValueError(f"Unknown method: {method}")
-                
-        except Exception as e:
-            response = {
-                "jsonrpc": "2.0",
-                "error": {
-                    "code": -32603,
-                    "message": str(e)
-                },
-                "id": request_id
-            }
-        
-        return JSONResponse(content=response)
-    
-    async def handle_mcp_server_info(self):
-        """Return MCP server information."""
-        return JSONResponse(content={
-            "name": "sunholo-vac-server",
-            "version": "1.0.0",
-            "transport": "http",
-            "endpoint": "/mcp",
-            "tools": ["vac_stream", "vac_query"] if self.vac_interpreter else ["vac_stream"]
-        })
     
     def _get_or_create_a2a_agent(self, request: Request):
         """Get or create the A2A agent instance with current request context."""
@@ -1040,3 +1190,93 @@ class VACRoutesFastAPI:
                 },
                 status_code=500
             )
+    
+    # MCP Tool Registration Methods
+    
+    def _register_custom_tools(self):
+        """Register any custom tools that were added before MCP server initialization."""
+        if self.vac_mcp_server:
+            for tool_func, name, description in self._custom_mcp_tools:
+                self.vac_mcp_server.add_tool(tool_func, name, description)
+            for resource_func, name, description in self._custom_mcp_resources:
+                self.vac_mcp_server.add_resource(resource_func, name, description)
+    
+    def add_mcp_tool(self, func: Callable, name: str = None, description: str = None):
+        """
+        Add a custom MCP tool to the server.
+        
+        Args:
+            func: The tool function
+            name: Optional custom name for the tool
+            description: Optional description (uses docstring if not provided)
+            
+        Example:
+            @app.add_mcp_tool
+            async def my_custom_tool(param: str) -> str:
+                '''Custom tool that does something useful.'''
+                return f"Result: {param}"
+            
+            # Or with custom name and description
+            app.add_mcp_tool(my_function, "custom_name", "Custom description")
+        """
+        if self.vac_mcp_server:
+            self.vac_mcp_server.add_tool(func, name, description)
+        else:
+            # Store for later registration
+            self._custom_mcp_tools.append((func, name, description))
+        
+        return func  # Allow use as decorator
+    
+    def add_mcp_resource(self, func: Callable, name: str = None, description: str = None):
+        """
+        Add a custom MCP resource to the server.
+        
+        Args:
+            func: The resource function
+            name: Optional custom name for the resource
+            description: Optional description (uses docstring if not provided)
+            
+        Example:
+            @app.add_mcp_resource
+            async def my_custom_resource(uri: str) -> str:
+                '''Custom resource that provides data.'''
+                return f"Resource data for: {uri}"
+        """
+        if self.vac_mcp_server:
+            self.vac_mcp_server.add_resource(func, name, description)
+        else:
+            # Store for later registration
+            self._custom_mcp_resources.append((func, name, description))
+        
+        return func  # Allow use as decorator
+    
+    def get_mcp_server(self):
+        """
+        Get the MCP server instance for advanced customization.
+        
+        Returns:
+            VACMCPServer instance or None if MCP server is not enabled
+        """
+        return self.vac_mcp_server
+    
+    def list_mcp_tools(self) -> List[str]:
+        """
+        List all registered MCP tools.
+        
+        Returns:
+            List of tool names
+        """
+        if self.vac_mcp_server:
+            return self.vac_mcp_server.list_tools()
+        return []
+    
+    def list_mcp_resources(self) -> List[str]:
+        """
+        List all registered MCP resources.
+        
+        Returns:
+            List of resource names
+        """
+        if self.vac_mcp_server:
+            return self.vac_mcp_server.list_resources()
+        return []
