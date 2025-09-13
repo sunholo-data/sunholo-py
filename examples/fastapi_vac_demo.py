@@ -371,15 +371,76 @@ def create_demo_app(use_async: bool = True):
         # Default response
         return f"The {vac_name} VAC received: '{user_input}'. This is a demo response."
     
-    # Add MCP debug endpoint
-    @app.get("/mcp/debug")
+    # Add MCP debug endpoint at a different path to avoid conflict with MCP mount
+    @app.get("/debug/mcp")
     async def mcp_debug():
         """Debug endpoint to check MCP status."""
+        import httpx
+        import json
+        
+        has_mcp = vac_routes.vac_mcp_server is not None
+        mcp_tools = []
+        mcp_response = None
+        
+        # Try to call the MCP endpoint the same way the test page does
+        if has_mcp:
+            try:
+                # Make the same JSON-RPC request that the test page makes
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        "http://localhost:8000/mcp/mcp",
+                        json={
+                            "jsonrpc": "2.0",
+                            "id": 1,
+                            "method": "tools/list"
+                        },
+                        headers={
+                            "Content-Type": "application/json",
+                            "Accept": "application/json, text/event-stream"
+                        }
+                    )
+                    
+                    logger.info(f"MCP response status: {response.status_code}")
+                    
+                    if response.status_code == 200:
+                        # Parse SSE (Server-Sent Events) response
+                        text = response.text
+                        for line in text.split('\n'):
+                            if line.startswith('data: '):
+                                # Extract JSON from the data line
+                                json_str = line[6:]  # Remove 'data: ' prefix
+                                try:
+                                    mcp_response = json.loads(json_str)
+                                    if "result" in mcp_response and "tools" in mcp_response["result"]:
+                                        for tool in mcp_response["result"]["tools"]:
+                                            mcp_tools.append({
+                                                "name": tool.get("name"),
+                                                "description": tool.get("description", "No description")[:100] + "..." if len(tool.get("description", "")) > 100 else tool.get("description", "No description")
+                                            })
+                                    break  # We found the data we need
+                                except json.JSONDecodeError:
+                                    continue
+                    else:
+                        mcp_response = {
+                            "error": f"MCP returned status {response.status_code}",
+                            "text": response.text[:500] if response.text else None
+                        }
+                        
+            except Exception as e:
+                logger.error(f"Error calling MCP endpoint: {e}")
+                mcp_response = {"error": str(e)}
+        
+        # Check for pending tools that haven't been registered yet
+        pending_tools = len(vac_routes._custom_mcp_tools) if hasattr(vac_routes, '_custom_mcp_tools') else 0
+        
         return {
-            "mcp_enabled": vac_routes.enable_mcp_server,
-            "has_mcp_server": vac_routes.vac_mcp_server is not None,
-            "mcp_tools_count": len(vac_routes._custom_mcp_tools) if hasattr(vac_routes, '_custom_mcp_tools') else 0,
-            "message": "MCP server should be available at /mcp endpoint"
+            "mcp_enabled": vac_routes.enable_mcp_server or has_mcp,
+            "has_mcp_server": has_mcp,
+            "mcp_tools_count": len(mcp_tools),
+            "mcp_tools": [tool["name"] for tool in mcp_tools] if mcp_tools else [],
+            "tool_details": mcp_tools,
+            "pending_tools": pending_tools,
+            "message": f"MCP server is available at /mcp endpoint with {len(mcp_tools)} tools" if has_mcp and mcp_tools else "MCP server is available at /mcp endpoint" if has_mcp else "MCP server not configured"
         }
     
     # Add a custom info endpoint

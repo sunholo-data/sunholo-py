@@ -2,12 +2,10 @@
 
 This folder contains example implementations for Sunholo's Model Context Protocol (MCP) integration.
 
-## Quick Start Files
+## Available Examples
 
-- **`sunholo_mcp_server.py`** - Basic MCP server with built-in VAC tools
-- **`extensible_mcp_demo.py`** - Advanced demo with custom tools and FastAPI integration
-- **`mcp_fastmcp_example.py`** - Simple FastMCP integration example
-- **`mcp_server_example.py`** - Legacy MCP server example
+- **`fastapi_vac_mcp_simple.py`** - Simple FastAPI app with built-in VAC tools and MCP server
+- **`fastapi_vac_demo.py`** - Full-featured demo with streaming, MCP tools, and web interface
 
 ## Documentation
 
@@ -15,14 +13,21 @@ For complete documentation, installation guides, and advanced usage patterns, se
 
 📖 **[MCP Integration Guide](../docs/docs/integrations/mcp.md)**
 
-## Quick Installation
+## Quick Setup with create_app_with_mcp
 
-```bash
-# For Claude Desktop
-fastmcp install claude-desktop sunholo_mcp_server.py --with sunholo[anthropic]
+```python
+from sunholo.agents.fastapi import VACRoutesFastAPI
 
-# For Claude Code  
-fastmcp install claude-code sunholo_mcp_server.py --with sunholo[anthropic]
+# One line to set up everything with MCP server
+app, vac_routes = VACRoutesFastAPI.create_app_with_mcp(
+    title="My VAC App",
+    stream_interpreter=my_interpreter
+)
+
+# Add custom MCP tools
+@vac_routes.add_mcp_tool
+async def my_tool(param: str) -> str:
+    return f"Result: {param}"
 ```
 
 ## What You Get

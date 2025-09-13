@@ -1,4 +1,11 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "sunholo[http,anthropic]>=0.144.6",
+#     "uvicorn",
+# ]
+# ///
 """
 Simple FastAPI VAC with MCP Server Example
 
@@ -6,11 +13,11 @@ This example shows the easiest way to set up a FastAPI app with VAC routes
 and MCP server support using the simplified helper method.
 
 Run this with:
-    python examples/fastapi_vac_mcp_simple.py
+    uv run examples/fastapi_vac_mcp_simple.py
 
 Then test with:
     # Check MCP server
-    curl -X POST http://localhost:8000/mcp \
+    curl -X POST http://localhost:8000/mcp/mcp \
         -H "Content-Type: application/json" \
         -d '{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}'
     
@@ -19,6 +26,12 @@ Then test with:
         -H "Content-Type: application/json" \
         -d '{"user_input": "Hello!"}'
 """
+
+import sys
+import os
+
+# Add parent directory to path to import sunholo
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sunholo.agents.fastapi import VACRoutesFastAPI
 import uvicorn
@@ -76,6 +89,6 @@ if __name__ == "__main__":
     print("MCP server available at: http://localhost:8000/mcp")
     print("VAC streaming at: http://localhost:8000/vac/streaming/{vector_name}")
     print("\nTest MCP tools list:")
-    print('  curl -X POST http://localhost:8000/mcp -H "Content-Type: application/json" -d \'{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}\'')
+    print('  curl -X POST http://localhost:8000/mcp/mcp -H "Content-Type: application/json" -d \'{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}\'')
     
     uvicorn.run(app, host="0.0.0.0", port=8000)

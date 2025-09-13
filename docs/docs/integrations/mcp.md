@@ -13,22 +13,31 @@ Model Context Protocol (MCP) is a standard that allows AI applications to intera
 
 ## Quick Start
 
-### 1. Basic Standalone MCP Server
+### 1. Basic FastAPI MCP Server
 
-The simplest way to get started:
+The simplest way to get started is using the `create_app_with_mcp` helper:
 
-```bash
-# Install dependencies
-pip install sunholo[anthropic] fastmcp
+```python
+from sunholo.agents.fastapi import VACRoutesFastAPI
 
-# Navigate to the examples directory
-cd examples/
+async def my_interpreter(question, vector_name, chat_history, callback, **kwargs):
+    """Your VAC interpreter logic here."""
+    return {"answer": f"Response to: {question}", "source_documents": []}
 
-# Install for Claude Desktop
-fastmcp install claude-desktop sunholo_mcp_server.py --with sunholo[anthropic]
+# One line setup with MCP server
+app, vac_routes = VACRoutesFastAPI.create_app_with_mcp(
+    title="My VAC App",
+    stream_interpreter=my_interpreter
+)
 
-# Install for Claude Code  
-fastmcp install claude-code sunholo_mcp_server.py --with sunholo[anthropic]
+# Add custom tools
+@vac_routes.add_mcp_tool
+async def my_custom_tool(param: str) -> str:
+    return f"Processed: {param}"
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 ```
 
 This gives you immediate access to:
@@ -73,23 +82,39 @@ Install with:
 fastmcp install claude-desktop my_custom_server.py --with sunholo[anthropic]
 ```
 
-### 3. FastAPI Integration with Custom Tools
+### 2. FastAPI Integration with Custom Tools
 
 Add MCP tools to your existing FastAPI application:
 
 ```python
 from sunholo.agents.fastapi import VACRoutesFastAPI
+from fastapi import FastAPI
 
-# Create FastAPI app with MCP enabled
-routes = VACRoutesFastAPI(enable_mcp_server=True)
+async def my_interpreter(question, vector_name, chat_history, callback, **kwargs):
+    """Your VAC interpreter logic."""
+    return {"answer": f"Response: {question}", "source_documents": []}
+
+# Method 1: Use the helper method (recommended)
+app, vac_routes = VACRoutesFastAPI.create_app_with_mcp(
+    title="My App",
+    stream_interpreter=my_interpreter
+)
+
+# Method 2: Manual setup with existing FastAPI app
+# app = FastAPI()
+# vac_routes = VACRoutesFastAPI(
+#     app,
+#     stream_interpreter=my_interpreter,
+#     enable_mcp_server=True
+# )
 
 # Add tools using decorators
-@routes.add_mcp_tool
+@vac_routes.add_mcp_tool
 async def get_server_stats() -> dict:
     """Get server statistics."""
     return {"uptime": 3600, "requests": 1234}
 
-@routes.add_mcp_tool("word_count", "Count words in text")
+@vac_routes.add_mcp_tool("word_count", "Count words in text")
 async def count_words(text: str) -> dict:
     """Count words and characters in text."""
     return {
@@ -101,7 +126,7 @@ async def count_words(text: str) -> dict:
 async def custom_tool(param: str) -> str:
     return f"Processing: {param}"
 
-routes.add_mcp_tool(custom_tool, "process_data", "Process data")
+vac_routes.add_mcp_tool(custom_tool, "process_data", "Process data")
 
 # Your app is now available at /mcp endpoint for Claude Desktop remote integration
 ```
@@ -222,6 +247,68 @@ app = routes.app
 6. Click **"Add"**
 
 ## Advanced Usage
+
+### New Features
+
+#### create_app_with_mcp Helper Method
+
+The `create_app_with_mcp` class method simplifies MCP setup by handling lifespan management automatically:
+
+```python
+from sunholo.agents.fastapi import VACRoutesFastAPI
+
+# This method automatically:
+# - Creates FastAPI app with proper lifespan
+# - Enables MCP server at /mcp endpoint  
+# - Registers built-in VAC tools
+# - Handles MCP server mounting
+app, vac_routes = VACRoutesFastAPI.create_app_with_mcp(
+    title="My VAC Application",
+    stream_interpreter=my_stream_interpreter,
+    vac_interpreter=my_vac_interpreter,  # Optional
+    app_lifespan=my_lifespan  # Optional custom lifespan
+)
+
+# Add custom tools after creation
+@vac_routes.add_mcp_tool
+async def my_tool(param: str) -> str:
+    return f"Result: {param}"
+```
+
+#### Debug Endpoint
+
+When using the demo server, a debug endpoint is available at `/debug/mcp` that shows:
+
+```json
+{
+    "mcp_enabled": true,
+    "has_mcp_server": true, 
+    "mcp_tools_count": 9,
+    "mcp_tools": ["vac_query", "list_available_vacs", "get_vac_info", "demo_reverse_text", "..."],
+    "tool_details": [{"name": "vac_query", "description": "Query a Sunholo VAC..."}],
+    "pending_tools": 0,
+    "message": "MCP server is available at /mcp endpoint with 9 tools"
+}
+```
+
+#### MCP Server Management Methods
+
+The VACRoutesFastAPI class provides methods for managing MCP tools:
+
+```python
+# List registered tools and resources
+tools = vac_routes.list_mcp_tools()
+resources = vac_routes.list_mcp_resources()
+
+# Get the MCP server instance for advanced usage
+mcp_server = vac_routes.get_mcp_server()
+
+# Add resources (data sources)
+@vac_routes.add_mcp_resource
+async def my_resource(uri: str) -> dict:
+    """Provide resource data."""
+    return {"data": f"Resource for {uri}"}
+```
 
 ### Custom Tool Registration
 
@@ -350,16 +437,24 @@ app = routes.app
 
 ## Testing the Integration
 
-### 1. Test Standalone MCP Server
+### 1. Test FastAPI MCP Server
 
-Test the standalone MCP server directly:
+Test the MCP server directly:
 
 ```bash
-cd examples/
-python sunholo_mcp_server.py
+# Run the simple example
+python examples/fastapi_vac_mcp_simple.py
+
+# In another terminal, test the MCP endpoint
+curl -X POST http://localhost:8000/mcp/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}'
+
+# Test the debug endpoint (if using fastapi_vac_demo.py)
+curl http://localhost:8000/debug/mcp
 ```
 
-The server will start in STDIO mode, ready for Claude Desktop/Code integration.
+The server provides both HTTP endpoints and MCP tools.
 
 ### 2. Test with Claude Desktop/Code
 
