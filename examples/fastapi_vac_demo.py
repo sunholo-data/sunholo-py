@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
-#     "sunholo[http,anthropic]>=0.144.10",
+#     "sunholo[http,anthropic]>=0.144.11",
 #     "uvicorn",
 # ]
 # ///
@@ -403,6 +403,11 @@ def create_demo_app(use_async: bool = True):
                 "openai": 'curl -X POST http://localhost:8000/openai/v1/chat/completions -H "Content-Type: application/json" -d \'{"model": "demo", "messages": [{"role": "user", "content": "Hello!"}], "stream": true}\''
             }
         }
+    
+    # Add HTML test page endpoint
+    @app.get("/test", response_class=HTMLResponse)
+    async def test_page():
+        return HTMLResponse(content=create_test_page())
     
     return app
 
@@ -1045,12 +1050,6 @@ def main():
     
     # Create the demo app
     app = create_demo_app(use_async=not args.sync)
-    
-    # Add HTML test page
-    @app.get("/test", response_class=HTMLResponse)
-    async def test_page():
-        from fastapi.responses import HTMLResponse
-        return HTMLResponse(content=create_test_page())
     
     # Print startup information
     print("\n" + "="*60)
