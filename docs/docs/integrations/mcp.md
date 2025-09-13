@@ -277,7 +277,7 @@ async def my_tool(param: str) -> str:
 
 #### Debug Endpoint
 
-When using the demo server, a debug endpoint is available at `/debug/mcp` that shows:
+When MCP is enabled, a debug endpoint is automatically available at `/debug/mcp` that shows:
 
 ```json
 {
