@@ -353,7 +353,6 @@ class VACRoutesFastAPI:
         additional_routes: Optional[List[Dict]] = None,
         mcp_servers: Optional[List[Dict[str, Any]]] = None,
         add_langfuse_eval: bool = True,
-        enable_mcp_server: bool = False,
         enable_a2a_agent: bool = False,
         a2a_vac_names: Optional[List[str]] = None
     ):
@@ -371,9 +370,6 @@ class VACRoutesFastAPI:
             mcp_servers: List of external MCP server configurations to connect to:
                        [{"name": "server-name", "command": "python", "args": ["server.py"]}]
             add_langfuse_eval: Whether to enable Langfuse evaluation and tracing
-            enable_mcp_server: Whether to enable the MCP server at /mcp endpoint for 
-                             Claude Desktop/Code integration. When True, automatically
-                             includes built-in VAC tools and supports custom tool registration.
             enable_a2a_agent: Whether to enable A2A (Agent-to-Agent) protocol endpoints
             a2a_vac_names: List of VAC names available for A2A agent interactions
         
@@ -398,7 +394,7 @@ class VACRoutesFastAPI:
         
         ## MCP Server Integration
         
-        When enable_mcp_server=True, the following happens:
+        When VACMCPServer is available, the following happens automatically:
         1. MCP server is mounted at /mcp endpoint
         2. Built-in VAC tools are automatically registered:
            - vac_stream, vac_query, list_available_vacs, get_vac_info
@@ -452,13 +448,13 @@ class VACRoutesFastAPI:
         self.mcp_client_manager = MCPClientManager() if MCPClientManager else None
         self._mcp_initialized = False
         
-        # MCP server initialization
-        self.enable_mcp_server = enable_mcp_server
+        # MCP server initialization - automatically enabled if VACMCPServer is available
         self.vac_mcp_server = None
         self._custom_mcp_tools = []
         self._custom_mcp_resources = []
         
-        if self.enable_mcp_server and VACMCPServer:
+        # Enable MCP server if VACMCPServer is available
+        if VACMCPServer:
             self.vac_mcp_server = VACMCPServer(
                 server_name="sunholo-vac-fastapi-server",
                 include_vac_tools=True
@@ -497,7 +493,7 @@ class VACRoutesFastAPI:
             stream_interpreter: Streaming interpreter function
             vac_interpreter: Non-streaming interpreter function  
             app_lifespan: Optional app lifespan context manager
-            **kwargs: Additional arguments passed to VACRoutesFastAPI (except enable_mcp_server)
+            **kwargs: Additional arguments passed to VACRoutesFastAPI
             
         Returns:
             Tuple of (FastAPI app, VACRoutesFastAPI instance)
@@ -569,7 +565,6 @@ class VACRoutesFastAPI:
                 app,
                 stream_interpreter=stream_interpreter,
                 vac_interpreter=vac_interpreter,
-                enable_mcp_server=False,  # Don't enable again since we manually mounted
                 **kwargs
             )
             
@@ -589,7 +584,6 @@ class VACRoutesFastAPI:
                 app,
                 stream_interpreter=stream_interpreter,
                 vac_interpreter=vac_interpreter,
-                enable_mcp_server=False,
                 **kwargs
             )
         
@@ -694,7 +688,7 @@ class VACRoutesFastAPI:
             self.app.post("/mcp/resources/read")(self.handle_mcp_read_resource)
         
         # MCP server endpoint - mount the FastMCP app
-        if self.enable_mcp_server and self.vac_mcp_server:
+        if self.vac_mcp_server:
             try:
                 mcp_app = self.vac_mcp_server.get_http_app()
                 
@@ -713,8 +707,7 @@ class VACRoutesFastAPI:
                         "The FastAPI app must be created with the MCP lifespan.\n\n"
                         "Quick fix: Use the helper method:\n"
                         "  app, vac_routes = VACRoutesFastAPI.create_app_with_mcp(\n"
-                        "      stream_interpreter=your_interpreter,\n"
-                        "      enable_mcp_server=True\n"
+                        "      stream_interpreter=your_interpreter\n"
                         "  )\n\n"
                         "Or manually configure the lifespan - see documentation for details."
                     )
@@ -727,8 +720,8 @@ class VACRoutesFastAPI:
                 log.error(f"Failed to mount MCP server: {e}")
                 raise RuntimeError(f"MCP server initialization failed: {e}") from e
         
-        # MCP debug endpoint - add after MCP server mounting
-        if self.enable_mcp_server:
+        # MCP debug endpoint - add if we have a MCP server instance
+        if self.vac_mcp_server:
             self.app.get("/debug/mcp")(self.handle_mcp_debug)
         
         # A2A agent endpoints
@@ -1620,7 +1613,7 @@ class VACRoutesFastAPI:
         pending_tools = len(self._custom_mcp_tools) if hasattr(self, '_custom_mcp_tools') else 0
         
         return {
-            "mcp_enabled": self.enable_mcp_server or has_mcp,
+            "mcp_enabled": has_mcp,
             "has_mcp_server": has_mcp,
             "mcp_tools_count": len(mcp_tools),
             "mcp_tools": [tool["name"] for tool in mcp_tools] if mcp_tools else [],

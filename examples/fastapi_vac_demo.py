@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
-#     "sunholo[http,anthropic]>=0.144.6",
+#     "sunholo[http,anthropic]>=0.144.8",
 #     "uvicorn",
 # ]
 # ///

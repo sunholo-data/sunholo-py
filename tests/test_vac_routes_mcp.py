@@ -214,7 +214,6 @@ def mcp_server_app():
         app,
         stream_interpreter=mock_async_stream_interpreter,
         vac_interpreter=mock_async_vac_interpreter,
-        enable_mcp_server=False,  # Disable initially
         add_langfuse_eval=False
     )
     
@@ -253,7 +252,6 @@ def mcp_client_app():
         stream_interpreter=mock_async_stream_interpreter,
         vac_interpreter=mock_async_vac_interpreter,
         mcp_servers=mcp_servers,
-        enable_mcp_server=False,
         add_langfuse_eval=False
     )
     # Replace with mock MCP client manager
@@ -320,7 +318,6 @@ class TestMCPServer:
         vac_routes = VACRoutesFastAPI(
             app,
             stream_interpreter=mock_async_stream_interpreter,
-            enable_mcp_server=False,
             add_langfuse_eval=False
         )
         client = TestClient(app)
@@ -329,6 +326,64 @@ class TestMCPServer:
         assert response.status_code == 404
 
 
+
+
+class TestMCPDebugEndpoint:
+    """Test MCP debug endpoint functionality."""
+    
+    def test_debug_endpoint_with_mcp_server(self):
+        """Test /debug/mcp endpoint when MCP server is enabled."""
+        app, vac_routes = VACRoutesFastAPI.create_app_with_mcp(
+            title="Test App",
+            stream_interpreter=mock_async_stream_interpreter
+        )
+        
+        # Add a mock tool to test
+        @vac_routes.add_mcp_tool
+        async def test_tool(input: str) -> str:
+            """Test tool for MCP."""
+            return f"Test: {input}"
+        
+        client = TestClient(app)
+        response = client.get("/debug/mcp")
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Check basic structure
+        assert "mcp_enabled" in data
+        assert "has_mcp_server" in data
+        assert "mcp_tools_count" in data
+        assert "mcp_tools" in data
+        
+        # Check values
+        assert data["mcp_enabled"] is True
+        assert data["has_mcp_server"] is True
+        assert data["mcp_tools_count"] >= 5  # Built-in tools + test_tool
+        
+        # Check that test_tool is in the list
+        tool_names = [tool["name"] for tool in data["mcp_tools"]]
+        assert "test_tool" in tool_names
+        
+        # Check built-in tools are present
+        assert "vac_stream" in tool_names
+        assert "vac_query" in tool_names
+        assert "list_available_vacs" in tool_names
+        assert "get_vac_info" in tool_names
+    
+    def test_debug_endpoint_without_mcp_server(self):
+        """Test /debug/mcp endpoint when MCP server is not present."""
+        app = FastAPI()
+        vac_routes = VACRoutesFastAPI(
+            app,
+            stream_interpreter=mock_async_stream_interpreter,
+            add_langfuse_eval=False
+        )
+        
+        # Should not have debug endpoint if no MCP server
+        client = TestClient(app)
+        response = client.get("/debug/mcp")
+        assert response.status_code == 404
 
 
 class TestMCPErrorHandling:
