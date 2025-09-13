@@ -395,11 +395,14 @@ class VACRoutesFastAPI:
         ## MCP Server Integration
         
         When VACMCPServer is available, the following happens automatically:
-        1. MCP server is mounted at /mcp endpoint
+        1. MCP server is mounted at /mcp/mcp endpoint (NOTE: /mcp/mcp not /mcp!)
         2. Built-in VAC tools are automatically registered:
            - vac_stream, vac_query, list_available_vacs, get_vac_info
         3. You can add custom MCP tools using add_mcp_tool()
-        4. Claude Desktop/Code can connect to http://your-server/mcp
+        4. Claude Desktop/Code can connect to http://your-server/mcp/mcp
+        
+        IMPORTANT: The endpoint is /mcp/mcp to avoid the MCP app intercepting other routes.
+        DO NOT change the mounting point to "" (root) as it will break other FastAPI routes!
         
         ## Complete Example
         
@@ -696,8 +699,13 @@ class VACRoutesFastAPI:
                 # so we can't easily check if it's configured. The error will be
                 # caught below if lifespan is missing.
                 
-                # Mount at /mcp/mcp - the MCP app has path="" configured
-                # This gives us /mcp/mcp endpoint without intercepting other routes
+                # CRITICAL: Mount at /mcp/mcp (NOT at root "")
+                # - The MCP app from get_http_app() has path="" configured
+                # - Mounting at "/mcp/mcp" creates the /mcp/mcp endpoint
+                # - This prevents the MCP app from intercepting other routes like /info, /test
+                # 
+                # DO NOT mount at "" (root) - it will break all other FastAPI routes!
+                # The endpoint will be available at /mcp/mcp as expected by Claude Code
                 self.app.mount("/mcp/mcp", mcp_app)
                 log.info("✅ MCP server mounted at /mcp/mcp endpoint")
                 

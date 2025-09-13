@@ -72,9 +72,19 @@ class VACMCPServer:
         return self.server
     
     def get_http_app(self):
-        """Get the HTTP app for mounting in FastAPI."""
-        # Use path="" when mounting at a subpath to avoid double nesting
-        # Mount at /mcp/mcp to get /mcp/mcp endpoint without intercepting other routes
+        """Get the HTTP app for mounting in FastAPI.
+        
+        IMPORTANT: This returns an app with path="" configured.
+        The VACRoutesFastAPI class mounts this at "/mcp/mcp" to create the /mcp/mcp endpoint.
+        
+        DO NOT change this to path="/mcp" as that would create double nesting when mounted.
+        DO NOT mount at root "" as that would intercept all other FastAPI routes.
+        
+        The correct configuration is:
+        - This method: path=""
+        - VACRoutesFastAPI: mount at "/mcp/mcp"
+        - Result: MCP endpoint at /mcp/mcp without breaking other routes
+        """
         return self.server.http_app(path="")
     
     def add_tool(self, func: Callable, name: str = None, description: str = None):

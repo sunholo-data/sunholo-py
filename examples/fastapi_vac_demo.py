@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
-#     "sunholo[http,anthropic]>=0.144.11",
+#     "sunholo[http,anthropic]>=0.144.12",
 #     "uvicorn",
 # ]
 # ///
@@ -394,6 +394,7 @@ def create_demo_app(use_async: bool = True):
             "mcp_info": {
                 "enabled": True,
                 "description": "MCP server is enabled for Claude Code integration",
+                "endpoint": "/mcp/mcp (NOT /mcp - this avoids route conflicts)",
                 "available_tools": ["vac_stream", "vac_query", "list_available_vacs", "get_vac_info"]
             },
             "test_commands": {
@@ -1061,7 +1062,7 @@ def main():
     print(f"  - Interactive Test Page: http://localhost:{args.port}/test")
     print(f"  - API Documentation: http://localhost:{args.port}/docs")
     print(f"  - Server Info: http://localhost:{args.port}/info")
-    print(f"  - MCP Server: http://localhost:{args.port}/mcp")
+    print(f"  - MCP Server: http://localhost:{args.port}/mcp/mcp")
     print("\nTest Commands:")
     print("  # Plain text streaming:")
     print(f'  curl -X POST http://localhost:{args.port}/vac/streaming/demo \\')
