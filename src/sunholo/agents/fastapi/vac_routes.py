@@ -720,9 +720,7 @@ class VACRoutesFastAPI:
                 log.error(f"Failed to mount MCP server: {e}")
                 raise RuntimeError(f"MCP server initialization failed: {e}") from e
         
-        # MCP debug endpoint - add if we have a MCP server instance
-        if self.vac_mcp_server:
-            self.app.get("/debug/mcp")(self.handle_mcp_debug)
+        # MCP debug endpoint removed to avoid complications with MCP mounting
         
         # A2A agent endpoints
         if self.enable_a2a_agent:
@@ -1515,114 +1513,4 @@ class VACRoutesFastAPI:
             return self.vac_mcp_server.list_resources()
         return []
     
-    async def handle_mcp_debug(self):
-        """
-        Debug endpoint to check MCP server status and list tools.
-        
-        Returns:
-            JSON with MCP server status, tools list, and diagnostic information
-        """
-        import json
-        
-        has_mcp = self.vac_mcp_server is not None
-        mcp_tools = []
-        mcp_response = None
-        
-        # Try to call the MCP endpoint the same way clients do
-        if has_mcp:
-            try:
-                # Make internal request to MCP server to get tools
-                import httpx
-                
-                # Get the base URL from the current request
-                from fastapi import Request
-                from starlette.requests import Request as StarletteRequest
-                
-                # Try common ports since we don't have request context
-                ports_to_try = [8000, 8001, 8080, 3000, 1956]
-                successful_response = None
-                
-                for port in ports_to_try:
-                    try:
-                        base_url = f"http://localhost:{port}"
-                        async with httpx.AsyncClient(timeout=2.0) as client:
-                                response = await client.post(
-                                    f"{base_url}/mcp/mcp",
-                                    json={
-                                        "jsonrpc": "2.0",
-                                        "id": 1,
-                                        "method": "tools/list"
-                                    },
-                                    headers={
-                                        "Content-Type": "application/json",
-                                        "Accept": "application/json, text/event-stream"
-                                    }
-                                )
-                                
-                                if response.status_code == 200:
-                                    successful_response = response
-                                    break  # Found working port
-                    except (httpx.ConnectError, httpx.TimeoutException):
-                        continue  # Try next port
-                    except Exception:
-                        continue  # Try next port
-                
-                if successful_response:
-                    # Parse SSE (Server-Sent Events) response
-                    text = successful_response.text
-                    for line in text.split('\n'):
-                        if line.startswith('data: '):
-                            # Extract JSON from the data line
-                            json_str = line[6:]  # Remove 'data: ' prefix
-                            try:
-                                mcp_response = json.loads(json_str)
-                                if "result" in mcp_response and "tools" in mcp_response["result"]:
-                                    for tool in mcp_response["result"]["tools"]:
-                                        mcp_tools.append({
-                                            "name": tool.get("name"),
-                                            "description": tool.get("description", "No description")[:100] + "..." if len(tool.get("description", "")) > 100 else tool.get("description", "No description")
-                                        })
-                                break  # We found the data we need
-                            except json.JSONDecodeError:
-                                continue
-                else:
-                    mcp_response = {
-                        "error": "Could not connect to MCP server on any common port",
-                        "ports_tried": ports_to_try
-                    }
-                        
-            except Exception as e:
-                log.error(f"Error calling MCP endpoint in debug: {e}")
-                mcp_response = {"error": str(e)}
-                
-                # Fallback: try to get tools from internal MCP server state
-                try:
-                    # Get tools from the FastMCP server directly
-                    if hasattr(self.vac_mcp_server, 'server'):
-                        mcp_server = self.vac_mcp_server.server
-                        if hasattr(mcp_server, '_tools'):
-                            for tool_name, tool_func in mcp_server._tools.items():
-                                mcp_tools.append({
-                                    "name": tool_name,
-                                    "description": getattr(tool_func, '__doc__', 'No description') or 'No description'
-                                })
-                except Exception as inner_e:
-                    log.error(f"Error getting MCP tools from internal state: {inner_e}")
-        
-        # Check for pending tools that haven't been registered yet
-        pending_tools = len(self._custom_mcp_tools) if hasattr(self, '_custom_mcp_tools') else 0
-        
-        return {
-            "mcp_enabled": has_mcp,
-            "has_mcp_server": has_mcp,
-            "mcp_tools_count": len(mcp_tools),
-            "mcp_tools": [tool["name"] for tool in mcp_tools] if mcp_tools else [],
-            "tool_details": mcp_tools,
-            "pending_tools": pending_tools,
-            "message": f"MCP server is available at /mcp endpoint with {len(mcp_tools)} tools" if has_mcp and mcp_tools else "MCP server is available at /mcp endpoint" if has_mcp else "MCP server not configured",
-            "debug_info": {
-                "mcp_server_type": type(self.vac_mcp_server).__name__ if self.vac_mcp_server else None,
-                "has_custom_tools": len(self._custom_mcp_tools) > 0 if hasattr(self, '_custom_mcp_tools') else False,
-                "has_custom_resources": len(self._custom_mcp_resources) > 0 if hasattr(self, '_custom_mcp_resources') else False
-            }
-        }
+    # handle_mcp_debug method removed - /debug/mcp endpoint no longer supported
