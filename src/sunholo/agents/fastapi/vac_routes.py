@@ -696,9 +696,10 @@ class VACRoutesFastAPI:
                 # so we can't easily check if it's configured. The error will be
                 # caught below if lifespan is missing.
                 
-                # Mount at root - the MCP app already has /mcp path configured
-                self.app.mount("", mcp_app)
-                log.info("✅ MCP server mounted at /mcp endpoint")
+                # Mount at /mcp/mcp - the MCP app has path="" configured
+                # This gives us /mcp/mcp endpoint without intercepting other routes
+                self.app.mount("/mcp/mcp", mcp_app)
+                log.info("✅ MCP server mounted at /mcp/mcp endpoint")
                 
             except RuntimeError as e:
                 if "Task group is not initialized" in str(e):
