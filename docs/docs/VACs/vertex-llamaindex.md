@@ -39,7 +39,7 @@ pip install sunholo[gcp,http,cli]
 
 ## File Indexing
 
-Once your configuration is loaded within Multivac, embed and index them by adding files to your Google Cloud Storage bucket to have the files indexed, via [`llamaindex.import_files.py`](../sunholo/llamaindex/import_files).  This supports large amounts of files.
+Once your configuration is loaded within Multivac, embed and index them by adding files to your Google Cloud Storage bucket to have the files indexed, via `llamaindex.import_files.py`.  This supports large amounts of files.
 
 For more details on how to set up indexing, see the [embedding pipeline documentation](../howto/embedding).
 

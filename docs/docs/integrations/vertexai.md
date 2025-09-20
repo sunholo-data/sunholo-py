@@ -33,7 +33,7 @@ Set `extensions` within your `vacConfig` to use specific extensions in your VAC:
             animal: ""
 ```
 
-You could then fetch data from the Vertex AI Extension from within your app using the helper function [get_extension_content()](../sunholo/vertex/extensions_call)
+You could then fetch data from the Vertex AI Extension from within your app using the helper function `get_extension_content()`
 
 ```python
 from sunholo.vertex import get_extension_content
@@ -48,7 +48,7 @@ extension_content = get_extension_content(question, config=config, animal="cat")
 
 ### VertexAIExtensions()
 
-The underlying [VertexAIExtensions()](../sunholo/vertex/extensions_class) class has methods to aid creating extensions and executing them. See its documentation for more information.
+The underlying `VertexAIExtensions()` class has methods to aid creating extensions and executing them. See its documentation for more information.
 
 ## Vertex AI Search
 
@@ -161,7 +161,7 @@ The above example used the `vertex` python library, but you can use Vertex AI Se
 
 A popular GenAI framework is Langchain.
 
-To use Vertex AI Search within Langchain, the [`DiscoveryEngineClient`](../sunholo/discovery_engine/discovery_engine_client/) can be used to import or export chunks from the Vertex AI Search data store.
+To use Vertex AI Search within Langchain, the `DiscoveryEngineClient` can be used to import or export chunks from the Vertex AI Search data store.
 
 > DiscoveryEngine is the old name for Vertex AI Search
 

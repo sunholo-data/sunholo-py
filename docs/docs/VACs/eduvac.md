@@ -27,13 +27,13 @@ class Question(BaseModel):
     source_filters_and_or: Optional[bool] = False
 ```
 
-The `sunholo` functions within [`sunholo/agents/langserve.py`](../sunholo/agents/langserve) query this input schema before sending it the payload to make sure it is in the correct format.
+The `sunholo` functions within `sunholo/agents/langserve.py` query this input schema before sending it the payload to make sure it is in the correct format.
 
 ### A configurable model 
 
 This allows the developer to set a choice for model to use, e.g. paid users can use a more expensive but smarter model
 
-Using Langserve configurables within sunholo streaming functions such as [`generate_proxy_stream_async()`](../sunholo/streaming) you can configure Langserve attributes on the fly.
+Using Langserve configurables within sunholo streaming functions such as `generate_proxy_stream_async()` you can configure Langserve attributes on the fly.
 
 ```python
 config_model = quick_model.configurable_alternatives(
@@ -86,7 +86,7 @@ The prompts themselves are managed by Langfuse, or a back up yaml file using the
 
 ### GenAI analytics
 
-The GenAI calls are sent to the [Multivac Langfuse instance](https://langfuse.sunholo.com) using the callback function provided via [add_langfuse_tracing()](../sunholo/langfuse/callback)
+The GenAI calls are sent to the [Multivac Langfuse instance](https://langfuse.sunholo.com) using the callback function provided via `add_langfuse_tracing()`
 
 
 ## Config yaml
@@ -94,7 +94,7 @@ The GenAI calls are sent to the [Multivac Langfuse instance](https://langfuse.su
 An explanation of the configuration is below:
 
 * `vac.eduvac` - this is the key that all other configurations are derived from, referred to as "vector_name"
-* `llm`: The configuration specifies an LLM model.  You can swap this for any model supported by `sunholo` so that it can work with the [`get_llm()`](../sunholo/components/llm) function via `model = get_llm("eduvac")`.
+* `llm`: The configuration specifies an LLM model.  You can swap this for any model supported by `sunholo` so that it can work with the `get_llm()` function via `model = get_llm("eduvac")`.
 * `agent`: Required to specify what type of agent this VAC is, which determines which Cloud Run or other runtime is queried via the endpoints.  This agent is derived from Langserve.
 * `agent_type`: If the agent is not the same as the `agent_type` then it is specified here to get the correct routing.
 * `display_name`: Used by end clients such as the webapp for the UI.

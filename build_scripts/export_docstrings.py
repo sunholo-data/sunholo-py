@@ -1,8 +1,21 @@
 import inspect
 import sunholo
 import os
+import re
 
 GITHUB_BASE_URL = "https://github.com/sunholo-data/sunholo-py/blob/main/"
+
+def escape_mdx(text):
+    """Escape special characters that cause MDX compilation errors."""
+    if text is None:
+        return ''
+    # Escape angle brackets that aren't part of valid HTML tags
+    text = re.sub(r'<(?![a-zA-Z/!])', '&lt;', text)
+    text = re.sub(r'(?<![a-zA-Z"])>', '&gt;', text)
+    # Escape curly braces that could be interpreted as JSX expressions
+    text = text.replace('{', '&#123;')
+    text = text.replace('}', '&#125;')
+    return text
 
 def list_functions(module):
     functions = inspect.getmembers(module, inspect.isfunction)
@@ -81,8 +94,8 @@ def write_docstrings_to_md(package):
                         f.write("## Functions\n\n")
                         functions_written = True
                     seen_functions.add(func_name)
-                    docstring = inspect.getdoc(func)
-                    f.write(f"### {func_name}{signature}\n")
+                    docstring = escape_mdx(inspect.getdoc(func))
+                    f.write(f"### {func_name}{escape_mdx(str(signature))}\n")
                     f.write(f"\n{docstring or 'No docstring available.'}\n\n")
 
             seen_classes = set()
@@ -93,12 +106,12 @@ def write_docstrings_to_md(package):
                         f.write("## Classes\n\n")
                         classes_written = True
                     seen_classes.add(cls_name)
-                    cls_docstring = inspect.getdoc(cls)
+                    cls_docstring = escape_mdx(inspect.getdoc(cls))
                     f.write(f"### {cls_name}\n")
                     f.write(f"\n{cls_docstring or 'No docstring available.'}\n\n")
                     for method_name, method in inspect.getmembers(cls, inspect.isfunction):
-                        signature = inspect.signature(method)
-                        method_docstring = inspect.getdoc(method)
+                        signature = escape_mdx(str(inspect.signature(method)))
+                        method_docstring = escape_mdx(inspect.getdoc(method))
                         f.write(f"* {method_name}{signature}\n")
                         f.write(f"   - {method_docstring or 'No docstring available.'}\n\n")
         

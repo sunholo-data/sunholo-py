@@ -86,7 +86,7 @@ The Agent Card at `/.well-known/agent.json` provides automatic discovery of your
 
 The A2A agent automatically generates skills based on your VAC configurations:
 
-### 1. VAC Query (vac_query_{vac_name})
+### 1. VAC Query (vac_query_&#123;vac_name&#125;)
 Static queries that return complete responses.
 
 **Parameters:**
@@ -97,7 +97,7 @@ Static queries that return complete responses.
 **Response:**
 - Complete answer with source documents and metadata
 
-### 2. VAC Stream (vac_stream_{vac_name})
+### 2. VAC Stream (vac_stream_&#123;vac_name&#125;)
 Streaming conversations with real-time updates.
 
 **Parameters:**
@@ -109,7 +109,7 @@ Streaming conversations with real-time updates.
 - Task ID for tracking streaming progress
 - Real-time updates via SSE
 
-### 3. VAC Memory Search (vac_memory_search_{vac_name})
+### 3. VAC Memory Search (vac_memory_search_&#123;vac_name&#125;)
 Search through the VAC's knowledge base (if memory is configured).
 
 **Parameters:**
