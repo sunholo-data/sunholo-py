@@ -9,6 +9,11 @@ def escape_mdx(text):
     """Escape special characters that cause MDX compilation errors."""
     if text is None:
         return ''
+    
+    # Remove markdown links that point to non-existent files
+    # Convert [text](link) to just text
+    text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
+    
     # First escape all angle brackets
     text = text.replace('<', '&lt;')
     text = text.replace('>', '&gt;')
