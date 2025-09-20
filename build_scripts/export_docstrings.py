@@ -9,12 +9,18 @@ def escape_mdx(text):
     """Escape special characters that cause MDX compilation errors."""
     if text is None:
         return ''
-    # Escape angle brackets that aren't part of valid HTML tags
-    text = re.sub(r'<(?![a-zA-Z/!])', '&lt;', text)
-    text = re.sub(r'(?<![a-zA-Z"])>', '&gt;', text)
+    # First escape all angle brackets
+    text = text.replace('<', '&lt;')
+    text = text.replace('>', '&gt;')
     # Escape curly braces that could be interpreted as JSX expressions
     text = text.replace('{', '&#123;')
     text = text.replace('}', '&#125;')
+    # Escape dollar signs that could be interpreted as math mode
+    text = text.replace('$', '&#36;')
+    # Escape backticks within text to prevent code block issues
+    # But preserve triple backticks for code blocks
+    if '```' not in text:
+        text = text.replace('`', '&#96;')
     return text
 
 def list_functions(module):
