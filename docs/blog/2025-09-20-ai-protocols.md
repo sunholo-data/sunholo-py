@@ -29,15 +29,15 @@ MIT's recent study showing that 95% of generative AI pilots fail to achieve rapi
 
 - [MIT report: 95% of generative AI pilots at companies are failing | Fortune](https://fortune.com/2025/08/18/mit-report-95-percent-generative-ai-pilots-at-companies-failing-cfo/) 
 
-But that tells only part of the story. What they don't say is why.  One reason could be that to stay relevant, AI tool needed custom integration with every requested data source and AI systems, and that home-spun solutions to connect quickly become outdated as the rapid pace of improvements outpaces developer project time.
+But that tells only part of the story. What they don't say is why.  One reason could be that to stay relevant, AI tools needed custom integration with every requested data source and AI systems, and that home-spun solutions to connect quickly become outdated as the rapid pace of improvements outpaces developer project time.
 
-This is where our story takes an interesting turn.
+Whats the answer? Standardisation.  And its that experience from thousands of AI deployments across the world that gave the feedback necessary for standard protocols to emerge.
 
 ## The Protocols Emerge (MCP & A2A)
 
-In November 2024, Anthropic released the [Model Context Protocol (MCP)](https://www.anthropic.com/news/model-context-protocol), but this wasn't just another standard. It was an admission that the entire industry had been doing it wrong. MCP isn't particularly special in its properties—much like HTTP wasn't special. The magic comes when everyone adopts it.
+In November 2024, Anthropic released the [Model Context Protocol (MCP)](https://www.anthropic.com/news/model-context-protocol), but this wasn't just another standard. It was an admission that the AI industry needed standards for what everyone was building, but in slightly different ways. MCP isn't particularly unique in its properties—much like HTTP wasn't. The value of a protocol comes only if and when it gains widespread adoption.
 
-Anthropic was the perfect source for this protocol. They're respected by developers for their coding capabilities but also neutral enough—deployed across Google Cloud, AWS, and Azure—to be trusted by everyone.
+Anthropic was the perfect source for this protocol. They're respected by developers for their model's coding capabilities but also neutral enough, being deployed across Google Cloud, AWS, and Azure, to be trusted by everyone.
 
 Then in April 2025, Google announced the Agent2Agent (A2A) protocol, backed by 50+ tech companies 
 
@@ -45,11 +45,11 @@ Then in April 2025, Google announced the Agent2Agent (A2A) protocol, backed by 5
 
 While MCP connects AI to tools and data, A2A defines how AI agents collaborate. It's the difference between giving workers tools and teaching them to work as a team.
 
-The protocol was deliberately kept vendor-neutral, transferred to an Apache project and endorsed by Microsoft and IBM. Like HTTP before it, A2A's value only emerges through universal adoption.
+The protocol was deliberately kept vendor-neutral, transferred to an Apache project and endorsed by companies such as Microsoft and IBM. Like HTTP before it, A2A's value only emerges through universal adoption.
 
 ## The Commerce Layer Changes Everything
 
-Google's recent Agent Payments Protocol (AP2), developed with 60+ organizations including Mastercard and PayPal 
+Google's recent Agent Payments Protocol (AP2) is an extension to A2A, developed with 60+ organizations including Mastercard and PayPal 
 
 - [Announcing Agent Payments Protocol (AP2) | Google Cloud Blog](https://cloud.google.com/blog/products/ai-machine-learning/announcing-agents-to-payments-ap2-protocol), 
 
@@ -59,29 +59,25 @@ Imagine your analysis agent automatically hiring a specialist translation agent 
 
 ## The Living Laboratory
 
-[Google Agentspace](https://cloud.google.com/products/agentspace), already deployed at companies like Wells Fargo, KPMG, and Nokia, shows what this infrastructure looks like in practice. It's one of Google Cloud's fastest-growing products ever, and watching it work is like seeing the future arrive early.
+[Google Agentspace](https://cloud.google.com/products/agentspace), already deployed at companies like Wells Fargo, KPMG, and Nokia, shows what this A2A led infrastructure looks like in practice. It's one of Google Cloud's fastest-growing products ever, and watching it work is like seeing the future arrive early.
 
-That dusty SharePoint archive from 2015? Suddenly searchable alongside this morning's Slack conversations. The rigid SAP system that took six months to integrate? Now accessible to AI agents without touching a line of code. Agentspace leverages A2A and has announced an A2A marketplace for seamless integration with its platform. The protocol works with all major AI frameworks such as Langchain and PydanticAI including Google's own ADK, demonstrating the power of unified AI access to enterprise data.
+That dusty SharePoint archive from 2015? Suddenly searchable alongside this morning's Slack conversations. The rigid SAP system that took six months to integrate? Now accessible to AI agents without touching a line of code. Agentspace leverages A2A and has announced an A2A marketplace for seamless integration with its platform from all, including non-Google, would be rivals and open-source competitors. As proof of that commitment to avoid vendor lock-in, the A2A protocol works with all major AI frameworks such as Langchain and Pydantic AI including Google's own ADK, demonstrating the power of unified AI access to enterprise data.
 
 ## The Second Wave Crisis
 
-After two years in the AI trenches, we are seeing a pattern for those early adopters. A lot of companies that were cutting edge in 2023 — the ones who built chatbots plus RAG for internal document search — are now stuck. They can't keep up with the pace of model improvements by the hyperscalers. Every time Gemini, Claude or OpenAI releases an update such as artifacts, thinking tokens or code execution, they face months of integration work to match it.
+After two years in the AI trenches, we are seeing a pattern for AI early adopters. A lot of companies that were cutting edge in 2023 — the ones who built chatbots plus RAG for internal document search — are now stuck. They can't keep up with the pace of AI improvements by the hyperscalers. Every time Gemini, Claude or OpenAI releases an update such as artifacts, thinking tokens or code execution, they face months of integration work to match it with less resources.
 
-This is the bitter lesson of AI: specialized solutions lose to general approaches that leverage computation. But we're learning a corollary: rigid infrastructure becomes tomorrow's technical debt, fast.
+This is the bitter lesson of AI: over a long enough timespan, specialized solutions lose to general approaches that leverage computation. But we're learning a corollary: rigid infrastructure becomes tomorrow's technical debt, fast.  For example, the "chat-to-PDF". features of 2023 usually involved involved data pipelines that are now redundent in modern AI deployments since that feature is now just one API call away.
 
-The solution isn't just technical—it's philosophical. Build for change, not features. Every AI component needs to be independently replaceable, like swapping batteries rather than rewiring your house. When OpenAI, Google or Claude releases a new model or feature next month (and they will), you should be able to swap it in within hours.  If you get it right, then your application automtically improves without you needing to change anything.  
+The solution isn't just technical, but philosophical. Build for change, not features. Every AI component needs to be independently replaceable, like swapping batteries rather than rewiring your house. When OpenAI, Google or Claude releases a new model or feature next month (and they will), you should be able to adapt to it within hours, espeically in this AI-code assisted future.  If you get it right, then your application automtically improves in lock step with the AI models underneath it. 
 
-Get it wrong however, and you are stuck with old features that your staff do not use in favour of "shadow AI" being used via personal phones or bypassing VPN controls.  Why that matters?  Those interactions are so valuable in assessing what your collegues are actually working on, what drives are important for your company.  Passing that to a 3rd party and not having those AI conversations available for your own review gives the keys to your busienss improvement to someone else, out of your control.
+Get it wrong however, and you are stuck with old features that your staff do not use in favour of "shadow AI" being used via personal phones or bypassing VPN controls.  Why that matters?  Those interactions are incredibly valuable in assessing what your collegues are actually working on, including what drives are important for your company.  Passing that to a 3rd party and not having those AI conversations available for your own review gives the keys to your busienss improvement elsewhere, out of your control.
 
 ## The Non-Human Web Emerges
 
-Humans are becoming less likely to be direct consumers of web data. We may have already reached peak human web traffic.
+Humans are becoming less likely to be direct consumers of web data. We may have already reached peak human web traffic in 2025, with the proportion of human traffic ever declining from now on.
 
-Google's AI Overviews now appear in over 35% of U.S. searches, with some sites reporting traffic drops of up to 70%. The Verge's publisher notes that when people see AI summaries, they visit sites less often .
-
-* [AI Summaries causing devasting drop in online news audiences | Guardian](https://www.theguardian.com/technology/2025/jul/24/ai-summaries-causing-devastating-drop-in-online-news-audiences-study-finds). 
-
-According to Pew Research, just 8% of users who encountered an AI summary clicked through to a traditional link—half the rate of those who didn't 
+Google's AI Overviews now appear in over 35% of U.S. searches, with some sites reporting traffic drops of up to 70%. According to Pew Research, just 8% of users who encountered an AI summary clicked through to a traditional link—half the rate of those who didn't 
 
 * [Pew Research Confirms Google AI Overviews Is Eroding Web Ecosystem | Search Engine Journal](https://www.searchenginejournal.com/pew-research-confirms-google-ai-overviews-is-eroding-web-ecosystem/551825/).
 
@@ -93,19 +89,19 @@ The rise of standards like [/llm.txt](https://llmstxt.org/) signals this shift�
 
 ## The Business Model Breaking Point
 
-The impact on media and content businesses is existential. Cloudflare data shows that for every visitor Anthropic refers back to a website, its crawlers have already visited tens of thousands of pages. OpenAI's crawler scraped websites 1,700 times for every referral, while Google's ratio was 14-to-1 
+The impact on media and content businesses is existential. Cloudflare (who can see ~20% of total web traffic) data shows that for every visitor Anthropic refers back to a website, its crawlers have already visited tens of thousands of pages. OpenAI's crawler scraped websites 1,700 times for every referral, while Google's ratio was 14-to-1 
 
 * [The crawl-to-click gap: Cloudflare data on AI bots, training, and referrals | Cloudflare](https://blog.cloudflare.com/crawlers-click-ai-bots-training/).
 
-This unsustainable imbalance led to a radical response. In July 2025, Cloudflare announced it would block AI crawlers by default and launched ["Pay Per Crawl"](https://blog.cloudflare.com/introducing-pay-per-crawl/) — a solutin where publishers can charge AI companies for each page crawled. It's the first serious attempt to create a new business model for the AI era, where content isn't just consumed but compensated.  Here the current HTTP protcol is invoked, using an obscure HTTP access code 402 (as opposed to 404, 200 etc) indicating "Payment Required".
+This unsustainable imbalance led to a radical response. In July 2025, Cloudflare announced it could block AI crawlers by default and launched ["Pay Per Crawl"](https://blog.cloudflare.com/introducing-pay-per-crawl/) — a solutin where publishers can charge AI companies for each page crawled. It's the first serious attempt to create a new business model for the AI era, where content isn't just consumed but compensated.  Here the current HTTP protcol is invoked, using an obscure HTTP access code 402 (as opposed to 404, 200 etc) indicating "Payment Required".
 
 ## The Human Question
 
-What happens to humans in this new world? Beautiful showroom websites will likely remain—spaces for inspiration and brand experience. But the messy functionality—complex forms, comparison shopping, detailed research— could likely shift to AI agents working in the background.
+What happens to humans in this new world? Beautiful showroom websites will likely remain as spaces for inspiration and brand experience. But the messy functionality of websites: complex forms, comparison shopping, detailed research, could likely shift to AI agents working in the background.
 
 Some companies are betting on the "everything app" approach. OpenAI and X.com seem to envision users never leaving their platforms, consuming all content through a single AI interface. It's Web 2.0's walled gardens taken to their logical extreme.
 
-But human traffic is already dwarfed by bot traffic. How does this impact web analytics? E-commerce conversion rates? Media websites that survived on impression-based advertising now face an extinction-level event.
+But human traffic is already dwarfed by AI bot traffic. How does this impact web analytics? E-commerce conversion rates? Media websites that survived on impression-based advertising now face an extinction-level event.
 
 ## The Privacy Revolution Returns
 
@@ -114,14 +110,6 @@ There's a twist in our story that harks back to Web 2.0's original promise: user
 What if individuals maintained their own A2A or MCP servers? All your purchase history, preferences, relationships, and interests in one place, under your control. You'd grant selective access to services in exchange for better experiences—verified, accurate profiles instead of the creepy tracking and guessing that defines today's web.
 
 The protocols make this technically feasible today. The question is whether a post-GDPR population, increasingly aware of privacy violations, will demand it. Could user-controlled AI servers become the next revolution?
-
-## What We've Learned
-
-McKinsey found that only 1% of companies consider their AI deployment "mature" [AI in the workplace: A report for 2025 | McKinsey](https://www.mckinsey.com/capabilities/mckinsey-digital/our-insights/ai-in-the-workplace-a-report-for-2025). The other 99% are learning what we call the adaptability imperative: your AI infrastructure must evolve faster than AI itself.
-
-MIT's research showing that purchasing specialized AI solutions succeeds 67% of the time versus 33% for internal builds [MIT report: 95% of generative AI pilots at companies are failing | Fortune](https://fortune.com/2025/01/15/ai-mit-research-generative-ai-productivity-technology/) isn't about capability—it's about learning curve. Vendors have already made the expensive mistakes.
-
-At Sunholo, these aren't academic observations. Our Multivac platform emerged from seeing the same failures repeatedly: monolithic architectures that can't adapt, tightly coupled systems that break with every update, proprietary protocols that lock companies into obsolescence.
 
 ## The Inflection Point
 
