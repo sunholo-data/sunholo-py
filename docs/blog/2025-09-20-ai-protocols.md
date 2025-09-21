@@ -3,9 +3,11 @@ title: "The AI Protocol Revolution: A Story of History Repeating Itself"
 authors: me
 tags: [mcp, a2a, agents]
 slug: /ai-protocol-revolution
+image: ./img/ai-protocols.png
 ---
 
 import AudioPlayer from '@site/src/components/audio';
+import CogFlow from '@site/src/components/reactFlow';
 
 Here at Sunholo, we've specialised deploying GenAI applications for the past few years. Recently, when talking to new propects we have noticed a trend: they show us their own internal chatbot, built at great expense just 18 months ago, and ask why it feels so outdated compared to ChatGPT or Gemini. Is there a better way to keep up to date but still keep your AI application bespoke? The answer takes us on a journey through web history, emerging protocols, and a future that's arriving faster than most realize.
 
@@ -56,6 +58,55 @@ Google's recent Agent Payments Protocol (AP2) is an extension to A2A, developed 
 AP2 adds what might be the most transformative element. This isn't just about AI agents buying things—it's about creating entirely new business models.
 
 Imagine your analysis agent automatically hiring a specialist translation agent when it encounters foreign language documents, paying per use, no human involvement. The agent economy isn't coming; it's being built right now.
+
+### How A2A and MCP Work Together
+
+Here's a practical example of how these protocols interact in a real-world scenario: A company's research agent needs to analyze market data across multiple languages and data sources:
+
+<CogFlow
+  title="A2A and MCP Protocol Interaction"
+  nodes={[
+    { id: '1', data: { label: '👤 User Request', hasInput: false, hasOutput: true }, position: { x: 400, y: 20 }, type: 'customNode' },
+    { id: '2', data: { label: '🏢 Research Agent [A2A]', hasInput: true, hasOutput: true, backgroundColor: '#d4f4dd', borderColor: '#00aa44' }, position: { x: 400, y: 120 }, type: 'customNode' },
+    { id: '3', data: { label: '📊 Market Agent [A2A]', hasInput: true, hasOutput: true, backgroundColor: '#d4f4dd', borderColor: '#00aa44' }, position: { x: 150, y: 240 }, type: 'customNode' },
+    { id: '4', data: { label: '🌐 Translation Agent [A2A]', hasInput: true, hasOutput: true, backgroundColor: '#d4f4dd', borderColor: '#00aa44' }, position: { x: 650, y: 240 }, type: 'customNode' },
+    { id: '5', data: { label: '📈 Bloomberg [MCP]', hasInput: true, hasOutput: true, backgroundColor: '#e6e6e6', borderColor: '#666' }, position: { x: 0, y: 380 }, type: 'customNode' },
+    { id: '6', data: { label: '🗄️ Database [MCP]', hasInput: true, hasOutput: true, backgroundColor: '#e6e6e6', borderColor: '#666' }, position: { x: 150, y: 380 }, type: 'customNode' },
+    { id: '7', data: { label: '💎 Gemini [LLM]', hasInput: true, hasOutput: true, backgroundColor: '#f0e6ff', borderColor: '#9933cc' }, position: { x: 300, y: 380 }, type: 'customNode' },
+    { id: '8', data: { label: '🧠 Claude [LLM]', hasInput: true, hasOutput: true, backgroundColor: '#f0e6ff', borderColor: '#9933cc' }, position: { x: 500, y: 380 }, type: 'customNode' },
+    { id: '9', data: { label: '📁 Drive [MCP]', hasInput: true, hasOutput: true, backgroundColor: '#e6e6e6', borderColor: '#666' }, position: { x: 800, y: 380 }, type: 'customNode' },
+    { id: '10', data: { label: '💳 Payments [AP2]', hasInput: true, hasOutput: true, backgroundColor: '#ffe6cc', borderColor: '#ff9900' }, position: { x: 400, y: 520 }, type: 'customNode' },
+    { id: '11', data: { label: '📋 Report', hasInput: true, hasOutput: false }, position: { x: 400, y: 620 }, type: 'customNode' },
+  ]}
+  edges={[
+    { id: 'e1-2', source: '1', target: '2', label: '', animated: true, style: { stroke: '#0066cc', strokeWidth: 2 } },
+    { id: 'e2-3', source: '2', target: '3', label: 'A2A', animated: true, style: { stroke: '#00aa44', strokeWidth: 2 } },
+    { id: 'e2-4', source: '2', target: '4', label: 'A2A', animated: true, style: { stroke: '#00aa44', strokeWidth: 2 } },
+    { id: 'e3-5', source: '3', target: '5', label: 'MCP', animated: false, style: { stroke: '#666', strokeDasharray: '5,5' } },
+    { id: 'e3-6', source: '3', target: '6', label: 'MCP', animated: false, style: { stroke: '#666', strokeDasharray: '5,5' } },
+    { id: 'e3-7', source: '3', target: '7', label: '', animated: false, style: { stroke: '#9933cc', strokeDasharray: '3,3' } },
+    { id: 'e4-8', source: '4', target: '8', label: '', animated: false, style: { stroke: '#9933cc', strokeDasharray: '3,3' } },
+    { id: 'e4-9', source: '4', target: '9', label: 'MCP', animated: false, style: { stroke: '#666', strokeDasharray: '5,5' } },
+    { id: 'e3-10', source: '3', target: '10', label: '$0.05', animated: false, style: { stroke: '#ff9900' } },
+    { id: 'e4-10', source: '4', target: '10', label: '$0.10', animated: false, style: { stroke: '#ff9900' } },
+    { id: 'e10-11', source: '10', target: '11', label: '', animated: true, style: { stroke: '#0066cc', strokeWidth: 2 } },
+  ]}
+  height="700px"
+/>
+
+**Color Legend:**
+- 🟢 **Green** = A2A Protocol (Agent-to-Agent communication)
+- ⬜ **Gray** = MCP Protocol (Model Context Protocol tools)
+- 🟣 **Purple** = LLM/AI Models
+- 🟠 **Orange** = AP2 Protocol (Agent Payment Protocol)
+
+In this example:
+- **A2A Protocol** handles agent-to-agent communication: The company's research agent discovers and coordinates with external specialist agents
+- **MCP Protocol** connects agents to tools and data: Each agent uses MCP to access databases, APIs, and file systems
+- **AP2 Protocol** manages micropayments: External agents charge small fees automatically without human intervention
+- **LLMs** provide the intelligence: Agents use various models (Claude, GPT, Gemini) for their specific tasks
+
+The beauty is that the company's research agent doesn't need to know how the translation agent works internally, or which LLM it uses. It just sends an A2A task request and receives results. Similarly, agents don't need custom integrations for each tool—MCP provides a standard interface to everything from databases to SaaS APIs.
 
 ## The Living Laboratory
 

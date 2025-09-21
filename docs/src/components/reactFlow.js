@@ -43,17 +43,18 @@ const getLayoutedElements = (nodes, edges, options) => {
   };
 };
 
-const nodeStyle = {
-  padding: 10,
-  border: '2px solid #000',
-  borderRadius: 10,
-  backgroundColor: '#fff',
-  display: 'flex',
-  alignItems: 'center',
-  position: 'relative', // For positioning handles
-};
-
 function CustomNode({ data }) {
+  // Merge default style with custom style from data
+  const nodeStyle = {
+    padding: 10,
+    border: data.borderColor ? `2px solid ${data.borderColor}` : '2px solid #000',
+    borderRadius: 10,
+    backgroundColor: data.backgroundColor || '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    position: 'relative', // For positioning handles
+  };
+
   return (
     <>
       {/* Target handle (top) */}
