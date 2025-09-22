@@ -303,11 +303,11 @@ And this time around, the privacy stakes are higher.  People were worried about 
 
 ## The Inflection Point
 
-We're witnessing the end of AI's wild west phase. Standards are emerging. The organisations recognising this shift—building for tomorrow's pace of change rather than today's requirements—will define the next era.
+We're witnessing the end of AI's wild west phase. Standards are emerging. The organisations recognising this shift and who are building for tomorrow's pace of change rather than today's requirements will define the next era.
 
 The future isn't about having the best AI. It's about having AI that can collaborate with everyone else's AI, upgrade without breaking, experiment without committing, and respect user privacy and control.
 
-The protocols are here. The early adopters are moving. The business models are being rewritten—from impression-based advertising to pay-per-crawl, from human web traffic to agent economies. The question isn't whether to embrace these standards, but whether you'll be part of the 5% that succeed or the 95% still trying to maintain custom integrations that were obsolete before they were finished.
+The protocols are here. The early adopters are moving. The business models are being rewritten: from impression-based advertising to pay-per-crawl, from human web traffic to agent economies. The question isn't whether to embrace these standards, but whether you'll be part of the 5% that succeed or the 95% still trying to maintain custom integrations that were obsolete before they were finished.
 
 History doesn't repeat, but it rhymes. The web's evolution from chaos to standards to walled gardens to user control could be playing out again, just faster and with artificial minds as the primary actors.  Will user privacy follow the same path, or do we have a chance to reshape the balance between user and company, to preserve human dignity? The stakes look to be higher this time around.
 
