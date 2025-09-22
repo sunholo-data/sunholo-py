@@ -10,7 +10,7 @@ import AudioPlayer from '@site/src/components/audio';
 import CogFlow from '@site/src/components/reactFlow';
 import ProtocolComparison from '@site/src/components/protocolComparison';
 
-![AI Protocol Revolution Banner](./img/ai-protocols.png)
+![AI Protocol Revolution Banner](img/ai-protocols.png)
 
 Here at Sunholo, we've specialised in deploying GenAI applications for the past few years. Recently, when talking to new prospects we have noticed a trend: they show us their own internal chatbot, built at great expense just 18 months ago, and ask why it feels already outdated compared to ChatGPT or Gemini. Is there a better way to keep on the cutting edge but still keep your AI application bespoke? The answer takes us on a journey through web history, emerging protocols, and a future that's arriving faster than most realize.
 
