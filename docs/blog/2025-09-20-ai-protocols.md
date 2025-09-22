@@ -3,12 +3,14 @@ title: "The AI Protocol Revolution: A Story of History Repeating Itself"
 authors: me
 tags: [mcp, a2a, agents]
 slug: /ai-protocol-revolution
-image: https://dev.sunholo.com/assets/images/ai-protocols-50147c1b82d2ef634f8474f02a1f180d.png
+image: blog/img/ai-protocols.png
 ---
 
 import AudioPlayer from '@site/src/components/audio';
 import CogFlow from '@site/src/components/reactFlow';
 import ProtocolComparison from '@site/src/components/protocolComparison';
+
+![AI Protocol Revolution Banner](./img/ai-protocols.png)
 
 Here at Sunholo, we've specialised in deploying GenAI applications for the past few years. Recently, when talking to new prospects we have noticed a trend: they show us their own internal chatbot, built at great expense just 18 months ago, and ask why it feels already outdated compared to ChatGPT or Gemini. Is there a better way to keep on the cutting edge but still keep your AI application bespoke? The answer takes us on a journey through web history, emerging protocols, and a future that's arriving faster than most realize.
 
@@ -32,15 +34,17 @@ MIT's recent study claimed that 95% of generative AI pilots fail to achieve rapi
 
 - [MIT report: 95% of generative AI pilots at companies are failing | Fortune](https://fortune.com/2025/08/18/mit-report-95-percent-generative-ai-pilots-at-companies-failing-cfo/) 
 
-But that tells only part of the story. What they don't say is why.  One reason could be that to go beyond the data available in the models training data so that its output was relevant, AI tools needed custom integration with internal data sources, and home-spun solutions to connect quickly become outdated as the rapid pace of improvements outpaces developer project time.  Without your own unique UI or data there is little reason to develop a poorer version than the already available AI applications.
+But that tells only part of the story. What they don't say is why.  
 
-What's the answer? Standardisation. It was that experience from thousands of AI deployments across the world that gave the feedback necessary for standard protocols to emerge.
+One reason could be that self-build AI applications need to have unique user interfaces or unique data to be any better than the generic AI applications.  If you don't have either of those (preferebly both) then you are going to be going head-to-head with hyperscalers with more resources than you.  To be of value, your internal AI tools needed custom integration with internal data sources and custom UIs, and home-spun solutions can quickly become outdated as the rapid pace of AI abilities outpaces developer project time. 
+
+What's the answer? Standards. It is the experience from thousands of AI deployments across the world that has enabled AI commmuity feedback necessary for standard protocols to emerge.
 
 ## The Protocols Emerge (MCP & A2A)
 
-In November 2024, Anthropic released the [Model Context Protocol (MCP)](https://www.anthropic.com/news/model-context-protocol). It addressed the emerging need for AI industry standards for what everyone was building, but in slightly different ways. MCP isn't particularly unique in its properties—much like HTTP wasn't. The value of a protocol comes only if and when it gains widespread adoption.
+In November 2024, Anthropic released the [Model Context Protocol (MCP)](https://www.anthropic.com/news/model-context-protocol). It addressed the emerging need for AI industry standards for what everyone was building, but in slightly different ways. MCP isn't particularly unique in its properties, much like HTTP wasn't. The value of a protocol comes only if and when it gains widespread adoption.
 
-Anthropic was the perfect source for this protocol. They're respected by developers for their model's coding capabilities but also neutral enough, being deployed across Google Cloud, AWS, and Azure, to be trusted by everyone.
+Anthropic was the perfect source for this initiative. They're respected by developers for their model's coding capabilities but also neutral enough, being deployed across Google Cloud, AWS, and Azure, to be trusted by everyone.
 
 Then in April 2025, Google announced the Agent2Agent (A2A) protocol, backed by 50+ tech companies 
 
@@ -48,7 +52,7 @@ Then in April 2025, Google announced the Agent2Agent (A2A) protocol, backed by 5
 
 While MCP connects AI to tools and data, A2A defines how AI agents collaborate. It's the difference between giving workers tools and teaching them to work as a team.
 
-The A2A protocol again would only be of value if it was not a lock-in to only Google AI, so it was deliberately kept vendor-neutral, transferred to the open source [Linux Foundation project](https://developers.googleblog.com/en/google-cloud-donates-a2a-to-linux-foundation/) and so is also endorsed by competitor AI companies such as AWS, Salesforce, ServiceNow, Microsoft and IBM. Like HTTP before it, A2A's value only emerges through universal adoption.
+The A2A protocol again would only be of value if it was not a vendor lock-in to Google, so it was deliberately kept vendor-neutral, transferred to the open source [Linux Foundation project](https://developers.googleblog.com/en/google-cloud-donates-a2a-to-linux-foundation/) and so is also endorsed by competitor AI companies such as AWS, Salesforce, ServiceNow, Microsoft and IBM. Like HTTP before it, A2A's value only emerges through universal adoption.
 
 <ProtocolComparison
   title="From HTTP to A2A: How Protocols Shape Technology Eras"
