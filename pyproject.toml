@@ -33,7 +33,6 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/sunholo-data/sunholo-py"
-Download = "https://github.com/sunholo-data/sunholo-py/archive/refs/tags/v0.118.0.tar.gz"
 
 [project.scripts]
 sunholo = "sunholo.cli.cli:main"
@@ -140,7 +139,8 @@ azure = [
 ]
 cli = [
     "jsonschema>=4.21.1",
-    "rich"
+    "rich",
+    "fastmcp"
 ]
 database = [
     "asyncpg",

@@ -9,7 +9,10 @@ Sunholo-py is a comprehensive toolkit for deploying GenAI apps (VACs - Virtual A
 
 ## Build & Test Commands
 ```bash
-# Install dependencies with uv
+# Clean up stale installations (run if version mismatches occur)
+./scripts/clean-egg-info.sh
+
+# Install dependencies with uv (ALWAYS use uv, never use pip directly)
 uv pip install -e ".[all]"  # or specific features: ".[test,gcp,langchain,azure,openai,anthropic,fastapi]"
 
 # Run all tests
@@ -165,6 +168,21 @@ All files should include the Apache 2.0 license header:
 - Mock external services (GCP, APIs) in tests
 - Test both sync and async code paths
 - Verify configuration parsing and validation
+
+## Common Issues & Solutions
+
+### Version Mismatch
+If `sunholo -v` shows an old version after updating:
+1. Run `./scripts/clean-egg-info.sh` to remove stale egg-info directories
+2. Reinstall with `uv pip install -e .`
+3. Verify with `sunholo -v`
+
+See `docs/troubleshooting/version-mismatch.md` for detailed troubleshooting.
+
+### Important Notes
+- **ALWAYS use uv for package management**, never use pip directly
+- **Never hardcode version-specific URLs** in pyproject.toml
+- **Run cleanup script** when encountering version issues
 
 ## Environment Variables
 Key environment variables:
