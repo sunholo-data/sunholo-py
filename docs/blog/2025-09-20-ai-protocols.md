@@ -299,7 +299,7 @@ What if individuals maintained their own A2A or MCP servers? All your purchase h
 
 The protocols make this technically feasible today. The question is whether a post-GDPR population, increasingly aware of privacy violations, will demand it. Could user-controlled AI servers become the next revolution?
 
-And this time around, the privacy stakes are higher.  People were worried about Cambridge Analytica interpreting signals from user behaviour via web traffic analytics potentially inlfuencing elections via paid ads.  Thats insignficiant next the potential harm that could be done by an AI that is super persuasive, with access to all your thoughts, dreams and desires typed into its chat box.
+And this time around, the privacy stakes are higher.  People were worried about Cambridge Analytica interpreting signals from user behaviour via web traffic analytics potentially influencing elections via paid ads.  Thats insignficiant next to the potential harm that could be done by an AI that is super persuasive, with access to all your thoughts, dreams and desires typed into its chat box.
 
 ## The Inflection Point
 
