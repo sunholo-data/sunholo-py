@@ -96,6 +96,13 @@ class AsyncTaskRunner:
             >>> results = await runner.get_aggregated_results()
             >>> print(results['results'])  # {'fetch_data': 'data from api'}
             
+            # Custom task names for better clarity
+            >>> runner = AsyncTaskRunner()
+            >>> runner.add_task(fetch_data, "user_api", task_name="fetch_user_data")
+            >>> runner.add_task(fetch_data, "posts_api", task_name="fetch_posts")
+            >>> results = await runner.get_aggregated_results()
+            >>> print(results['results']['fetch_user_data'])  # User data
+            
             # Silent mode - no console output but still collects results
             >>> runner = AsyncTaskRunner(verbose=False)
             
@@ -108,6 +115,7 @@ class AsyncTaskRunner:
             >>> runner = AsyncTaskRunner(use_default_callbacks=False)
         """
         self.tasks = []
+        self.task_name_counts = {}  # Track task names to ensure uniqueness
         self.retry_enabled = retry_enabled
         self.retry_kwargs = retry_kwargs or {}
         self.timeout = timeout
@@ -209,18 +217,35 @@ class AsyncTaskRunner:
                  func: Callable[..., Any], 
                  *args: Any, 
                  task_config: Optional[TaskConfig] = None,
+                 task_name: Optional[str] = None,
                  **kwargs: Any):
         """
         Adds a task to the list of tasks to be executed, with optional per-task configuration.
+        
+        Automatically ensures task names are unique by appending a suffix if needed.
 
         Args:
             func: The function to be executed.
             *args: Positional arguments for the function.
             task_config: Optional per-task configuration for timeout, retry, and callbacks.
+            task_name: Optional custom name for the task. If not provided, uses func.__name__.
             **kwargs: Keyword arguments for the function.
         """
-        log.info(f"Adding task: {func.__name__} with args: {args}, kwargs: {kwargs}, config: {task_config}")
-        self.tasks.append((func.__name__, func, args, kwargs, task_config))
+        # Get base name from task_name or function name
+        base_name = task_name if task_name is not None else func.__name__
+        
+        # Ensure uniqueness by adding suffix if needed
+        if base_name in self.task_name_counts:
+            # Name already exists, increment count and add suffix
+            self.task_name_counts[base_name] += 1
+            name = f"{base_name}_{self.task_name_counts[base_name]}"
+        else:
+            # First occurrence of this name
+            self.task_name_counts[base_name] = 0
+            name = base_name
+        
+        log.info(f"Adding task: {name} with args: {args}, kwargs: {kwargs}, config: {task_config}")
+        self.tasks.append((name, func, args, kwargs, task_config))
 
     async def run_async_with_callbacks(self) -> AsyncGenerator[CallbackContext, None]:
         """
@@ -313,10 +338,10 @@ class AsyncTaskRunner:
         
         Example:
             >>> runner = AsyncTaskRunner()
-            >>> runner.add_task(fetch_data, "api")
-            >>> runner.add_task(process_data, "raw_data")
+            >>> runner.add_task(fetch_data, "api", task_name="api_fetch")
+            >>> runner.add_task(process_data, "raw_data", task_name="data_processing")
             >>> results = await runner.get_aggregated_results()
-            >>> print(results['results']['fetch_data'])  # Access specific result
+            >>> print(results['results']['api_fetch'])  # Access specific result
             >>> if results['errors']:  # Check for any errors
             ...     print(f"Errors occurred: {results['errors']}")
         """

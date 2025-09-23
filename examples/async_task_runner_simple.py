@@ -60,11 +60,11 @@ async def main():
     runner = AsyncTaskRunner()  # All defaults!
     
     # Add tasks to the runner
-    # Each task gets a unique name based on function name and a counter
-    # Tasks will run concurrently when get_aggregated_results() is called
-    runner.add_task(fetch_data, "API")          # Will be named: fetch_data_0
-    runner.add_task(fetch_data, "Database")     # Will be named: fetch_data_1
-    runner.add_task(process_data, "Sample data") # Will be named: process_data_0
+    # AsyncTaskRunner now automatically ensures unique task names by adding suffixes
+    # This prevents results from being overwritten when the same function is called multiple times
+    runner.add_task(fetch_data, "API")          # Will be named: fetch_data
+    runner.add_task(fetch_data, "Database")     # Will be named: fetch_data_1 (auto-suffixed!)
+    runner.add_task(process_data, "Sample data") # Will be named: process_data
     
     # Run all tasks concurrently and wait for completion
     # Returns the shared_state dict containing results, errors, and completed lists
@@ -74,8 +74,28 @@ async def main():
     print(f"\nResults: {results['results']}")     # Dict of task_name -> result
     print(f"Completed: {results['completed']}")   # List of completed task names
     
-    # Example 2: Disable verbose output for quiet operation
-    print("\n2. Quiet mode - no status messages:")
+    # Example 2: Using custom task names for clarity
+    print("\n2. Custom task names - distinguish between similar tasks:")
+    
+    runner = AsyncTaskRunner()
+    
+    # Use custom task names to differentiate multiple calls to the same function
+    # This is especially useful when running the same function with different arguments
+    runner.add_task(fetch_data, "API", task_name="fetch_api_data")
+    runner.add_task(fetch_data, "Database", task_name="fetch_db_data")
+    runner.add_task(fetch_data, "Cache", task_name="fetch_cache_data")
+    runner.add_task(process_data, "Sample data", task_name="process_sample")
+    
+    # Now each task has a unique, meaningful name
+    results = await runner.get_aggregated_results()
+    
+    print(f"\nResults with custom names:")
+    for task_name, result in results['results'].items():
+        print(f"  {task_name}: {result}")
+    print(f"Completed: {results['completed']}")
+    
+    # Example 3: Disable verbose output for quiet operation
+    print("\n3. Quiet mode - no status messages:")
     
     # verbose=False disables the default status logging
     # Callbacks still run, but they won't print messages
@@ -89,9 +109,9 @@ async def main():
     results = await runner.get_aggregated_results()
     print(f"Results: {results['results']}")
     
-    # Example 3: Mix default callbacks with one custom callback
+    # Example 4: Mix default callbacks with one custom callback
     # This demonstrates how to override specific callbacks while keeping others
-    print("\n3. Override just one callback, keep the rest as defaults:")
+    print("\n4. Override just one callback, keep the rest as defaults:")
     
     async def custom_complete(ctx):
         """Custom callback for task completion.
@@ -119,9 +139,9 @@ async def main():
     results = await runner.get_aggregated_results()
     print(f"Results: {results['results']}")
     
-    # Example 4: Disable all default callbacks for manual control
+    # Example 5: Disable all default callbacks for manual control
     # This shows what happens when you don't use any callbacks
-    print("\n4. No default callbacks - manual control:")
+    print("\n5. No default callbacks - manual control:")
     
     # use_default_callbacks=False means NO automatic result tracking
     # You would need to provide your own callbacks to track results
@@ -139,6 +159,7 @@ async def main():
     print("Done! Default callbacks make AsyncTaskRunner easy to use!")
     print("\nKey takeaways:")
     print("- Default callbacks handle result aggregation automatically")
+    print("- Use custom task_name to distinguish multiple calls to the same function")
     print("- Override specific callbacks while keeping others")
     print("- Use verbose=False for quiet operation")
     print("- Disable defaults with use_default_callbacks=False for full control")
