@@ -46,13 +46,16 @@ async def test_default_callbacks_basic():
     assert 'started' in results
     assert 'errors' in results
     
-    # Check task results
+    # Check task results - with auto-naming, second task gets _1 suffix
     assert 'simple_task' in results['results']
-    assert results['results']['simple_task'] == "Result: test2"  # Last one wins with same name
+    assert results['results']['simple_task'] == "Result: test1"
+    assert 'simple_task_1' in results['results']
+    assert results['results']['simple_task_1'] == "Result: test2"
     
-    # Check completed list
+    # Check completed list - should have unique names
     assert len(results['completed']) == 2
-    assert results['completed'].count('simple_task') == 2
+    assert 'simple_task' in results['completed']
+    assert 'simple_task_1' in results['completed']
     
     # Check started list
     assert len(results['started']) == 2
@@ -110,8 +113,8 @@ async def test_default_callbacks_with_retry():
     # Check that retries were tracked
     assert 'retries' in results
     assert len(results['retries']) == 2  # Attempts 2 and 3 (not 1)
-    assert 'failing_task_attempt_2' in results['retries']
-    assert 'failing_task_attempt_3' in results['retries']
+    assert results['retries'][0] == 'failing_task_attempt_2'
+    assert results['retries'][1] == 'failing_task_attempt_3'
     
     # Task should have error after all retries
     assert 'failing_task' in results['errors']
@@ -193,7 +196,7 @@ async def test_per_task_timeout_with_defaults():
     
     results = await runner.get_aggregated_results()
     
-    # Check that one timed out
+    # Check that one timed out (first slow_task)
     assert 'timed_out' in results
     assert 'slow_task' in results['timed_out']
     
@@ -203,9 +206,9 @@ async def test_per_task_timeout_with_defaults():
     error_msg = results['errors'].get('slow_task', '').lower()
     assert 'timeout' in error_msg or 'unknown' in error_msg
     
-    # The one with extended timeout should complete
-    assert 'slow_task' in results['results']
-    assert results['results']['slow_task'] == "Slow result: complete_task"
+    # The one with extended timeout should complete (gets _1 suffix)
+    assert 'slow_task_1' in results['results']
+    assert results['results']['slow_task_1'] == "Slow result: complete_task"
 
 
 @pytest.mark.asyncio
@@ -238,7 +241,10 @@ async def test_shared_state_persistence():
     # Check custom state was maintained
     assert results['custom_counter'] == 3
     assert len(results['task_order']) == 3
-    assert all(name == 'simple_task' for name in results['task_order'])
+    # With auto-naming, tasks are now: simple_task, simple_task_1, simple_task_2
+    assert 'simple_task' in results['task_order']
+    assert 'simple_task_1' in results['task_order']
+    assert 'simple_task_2' in results['task_order']
     
     # Default keys should also be present
     assert 'results' in results
@@ -283,14 +289,20 @@ async def test_multiple_tasks_same_name():
     
     results = await runner.get_aggregated_results()
     
-    # Results dict should have the last result (overwrites)
-    assert results['results']['simple_task'] == "Result: third"
+    # Results dict should have all three with unique names
+    assert results['results']['simple_task'] == "Result: first"
+    assert results['results']['simple_task_1'] == "Result: second"
+    assert results['results']['simple_task_2'] == "Result: third"
     
-    # Completed list should have all three
-    assert results['completed'].count('simple_task') == 3
+    # Completed list should have all three with unique names
+    assert 'simple_task' in results['completed']
+    assert 'simple_task_1' in results['completed']
+    assert 'simple_task_2' in results['completed']
     
-    # Started list should have all three
-    assert results['started'].count('simple_task') == 3
+    # Started list should have all three with unique names
+    assert 'simple_task' in results['started']
+    assert 'simple_task_1' in results['started']
+    assert 'simple_task_2' in results['started']
 
 
 @pytest.mark.asyncio
@@ -339,6 +351,63 @@ async def test_task_config_none_values():
     assert results['results']['simple_task'] == "Result: test"
 
 
+@pytest.mark.asyncio
+async def test_custom_task_names():
+    """Test custom task naming feature for better differentiation."""
+    runner = AsyncTaskRunner(verbose=False)
+    
+    # Use custom task names to differentiate multiple calls to the same function
+    runner.add_task(simple_task, "API", task_name="fetch_api_data")
+    runner.add_task(simple_task, "Database", task_name="fetch_db_data")
+    runner.add_task(simple_task, "Cache", task_name="fetch_cache_data")
+    
+    results = await runner.get_aggregated_results()
+    
+    # Check that custom names were used
+    assert 'fetch_api_data' in results['results']
+    assert 'fetch_db_data' in results['results']
+    assert 'fetch_cache_data' in results['results']
+    
+    # Check the results values
+    assert results['results']['fetch_api_data'] == "Result: API"
+    assert results['results']['fetch_db_data'] == "Result: Database"
+    assert results['results']['fetch_cache_data'] == "Result: Cache"
+    
+    # Check completed list has custom names
+    assert set(results['completed']) == {'fetch_api_data', 'fetch_db_data', 'fetch_cache_data'}
+    
+    # Check started list has custom names
+    assert set(results['started']) == {'fetch_api_data', 'fetch_db_data', 'fetch_cache_data'}
+
+
+@pytest.mark.asyncio
+async def test_custom_task_names_with_duplicates():
+    """Test that duplicate custom task names are automatically made unique."""
+    runner = AsyncTaskRunner(verbose=False)
+    
+    # Add multiple tasks with the same custom name - should auto-suffix
+    runner.add_task(simple_task, "first", task_name="duplicate_name")
+    runner.add_task(simple_task, "second", task_name="duplicate_name")
+    runner.add_task(simple_task, "third", task_name="duplicate_name")
+    
+    results = await runner.get_aggregated_results()
+    
+    # Check that names were made unique with suffixes
+    assert 'duplicate_name' in results['results']
+    assert 'duplicate_name_1' in results['results']
+    assert 'duplicate_name_2' in results['results']
+    
+    # Check the results values
+    assert results['results']['duplicate_name'] == "Result: first"
+    assert results['results']['duplicate_name_1'] == "Result: second"
+    assert results['results']['duplicate_name_2'] == "Result: third"
+    
+    # Check completed list has unique names
+    assert 'duplicate_name' in results['completed']
+    assert 'duplicate_name_1' in results['completed']
+    assert 'duplicate_name_2' in results['completed']
+
+
 if __name__ == "__main__":
     # Run tests with asyncio
     asyncio.run(test_default_callbacks_basic())
@@ -352,4 +421,6 @@ if __name__ == "__main__":
     asyncio.run(test_multiple_tasks_same_name())
     asyncio.run(test_empty_runner())
     asyncio.run(test_task_config_none_values())
+    asyncio.run(test_custom_task_names())
+    asyncio.run(test_custom_task_names_with_duplicates())
     print("All tests passed!")
