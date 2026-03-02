@@ -85,6 +85,24 @@ Chunking and embedding pipeline
 pip install sunholo[pipeline]
 ```
 
+[ADK](adk) (Google Agent Development Kit)
+
+```sh
+pip install sunholo[adk]
+```
+
+[Channels](channels) (Email, Telegram, WhatsApp)
+
+```sh
+pip install sunholo[channels]
+```
+
+[Firestore](databases/firestore)
+
+```sh
+pip install sunholo[firestore]
+```
+
 ## Tests via pytest
 
 If loading from GitHub, run tests:
