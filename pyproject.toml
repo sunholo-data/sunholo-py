@@ -88,7 +88,7 @@ all = [
     "httpx",
     "jsonschema",
     "lancedb",
-    "langchain>=0.2.16",
+    "langchain>=0.3.0",
     "langchain-experimental>=0.0.61",
     "langchain-community>=0.2.11",
     "langchain-openai>=0.3.2",
@@ -155,7 +155,7 @@ database = [
 pipeline = [
     "GitPython",
     "lark",
-    "langchain>=0.2.16",
+    "langchain>=0.3.0",
     "langchain-unstructured",
     "psutil",
     "pypdf",
@@ -230,3 +230,20 @@ tts = [
     "sounddevice"
 ]
 video = ["opencv-python"]
+adk = [
+    "google-adk>=0.3.0",
+    "httpx>=0.25.0",
+    "litellm>=1.0.0",
+    "fastmcp>=2.12.0",
+]
+channels = [
+    "aiohttp>=3.9.0",
+    "httpx>=0.25.0",
+    "markdown>=3.5.0",
+    "twilio>=8.0.0",
+]
+firestore = [
+    "google-cloud-firestore>=2.12.0",
+    "google-api-core>=2.11.0",
+    "tenacity>=8.2.0",
+]

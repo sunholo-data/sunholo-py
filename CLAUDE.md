@@ -51,15 +51,19 @@ npm run typecheck   # If configured in package.json
 
 ### Key Modules
 - **agents**: Routing and dispatch for VAC agents (Flask/FastAPI routes, chat history, PubSub)
+- **adk**: Google ADK (Agent Development Kit) integration - dynamic agent config, session management, event streaming, MCP tool decorators. Install: `pip install sunholo[adk]`
+- **channels**: Multi-channel messaging (email/Telegram/WhatsApp) with abstract `BaseChannel` interface, rate limiting, and session management. Install: `pip install sunholo[channels]`
 - **cli**: Command-line interface (chat, deploy, config management)
-- **utils**: Configuration management via `ConfigManager` class
-- **genai**: Generic AI interface supporting multiple providers (OpenAI, Anthropic, Google)
-- **vertex**: Google Vertex AI integration with extensions
-- **database**: Support for AlloyDB, PostgreSQL, LanceDB, Supabase
+- **database**: Support for AlloyDB, PostgreSQL, LanceDB, Supabase, Firestore (with circuit breaker and async/sync fallback). Install Firestore: `pip install sunholo[firestore]`
 - **discovery_engine**: Google AI Search integration
+- **genai**: Generic AI interface supporting multiple providers (OpenAI, Anthropic, Google)
 - **langchain/llamaindex**: Framework integrations
 - **mcp**: Model Context Protocol server and client integration (expose VACs as MCP tools)
+- **messaging**: Inter-agent messaging bridge to AILANG CLI (inbox management, GitHub sync, semantic search)
 - **streaming**: Real-time response streaming
+- **utils**: Configuration management via `ConfigManager`, HTTP client with retry/backoff (`http_client`), context-aware timeout config (`timeout_config`)
+- **auth**: GCP/Azure authentication, Google OAuth2 flow with token caching (`oauth`)
+- **vertex**: Google Vertex AI integration with extensions
 - **chunker/embedder**: Document processing pipeline
 
 ### Configuration System
@@ -156,11 +160,16 @@ All files should include the Apache 2.0 license header:
 ### Common Tasks
 - **Add new LLM provider**: Update `llm_config.yaml` and `model_lookup.yaml`
 - **Create custom agent**: Inherit from base classes in `agents/`
+- **Create ADK agent**: Use `sunholo.adk.config.ADKConfig` for setup, `sunholo.adk.session.SessionHelper` for session management, `sunholo.adk.tools.mcp_tool` decorator for MCP tools
+- **Add messaging channel**: Inherit from `sunholo.channels.base.BaseChannel`, implement `receive_webhook()`, `send_response()`, `validate_webhook()`
+- **Use inter-agent messaging**: Use `sunholo.messaging.client.AILangMessaging` to send/receive messages via AILANG
 - **Add vectorstore**: Configure in `vac_config.yaml` under `rag` section
 - **Enable streaming**: Set `stream: true` in VAC config
 - **Enable MCP server**: Set `enable_mcp_server=True` in VACRoutes (Flask) or VACRoutesFastAPI (FastAPI) for Claude Code integration
-- **Add authentication**: Configure in `platform_config.yaml`
+- **Add authentication**: Configure in `platform_config.yaml`; use `sunholo.auth.oauth.GoogleAuthManager` for OAuth flows
 - **Use FastAPI for async**: Use `VACRoutesFastAPI` from `sunholo.agents.fastapi` for async-first applications
+- **HTTP with retries**: Use `sunholo.utils.http_client.get_with_retries` / `post_with_retries` for resilient HTTP calls
+- **Use Firestore**: Use `sunholo.database.firestore.get_firestore_client()` for robust Firestore operations with circuit breaker
 
 ### Testing Guidelines
 - Test files in `tests/` mirror source structure
