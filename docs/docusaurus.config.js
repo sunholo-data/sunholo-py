@@ -5,16 +5,11 @@
 // See: https://docusaurus.io/docs/api/docusaurus-config
 
 import {themes as prismThemes} from 'prism-react-renderer';
-import 'dotenv/config';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  customFields: {
-    // Put your custom environment here
-    multivacApiKey: process.env.REACT_APP_MULTIVAC_API_KEY || 'default_key_if_not_defined',
-  },
-  title: 'Sunholo Dev Portal',
-  tagline: 'Development resources for Sunholo and Multivac',
+  title: 'sunholo',
+  tagline: 'Python toolkit for building and deploying GenAI applications',
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
@@ -51,13 +46,7 @@ const config = {
           editUrl:
             'https://github.com/sunholo-data/sunholo-py/tree/main/docs/',
         },
-        //blog: true,
-        blog: {
-        //  showReadingTime: true,
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          //editUrl: null,
-        },
+        blog: false,
         googleTagManager: {
           containerId: 'GTM-WLQZQF2P',
         },
@@ -86,7 +75,12 @@ const config = {
             position: 'left',
             label: 'Documentation',
           },
-          {to: '/blog', label: 'Blog', position: 'left'},
+          {href: 'https://www.sunholo.com/blog/', label: 'Blog', position: 'left'},
+          {
+            href: 'https://pypi.org/project/sunholo/',
+            label: 'PyPI',
+            position: 'right',
+          },
           {
             href: 'https://github.com/sunholo-data/sunholo-py',
             label: 'GitHub',
@@ -94,7 +88,7 @@ const config = {
           },
           {
             href: 'https://www.sunholo.com',
-            label: 'Multivac',
+            label: 'Sunholo.com',
             position: 'right',
           },
         ],
@@ -106,8 +100,12 @@ const config = {
             title: 'Docs',
             items: [
               {
-                label: 'Tutorial',
+                label: 'Getting Started',
                 to: '/',
+              },
+              {
+                label: 'PyPI',
+                href: 'https://pypi.org/project/sunholo/',
               },
             ],
           },
@@ -125,7 +123,7 @@ const config = {
             items: [
               {
                 label: 'Blog',
-                to: '/blog',
+                href: 'https://www.sunholo.com/blog/',
               },
               {
                 label: 'GitHub',
@@ -145,7 +143,6 @@ const config = {
     
 
   plugins: [
-    './src/plugins/proxy',
     [
       
       '@docusaurus/plugin-ideal-image',

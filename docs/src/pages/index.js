@@ -23,6 +23,9 @@ function HomepageHeader() {
             Get Started
           </Link>
         </div>
+        <div className={styles.installCommand}>
+          <code>pip install sunholo</code>
+        </div>
       </div>
     </header>
   );
@@ -32,8 +35,8 @@ export default function Home() {
   const {siteConfig} = useDocusaurusContext();
   return (
     <Layout
-      title={`Hello from ${siteConfig.title}`}
-      description="Description will go into a meta tag in <head />">
+      title="Documentation"
+      description="Documentation for the sunholo Python package - GenAI toolkit for agents, RAG, and cloud deployment">
       <HomepageHeader />
       <main>
         <HomepageFeatures />

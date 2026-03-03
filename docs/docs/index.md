@@ -4,115 +4,97 @@ slug: /
 ---
 import AudioPlayer from '@site/src/components/audio';
 
-# Introduction
+# sunholo
 
-Welcome to the dev portal for the `sunholo` project, which is the open-source component for the Sunholo Multivac.
-
-`sunholo` is a library of helpful utilities for deploying GenAI applications on the cloud.  It includes various python modules and functions that have been needed to help develop GenAI applications called VACs (Virtual Agent Computers) on the Multivac system.  Whilst its primary purpose is to enable Multivac applications, it may also be useful for more general GenAI applications, for instance if you are looking for ways to manage many GenAI configurations.
+A Python toolkit for building, configuring, and deploying GenAI applications. Sunholo provides a config-driven approach to working with multiple LLM providers, agent frameworks, and cloud infrastructure — letting you swap models, vectorstores, and deployment targets via YAML configuration rather than code changes.
 
 <AudioPlayer src="https://storage.googleapis.com/sunholo-public-podcasts/sunholo-podcasts.wav" />
 
+## Key Capabilities
 
-> "Ever wish you could build your own AI?..."
+- **Multi-provider GenAI** — Use Google Gemini, OpenAI, Anthropic, Ollama, and Azure through a unified interface
+- **Agent frameworks** — Build agents with Google ADK, LangChain, or LlamaIndex
+- **Config-driven architecture** — Define models, tools, permissions, and infrastructure in YAML
+- **Cloud-native deployment** — Deploy to GCP Cloud Run, with AlloyDB vectorstores, Pub/Sub, and Firestore
+- **Protocol support** — FastAPI services with streaming, MCP (Model Context Protocol), and A2A
+- **Multi-channel messaging** — Connect agents to Email, Telegram, and WhatsApp
 
+## Installation
 
-## Skills needed
-
-To start using the package, a good background is:
-
-* Basic Python skills
-* Knowledge about GenAI models and components such as vectorstores
-* Can deploy a GenAI application, such as a Langchain Langserve template or a LlamaIndex app.
-* Familiar with cloud providers, in particular Google Cloud Platform
-
-If you have the above, then you should be able to get some value from the `sunholo` package.
-
-## Getting started
-
-`sunholo` is available on pip https://pypi.org/project/sunholo/ 
-
-Minimal deps:
-
-```sh
+```bash
 pip install sunholo
 ```
 
-All dependencies:
+Install with specific feature groups:
 
-```sh
-pip install sunholo[all]
+| Extra | Install command | What it adds |
+|-------|----------------|--------------|
+| `[all]` | `pip install sunholo[all]` | All dependencies |
+| `[cli]` | `pip install sunholo[cli]` | [Command-line interface](cli) |
+| `[gcp]` | `pip install sunholo[gcp]` | Google Cloud Platform integration |
+| `[database]` | `pip install sunholo[database]` | [AlloyDB, Postgres, LanceDB](databases) |
+| `[firestore]` | `pip install sunholo[firestore]` | [Firestore](databases/firestore) with circuit breaker |
+| `[adk]` | `pip install sunholo[adk]` | [Google ADK](adk) agent framework |
+| `[channels]` | `pip install sunholo[channels]` | [Email, Telegram, WhatsApp](channels) |
+| `[openai]` | `pip install sunholo[openai]` | OpenAI provider |
+| `[anthropic]` | `pip install sunholo[anthropic]` | Anthropic provider |
+| `[pipeline]` | `pip install sunholo[pipeline]` | Chunking and embedding pipeline |
+| `[http]` | `pip install sunholo[http]` | HTTP tools with retry |
+
+## Module Overview
+
+| Module | Description |
+|--------|-------------|
+| [`sunholo.agents`](agents) | FastAPI/Flask route handlers for GenAI services (VACs) |
+| [`sunholo.adk`](adk) | Google ADK integration — agent config, sessions, events, MCP tools |
+| [`sunholo.channels`](channels) | Multi-channel messaging — Email, Telegram, WhatsApp |
+| [`sunholo.database`](databases) | Vector stores — AlloyDB, Postgres, LanceDB, Firestore, Supabase |
+| [`sunholo.genai`](integrations) | Generic AI interface with extended thinking capture |
+| [`sunholo.streaming`](howto/streaming) | Real-time response streaming |
+| [`sunholo.tools`](tools) | Config-driven permissions and async tool orchestration |
+| [`sunholo.auth`](config) | OAuth, RBAC, GCP/Azure authentication |
+| [`sunholo.mcp`](agents) | Model Context Protocol server and client |
+| [`sunholo.cli`](cli) | Command-line interface for chat, deploy, and config management |
+| [`sunholo.integrations`](integrations) | LangChain, LlamaIndex, Vertex AI, Langfuse |
+
+## Quick Example
+
+Sunholo uses YAML configuration files to define your GenAI application. Access settings via `ConfigManager`:
+
+```python
+from sunholo.utils import ConfigManager
+
+# Load configuration for a VAC (Virtual Agent Computer)
+config = ConfigManager("my_agent")
+
+# Access model settings from vac_config.yaml
+llm = config.vacConfig("llm")          # e.g. "openai"
+model = config.vacConfig("model")      # e.g. "gpt-4"
+agent_type = config.vacConfig("agent") # e.g. "langchain"
 ```
 
-Sunholo [CLI](cli):
+Define your agent in `vac_config.yaml`:
 
-```sh
-pip install sunholo[cli]
+```yaml
+kind: vacConfig
+apiVersion: v1
+vac:
+  my_agent:
+    llm: openai
+    model: gpt-4
+    agent: langchain
+    display_name: My Agent
+    tags:
+      - general
 ```
 
-[Databases](databases):
+## What is Multivac?
 
-```sh
-pip install sunholo[database]
-```
+Multivac is the full platform built on top of sunholo for deploying and managing GenAI applications at scale. It adds a web UI, user management, billing, and orchestration on Google Cloud Platform. See the [Multivac documentation](multivac) for more details.
 
-Google Cloud Platform:
-
-```sh
-pip install sunholo[gcp]
-```
-
-OpenAI
-
-```sh
-pip install sunholo[openai]
-```
-
-Anthropic
-
-```sh
-pip install sunholo[anthropic]
-```       
-
-HTTP tools
-
-```sh
-pip install sunholo[http]
-```
-
-Chunking and embedding pipeline
-
-```sh
-pip install sunholo[pipeline]
-```
-
-[ADK](adk) (Google Agent Development Kit)
-
-```sh
-pip install sunholo[adk]
-```
-
-[Channels](channels) (Email, Telegram, WhatsApp)
-
-```sh
-pip install sunholo[channels]
-```
-
-[Firestore](databases/firestore)
-
-```sh
-pip install sunholo[firestore]
-```
-
-## Tests via pytest
-
-If loading from GitHub, run tests:
+## Running Tests
 
 ```bash
 pip install pytest
-pip install . --use-feature=in-tree-build
 pytest tests
 ```
-
-## Legacy
-
-Sunholo is derived from the Edmonbrain project, the original blog post you can read here: https://code.markedmondson.me/running-llms-on-gcp/ and owes a lot to Langchain ( https://github.com/langchain-ai/langchain )
