@@ -716,3 +716,93 @@ For questions or issues:
 3. File issues at: https://github.com/sunholo-data/sunholo-py/issues
 
 The extensible MCP system makes it easy to create powerful Claude Desktop and Claude Code integrations with both built-in VAC functionality and your own custom tools!
+
+## MCP Tool Discovery
+
+The `sunholo.mcp.discovery` module provides dynamic discovery and registration of tools from external MCP servers. This is useful when your application needs to connect to multiple MCP servers and discover their available tools at runtime.
+
+### MCPDiscovery
+
+```python
+from sunholo.mcp.discovery import MCPDiscovery
+
+discovery = MCPDiscovery()
+
+# Register MCP servers
+discovery.register_server(
+    "search",
+    name="Search Server",
+    url="http://localhost:8080/mcp",
+    tags=["search", "retrieval"],
+)
+
+discovery.register_server(
+    "email",
+    name="Email Server",
+    command="python",
+    args=["-m", "email_mcp_server"],
+)
+
+# Discover tools on all servers
+tools = await discovery.discover_all()
+
+# Get info about a specific tool
+info = discovery.get_tool_info("mcp_search_query")
+
+# List all discovered tools
+all_tools = discovery.list_discovered_tools()
+```
+
+### Tool ID Convention
+
+Discovered tools follow the naming convention `mcp_{server_id}_{tool_name}`:
+- `mcp_search` - Server-level tool ID
+- `mcp_search_query` - Specific tool on the search server
+- `external_mcp` - Generic external MCP tool identifier
+
+### Adding to Available Tools
+
+Integrate discovered MCP tools with your permission system:
+
+```python
+from sunholo.mcp.discovery import MCPDiscovery, is_mcp_tool
+
+discovery = MCPDiscovery()
+discovery.register_server("search", url="http://search-server/mcp")
+
+# Add MCP tools to an available tools list
+available = discovery.add_to_available_tools(["existing_tool_1", "existing_tool_2"])
+# ["existing_tool_1", "existing_tool_2", "external_mcp", "mcp_search"]
+
+# Check if a tool ID is an MCP tool
+is_mcp_tool("mcp_search")      # True
+is_mcp_tool("external_mcp")    # True
+is_mcp_tool("regular_tool")    # False
+```
+
+### Server Configuration
+
+Servers can connect via HTTP/SSE or stdio transport:
+
+```python
+from sunholo.mcp.discovery import MCPServerConfig
+
+# HTTP/SSE server
+http_server = MCPServerConfig(
+    server_id="remote",
+    name="Remote MCP Server",
+    url="https://mcp.example.com/sse",
+    auth="bearer_token",
+)
+
+# Stdio server (local process)
+stdio_server = MCPServerConfig(
+    server_id="local",
+    name="Local MCP Server",
+    command="python",
+    args=["-m", "my_mcp_server"],
+)
+
+print(http_server.tool_id)   # "mcp_remote"
+print(http_server.to_dict()) # Serializable config
+```

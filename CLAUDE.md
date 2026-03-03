@@ -51,15 +51,20 @@ npm run typecheck   # If configured in package.json
 
 ### Key Modules
 - **agents**: Routing and dispatch for VAC agents (Flask/FastAPI routes, chat history, PubSub)
+- **adk**: Google ADK (Agent Development Kit) integration - dynamic agent config, session management, event streaming, MCP tool decorators. Install: `pip install sunholo[adk]`
+- **channels**: Multi-channel messaging (email/Telegram/WhatsApp) with abstract `BaseChannel` interface, rate limiting, and session management. Install: `pip install sunholo[channels]`
 - **cli**: Command-line interface (chat, deploy, config management)
-- **utils**: Configuration management via `ConfigManager` class
-- **genai**: Generic AI interface supporting multiple providers (OpenAI, Anthropic, Google)
-- **vertex**: Google Vertex AI integration with extensions
-- **database**: Support for AlloyDB, PostgreSQL, LanceDB, Supabase
+- **database**: Support for AlloyDB, PostgreSQL, LanceDB, Supabase, Firestore (with circuit breaker and async/sync fallback). Install Firestore: `pip install sunholo[firestore]`
 - **discovery_engine**: Google AI Search integration
+- **genai**: Generic AI interface supporting multiple providers (OpenAI, Anthropic, Google). Includes `thinking` module for extended thinking capture from streaming LLM responses (tag extraction, Anthropic thinking blocks)
 - **langchain/llamaindex**: Framework integrations
-- **mcp**: Model Context Protocol server and client integration (expose VACs as MCP tools)
+- **mcp**: Model Context Protocol server and client integration (expose VACs as MCP tools). Includes `discovery` module for dynamic MCP server registry and tool auto-discovery with `mcp_{server_id}` naming convention
+- **messaging**: Inter-agent messaging bridge to AILANG CLI (inbox management, GitHub sync, semantic search)
+- **tools**: Tool system including `permissions` (config-driven permission validation with email/domain matching, wildcard configs, TTL cache, tag-based access) and `orchestrator` (async concurrent tool execution via AsyncTaskRunner with config merging and streaming)
 - **streaming**: Real-time response streaming
+- **utils**: Configuration management via `ConfigManager`, HTTP client with retry/backoff (`http_client`), context-aware timeout config (`timeout_config`)
+- **auth**: GCP/Azure authentication, Google OAuth2 flow with token caching (`oauth`), declarative access control (`access_control`) with public/private/domain/group/role levels
+- **vertex**: Google Vertex AI integration with extensions
 - **chunker/embedder**: Document processing pipeline
 
 ### Configuration System
@@ -156,11 +161,21 @@ All files should include the Apache 2.0 license header:
 ### Common Tasks
 - **Add new LLM provider**: Update `llm_config.yaml` and `model_lookup.yaml`
 - **Create custom agent**: Inherit from base classes in `agents/`
+- **Create ADK agent**: Use `sunholo.adk.config.ADKConfig` for setup, `sunholo.adk.session.SessionHelper` for session management, `sunholo.adk.tools.mcp_tool` decorator for MCP tools
+- **Add messaging channel**: Inherit from `sunholo.channels.base.BaseChannel`, implement `receive_webhook()`, `send_response()`, `validate_webhook()`
+- **Use inter-agent messaging**: Use `sunholo.messaging.client.AILangMessaging` to send/receive messages via AILANG
 - **Add vectorstore**: Configure in `vac_config.yaml` under `rag` section
 - **Enable streaming**: Set `stream: true` in VAC config
 - **Enable MCP server**: Set `enable_mcp_server=True` in VACRoutes (Flask) or VACRoutesFastAPI (FastAPI) for Claude Code integration
-- **Add authentication**: Configure in `platform_config.yaml`
+- **Add authentication**: Configure in `platform_config.yaml`; use `sunholo.auth.oauth.GoogleAuthManager` for OAuth flows
 - **Use FastAPI for async**: Use `VACRoutesFastAPI` from `sunholo.agents.fastapi` for async-first applications
+- **HTTP with retries**: Use `sunholo.utils.http_client.get_with_retries` / `post_with_retries` for resilient HTTP calls
+- **Use Firestore**: Use `sunholo.database.firestore.get_firestore_client()` for robust Firestore operations with circuit breaker
+- **Tool permissions**: Use `sunholo.tools.permissions.permitted_tools()` to validate user access to tools based on email/domain rules with wildcard configs and TTL caching
+- **Tool orchestration**: Use `sunholo.tools.orchestrator.ToolOrchestrator` to register and execute multiple tools concurrently with config merging; supports both batch (`run()`) and streaming (`run_streaming()`) results
+- **MCP tool discovery**: Use `sunholo.mcp.discovery.MCPDiscovery` to register MCP servers and auto-discover available tools; tools use `mcp_{server_id}` naming convention
+- **Thinking capture**: Use `sunholo.genai.thinking.ThinkingCapture` for real-time streaming separation of thinking/response content, or `extract_thinking()` for post-hoc extraction from complete responses; `extract_anthropic_thinking()` handles Anthropic's thinking block format
+- **Access control**: Use `sunholo.auth.access_control.AccessControl` for declarative RBAC; supports public/private/domain/domains/specific/group/role access levels with `from_config()` for config-driven setup
 
 ### Testing Guidelines
 - Test files in `tests/` mirror source structure

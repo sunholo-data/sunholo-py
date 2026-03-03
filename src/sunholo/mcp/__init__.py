@@ -29,10 +29,15 @@ except ImportError as e:
 # SSE utilities are always available
 from .sse_utils import parse_sse_response, is_sse_response, extract_sse_data
 
+from .discovery import MCPDiscovery, MCPServerConfig, is_mcp_tool
+
 __all__ = [
-    'MCPClientManager', 
+    'MCPClientManager',
     'VACMCPServer',
     'parse_sse_response',
-    'is_sse_response', 
-    'extract_sse_data'
+    'is_sse_response',
+    'extract_sse_data',
+    'MCPDiscovery',
+    'MCPServerConfig',
+    'is_mcp_tool',
 ]
