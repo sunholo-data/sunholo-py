@@ -165,6 +165,7 @@ class TestTelegramChannel:
 
     @pytest.mark.asyncio
     async def test_receive_webhook_dict(self):
+        pytest.importorskip("httpx")
         from sunholo.channels.telegram import TelegramChannel
         channel = TelegramChannel(bot_token="fake:token")
 
@@ -186,6 +187,7 @@ class TestTelegramChannel:
 
     @pytest.mark.asyncio
     async def test_receive_webhook_no_message(self):
+        pytest.importorskip("httpx")
         from sunholo.channels.telegram import TelegramChannel
         channel = TelegramChannel(bot_token="fake:token")
 
