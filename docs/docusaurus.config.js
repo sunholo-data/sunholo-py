@@ -8,8 +8,8 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Sunholo Dev Portal',
-  tagline: 'Development resources for Sunholo and Multivac',
+  title: 'sunholo',
+  tagline: 'Python toolkit for building and deploying GenAI applications',
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
@@ -77,13 +77,18 @@ const config = {
           },
           {href: 'https://www.sunholo.com/blog/', label: 'Blog', position: 'left'},
           {
+            href: 'https://pypi.org/project/sunholo/',
+            label: 'PyPI',
+            position: 'right',
+          },
+          {
             href: 'https://github.com/sunholo-data/sunholo-py',
             label: 'GitHub',
             position: 'right',
           },
           {
             href: 'https://www.sunholo.com',
-            label: 'Multivac',
+            label: 'Sunholo.com',
             position: 'right',
           },
         ],
@@ -95,8 +100,12 @@ const config = {
             title: 'Docs',
             items: [
               {
-                label: 'Tutorial',
+                label: 'Getting Started',
                 to: '/',
+              },
+              {
+                label: 'PyPI',
+                href: 'https://pypi.org/project/sunholo/',
               },
             ],
           },

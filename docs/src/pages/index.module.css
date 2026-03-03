@@ -21,3 +21,17 @@
   align-items: center;
   justify-content: center;
 }
+
+.installCommand {
+  margin-top: 1.5rem;
+}
+
+.installCommand code {
+  background: rgba(0, 0, 0, 0.15);
+  padding: 0.6rem 1.5rem;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  font-family: var(--ifm-font-family-monospace);
+  color: inherit;
+  user-select: all;
+}

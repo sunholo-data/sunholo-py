@@ -7,5 +7,16 @@
 
 .featureSvg {
   height: 200px;
-  width: 200px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.featureLink {
+  color: var(--ifm-heading-color);
+  text-decoration: none;
+}
+
+.featureLink:hover {
+  color: var(--ifm-color-primary);
+  text-decoration: underline;
 }
