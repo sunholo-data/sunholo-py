@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "additionalDirectories": [
+      "/Users/mark/dev/sunholo/blog"
+    ],
+    "allow": [
+      "WebFetch(domain:dev.sunholo.com)"
+    ]
+  }
+}
